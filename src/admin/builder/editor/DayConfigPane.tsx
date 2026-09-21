@@ -11,7 +11,7 @@
  * see the notes at each site for what they did and what still writes `policy`
  * and `layout` without them.
  */
-import { DayContent } from '../../../shared/blocks/block-model';
+import { DayContent } from '../../block-builder/model/block-model';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 

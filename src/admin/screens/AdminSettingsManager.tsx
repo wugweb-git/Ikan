@@ -9,7 +9,7 @@ import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { AdminSection } from '../components/AdminSection';
 import { AdminFormField } from '../components/AdminFormField';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';

@@ -12,8 +12,8 @@
  * layout. Those stay in the editor column, reached from here.
  */
 import { MoreVertical, Settings, Repeat, Copy, Trash2, Clock, Layers } from 'lucide-react';
-import { DayContent } from '../../../shared/blocks/block-model';
-import { dayMeta } from '../../../shared/blocks/day-meta';
+import { DayContent } from '../../block-builder/model/block-model';
+import { dayMeta } from '../../block-builder/model/day-meta';
 import { Button } from '../../ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,

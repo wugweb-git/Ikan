@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { clearEngineConfigCache } from '../../../shared/engine/recommendation-engine';
+import { clearEngineConfigCache } from '../../engines/recommendation-engine';
 import { Trash2, Plus, Save, BookOpen, FileText, ClipboardList, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { AdminHeader } from '../AdminHeader';
@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Input } from '../../ui/input';
 import { apiClient } from '../../../shared/api';
-import { useMetadata } from '../../../shared/hooks/useMetadata';
+import { useMetadata } from '../../ui/hooks/useMetadata';
 
 // ── Types ────────────────────────────────────────────────────
 interface RecommendationRule {

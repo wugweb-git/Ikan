@@ -1,0 +1,450 @@
+import {
+  type Activity, type DayType,
+} from './block-model.ts';
+import type { ActivityName } from './vocabulary.ts';
+
+export interface DayTypePreset {
+  label: string;
+  description: string;
+  defaultBlocks: Partial<Activity>[];
+  /**
+   * What a day made from this template may hold — ACTIVITIES since §26.
+   *
+   * It listed interaction names, which under §26 cannot express this: `mcq`,
+   * `multi-select` and `boolean` all carry `choose`, so permitting `choose`
+   * would permit all three and forbidding it would forbid all three. The
+   * template means the activities, and now says so.
+   */
+  allowedActivities: ActivityName[];
+  autoConfig: {
+    autoAdvance?: boolean;
+    navigationBack?: boolean;
+    scoringEnabled?: boolean;
+    saveOnExit?: boolean;
+    saveOnToggle?: boolean;
+  };
+  stepGroupRules: {
+    allowed: boolean;
+    required: boolean;
+    maxBlocksPerStep?: number;
+    oneBlockPerStep?: boolean;
+    oneStepPerLesson?: boolean;
+  };
+  warnings: string[];
+  errors: string[];
+}
+
+/**
+ * `allowedActivities` coverage, corrected 2026-09-04 (blocks.md §18 step 2).
+ *
+ * Phase 0 widened these only far enough to cover each preset's OWN seed blocks.
+ * That left them describing something no author actually builds:
+ *
+ *   - 3 presets could not open with a lesson (no `read`)
+ *   - 5 presets could not close with a conclude (no `complete`)
+ *   - `upload` and `number` were allowed by NO preset, so those two activities
+ *     were authorable nowhere at all
+ *
+ * `lesson` + `conclude` are 215 of 406 live blocks — 53% of the catalogue — so a
+ * stage forbidding either was wrong about the product, not about the content.
+ * Every container now allows `read` and `complete`; `upload` and `number` were
+ * given the homes where they make sense (practice/workshop, tracker/practice).
+ * That last pair is a judgement call and is the one part here worth revisiting.
+ */
+export const DAY_TYPE_PRESETS: Record<DayType, DayTypePreset> = {
+  // `onboarding` had a `day_config_type` catalog row and no code path at all, so
+  // an admin picking it in Meta Manager silently got nothing. Typing this record
+  // as Record<DayType, ...> is what forced it to exist.
+  'onboarding': {
+    label: 'Onboarding',
+    description: 'Day 0. First-time intro, consent, and orientation before the programme starts.',
+    defaultBlocks: [
+      { type: 'lesson', title: 'Welcome', content: '', autoAdvance: false },
+      {
+        type: 'exercise',
+        title: 'What brings you here?',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        activityConfig: { subtype: 'single-select' }
+      }
+    ],
+    allowedActivities: ['read', 'mcq', 'single-select', 'multi-select', 'text', 'ephemeral-journal', 'complete'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: false
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Onboarding runs once, before day 1. Answers are profile data, not programme progress.'],
+    errors: []
+  },
+  'assessment': {
+    label: 'Assessment',
+    description: 'Baseline measurement, severity scoring, recommendations.',
+    defaultBlocks: [
+      { type: 'lesson', content: 'Assessment Intro', autoAdvance: false },
+      { 
+        type: 'exercise', 
+        content: 'Question 1', 
+        required: true,
+        autoAdvance: true,
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true } } 
+      },
+      { 
+        type: 'exercise', 
+        content: 'Question 2', 
+        required: true, 
+        autoAdvance: true,
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true } } 
+      },
+      { type: 'conclude', content: 'Continue', autoAdvance: false }
+    ],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedActivities: ['read', 'clinical-instrument', 'mcq', 'single-select', 'complete'],
+    autoConfig: {
+      autoAdvance: true, // for MCQs
+      navigationBack: false,
+      scoringEnabled: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Assessments should be fast. Long inputs reduce completion.'],
+    errors: []
+  },
+  'assessment-lite': {
+    label: 'Assessment Lite',
+    description: 'Awareness, reflection, non-scored check-ins.',
+    defaultBlocks: [
+      { type: 'lesson', content: 'Quick check-in', autoAdvance: false },
+      { 
+        type: 'exercise', 
+        content: 'How are you feeling?', 
+        required: true,
+        activityConfig: { subtype: 'mcq', scoring: { enabled: false } } // non-evaluative
+      },
+      { 
+        type: 'exercise', 
+        content: 'Rate your day', 
+        required: true,
+        activityConfig: { subtype: 'rating_scale' } 
+      }
+    ],
+    // + read 2026-09-04: this preset seeds a `lesson`.
+    allowedActivities: ['read', 'mcq', 'single-select', 'rating-scale', 'text', 'ephemeral-journal', 'complete'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: true,
+      scoringEnabled: false
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: false,
+      maxBlocksPerStep: 2
+    },
+    warnings: [],
+    errors: []
+  },
+  'learning': {
+    label: 'Learning',
+    description: 'Concept introduction and understanding.',
+    defaultBlocks: [
+      { type: 'lesson', content: 'Introduction', autoAdvance: false },
+      { type: 'lesson', content: 'Diagram/Illustration', autoAdvance: false }, // media
+      { 
+        type: 'exercise', 
+        content: 'Knowledge Check', 
+        required: false,
+        activityConfig: { subtype: 'mcq' } 
+      }
+    ],
+    allowedActivities: ['read', 'view', 'complete', 'mcq', 'single-select'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: true
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: true,
+      oneStepPerLesson: true
+    },
+    warnings: ['Learning days must include at least one interaction.'],
+    errors: []
+  },
+  'practice': {
+    label: 'Practice',
+    description: 'User data capture, reflection, application.',
+    defaultBlocks: [
+      { type: 'lesson', content: 'Context for practice', autoAdvance: false },
+      { 
+        type: 'journal', 
+        content: 'Journal Entry', 
+        required: true,
+        activityConfig: { subtype: 'ephemeral-journal' }
+      },
+      { type: 'conclude', content: 'Done for today', autoAdvance: false }
+    ],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedActivities: ['read', 'text', 'ephemeral-journal', 'input-table', 'structured-list', 'multi-select', 'number', 'upload', 'complete'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: true,
+      saveOnExit: true
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: false
+    },
+    warnings: ['Clearly state whether responses are stored or private.'],
+    errors: []
+  },
+  'workshop': {
+    label: 'Workshop',
+    description: 'Multi-step thinking (ideation, evaluation, rituals).',
+    defaultBlocks: [
+      // Preset fills these but UI logic will handle StepGroups
+    ],
+    allowedActivities: ['read', 'input-table', 'text', 'ephemeral-journal', 'multi-select', 'upload', 'complete'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: true
+    },
+    stepGroupRules: {
+      allowed: true,
+      required: true,
+      maxBlocksPerStep: 3
+    },
+    warnings: [],
+    errors: ['Workshop day without StepGroups', '>3 blocks in a StepGroup', 'Mixed intent blocks in same StepGroup']
+  },
+  'tracker': {
+    label: 'Tracker',
+    description: 'Daily repetition, habits, streaks.',
+    defaultBlocks: [
+      { 
+        type: 'checklist', 
+        content: 'Daily Habits', 
+        required: false,
+        activityConfig: { subtype: 'structured-list' }
+      },
+      { 
+        type: 'exercise', 
+        content: 'Rate today', 
+        required: true,
+        activityConfig: { subtype: 'rating_scale' }
+      }
+    ],
+    allowedActivities: ['read', 'check-grid', 'input-table', 'structured-list', 'rating-scale', 'number', 'complete'],
+    autoConfig: {
+      autoAdvance: false,
+      saveOnToggle: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false
+    },
+    warnings: ['Trackers should stay identical across days.'],
+    errors: []
+  },
+  'reflection': {
+    label: 'Reflection',
+    description: 'Closure, sense-making, review.',
+    defaultBlocks: [
+      // Was `type: 'reflection'`. `reflection` became a CONTAINER when quiz and
+      // reflection were flipped (Phase 3.3), so this seeded a stage inside a
+      // stage — nothing nests. It is a written summary, which is a `journal`.
+      // The preset's own defaultBlocks were not updated with the flip; the
+      // containment check caught it the moment it started running.
+      { type: 'journal', content: 'Summary', autoAdvance: false },
+      { 
+        type: 'exercise', 
+        content: 'How do you feel now?', 
+        required: true,
+        activityConfig: { subtype: 'rating_scale' }
+      },
+      { type: 'journal', content: 'Final thoughts', required: false }
+    ],
+    allowedActivities: ['read', 'text', 'ephemeral-journal', 'rating-scale', 'mcq', 'single-select', 'complete'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: false
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false
+    },
+    warnings: [],
+    errors: []
+  },
+  'check-in': {
+    label: 'Check-In',
+    description: 'Quick daily mood/wellness check. 1-3 questions, no scoring.',
+    defaultBlocks: [
+      {
+        type: 'exercise',
+        title: 'How are you feeling?',
+        content: 'Rate your mood right now.',
+        required: true,
+        autoAdvance: true,
+        activityConfig: { subtype: 'rating-scale', slider_min: 1, slider_max: 5, slider_labels: ['Awful', 'Bad', 'Okay', 'Good', 'Great'] }
+      },
+      {
+        type: 'journal',
+        title: 'Quick note',
+        content: 'Anything on your mind? (optional)',
+        required: false,
+        autoAdvance: false,
+      },
+      { type: 'conclude', title: 'Done', content: 'Thanks for checking in!', autoAdvance: false }
+    ],
+    // + complete 2026-09-04: this preset seeds a `conclude`.
+    allowedActivities: ['read', 'rating-scale', 'mcq', 'single-select', 'multi-select', 'text', 'ephemeral-journal', 'complete'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: false,
+      saveOnExit: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: [
+      'Keep check-ins under 2 minutes for best completion rates.',
+      // `read` was added here as part of the uniform structural minimum
+      // (2026-09-04), which lets an author place a lesson in a check-in. That
+      // pushes against this stage's stated purpose, so it is DELIBERATELY a
+      // warning rather than a prohibition: permitting is not requiring, and the
+      // allow-list is the wrong instrument for "this is usually a bad idea".
+      'A check-in can hold a lesson, but rarely should — brevity is the point of this stage.',
+    ],
+    errors: []
+  },
+  'rest': {
+    label: 'Rest Day',
+    description: 'No active tasks. Optional motivation or gentle prompt.',
+    defaultBlocks: [
+      {
+        type: 'lesson',
+        title: 'Rest Day',
+        content: 'Take it easy today. You\'re doing great.',
+        autoAdvance: false
+      }
+    ],
+    allowedActivities: ['read', 'complete'],
+    autoConfig: {
+      autoAdvance: false,
+      navigationBack: false
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false
+    },
+    warnings: ['Rest days auto-complete — no user action needed.'],
+    errors: []
+  },
+  'quiz': {
+    label: 'Quiz',
+    description: 'Knowledge check with scoring. Tests retention from learning days.',
+    defaultBlocks: [
+      { type: 'lesson', title: 'Quiz Intro', content: 'Let\'s see what you remember.', autoAdvance: false },
+      {
+        type: 'exercise',
+        title: 'Question 1',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+      },
+      {
+        type: 'exercise',
+        title: 'Question 2',
+        content: '',
+        required: true,
+        autoAdvance: true,
+        activityConfig: { subtype: 'mcq', scoring: { enabled: true, maxScore: 1 } }
+      },
+      { type: 'conclude', title: 'Results', content: 'Here\'s how you did.', autoAdvance: false }
+    ],
+    // + read/complete 2026-09-04: this preset seeds a `lesson` and a `conclude`.
+    allowedActivities: ['read', 'mcq', 'single-select', 'multi-select', 'rating-scale', 'complete'],
+    autoConfig: {
+      autoAdvance: true,
+      navigationBack: false,
+      scoringEnabled: true
+    },
+    stepGroupRules: {
+      allowed: false,
+      required: false,
+      oneBlockPerStep: true
+    },
+    warnings: ['Keep quizzes to 5-10 questions max.'],
+    errors: []
+  }
+};
+
+/** True for a string that names a real preset. The only way into DAY_TYPE_PRESETS. */
+export function isDayType(dayType: string | undefined | null): dayType is DayType {
+  return !!dayType && Object.prototype.hasOwnProperty.call(DAY_TYPE_PRESETS, dayType);
+}
+
+export function getPresetForDayType(dayType: string): DayTypePreset | undefined {
+  return isDayType(dayType) ? DAY_TYPE_PRESETS[dayType] : undefined;
+}
+
+/*
+  `BlockDayTypeVerdict`, `validateBlockForDayType` and `wouldReject` were here.
+  Deleted 2026-09-08, §19 step 3.
+
+  They judged a block against the DAY'S TYPE — its `can_hold` list, its
+  `activities` list, its `allowedInteractions`. A day no longer has a type, so
+  there is nothing left to judge against, and the function had no honest input.
+
+  It was never enforcement in any case: the rejecting line was commented out, so
+  `allowed: true` always won and the computed verdict was discarded. Restoring
+  it was described for months as "one line". Deleting it is the right end,
+  because the constraint it encoded is the one the settled model drops — a
+  template SEEDS a day and then has no further say. `DAY_TYPE_PRESETS` remains,
+  as seeding information; `seedDayFromTemplate` below is the only thing that
+  reads it now.
+
+  Block-level validity is untouched and still runs: `validateBlock` in
+  `block-validation.ts` asks whether a block can render at all, which is a
+  question about the block, not about where it sits.
+*/
+
+/* `seedDayFromTemplate` lives in `day-policy.ts` — it needs both the policy
+   and the layout tables, and importing the layout table here would close a
+   cycle through `day-policy.ts`, which already reads DAY_TYPE_PRESETS. */
+
+/**
+ * The block types `DayEditor`'s palette can actually OFFER an author, with the
+ * legacy `allowedBlocks` key each one matches on.
+ *
+ * Extracted from `DayEditor.tsx` so it can be asserted against `can_hold`: the
+ * validator permitting a block type the editor cannot create is a present-tense
+ * authoring gap — an author who deletes a seeded block cannot add it back.
+ *
+ * Complete as of 2026-09-04: every leaf block type the catalog defines has an
+ * entry, so a stage can no longer permit a type the editor cannot create.
+ */
+export const PALETTE_BLOCK_TYPES: { type: string; label: string; keys: string[] }[] = [
+  { type: 'lesson',   label: 'Lesson',     keys: ['lesson'] },
+  { type: 'exercise', label: 'Exercise',   keys: ['mcq_single', 'mcq_multi', 'rating_scale', 'likert', 'boolean', 'short_text', 'long_text'] },
+  { type: 'journal',  label: 'Journal',    keys: ['journal', 'journal_short'] },
+  { type: 'conclude', label: 'Conclusion', keys: ['summary', 'conclude'] },
+  // Added 2026-09-04, closing the gap this file's own comment recorded: the
+  // palette offered 4 of the leaf types, so a stage could permit `checklist`
+  // while the editor had no way to create one. `sleep-diary` is retained per
+  // decision and needs an entry for the same reason.
+  { type: 'checklist',   label: 'Checklist',   keys: ['checklist', 'journal_short'] },
+  { type: 'sleep-diary', label: 'Sleep Diary', keys: ['table_input', 'input-table'] },
+];

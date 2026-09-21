@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../../shared/api';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { BookOpen, Smile, BarChart3, ChevronDown, ChevronRight, FileText, Tag, Zap, Brain, Check, Clock } from 'lucide-react';

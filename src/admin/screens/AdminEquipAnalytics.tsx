@@ -5,7 +5,7 @@ import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { cn } from '../ui/utils';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';

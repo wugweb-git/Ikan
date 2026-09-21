@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { AlertTriangle, Phone, MessageSquare, ExternalLink, Heart, Shield } from 'lucide-react';
-import { useIsMobile } from '../../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../../ui/hooks/useIsMobile';
 
 interface CrisisSupportProps {
   isVisible: boolean;

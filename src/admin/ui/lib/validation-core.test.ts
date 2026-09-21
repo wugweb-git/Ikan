@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import {
   sanitizeString, validateName, validateEmail, validatePassword,
   validatePhone, validateBio, validateDateOfBirth,
-} from '../../supabase/functions/server/validation-core.ts';
+} from '../../../supabase/functions/server/validation-core.ts';
 
 test('every shared validator survives a non-string, rather than throwing', () => {
   // THE DRIFT THIS FIXES. The browser copy lacked `typeof x !== 'string'`, so
@@ -70,7 +70,7 @@ test('optional rules return null when absent, and validate when present', () => 
 // ── Scoring vocabulary ─────────────────────────────────────────────
 // The severity terms were defined in four places. The values agreed, but the
 // two `compareSeverity` implementations did not, and the browser's was wrong.
-import { compareSeverity, isSeverityLevel, SEVERITY_LEVELS } from '../../supabase/functions/server/scoring-vocabulary.ts';
+import { compareSeverity, isSeverityLevel, SEVERITY_LEVELS } from '../../../supabase/functions/server/scoring-vocabulary.ts';
 
 test('an unrecognised threshold is never one everybody clears', () => {
   // THE BUG. The browser copy was `indexOf(a) - indexOf(b)`, and indexOf gives

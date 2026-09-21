@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { NavBadge } from '../ui/NavBadge';
 import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';

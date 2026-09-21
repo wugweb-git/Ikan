@@ -1,5 +1,5 @@
 // react-tokens.ts - inject iKan tokens + keyframes as CSS vars for React/Storybook
-import tokens from '../../../shared/lib/design-tokens';
+import tokens from '../ui/lib/design-tokens';
 import { useEffect } from 'react';
 
 type TokenValue = string | number | boolean | object | any[];

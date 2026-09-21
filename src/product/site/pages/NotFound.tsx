@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { House, ArrowLeft, Search } from 'lucide-react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 

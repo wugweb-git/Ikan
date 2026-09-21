@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Icon } from '../ui/Icon';
 import { LogoFull } from '../ui/Logo';
 import { cn } from '../ui/utils';
-import { EngineResult } from '../../../shared/engine/recommendation-engine';
+import { EngineResult } from '../engines/recommendation-engine';
 import { apiClient } from '../../../shared/api';
 import { ContentImage } from '../ui/ContentImage';
 import { SectionReportCard } from '../features/player/SectionReportCard';
@@ -18,7 +18,7 @@ import {
 import { severityPresentation, severityOfResult } from '../lib/severity-presentation';
 import { equipMeta } from '../lib/equip-meta';
 import { resolveResultPresentation, percentOfRange } from '../lib/result-presentation';
-import { getLoadedScoringProfiles, loadScoringProfiles } from '../../../shared/engine/recommendation-engine';
+import { getLoadedScoringProfiles, loadScoringProfiles } from '../engines/recommendation-engine';
 import type { SectionScoreResult } from '../lib/assessment-sections';
 
 /**

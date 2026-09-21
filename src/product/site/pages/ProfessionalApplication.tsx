@@ -27,8 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
-import { useMetadata } from '../../../shared/hooks/useMetadata';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { useMetadata } from '../ui/hooks/useMetadata';
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 

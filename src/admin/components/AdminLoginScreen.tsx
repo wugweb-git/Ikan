@@ -7,7 +7,7 @@ import { LogoIcon } from '../ui/Logo';
 import { Lock, ArrowLeft, Loader2, CircleAlert, Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
-import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
+import { usePublicSettings } from '../ui/hooks/usePublicSettings';
 import { Checkbox } from '../ui/checkbox';
 
 const REMEMBER_KEY = 'ikan_admin_remembered_email';

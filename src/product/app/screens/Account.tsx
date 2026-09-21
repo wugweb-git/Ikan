@@ -5,8 +5,8 @@ import { AccountDetailsSection } from '../ui/blocks/AccountDetailsSection';
 import { SideNavAccount } from '../shell/navigation/SideNavAccount';
 import { cn } from '../ui/utils';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
-import { validateProfile } from '../../../shared/validation';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { validateProfile } from '../ui/lib/validation';
 import { AccountPageHeader } from '../ui/blocks/AccountPageHeader';
 
 // Lazy-load all account sub-screens so only the active tab loads

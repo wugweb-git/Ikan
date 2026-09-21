@@ -3,14 +3,14 @@ import { ClipboardList, Plus, Eye, MoreHorizontal, EyeOff, Trash2, Pencil } from
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
 import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../ui/ImageWithFallback';
-import { useMetadata } from '../../shared/hooks/useMetadata';
+import { useMetadata } from '../ui/hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,

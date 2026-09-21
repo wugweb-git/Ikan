@@ -6,7 +6,7 @@
 import { memo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { GripVertical, FastForward, Clock, Hash, Repeat, MoreVertical, ArrowRightLeft, Copy, Trash2 } from 'lucide-react';
-import { Activity, repeatSummary } from '../../../shared/blocks/block-model';
+import { Activity, repeatSummary } from '../../block-builder/model/block-model';
 import { getIconComponent, iconResolves } from '../../lib/catalog-icons';
 import { Button } from '../../ui/button';
 import { cn } from '../../ui/utils';

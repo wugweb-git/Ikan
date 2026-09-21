@@ -14,10 +14,10 @@ import { useMemo, useState } from 'react';
 import { BlockRenderer } from '../../product/app/blocks/BlockRenderer';
 import {
   type Activity, type ActivityConfig, type BlockType,
-} from '../../shared/blocks/block-model';
-import { ACTIVITIES, interactionsOf, type ActivityName } from '../../shared/blocks/vocabulary';
-import { LEAF_BLOCK_TYPES } from '../../shared/blocks/block-model';
-import { DAY_TYPE_PRESETS } from '../../shared/blocks/block-type-rules';
+} from '../block-builder/model/block-model';
+import { ACTIVITIES, interactionsOf, type ActivityName } from '../block-builder/model/vocabulary';
+import { LEAF_BLOCK_TYPES } from '../block-builder/model/block-model';
+import { DAY_TYPE_PRESETS } from '../block-builder/model/block-type-rules';
 
 /**
  * Permitted activities per block type.

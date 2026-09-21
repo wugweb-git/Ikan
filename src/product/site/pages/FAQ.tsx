@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Search, MessageSquarePlus } from 'lucide-react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import {

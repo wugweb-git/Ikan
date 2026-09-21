@@ -3,7 +3,7 @@
  * Extracted from App.tsx to reduce main bundle complexity.
  */
 
-import { logger } from '../../../shared/logger';
+import { logger } from '../shell/logger';
 import { apiClient } from '../../../shared/api';
 
 // --- Patterns ---

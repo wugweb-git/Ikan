@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../../../shared/contexts/NotificationContext';
 import { useAuth } from '../../../../shared/contexts/AuthContext';
 import { apiClient } from '../../../../shared/api';
-import { useIsMobile } from '../../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { cn } from '../../ui/utils';
-import { validatePassword, isCommonPassword, validateEmail } from '../../../../shared/validation';
+import { validatePassword, isCommonPassword, validateEmail } from '../../ui/lib/validation';
 import { PasswordStrength } from '../../ui/password-strength';
 import { Key, Mail, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
 

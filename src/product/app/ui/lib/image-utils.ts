@@ -1,4 +1,4 @@
-import { projectId } from '../config/supabase-info';
+import { projectId } from '../../../../shared/config/supabase-info';
 
 export const resolveImageUrl = (url: string | undefined | null): string | undefined => {
   if (!url) return undefined;

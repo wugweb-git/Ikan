@@ -1,5 +1,5 @@
 import { PageHero } from '../ui/PageHero';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
 import { getPrograms, type SiteProgram } from '../lib/catalog';
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Icon } from '../ui/Icon';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

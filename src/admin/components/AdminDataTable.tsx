@@ -1,5 +1,5 @@
 import { useState, useMemo, ReactNode } from 'react';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { 
   Table, 
   TableBody, 

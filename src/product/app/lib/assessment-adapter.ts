@@ -1,5 +1,5 @@
-import { EquipProgram, DayContent, Activity, ActivityConfig, InteractionType } from '../../../shared/blocks/block-model';
-import { seedDayFromTemplate } from '../../../shared/blocks/day-policy.ts';
+import { EquipProgram, DayContent, Activity, ActivityConfig, InteractionType } from '../programs/block-model/block-model';
+import { seedDayFromTemplate } from '../programs/block-model/day-policy.ts';
 
 /**
  * Inbound spellings of a legacy assessment question type -> the four the save

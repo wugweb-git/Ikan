@@ -24,7 +24,7 @@ import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminEmptyState } from '../components/AdminEmptyState';
 import { AdminLoading } from '../components/AdminLoading';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge, resolveStatusVariant } from '../components/AdminStatusBadge';
 import { ConsultantEditPage, Consultant } from './ConsultantEditPage';
@@ -46,8 +46,8 @@ import {
 } from "../ui/dropdown-menu";
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase';
-import { copyToClipboard } from '../../shared/lib/clipboard';
-import { useMetadata } from '../../shared/hooks/useMetadata';
+import { copyToClipboard } from '../ui/lib/clipboard';
+import { useMetadata } from '../ui/hooks/useMetadata';
 
 interface AdminConsultationManagerProps {
   onBack?: () => void;

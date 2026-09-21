@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BrandMark } from './BrandMark';
 import svgPathsFull from "./svg/svg-epzl744ze1";
-import { usePublicSettings } from '../../../shared/hooks/usePublicSettings';
+import { usePublicSettings } from './hooks/usePublicSettings';
 
 // Icon-only logo component
 export function LogoIcon({ 

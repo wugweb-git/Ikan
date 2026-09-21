@@ -33,7 +33,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../components/SideNav';
 import { LogoIcon } from '../ui/Logo';
-import { usePublicSettings } from '../../shared/hooks/usePublicSettings';
+import { usePublicSettings } from '../ui/hooks/usePublicSettings';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 // ── ALL admin screens are lazy-loaded ──────────────────────────────

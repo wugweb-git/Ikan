@@ -5,12 +5,12 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { EquipProgram } from '../../../shared/blocks/block-model';
+import { EquipProgram } from '../programs/block-model/block-model';
 import { ProgramPlayer } from '../features/player/ProgramPlayer';
 import { apiClient } from '../../../shared/api';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
 import { toast } from 'sonner';
-import tokens from '../../../shared/lib/design-tokens';
+import tokens from '../ui/lib/design-tokens';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 // ── design tokens ────────────────────────────────────────────────

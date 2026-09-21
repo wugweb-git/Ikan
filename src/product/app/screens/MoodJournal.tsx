@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../../../shared/api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { useOfflineSync } from '../../../shared/hooks/useOfflineSync';
 import { cn } from '../ui/utils';
 import { Plus, ChevronLeft, TrendingUp, Check } from 'lucide-react';
@@ -18,8 +18,8 @@ import {
   getContextTags,
   loadCustomScales,
   getScaleByKey,
-} from '../../../shared/lib/emoji-utils';
-import tokens from '../../../shared/lib/design-tokens';
+} from '../ui/lib/emoji-utils';
+import tokens from '../ui/lib/design-tokens';
 import { projectId, publicAnonKey } from '../../../shared/config/supabase-info';
 import { detectCrisisKeywords } from '../shell/SecurityProvider';
 import { triggerCrisisSupport } from '../features/safety/CrisisSupport';

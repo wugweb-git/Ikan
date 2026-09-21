@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Smile, Play, Activity, Check, Heart, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../../shared/api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { cn } from '../ui/utils';
 
 interface WellnessTimelineProps {

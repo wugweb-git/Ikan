@@ -5,7 +5,7 @@ import { equipUrl } from '../lib/slug';
 import { PageHero } from '../ui/PageHero';
 import { ContentImage } from '../ui/ContentImage';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { SkeletonCard } from '../ui/skeleton-loader';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
 

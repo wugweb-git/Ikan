@@ -14,8 +14,8 @@ import {
   validatePassword, 
   validateName, 
   validatePhone 
-} from '../../../shared/validation';
-import { usePublicSettings } from '../../../shared/hooks/usePublicSettings';
+} from '../ui/lib/validation';
+import { usePublicSettings } from '../ui/hooks/usePublicSettings';
 
 interface AuthFormProps {
   onSuccess?: () => void;

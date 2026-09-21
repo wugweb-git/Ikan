@@ -3,7 +3,7 @@ import { Badge } from '../ui/badge';
 import { apiClient } from '../../../shared/api';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { useNotifications } from '../../../shared/contexts/NotificationContext';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { cn } from '../ui/utils';
 import { Receipt, Check, Clock, X, RotateCcw, Download, ChevronDown, ChevronUp, Inbox } from 'lucide-react';
 

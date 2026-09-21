@@ -6,7 +6,7 @@ import { MobileHeader } from '../ui/MobileHeader';
 import { useSeo } from '../hooks/useSeo';
 import { recordImage, cmsLines } from '../lib/cms-content';
 import { EmptyState } from '../ui/empty-state';
-import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../../shared/lib/constants/content';
+import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../content/content';
 import { getProgram, getPrograms, type SiteProgram } from '../lib/catalog';
 import { APP_LOGIN_URL } from '../lib/app-origin';
 

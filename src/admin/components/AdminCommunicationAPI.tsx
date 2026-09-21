@@ -20,7 +20,7 @@ import { Switch } from '../ui/switch';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminLoading } from './AdminLoading';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase';
 

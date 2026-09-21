@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
-import { useMetadata } from '../../../shared/hooks/useMetadata';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { useMetadata } from '../ui/hooks/useMetadata';
 import { cn } from '../ui/utils';
 import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { toResourcePost } from '../lib/resource-presentation';
 import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
 import { apiClient } from '../../../shared/api';
-import { logger } from '../../../shared/logger';
+import { logger } from '../shell/logger';
 import { PullToRefresh } from '../ui/touch-feedback';
 import { ContentImage } from '../ui/ContentImage';
-import { resolveImageUrl } from '../../../shared/lib/image-utils';
-import { LIBRARY_LABELS } from '../../../shared/lib/constants/content';
+import { resolveImageUrl } from '../ui/lib/image-utils';
+import { LIBRARY_LABELS } from '../ui/lib/content';
 import { PageHero } from '../ui/PageHero';
 
 interface LibraryProps {

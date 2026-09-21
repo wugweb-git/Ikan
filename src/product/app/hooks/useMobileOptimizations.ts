@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 
 interface MobileGestureHandlers {
   onSwipeLeft?: () => void;

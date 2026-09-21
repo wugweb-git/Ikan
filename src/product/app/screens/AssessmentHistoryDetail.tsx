@@ -10,7 +10,7 @@ import { SectionReportCard } from '../features/player/SectionReportCard';
 import type { SectionScoreResult } from '../lib/assessment-sections';
 import { severityOfResult, tonePresentation } from '../lib/severity-presentation';
 import { resolveResultPresentation, percentOfRange, type Tone } from '../lib/result-presentation';
-import { loadScoringProfiles, getLoadedScoringProfiles } from '../../../shared/engine/recommendation-engine';
+import { loadScoringProfiles, getLoadedScoringProfiles } from '../engines/recommendation-engine';
 
 /**
  * Percentage of the achievable range, or null when there is no real maximum.

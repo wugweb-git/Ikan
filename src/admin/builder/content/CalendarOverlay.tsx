@@ -11,8 +11,8 @@
  * tinted by its NUMBER, not by a type — days do not have types.
  */
 import { X, Plus, Repeat } from 'lucide-react';
-import { DayContent } from '../../../shared/blocks/block-model';
-import { dayMeta } from '../../../shared/blocks/day-meta';
+import { DayContent } from '../../block-builder/model/block-model';
+import { dayMeta } from '../../block-builder/model/day-meta';
 import { Button } from '../../ui/button';
 
 export interface CalendarOverlayProps {

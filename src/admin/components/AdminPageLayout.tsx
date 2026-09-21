@@ -2,7 +2,7 @@ import type React from 'react';
 import { X, Trash2, FileText, Save, Star } from 'lucide-react';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from './AdminStatusBadge';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 
 interface Action {
   label: string;

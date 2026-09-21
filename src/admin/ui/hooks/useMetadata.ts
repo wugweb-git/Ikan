@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { apiClient } from '../api';
+import { apiClient } from '../../../shared/api';
 
 export interface MetadataOption {
   label: string;

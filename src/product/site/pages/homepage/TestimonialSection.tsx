@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
-import { useIsMobile } from '../../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
 
 interface StatItem {

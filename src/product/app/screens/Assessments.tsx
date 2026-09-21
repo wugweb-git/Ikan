@@ -12,7 +12,7 @@ import { cn } from '../ui/utils';
 import { apiClient } from '../../../shared/api';
 import { AssessmentFlow } from './AssessmentFlow';
 import { AssessmentResults } from './AssessmentResults';
-import { evaluateAssessment } from '../../../shared/engine/recommendation-engine';
+import { evaluateAssessment } from '../engines/recommendation-engine';
 import { Skeleton } from '../ui/skeleton-loader';
 
 interface Assessment {
@@ -137,7 +137,7 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
 
 import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from '../features/assessment/AssessmentCard';
-import { assessmentMeta, assessmentImage } from '../../../shared/lib/assessment-meta';
+import { assessmentMeta, assessmentImage } from '../assessments/assessment-meta';
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
   const { user } = useAuth();

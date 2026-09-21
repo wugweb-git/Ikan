@@ -13,11 +13,11 @@ import { Switch } from '../ui/switch';
 import { AdminStatusBadge } from './AdminStatusBadge';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api';
-import { useMetadata } from '../../shared/hooks/useMetadata';
+import { useMetadata } from '../ui/hooks/useMetadata';
 import {
   SEVERITY_LEVELS, tierFor, validateBandTiling, formatBandInterval,
   type ScoringProfile, type ScoringBand, type SeverityLevel, type ScoreCalc,
-} from '../../shared/engine/scoring-engine';
+} from '../engines/scoring-engine';
 
 /**
  * Scoring profile authoring (v2).

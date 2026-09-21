@@ -22,7 +22,7 @@
  * to design tokens — never to a raw hex in a component.
  */
 
-import { isSeverityLevel, type SeverityLevel, type ResponseTier } from '../../../shared/engine/scoring-engine';
+import { isSeverityLevel, type SeverityLevel, type ResponseTier } from '../engines/scoring-engine';
 
 export interface SeverityPresentation {
   /** The severity this describes, or null when nothing resolved. */

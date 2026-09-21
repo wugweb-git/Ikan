@@ -11,12 +11,12 @@ import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { useSeo } from '../hooks/useSeo';
 import { recordImage } from '../lib/cms-content';
 import { EmptyState } from '../ui/empty-state';
 import { Skeleton } from '../ui/skeleton-loader';
-import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../../../shared/lib/constants/content';
+import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../ui/lib/content';
 
 interface EquipDetailProps {
   equipId?: string;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import { iconConfig, type IconName } from '../../../shared/lib/icon-config';
-import { iconMapping, type IconMappingKey } from '../../../shared/lib/icon-mapping';
+import { iconConfig, type IconName } from './lib/icon-config';
+import { iconMapping, type IconMappingKey } from './lib/icon-mapping';
 import { cn } from './utils';
 
 // Type for getting the right variant based on icon name

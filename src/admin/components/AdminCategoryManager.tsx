@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../../shared/api';
 import { toast } from 'sonner';
-import { invalidateMetadataCache } from '../../shared/hooks/useMetadata';
-import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../../shared/lib/metadata-catalog';
+import { invalidateMetadataCache } from '../ui/hooks/useMetadata';
+import { METADATA_CATALOG_ITEMS, METADATA_TYPE_LABELS, METADATA_TYPE_ICONS, METADATA_TYPE_GROUPS, type MetadataType } from '../catalog/metadata-catalog';
 import { Skeleton } from '../ui/skeleton-loader';
 import { getIconComponent as sharedGetIconComponent } from '../lib/catalog-icons';
 

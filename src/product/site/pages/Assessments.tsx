@@ -4,7 +4,7 @@ import { FileText, Brain, Shield, Activity } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from '../ui/blocks/AssessmentCard';
-import { assessmentImage } from '../../../shared/lib/assessment-meta';
+import { assessmentImage } from '../content/assessment-meta';
 import { getAssessments, type SiteAssessment } from '../lib/catalog';
 
 /**

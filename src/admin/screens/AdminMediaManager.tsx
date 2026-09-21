@@ -4,13 +4,13 @@ import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
 import { AdminLoading } from '../components/AdminLoading';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { AdminEmptyState } from '../components/AdminEmptyState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
-import { copyToClipboard } from '../../shared/lib/clipboard';
+import { copyToClipboard } from '../ui/lib/clipboard';
 import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
 

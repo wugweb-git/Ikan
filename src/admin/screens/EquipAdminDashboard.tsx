@@ -15,11 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { apiClient } from '../../shared/api';
-import { EquipProgram } from '../../shared/blocks/block-model';
+import { EquipProgram } from '../block-builder/model/block-model';
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';
 import { AdminHeader } from '../components/AdminHeader';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 
 interface EquipAdminDashboardProps {
   onBack?: () => void;

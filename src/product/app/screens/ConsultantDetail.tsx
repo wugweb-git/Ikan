@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../../shared/api';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { toast } from 'sonner';
 import { MobileHeader } from '../shell/navigation/MobileHeader';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { BookingModal } from '../ui/blocks/BookingModal';
-import { copyToClipboard } from '../../../shared/lib/clipboard';
+import { copyToClipboard } from '../ui/lib/clipboard';
 import { cn } from '../ui/utils';
 import {
   Star,

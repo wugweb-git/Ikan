@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../../../shared/blocks/block-model';
+import { Activity, ActivityConfig, renderActivityOf, warnFallback, configOf } from '../programs/block-model/block-model';
 import { Label } from '../ui/label';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Checkbox } from '../ui/checkbox';

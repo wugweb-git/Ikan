@@ -3,7 +3,7 @@ import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Tra
 import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { apiClient } from '../../shared/api';
 import { AdminHeader } from '../components/AdminHeader';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
@@ -12,7 +12,7 @@ import { ImageWithFallback } from '../ui/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import { SkeletonTable } from '../ui/skeleton-loader';
-import { useMetadata } from '../../shared/hooks/useMetadata';
+import { useMetadata } from '../ui/hooks/useMetadata';
 import {
   DropdownMenu,
   DropdownMenuContent,

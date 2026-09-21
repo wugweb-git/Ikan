@@ -5,8 +5,8 @@ import {
 import { AdminHeader } from '../components/AdminHeader';
 import { apiClient } from '../../shared/api';
 import { getIconComponent, iconResolves } from '../lib/catalog-icons';
-import { AUTHORABLE_SUBTYPES } from '../../shared/blocks/block-model';
-import { missingRequirements, blockOf } from '../../shared/blocks/content-hierarchy';
+import { AUTHORABLE_SUBTYPES } from '../block-builder/model/block-model';
+import { missingRequirements, blockOf } from '../block-builder/model/content-hierarchy';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
@@ -14,7 +14,7 @@ import {
   LEAF_BLOCK_TYPES,
   normalizeSubtype,
   type Activity,
-} from '../../shared/blocks/block-model';
+} from '../block-builder/model/block-model';
 /*
   §26, 2026-09-09. The page reads the vocabulary module directly: nine
   interactions, twenty-nine activities, seven labels, and one preview hint per
@@ -25,10 +25,10 @@ import {
   INTERACTIONS, INTERACTION_META, ACTIVITIES as CANONICAL_SUBTYPES, ACTIVITY_SPECS,
   ACTIVITY_HINTS, LABELS, TWO_INTERACTIONS, interactionsOf, activitiesFor,
   requiresOf, type Interaction, type ActivityName,
-} from '../../shared/blocks/vocabulary';
-import { DAY_TYPE_PRESETS } from '../../shared/blocks/block-type-rules';
-import { useMetadata } from '../../shared/hooks/useMetadata';
-import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../../shared/blocks/block-fields';
+} from '../block-builder/model/vocabulary';
+import { DAY_TYPE_PRESETS } from '../block-builder/model/block-type-rules';
+import { useMetadata } from '../ui/hooks/useMetadata';
+import { hasContentField, contentLabelFor, contentPlaceholderFor } from '../block-builder/model/block-fields';
 // Template building blocks shared with actual editors (BlockEditor, CheckinTemplateBuilder)
 import {
   blockFormStyles,

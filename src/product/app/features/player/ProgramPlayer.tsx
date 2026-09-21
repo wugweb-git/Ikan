@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EquipProgram, Activity, renderActivityOf, interactionsOfBlock, repeatTargetDays, responseKeyOf, type DayContent } from '../../../../shared/blocks/block-model';
+import { EquipProgram, Activity, renderActivityOf, interactionsOfBlock, repeatTargetDays, responseKeyOf, type DayContent } from '../../programs/block-model/block-model';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { BlockRenderer } from '../../blocks/BlockRenderer';
 import { Button } from '../../ui/button';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useNotifications } from '../../../../shared/contexts/NotificationContext';
 import { cn } from '../../ui/utils';
-import { DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../../../shared/blocks/day-layout';
-import { policyOf } from '../../../../shared/blocks/day-policy';
+import { DEFAULT_DAY_LAYOUT, layoutOf, primaryButtonFor, fallbackTitleFor, type DayLayout } from '../../programs/block-model/day-layout';
+import { policyOf } from '../../programs/block-model/day-policy';
 
 interface ProgramPlayerProps {
   program: EquipProgram;

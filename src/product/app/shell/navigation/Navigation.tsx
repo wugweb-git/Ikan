@@ -1,4 +1,4 @@
-import { useIsMobile } from '../../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { LogoFull } from '../../ui/Logo';
 import { cn } from '../../ui/utils';
 import { MessageCircle, LogIn, User } from 'lucide-react';

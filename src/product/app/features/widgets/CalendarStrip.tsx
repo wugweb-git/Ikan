@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import tokens from '../../../../shared/lib/design-tokens';
+import tokens from '../../ui/lib/design-tokens';
 
 // ── types ────────────────────────────────────────────────────────
 export type DateStatus = 'done' | 'missed' | 'partial' | 'pending' | 'future' | 'none';

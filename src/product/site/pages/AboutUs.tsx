@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ContentImage } from '../ui/ContentImage';
-import { useIsMobile } from '../../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
@@ -11,7 +11,7 @@ import {
   FlaskConical,
   Handshake,
 } from 'lucide-react';
-import { NEWSLETTER_CONTENT } from '../../../shared/lib/constants/content';
+import { NEWSLETTER_CONTENT } from '../content/content';
 import { PageHero } from '../ui/PageHero';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';

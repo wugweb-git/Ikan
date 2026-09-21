@@ -14,10 +14,10 @@ import { useNotifications } from '../../shared/contexts/NotificationContext';
 import { AdminHeader } from './AdminHeader';
 import { AdminCommunicationAPI } from './AdminCommunicationAPI';
 import { AdminEmptyState } from './AdminEmptyState';
-import { useIsMobile } from '../../shared/hooks/useIsMobile';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { projectId, publicAnonKey } from '../../shared/config/supabase-info';
 import { supabase } from '../../shared/supabase';
-import tokens from '../../shared/lib/design-tokens';
+import tokens from '../ui/lib/design-tokens';
 
 // ── Design helpers ──────────────────────────────────────────────
 const B = {

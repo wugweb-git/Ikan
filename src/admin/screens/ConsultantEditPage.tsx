@@ -33,7 +33,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { ImageUpload } from '../ui/image-upload';
 import { useFormValidation, ValidationSchema } from '../hooks/useFormValidation';
-import { validateUrl } from '../../shared/validation';
+import { validateUrl } from '../ui/lib/validation';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
@@ -43,7 +43,7 @@ import { Badge } from '../ui/badge';
 import { Switch } from '../ui/switch';
 import { AdminActionBar } from '../ui/admin-action-bar';
 import { AdminLoading } from '../components/AdminLoading';
-import { useMetadata } from '../../shared/hooks/useMetadata';
+import { useMetadata } from '../ui/hooks/useMetadata';
 
 // ── Consultant Interface ───────────────────────────────────────────
 export interface Consultant {
