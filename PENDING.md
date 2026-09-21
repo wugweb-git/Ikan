@@ -1,7 +1,7 @@
 # Pending work — iKan Health
 
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
-something that changes what's here — see `GOVERNANCE.md` for the rule.
+something that changes what's here — see `docs/GOVERNANCE.md` for the rule.
 
 *Last updated: 2026-09-21 — restructured to hold **only open work**. Every closed item, the
 "Verified fixed" section, the Batch 1–6 summary and the eleven dated session-closeout / module-pass /
@@ -390,14 +390,14 @@ item — confirm with the §B scoring-guardrail pass before counting any of them
 
 ---
 
-Deploy per `BUILD.md`, then smoke-test `/health`, `/assessments`, `/equip/programs`,
+Deploy per `docs/BUILD.md`, then smoke-test `/health`, `/assessments`, `/equip/programs`,
 `/scales/moods` **plus** the two new endpoints above.
 
 ---
 
 ## C2. Frontend typecheck debt — baseline 159, and that is a baseline not a clean bill
 
-`npm run typecheck` is ratcheted against `.typecheck-baseline` = **159** (2026-09-21). It read 208
+`npm run typecheck` is ratcheted against `scripts/baselines/typecheck` = **159** (2026-09-21). It read 208
 when this section was written (211 before 2026-09-02; defining the missing `SeedItem` interface in
 `metadata-catalog.ts` cleared 3), 183 on 2026-09-08, and was raised to 177 on
 `restructure/codebase-separation` only for per-file-verified UI-split duplicates. Every one
@@ -409,7 +409,7 @@ against, nobody will ever notice the 160th. A new error introduced by a future c
 invisible against this floor.
 
 1. ~~**Ratchet it.**~~ **Done.** `scripts/typecheck-ratchet.sh` and `scripts/lint-ratchet.sh`
-   (`npm run lint:ratchet`, `.lint-baseline` = 861) both run in CI, alongside the contrast,
+   (`npm run lint:ratchet`, `scripts/baselines/lint` = 861) both run in CI, alongside the contrast,
    raw-hex, static-a11y and surface-boundary ratchets. Lower a baseline whenever problems clear;
    never raise it silently.
 2. **Drain the obvious clusters.** They are not scattered — `WizardField.tsx` alone
@@ -419,7 +419,7 @@ invisible against this floor.
 3. **Lint warnings left by the 2026-09-08 assessments work** (from Module closeout — Assessments,
    2026-09-08): an unused `ContentImage` import and an unused `programMeta` in
    `AssessmentResults.tsx`, `useState<any[]>` for `recommended`/`articles`, and an unused
-   `backgroundAlt` on `SectionHero`. `.lint-baseline` was raised 905 → 911 at the time, against the
+   `backgroundAlt` on `SectionHero`. `scripts/baselines/lint` was raised 905 → 911 at the time, against the
    ratchet's own rule, so 911 was never a historic floor. Re-check — some may be cleared.
 
 Note also that **`tsconfig.json` excludes `supabase`**, so none of the edge-function

@@ -16,7 +16,7 @@
 | **Backend** | Supabase Edge Functions (Deno + Hono) | single function |
 | **Database** | Supabase Postgres (KV table) | `kv_store_cc205da9` |
 | **Auth** | Supabase Auth | v2, email confirmation ON |
-| **Deployment** | Vercel CLI (frontend) + Supabase CLI (backend), via `scripts/deploy-prod.sh` / `scripts/deploy-edge.sh` — see `BUILD.md` | |
+| **Deployment** | Vercel CLI (frontend) + Supabase CLI (backend), via `scripts/deploy-prod.sh` / `scripts/deploy-edge.sh` — see `docs/BUILD.md` | |
 | **Analytics** | Vercel Analytics + Speed Insights | |
 
 ---

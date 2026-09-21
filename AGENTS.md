@@ -1,7 +1,7 @@
 # AGENTS.md — iKan Health
 
 This repo's agent rules live in [`CLAUDE.md`](CLAUDE.md). Read it first, then
-[`GOVERNANCE.md`](GOVERNANCE.md), [`PENDING.md`](PENDING.md),
+[`docs/GOVERNANCE.md`](docs/GOVERNANCE.md), [`PENDING.md`](PENDING.md),
 [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md) and [`SESSIONS.md`](SESSIONS.md).
 
 The three hardest rules:

@@ -19,7 +19,7 @@ when it was read; if a doc and the code disagree, the code (and `git log` for th
 | [`vocabulary.md`](vocabulary.md) | Blocks module — the list of interactions and activities (2026-09-09) |
 | [`iKan-Equip-GOSPEL.md`](iKan-Equip-GOSPEL.md) | The Equip model, single source of truth (v4.0, 2026-09-11) |
 
-Deployment moved into root [`BUILD.md`](../BUILD.md) (was `docs/DEPLOYMENT.md`).
+Deployment moved into root [`docs/BUILD.md`](BUILD.md) (was `docs/DEPLOYMENT.md`).
 
 ## `docs/systems/` — one doc per system, verified against live data
 
@@ -90,9 +90,9 @@ source-of-truth decision) and predates several changes documented in `systems/`.
 
 - [`CLAUDE.md`](../CLAUDE.md) — agent rules; read first. [`AGENTS.md`](../AGENTS.md) is a pointer to it.
 - [`README.md`](../README.md) — the repo front page.
-- [`BUILD.md`](../BUILD.md) — build and deploy reference.
-- [`BRAND.md`](../BRAND.md) — brand and content standards.
-- [`GOVERNANCE.md`](../GOVERNANCE.md) — process rules, each traced to an incident.
+- [`docs/BUILD.md`](BUILD.md) — build and deploy reference.
+- [`docs/BRAND.md`](BRAND.md) — brand and content standards.
+- [`docs/GOVERNANCE.md`](GOVERNANCE.md) — process rules, each traced to an incident.
 - [`PENDING.md`](../PENDING.md) — what's still open, kept current per fix.
 - [`CHANGELOG.md`](../CHANGELOG.md) — dated record of what shipped.
 - [`SESSIONS.md`](../SESSIONS.md) — concurrent-session protocol: who owns which files and KV prefixes.

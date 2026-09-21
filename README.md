@@ -64,18 +64,18 @@ Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `equip
 level with origin, with a clean tree, and CI is green on that exact commit. CI
 (`.github/workflows/ci.yml`) runs the tests, the typecheck/lint/contrast/raw-hex/a11y/boundary
 ratchets and a build on every pull request and on pushes to `equip-carry-forward` / `main`. After an edge deploy, smoke-test `/health`, `/assessments`,
-`/equip/programs`, `/scales/moods`. Full steps: [`BUILD.md`](BUILD.md).
+`/equip/programs`, `/scales/moods`. Full steps: [`docs/BUILD.md`](docs/BUILD.md).
 
 ## Documentation
 
 | Doc | Covers |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Stack detail, KV prefix map, CMS content rules, explicit don'ts |
-| [`GOVERNANCE.md`](GOVERNANCE.md) | Process rules — why they exist, what incident each one prevents |
+| [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) | Process rules — why they exist, what incident each one prevents |
 | [`PENDING.md`](PENDING.md) | Outstanding work, known defects, items blocked on external action |
 | [`CHANGELOG.md`](CHANGELOG.md) | Dated record of what shipped |
-| [`BRAND.md`](BRAND.md) | Voice, identity, crisis-resource copy standard, domain/email conventions |
-| [`BUILD.md`](BUILD.md) | Build/deploy reference, env vars, migrations |
+| [`docs/BRAND.md`](docs/BRAND.md) | Voice, identity, crisis-resource copy standard, domain/email conventions |
+| [`docs/BUILD.md`](docs/BUILD.md) | Build/deploy reference, env vars, migrations |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture decisions and deep-dive |
 | [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md) | Code layout — `src/{admin,app,site,shared}` and what goes where |
 | [`docs/`](docs/) | Backend route reference, contributing, module maps |

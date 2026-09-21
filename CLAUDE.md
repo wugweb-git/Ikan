@@ -2,7 +2,7 @@
 
 This file is read by AI coding assistants. It documents the conventions, architecture decisions, and sharp edges that aren't obvious from reading the code.
 
-**Also read:** [`GOVERNANCE.md`](GOVERNANCE.md) (process rules — each one traces to a real incident), [`PENDING.md`](PENDING.md) (outstanding work, updated per deploy), [`CHANGELOG.md`](CHANGELOG.md) (dated record of what shipped).
+**Also read:** [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) (process rules — each one traces to a real incident), [`PENDING.md`](PENDING.md) (outstanding work, updated per deploy), [`CHANGELOG.md`](CHANGELOG.md) (dated record of what shipped).
 
 ---
 
@@ -59,7 +59,7 @@ All API routes live in one Deno/Hono function: **`make-server-cc205da9`**.
 - Entry point: `index.tsx` in that directory
 - Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales
 - Auth: `verify_jwt: true`. Routes use `requireAuth` (user JWT) or `requireAdmin` (admin JWT) middleware.
-- Deploy: `bash scripts/deploy-edge.sh` (guarded; see `BUILD.md`) — never the Supabase CLI by hand, which needs a staging-directory trick because it wants a project directory, not a subdirectory.
+- Deploy: `bash scripts/deploy-edge.sh` (guarded; see `docs/BUILD.md`) — never the Supabase CLI by hand, which needs a staging-directory trick because it wants a project directory, not a subdirectory.
 
 **Do not redeploy the edge function without smoke-testing** `/health`, assessments, equip, and scales endpoints afterwards. A bad deploy silently breaks the entire API.
 
@@ -477,7 +477,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
-- **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
+- **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `docs/GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
 - **Don't call `supabase.auth.signOut()` without a scope.** Its default is `scope: 'global'`, which
   revokes that user's session on **every device**. Eleven call sites used the default, nine of them
   defensive (a refresh token looked broken, a session check failed) — so one transient error in one
@@ -514,8 +514,8 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 | Health Connect / Google Fit | `src/product/app/features/integrations/GoogleFitContext.tsx`, `src/product/app/lib/google-fit.ts` |
 | Design system tokens | `src/product/styles/globals.css` (product) · `src/admin/styles/globals.css` (admin — a fork, may drift) |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
-| Brand docs | `BRAND.md` |
-| Build/deploy steps | `BUILD.md` |
+| Brand docs | `docs/BRAND.md` |
+| Build/deploy steps | `docs/BUILD.md` |
 | Architecture deep-dive | `docs/ARCHITECTURE.md` |
 | Project structure | `docs/PROJECT-STRUCTURE.md` |
 | Stale docs archive | `docs/archive/` |

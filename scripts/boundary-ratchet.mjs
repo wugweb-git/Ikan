@@ -3,7 +3,7 @@
 // eslint.config.js blocks imports between admin/, app/ and site/, and from
 // shared/ into any surface or components/. The rule is `warn`, so on its own a
 // new crossing would disappear into the general lint count. This counts only
-// those messages and fails when the number RISES above .boundary-baseline.
+// those messages and fails when the number RISES above scripts/baselines/boundary.
 //
 // The baseline is 0. Admin's two previews (BlockRenderer, ProgramPlayer) are
 // allowed by name in eslint.config.js rather than counted here.
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const BASELINE_FILE = join(ROOT, '.boundary-baseline');
+const BASELINE_FILE = join(ROOT, 'scripts/baselines/boundary');
 const SURFACES = ['src/admin', 'src/product/app', 'src/product/site', 'src/shared'];
 
 let report;
@@ -41,5 +41,5 @@ if (hits.length > baseline) {
   process.exit(1);
 }
 if (hits.length < baseline) {
-  console.log(`✓ crossings fell — lower the baseline:\n  echo ${hits.length} > .boundary-baseline`);
+  console.log(`✓ crossings fell — lower the baseline:\n  echo ${hits.length} > scripts/baselines/boundary`);
 }

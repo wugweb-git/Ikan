@@ -40,7 +40,7 @@ The app connects to the **production Supabase project** even in dev (project `jp
 2. `src/App.tsx` — the single routing hub (no React Router)
 3. `src/product/site/lib/cms-defaults.ts` — all site page copy
 4. `src/supabase/functions/server/index.tsx` — edge function entry and route mounting
-5. `BUILD.md` — how to build and deploy
+5. `docs/BUILD.md` — how to build and deploy
 
 ### Admin access
 
@@ -74,7 +74,7 @@ feature/<name>        ← branch from equip-carry-forward
 fix/<name>            ← bug fixes
 ```
 
-**The live production site deploys from `equip-carry-forward`**, not `main`. **Never deploy from `main`.** See `BUILD.md` for the deploy scripts.
+**The live production site deploys from `equip-carry-forward`**, not `main`. **Never deploy from `main`.** See `docs/BUILD.md` for the deploy scripts.
 
 ---
 

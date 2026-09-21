@@ -6,7 +6,7 @@
 > **Audience**: Backend and full-stack developers
 > **Base URL**: `https://jpfvoevxegnknxoqmwye.supabase.co/functions/v1/make-server-cc205da9`
 
-For deploy instructions see `BUILD.md`. For the nested backend CLAUDE.md see `src/supabase/functions/server/CLAUDE.md`.
+For deploy instructions see `docs/BUILD.md`. For the nested backend CLAUDE.md see `src/supabase/functions/server/CLAUDE.md`.
 
 ---
 

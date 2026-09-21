@@ -5,7 +5,7 @@
  * A design token that can be bypassed is a suggestion. This counts the bypasses
  * and fails when they rise, so the number can only go down.
  *
- * Ratchets against .rawhex-baseline, mirroring scripts/lint-ratchet.sh.
+ * Ratchets against scripts/baselines/rawhex, mirroring scripts/lint-ratchet.sh.
  * No dependencies.
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -15,7 +15,7 @@ import { dirname, join, relative } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* The three UI surfaces. components/ was emptied into them. */
 const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
-const BASELINE_FILE = join(ROOT, '.rawhex-baseline');
+const BASELINE_FILE = join(ROOT, 'scripts/baselines/rawhex');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */
 const SKIP_FILE = /\.(test|spec|stories)\.tsx?$/;
@@ -62,7 +62,7 @@ console.log('');
 
 if (total > baseline) {
   console.error(`FAIL: raw literals rose by ${total - baseline} above the baseline.`);
-  console.error(`Use a token from the surface stylesheet (src/{admin,product}/styles/globals.css), or raise .rawhex-baseline and say why.`);
+  console.error(`Use a token from the surface stylesheet (src/{admin,product}/styles/globals.css), or raise scripts/baselines/rawhex and say why.`);
   process.exit(1);
 }
 if (total < baseline && baseline !== Number.MAX_SAFE_INTEGER) console.log(`Baseline can be lowered to ${total}.`);

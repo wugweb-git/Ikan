@@ -10,7 +10,7 @@
  * A static rule cannot see the rendered tree, so it errs toward silence:
  * it reports only patterns that are wrong regardless of what wraps them.
  *
- * Ratchets against .a11y-baseline. No dependencies.
+ * Ratchets against scripts/baselines/a11y. No dependencies.
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +19,7 @@ import { dirname, join, relative } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* The three UI surfaces. components/ was emptied into them. */
 const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
-const BASELINE_FILE = join(ROOT, '.a11y-baseline');
+const BASELINE_FILE = join(ROOT, 'scripts/baselines/a11y');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 
 const RULES = [

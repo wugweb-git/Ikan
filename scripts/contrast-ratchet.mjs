@@ -22,7 +22,7 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 // Each surface owns its stylesheet (forked 2026-09-21); both are held to the same baseline.
 const CSS_FILES = ['product', 'admin'].map(s => join(here, '..', 'src', s, 'styles', 'globals.css'));
-const BASELINE_FILE = join(here, '..', '.contrast-baseline');
+const BASELINE_FILE = join(here, 'baselines', 'contrast');
 
 /** Token name -> value, from the `:root` block. Nested `var()` is resolved. */
 function readTokens(css) {

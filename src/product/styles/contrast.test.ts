@@ -27,7 +27,7 @@ test('every declared pair resolves to a number — an unresolvable token is a ho
 });
 
 test('contrast failures have not risen above the recorded baseline', () => {
-  const baseline = Number.parseInt(readFileSync(new URL('../../../.contrast-baseline', import.meta.url), 'utf8').trim(), 10);
+  const baseline = Number.parseInt(readFileSync(new URL('../../../scripts/baselines/contrast', import.meta.url), 'utf8').trim(), 10);
   const rows = audit(readFileSync(new URL('./globals.css', import.meta.url), 'utf8'));
   const failing = rows.filter((r: { pass: boolean | null }) => r.pass === false);
   assert.ok(
