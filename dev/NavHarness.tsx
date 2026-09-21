@@ -7,10 +7,10 @@
  */
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AuthProvider } from '../shared/contexts/AuthContext';
-import { NotificationProvider } from '../shared/contexts/NotificationContext';
-import { BottomNavBarMobile } from '../app/shell/navigation/BottomNavBarMobile';
-import '../index.css';
+import { AuthProvider } from '../src/shared/contexts/AuthContext';
+import { NotificationProvider } from '../src/shared/contexts/NotificationContext';
+import { BottomNavBarMobile } from '../src/app/shell/navigation/BottomNavBarMobile';
+import '../src/index.css';
 
 function Harness() {
   const [route, setRoute] = useState('/dashboard');

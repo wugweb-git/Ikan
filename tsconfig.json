@@ -23,7 +23,7 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     },
 
     /* Additional options for better development experience */
@@ -45,23 +45,23 @@
   // at all, and no type check has ever run against this repo. Dropping the
   // reference and the `composite` flag makes both configs load standalone.
   "include": [
-    "./App.tsx",
-    "./admin/**/*.ts",
-    "./admin/**/*.tsx",
-    "./app/**/*.ts",
-    "./app/**/*.tsx",
-    "./site/**/*.ts",
-    "./site/**/*.tsx",
-    "./shared/**/*.ts",
-    "./shared/**/*.tsx",
-    "./styles/**/*.css"
+    "./src/App.tsx",
+    "./src/admin/**/*.ts",
+    "./src/admin/**/*.tsx",
+    "./src/app/**/*.ts",
+    "./src/app/**/*.tsx",
+    "./src/site/**/*.ts",
+    "./src/site/**/*.tsx",
+    "./src/shared/**/*.ts",
+    "./src/shared/**/*.tsx",
+    "./src/styles/**/*.css"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "build",
     "coverage",
-    "supabase",
+    "src/supabase",
     "scripts",
     "**/*.test.ts",
     "**/*.test.tsx",

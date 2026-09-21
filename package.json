@@ -76,7 +76,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit -p src/tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --test \"src/**/*.test.ts\"",
     "lint": "eslint .",
     "lint:ratchet": "bash scripts/lint-ratchet.sh",

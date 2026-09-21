@@ -12,11 +12,11 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DayEditor } from '../admin/blocks/DayComposer';
-import { BuilderShell } from '../admin/builder/BuilderShell';
-import { BuilderTopBar } from '../admin/builder/BuilderTopBar';
-import type { DayContent } from '../shared/blocks/block-model';
-import '../index.css';
+import { DayEditor } from '../src/admin/blocks/DayComposer';
+import { BuilderShell } from '../src/admin/builder/BuilderShell';
+import { BuilderTopBar } from '../src/admin/builder/BuilderTopBar';
+import type { DayContent } from '../src/shared/blocks/block-model';
+import '../src/index.css';
 
 type Prog = { id: string; title: string; daily_content: DayContent[] };
 

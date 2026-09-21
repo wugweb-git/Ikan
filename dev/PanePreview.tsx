@@ -8,10 +8,10 @@
  */
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BlockEditorPane } from '../admin/builder/editor/BlockEditorPane';
-import type { Activity } from '../shared/blocks/block-model';
-import { DAY_TYPE_POLICIES } from '../shared/blocks/day-policy';
-import '../index.css';
+import { BlockEditorPane } from '../src/admin/builder/editor/BlockEditorPane';
+import type { Activity } from '../src/shared/blocks/block-model';
+import { DAY_TYPE_POLICIES } from '../src/shared/blocks/day-policy';
+import '../src/index.css';
 
 const FIXTURES: Activity[] = [
   { id: 'b1', title: 'Welcome Back!', type: 'lesson', activity: 'read', content: '<p>Some prose.</p>', duration: 4, required: true, order: 0, stepGroup: 'daily_reflection' },
