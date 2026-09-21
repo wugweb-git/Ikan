@@ -6,7 +6,7 @@ Supabase (Hono edge functions + a single `kv_store_cc205da9` key/value table), V
 ## Content model
 
 Most public content is dynamic, read from the Supabase KV store via the edge function
-`make-server-cc205da9`. Code-side defaults in `src/utils/cms-defaults.ts` are shown
+`make-server-cc205da9`. Code-side defaults in `src/site/lib/cms-defaults.ts` are shown
 immediately (stale-while-revalidate via `usePageContent`) and overridden by saved CMS records.
 
 Key prefixes:
@@ -25,7 +25,7 @@ against a route table and a few path patterns. Detail pages use readable slugs:
   existing `/assessment-detail` / `/equip-detail` screen and passes the slug as the id.
 - Legacy `?id=<id>` URLs still resolve (backend tries id, then slug; assessment detail also
   has a client-side list fallback for resilience during deploys).
-- Build links with the helpers in `src/lib/slug.ts` (`assessmentUrl`, `equipUrl`).
+- Build links with the helpers in `src/app/lib/slug.ts` (`assessmentUrl`, `equipUrl`).
 
 ## Images / banners
 
@@ -37,7 +37,7 @@ Hero/banner images come from record fields. Two historical data hazards:
 
 ## SEO
 
-- `useSeo` (`src/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD
+- `useSeo` (`src/app/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD
   per page. Used on assessment & equip detail; extend to other pages as needed.
 - `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` are static; update the sitemap
   when assessment/equip slugs change.

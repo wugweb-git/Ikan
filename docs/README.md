@@ -1,8 +1,8 @@
 # src/docs — index
 
-Everything under `src/docs/` in one place, so nothing from the 2026-08-06/07 data-integrity audit
+Everything under `docs/` in one place, so nothing from the 2026-08-06/07 data-integrity audit
 gets lost or re-derived from scratch. This file is the shortcut — bookmark
-`src/docs/README.md` (or the GitHub path
+`docs/README.md` (or the GitHub path
 [`src/docs`](https://github.com/wugweb-git/Ikan/tree/equip-carry-forward/src/docs)) rather than
 individual doc links, since new sections keep getting added here.
 
@@ -12,7 +12,7 @@ individual doc links, since new sections keep getting added here.
 are kept in sync; if either seems to disagree, the one with the later timestamp is current — check
 `git log` for this folder.
 
-## `src/docs/systems/` — one doc per system, verified against live data
+## `docs/systems/` — one doc per system, verified against live data
 
 | Doc | Covers | Artifact § |
 |---|---|---|
@@ -31,7 +31,7 @@ are kept in sync; if either seems to disagree, the one with the later timestamp 
 | [`repo-hygiene-audit.md`](systems/repo-hygiene-audit.md) | Suspect folders, dead code, CMS content bugs | §17 |
 | [`user-accounts.md`](systems/user-accounts.md) | User/auth/profile system, incl. 2 fake-feature findings | §18 |
 
-## `src/docs/equips/` — full verbatim content, all 7 equips ever audited
+## `docs/equips/` — full verbatim content, all 7 equips ever audited
 
 [`sleep-tight.md`](equips/sleep-tight.md), [`burnout-reset.md`](equips/burnout-reset.md),
 [`stress-buster.md`](equips/stress-buster.md), [`productivity-reset.md`](equips/productivity-reset.md)
@@ -40,7 +40,7 @@ are kept in sync; if either seems to disagree, the one with the later timestamp 
 [`_unnamed-73034a14.md`](equips/_unnamed-73034a14.md) — the 3 since deleted, kept as historical
 record (each marked "✅ Deleted" at the top).
 
-## `src/docs/assessments/` — full content + scoring audit, all 7 assessments
+## `docs/assessments/` — full content + scoring audit, all 7 assessments
 
 [`README.md`](assessments/README.md) is the index for this folder — start there. Covers Anxiety,
 Depression, Stress, Sleep, Balance, Burnout, General.
@@ -51,12 +51,12 @@ Depression, Stress, Sleep, Balance, Burnout, General.
 [`CONTRIBUTING.md`](CONTRIBUTING.md), [`DEPLOYMENT.md`](DEPLOYMENT.md),
 [`GETTING-STARTED.md`](GETTING-STARTED.md), [`PROJECT-STRUCTURE.md`](PROJECT-STRUCTURE.md).
 
-## `src/docs/archive/`
+## `docs/archive/`
 
 Point-in-time historical snapshots, intentionally frozen — not updated when the code changes.
 `DIVERGENCE-MAP.md` is dated 2026-06-16 and predates several changes documented in `systems/`.
 
-## Root-of-repo docs (outside `src/docs/`, same audit)
+## Root-of-repo docs (outside `docs/`, same audit)
 
 [`CLAUDE.md`](/CLAUDE.md), [`README.md`](/README.md), [`PENDING.md`](/PENDING.md) (what's still
 open, kept current per fix), [`CHANGELOG.md`](/CHANGELOG.md) (dated record of what shipped),

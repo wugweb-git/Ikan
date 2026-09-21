@@ -77,7 +77,7 @@ exists twice: the inline `daily_content` array on the `equip:` record, which is 
 whose REST surface was removed 2026-08-06 (`equip-routes.ts:210-214`) and which nothing reads.
 The two disagree — 406 live blocks vs 223 dead ones, with different subtype values. Counting the
 dead set produced a published figure that was wrong by 5x. The live census lives in
-`src/docs/module-maps/census/`; diff against it rather than writing a fresh count.
+`docs/module-maps/census/`; diff against it rather than writing a fresh count.
 
 Key prefixes:
 
@@ -530,24 +530,20 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
 ## CMS content architecture
 
-`usePageContent` (`src/hooks/usePageContent.ts`) fetches from `/cms/pages/{pageId}` with stale-while-revalidate. The code defaults in `src/utils/cms-defaults.ts` render immediately; live KV data overrides them.
-
-**When changing any CMS-backed content (contact info, crisis resources, team copy, etc.) you must update BOTH:**
-1. The default in `src/utils/cms-defaults.ts`
-2. The live record in Supabase KV (via edge function admin endpoint or SQL) so production overrides don't hide your change.
+Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/lib/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
 
 ---
 
 ## Slug URL system
 
-`src/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
+`src/app/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
 
 ---
 
 ## Auth
 
 - Email confirmation is ON. New users get a Supabase native confirmation email.
-- `/reset-password` route exists (`src/components/screens/ResetPassword.tsx`).
+- `/reset-password` route exists (`src/app/screens/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
 - Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
@@ -567,11 +563,11 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
   defensive (a refresh token looked broken, a session check failed) — so one transient error in one
   tab logged the user out of their phone, and the tab still holding an unexpired JWT then got
   `session_not_found` from GoTrue, which reads like a library fault and is not one. Use
-  `signOutLocal()` from `src/lib/supabase-client.ts`; pass `'global'` only for a deliberate
+  `signOutLocal()` from `src/shared/supabase-client.ts`; pass `'global'` only for a deliberate
   "sign out everywhere". Related: `SecurityProvider`'s 30-minute idle sign-out is for the
   patient-facing app and **exempts admins** — an author reading a long day of content is not idle,
   and being signed out mid-edit loses work.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase-client.ts` is public by design.
 - **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
 
 | rollback past | what breaks | how to tell | fix |
@@ -581,7 +577,7 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
   Backup of all 192 `category:` rows as they were before both: `backup_pre_blocktype_seed_2026_09_04`.
 
-  **The general rule this is an instance of:** when a catalog rename or a new catalog field needs code to read it, the code must be **deployed and verified `● Ready`** before the data is written — and until the old data shape is gone, the deploy is a floor you cannot roll back beneath. Detail in `src/docs/module-maps/blocks.md` §18 Phase 1.
+  **The general rule this is an instance of:** when a catalog rename or a new catalog field needs code to read it, the code must be **deployed and verified `● Ready`** before the data is written — and until the old data shape is gone, the deploy is a floor you cannot roll back beneath. Detail in `docs/module-maps/blocks.md` §18 Phase 1.
 
 ---
 
@@ -590,15 +586,15 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 | What | Where |
 |------|-------|
 | App shell + routing | `src/App.tsx` |
-| Auth context | `src/contexts/AuthContext.tsx` |
-| API client | `src/lib/api-client.ts` |
-| Supabase client | `src/lib/supabase-client.ts` |
-| CMS defaults | `src/utils/cms-defaults.ts` |
-| Slug helpers | `src/lib/slug.ts` |
-| Health Connect / Google Fit | `src/components/integrations/GoogleFitContext.tsx`, `src/lib/google-fit.ts` |
+| Auth context | `src/shared/contexts/AuthContext.tsx` |
+| API client | `src/shared/api-client.ts` |
+| Supabase client | `src/shared/supabase-client.ts` |
+| CMS defaults | `src/site/lib/cms-defaults.ts` |
+| Slug helpers | `src/app/lib/slug.ts` |
+| Health Connect / Google Fit | `src/app/features/integrations/GoogleFitContext.tsx`, `src/app/lib/google-fit.ts` |
 | Design system tokens | `src/styles/globals.css` |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `BRAND.md` |
 | Build/deploy steps | `BUILD.md` |
 | Architecture deep-dive | `DESIGN.md` |
-| Stale docs archive | `src/docs/archive/` |
+| Stale docs archive | `docs/archive/` |

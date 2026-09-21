@@ -41,7 +41,7 @@ truth until each entity's read path cuts over. Status: `PENDING.md` §D.
 
 **Routing is client-side**, custom, in `src/App.tsx`. Public detail pages use human-readable slugs
 resolved by the backend (with a client fallback): `/assessment/<slug>`, `/equip/<slug>` (legacy
-`?id=` query params still work). Slug helpers: `src/lib/slug.ts`.
+`?id=` query params still work). Slug helpers: `src/app/lib/slug.ts`.
 
 **Admin console** at `/admin` — content management (assessments, equip programs, resources,
 consultants, media, CMS pages), a KV Audit screen (orphan detection, schema visibility, safe
@@ -71,11 +71,11 @@ staging-directory deploy steps, and smoke-test `/health`, `/assessments`, `/equi
 | [`BRAND.md`](BRAND.md) | Voice, identity, crisis-resource copy standard, domain/email conventions |
 | [`BUILD.md`](BUILD.md) | Build/deploy reference, env vars, migrations |
 | [`DESIGN.md`](DESIGN.md) | Architecture decisions |
-| [`src/docs/`](src/docs/) | Architecture deep-dive, backend route reference, project structure, contributing |
+| [`docs/`](docs/) | Architecture deep-dive, backend route reference, project structure, contributing |
 
 ## SEO
 
-Per-page meta/OpenGraph/Twitter/canonical + JSON-LD via `useSeo` (`src/hooks/useSeo.ts`). Static
+Per-page meta/OpenGraph/Twitter/canonical + JSON-LD via `useSeo` (`src/app/hooks/useSeo.ts`). Static
 `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`. Google Analytics loads from the shell
 `index.html`.
 

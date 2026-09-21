@@ -60,7 +60,7 @@ the single reader extracts `id`, `is_paid`, `price`, `title`, `currency` and nev
 | P6 | `EquipProgramWizard.tsx:315-343` `persistWizard` | the save reaching W3/W4 |
 | P7 | `lib/block-normalise.ts` `normaliseBlock` | raw → `Activity`, **spread-first** |
 | P8/P9 | `api-client.ts:435,453` | read-path mappers |
-| P10 | `lib/assessment-adapter.ts` | assessment → programme, in-memory |
+| P10 | `app/lib/assessment-adapter.ts` | assessment → programme, in-memory |
 | P11/P12 | `AssessmentEditPageWizard.tsx:51,463` `convertQuestionsToDay` / `convertDayToQuestions` | **the round-trip that flattens 7 types to 4** |
 | P13 | `progress-service.ts:377-391` | server today-view mapper, read-derived |
 

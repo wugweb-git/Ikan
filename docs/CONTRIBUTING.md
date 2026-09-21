@@ -58,7 +58,7 @@ fix/<name>            ← bug fixes
 
 ## CMS content changes
 
-The app uses stale-while-revalidate CMS: `src/utils/cms-defaults.ts` provides instant defaults; live Supabase KV overrides them. When changing any CMS-backed text, phone number, or resource link, **update both**:
+The app uses stale-while-revalidate CMS: `src/site/lib/cms-defaults.ts` provides instant defaults; live Supabase KV overrides them. When changing any CMS-backed text, phone number, or resource link, **update both**:
 
 1. The default in `cms-defaults.ts`
 2. The live Supabase KV record (via admin API or SQL)
@@ -76,6 +76,6 @@ See `/BRAND.md` for voice/tone, email addresses, India crisis resources, and wha
 ## Security
 
 - No secrets in code. Supabase service-role key stays in Vercel env and Supabase Edge Function secrets only.
-- The anon key in `src/lib/supabase-client.ts` is intentionally public.
+- The anon key in `src/shared/supabase-client.ts` is intentionally public.
 - Do not re-enable auto-create-on-failed-login in `AuthContext.tsx` — it was removed deliberately.
 - SECURITY DEFINER functions in Postgres (`kv_store_row_count`, `rls_auto_enable`) are locked to service-role — do not grant EXECUTE to `anon`/`authenticated`/`PUBLIC`.

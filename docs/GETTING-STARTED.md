@@ -32,7 +32,7 @@ npm run dev
 # → http://localhost:5173
 ```
 
-The app connects to the **production Supabase project** even in dev (project `jpfvoevxegnknxoqmwye`, Mumbai). The anon key is committed in `src/lib/supabase-client.ts` — this is intentional (it's a public-facing key, not a secret).
+The app connects to the **production Supabase project** even in dev (project `jpfvoevxegnknxoqmwye`, Mumbai). The anon key is committed in `src/shared/supabase-client.ts` — this is intentional (it's a public-facing key, not a secret).
 
 ---
 
@@ -46,7 +46,7 @@ The app connects to the **production Supabase project** even in dev (project `jp
 
 1. `/CLAUDE.md` — AI and developer quick-reference for the whole repo
 2. `src/App.tsx` — the single routing hub (no React Router)
-3. `src/utils/cms-defaults.ts` — all CMS-backed content defaults
+3. `src/site/lib/cms-defaults.ts` — all CMS-backed content defaults
 4. `src/supabase/functions/server/index.tsx` — edge function entry and route mounting
 5. `BUILD.md` — how to build, deploy, and run migrations
 
@@ -70,4 +70,4 @@ npm run preview    # Serve dist/ locally
 
 ## Where things live
 
-See `src/docs/PROJECT-STRUCTURE.md` for a full directory map and `src/docs/ARCHITECTURE.md` for the system design.
+See `docs/PROJECT-STRUCTURE.md` for a full directory map and `docs/ARCHITECTURE.md` for the system design.

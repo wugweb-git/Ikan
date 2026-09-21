@@ -1,7 +1,11 @@
 # iKan Health — Project Structure
 
-> **Last updated**: July 2026
+> **Last updated**: 2026-09-21 (codebase separation, branch `restructure/codebase-separation`)
 > **Audience**: All developers
+
+The frontend is split into three **surfaces** that never share UI, plus one
+**non-UI** layer they all import. The split is enforced by a lint boundary
+(`eslint.config.js`, counted by `npm run lint:boundary` in CI).
 
 ---
 
@@ -9,98 +13,75 @@
 
 ```
 /
-├── CLAUDE.md              # AI/developer quick-reference
-├── BRAND.md               # Voice, tone, crisis resources, email conventions
-├── BUILD.md               # Build, deploy, migration commands
-├── DESIGN.md              # Architecture decisions, slug system, KV model
-├── README.md              # Public-facing project overview
-├── index.html             # HTML shell (GA tag, OG/Twitter meta)
-├── package.json
-├── vite.config.ts
-├── vercel.json            # SPA rewrites, security headers
-├── tsconfig.json
-├── .vercel/               # Vercel project link (gitignored)
-├── supabase/              # Supabase migrations
-│   └── migrations/
-├── public/                # Static assets served at root
-│   ├── robots.txt
-│   ├── sitemap.xml
-│   ├── llms.txt
-│   ├── security.txt
-│   ├── ai-context.txt
-│   ├── .well-known/security.txt
-│   └── team/              # Founder headshots (kartik, vedanshu, vaibhav, amitabh, divyanshu, sachin)
-└── src/                   # All source code
+├── CLAUDE.md · AGENTS.md    # AI/developer rules (read every session)
+├── README.md · CHANGELOG.md · PENDING.md · GOVERNANCE.md
+├── BRAND.md · BUILD.md · DESIGN.md
+├── SESSIONS.md · HANDOFF.md # concurrent-session protocol, current brief
+├── index.html               # the only Vite entry (GA tag, OG/Twitter meta)
+├── vite.config.ts · tsconfig.json · eslint.config.js · package.json
+├── vercel.json              # SPA rewrites, headers, git deploy branches
+├── .*-baseline              # ratchet baselines (typecheck, lint, contrast, raw-hex, a11y, boundary)
+├── scripts/                 # ratchets + guarded deploy scripts
+├── public/                  # static files served at /
+├── docs/                    # all documentation (archive/ = superseded)
+├── dev/                     # dev-only harness pages (vite dev → /dev/<name>.html); not built
+└── src/
 ```
 
----
-
-## `src/`
+## src/
 
 ```
 src/
-├── App.tsx                # Single routing hub — maintains currentRoute, handles navigation
-├── main.tsx               # React entry point
-├── index.css              # Tailwind base import
-├── components/            # React components (see below)
-├── contexts/              # React context providers (Auth, Notifications, PWA)
-├── hooks/                 # Custom hooks (usePageContent, useSeo, useHealthData, …)
-├── lib/                   # Utilities and services
-├── utils/                 # Small helpers + cms-defaults.ts
-├── styles/                # globals.css (design tokens, component defaults)
-├── guidelines/            # Design system doc (Guidelines.md)
-├── docs/                  # Developer docs (this folder)
-├── supabase/functions/server/  # Edge function source (18 route modules, 33 files total)
-├── assets/                # Bundled images/fonts
-├── imports/               # Figma-generated SVG components
-└── services/              # API service layer (thin wrappers around apiClient)
+├── App.tsx                # composition root — routes admin, app and site
+├── main.tsx · index.css   # entry; index.css pulls in styles/globals.css
+├── styles/globals.css     # design tokens, loaded once for every surface
+│
+├── admin/                 # STAFF surface
+│   ├── screens/           # admin + editor screens
+│   ├── components/        # admin widgets (tables, forms, SideNav, …)
+│   ├── builder/           # program builder
+│   ├── blocks/            # block gallery / type viewer / day composer
+│   ├── ui/                # the old component library — admin's own copy
+│   ├── hooks/ · lib/      # admin-only hooks and helpers
+│
+├── app/                   # MEMBER product
+│   ├── screens/           # member screens (+ account/, onboarding/)
+│   ├── features/          # player, payments, notifications, safety,
+│   │                      #   integrations, widgets, assessment
+│   ├── blocks/            # BlockRenderer
+│   ├── ui/                # app's own UI (primitives, blocks/, svg/)
+│   ├── shell/             # route guard, login, error boundary, offline,
+│   │                      #   security, member navigation, app contexts
+│   ├── hooks/ · lib/ · assets/
+│
+├── site/                  # MARKETING + policy
+│   ├── pages/             # pages + homepage/ sections
+│   ├── ui/                # site's own UI (Footer, public nav, primitives, blocks/)
+│   ├── hooks/ · lib/ · assets/   # lib/cms-defaults.ts = all site page copy
+│
+├── shared/                # NON-UI contract every surface imports
+│   ├── api-client.ts · api-types.ts · supabase-client.ts · validation.ts · logger.ts
+│   ├── blocks/            # block model (+ tests)
+│   ├── engine/            # scoring + recommendation engines
+│   ├── contexts/          # AuthContext, NotificationContext (one session source)
+│   ├── hooks/             # useIsMobile, useMetadata, useOfflineSync, usePublicSettings
+│   ├── lib/               # cross-surface helpers (metadata catalog, icons, tokens, …)
+│   └── config/            # supabase-info
+│
+└── supabase/functions/server/   # the edge function (Deno/Hono) — deployed separately
 ```
 
----
+## The boundary rules
 
-## `src/components/`
+| from | may import | may NOT import |
+|---|---|---|
+| `admin/` | itself, `shared/` | `app/`, `site/` — except `app/blocks/BlockRenderer` and `app/features/player/ProgramPlayer`, allowed by name so admin previews match what members see |
+| `app/` | itself, `shared/` | `admin/`, `site/` |
+| `site/` | itself, `shared/` | `admin/`, `app/` |
+| `shared/` | itself | any surface |
 
-### Root-level loose files (not yet reorganised — see DESIGN.md)
+`App.tsx` is exempt: it is the composition root that mounts all three.
 
-`AuthForm.tsx`, `CalendarStrip.tsx`, `ChunkErrorBoundary.tsx`, `CorporateProgramCard.tsx`, `DashboardActionBlocks.tsx`, `ErrorBoundary.tsx`, `Footer.tsx`, `HelloWidget.tsx`, `Icon.tsx`, `IkanScoreCard.tsx`, `LoadingSpinner.tsx`, `LoginScreen.tsx`, `Logo.tsx`, `OfflineBanner.tsx`, `ProgramProgressTracker.tsx`, `RecommendationCards.tsx`, `RouteGuard.tsx`
-
-### Subdirectories
-
-| Folder | Contents |
-|--------|---------|
-| `admin/` | Admin panel components (RBAC-gated) |
-| `blocks/` | Reusable content blocks (SectionHero, BookingModal, NewsletterBlock, BentoGrids, …) |
-| `equip/` | Equip program-specific UI (ProgramCheckIn) |
-| `figma/` | Figma-generated components (ImageWithFallback) |
-| `integrations/` | Health Connect / Google Fit context + ActivityCard |
-| `monitoring/` | SafePerformanceMonitor |
-| `navigation/` | Nav bar, tab bar |
-| `notifications/` | PushPermissionPrompt |
-| `organisms/` | AssessmentQuestion (compound input component) |
-| `payments/` | Razorpay / payment UI |
-| `player/` | BlockRenderer (lesson, exercise, clinical blocks), ProgramPlayer |
-| `safety/` | CrisisSupport panel |
-| `screens/` | Full-page screen components (Dashboard, AboutUs, ContactUs, AssessmentDetail, EquipDetail, ResetPassword, …) |
-| `ui/` | Radix-based primitives (Button, Input, Card, Dialog, Select, …) |
-
----
-
-## `src/lib/`
-
-| File | Purpose |
-|------|---------|
-| `api-client.ts` | Authenticated fetch wrapper for the edge function |
-| `supabase-client.ts` | Supabase JS client singleton |
-| `slug.ts` | `slugify()`, `assessmentUrl()`, `equipUrl()` |
-| `google-fit.ts` | Google Fit REST API aggregation |
-| `health-connect-bridge.ts` | Android TWA native data bridge |
-| `emoji-utils.ts` | Emoji scale loading and helpers |
-| `constants/` | Content constants (NEWSLETTER_CONTENT, etc.) |
-
----
-
-## `src/supabase/functions/server/`
-
-33 `.ts`/`.tsx` files (18 of them `*-routes.ts` route modules) making up the single edge function. See `src/supabase/functions/server/CLAUDE.md` for the full guide and deploy steps.
-
-Key files: `index.tsx` (entry), `program-service.ts` (equip/day/block CRUD), `content-service.ts` (KV wrapper), `shared-types.ts` (shared TypeScript types).
+**No UI is shared.** Where two surfaces need the same primitive, each holds its
+own copy (`admin/ui/button.tsx`, `app/ui/button.tsx`, `site/ui/button.tsx`).
+They may drift — that is the point.

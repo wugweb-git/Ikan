@@ -100,24 +100,20 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
 ## CMS content architecture
 
-`usePageContent` (`src/hooks/usePageContent.ts`) fetches from `/cms/pages/{pageId}` with stale-while-revalidate. The code defaults in `src/utils/cms-defaults.ts` render immediately; live KV data overrides them.
-
-**When changing any CMS-backed content (contact info, crisis resources, team copy, etc.) you must update BOTH:**
-1. The default in `src/utils/cms-defaults.ts`
-2. The live record in Supabase KV (via edge function admin endpoint or SQL) so production overrides don't hide your change.
+Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/site/lib/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
 
 ---
 
 ## Slug URL system
 
-`src/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
+`src/app/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
 
 ---
 
 ## Auth
 
 - Email confirmation is ON. New users get a Supabase native confirmation email.
-- `/reset-password` route exists (`src/components/screens/ResetPassword.tsx`).
+- `/reset-password` route exists (`src/app/screens/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
 - Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
@@ -132,7 +128,7 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
 - **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase-client.ts` is public by design.
 
 ---
 
@@ -141,15 +137,15 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 | What | Where |
 |------|-------|
 | App shell + routing | `src/App.tsx` |
-| Auth context | `src/contexts/AuthContext.tsx` |
-| API client | `src/lib/api-client.ts` |
-| Supabase client | `src/lib/supabase-client.ts` |
-| CMS defaults | `src/utils/cms-defaults.ts` |
-| Slug helpers | `src/lib/slug.ts` |
-| Health Connect / Google Fit | `src/components/integrations/GoogleFitContext.tsx`, `src/lib/google-fit.ts` |
+| Auth context | `src/shared/contexts/AuthContext.tsx` |
+| API client | `src/shared/api-client.ts` |
+| Supabase client | `src/shared/supabase-client.ts` |
+| CMS defaults | `src/site/lib/cms-defaults.ts` |
+| Slug helpers | `src/app/lib/slug.ts` |
+| Health Connect / Google Fit | `src/app/features/integrations/GoogleFitContext.tsx`, `src/app/lib/google-fit.ts` |
 | Design system tokens | `src/styles/globals.css` |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `BRAND.md` |
 | Build/deploy steps | `BUILD.md` |
 | Architecture deep-dive | `DESIGN.md` |
-| Stale docs archive | `src/docs/archive/` |
+| Stale docs archive | `docs/archive/` |

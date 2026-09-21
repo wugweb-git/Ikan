@@ -73,5 +73,5 @@ Rule 2. Take a fresh backup snapshot before any bulk delete that isn't purely ad
 
 - Don't create a new top-level `.md` file for a one-off note — it becomes stale and nobody deletes
   it. Use `PENDING.md` for open work, `CHANGELOG.md` for what shipped.
-- When a doc becomes fully superseded (like `src/docs/KNOWN-ISSUES.md` → `CHANGELOG.md`), delete it
+- When a doc becomes fully superseded (like `docs/KNOWN-ISSUES.md` → `CHANGELOG.md`), delete it
   in the same commit as the replacement, and grep for references to the old filename first.

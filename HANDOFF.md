@@ -1,10 +1,24 @@
 # iKan — handoff brief for Claude Code (local)
 
-**Revision 2026-09-15.** The CMS Pages + Hero Banner unmap (old Workstream B) is DONE and merged (PRs #13/#14/#15). What remains is the **codebase separation (A)** and the **edge-function `_shared/` dedup (C)**. Do C first — it's smaller, independent, and fixes a live security drift.
+**Revision 2026-09-15.** The CMS Pages + Hero Banner unmap (old Workstream B) is DONE and merged (PRs #13/#14/#15). What remains is the **codebase separation (A)** and the **edge-function `_shared/` dedup (C)**. ORDER (Vedanshu): do **A Stage 1 (site/ + app/) FIRST**. C is DEFERRED and must NOT ride the staging-verified flow — staging shares the one Supabase, so C's edge deploy hits prod. Do C last, verified locally (deno check + tests), deployed carefully.
 
 Path: `/Users/abcom/Documents/GitHub/ikan`. Branch base: `equip-carry-forward` (the real trunk — what Vercel deploys; NOT `main`, which is 3 months stale).
 
 Paste everything below this line into Claude Code.
+
+---
+
+## START HERE — 2026-09-21
+
+Branch `restructure/codebase-separation` has been CREATED LOCALLY off `equip-carry-forward` (@ b6095adc), not checked out (the shared tree stays on ecf), NOT pushed. First actions, in order:
+
+1. `git fetch origin` and verify the branch is level with current `origin/equip-carry-forward`; if origin moved, `git branch -f restructure/codebase-separation origin/equip-carry-forward` before starting. Claim files in `SESSIONS.md`.
+2. Add the branch to `vercel.json` → `git.deploymentEnabled`: `{ "equip-carry-forward": true, "restructure/codebase-separation": true }`. Commit on the branch.
+3. Push the branch → first deploy builds.
+4. Tell Vedanshu to bind `staging.ikanhealth.in` → `restructure/codebase-separation` in the Vercel dashboard (Settings → Domains → edit git branch). One umbrella branch for the whole staged effort; staging follows it throughout. Leave `sandbox.ikanhealth.in` on ecf as the prod-mirror.
+5. Then work the stages below, verifying each on `staging.ikanhealth.in` before merging that slice to ecf.
+
+DB rule (standing): make NO changes to the database (Supabase KV or Postgres) without asking Vedanshu first. Read-only SQL is fine.
 
 ---
 
@@ -32,37 +46,60 @@ Verify: `npm test`, typecheck, `deno check` on server dir, build. Commit.
 
 ---
 
-## Workstream A — codebase separation (~250 files)
+## Staging — verify before ecf (both workstreams share one branch)
 
-**Precondition:** cut a FRESH branch from `equip-carry-forward` at the deployed commit, AFTER the pending deployment lands. Steps 2–4 each leave the tree briefly non-building — run them back-to-back on the same branch, do not deploy between.
+Do all of this on ONE branch: `restructure/codebase-separation`, cut from `equip-carry-forward`. No separate `staging` git branch — this branch IS what staging points at.
 
-### Target tree
+Wiring (frontend, Workstream A):
+1. In `vercel.json`, add the branch to git deploys so pushes build:
+   `"git": { "deploymentEnabled": { "equip-carry-forward": true, "restructure/codebase-separation": true } }`
+2. In the Vercel dashboard, alias `staging.ikanhealth.in` → this branch (branch-domain assignment). Vedanshu does this — dashboard config, not code.
+3. Push → auto-deploys to `staging.ikanhealth.in`. QA there against the real backend.
+4. Merge to `equip-carry-forward` → prod via `scripts/deploy-prod.sh`.
+5. After merge, REMOVE the branch from `deploymentEnabled` in `vercel.json`.
+
+Note: `deploy-prod.sh` + `deploy-guard.sh` are hardwired to `equip-carry-forward` only — staging goes through Vercel's git integration (steps 1–2), never the scripts.
+
+Backend caveat: staging still hits the ONE Supabase project + ONE edge function — there is no staging Supabase. So:
+- **A (frontend refactor)** — staging covers it fully; verify on `staging.ikanhealth.in`.
+- **C (edge `_shared/`)** — staging does NOT isolate it; deploying the restructured edge function touches prod. Verify C with `deno check` + tests locally; deploy edge carefully, only after A's staging is green.
+
+---
+
+## Workstream A — codebase separation — STAGED (Vedanshu's order: site/ + app/ FIRST)
+
+Do NOT do the ~250-file move in one PR. ONE umbrella branch `restructure/codebase-separation` for the whole effort (staging is bound to it). Stages are commits/slices ON that branch, each verified on staging, each merged to ecf as a slice when green — NOT a separate branch per stage. Only the LAST stage adds the lint boundary.
+
+**Target tree (Vedanshu, 2026-09-21 — supersedes the `product/` layout):**
 ```
 src/
-  admin/     screens(20) · components(29) · builder(19) · blocks/ · ui(27) · types/
-  product/
-    site/    Homepage + homepage/(8) · AboutUs · FAQ · ContactUs · CmsPageRenderer
-             Sitemap · NotFound · Privacy/Terms/Cancellation/ReturnPolicy · ProfessionalApplication · Footer
-    app/     20 screens + navigation/ player/ payments/ notifications/ safety/ integrations/
-             + blocks/BlockRenderer
-    ui/      tokens/ · primitives/(~60) · blocks/(20, was page-blocks)
-    shell/   App · RouteGuard · LoginScreen · AuthForm · ErrorBoundary · ChunkErrorBoundary
-             OfflineBanner · LoadingSpinner · Logo · Icon
-  shared/    blocks/(19) · engine/ · api-client · api-types · supabase-client · validation · logger
+  admin/     staff surface — the OLD component library is admin's now
+    screens/ · components/ · builder/ · blocks/(components) · ui/ · types/
+  app/       member product — the NEW UI (from Vedanshu's other repo, ported later)
+    screens/ · features/ · blocks/(renderer) · ui/ · shell/
+  site/      marketing + policy — its OWN ui
+    pages/ · ui/
+  shared/    NON-UI ONLY — the contract every surface imports
+    blocks/(model) · engine/ · api-client · api-types · supabase-client · validation · logger
 ```
 
-### Order
-1. **Delete corporate** — `components/CorporateProgramCard.tsx`, `screens/account/Corporate.tsx`, `server/corporate-routes.ts`, its `registerCorporateRoutes` call in `index.tsx`, and the dead `corporate_user` fields (hardcoded false everywhere).
-2. **`git mv` only** — pure relocation, one commit, no logic change:
-   - `lib/blocks/` (19 files, 6 `.test.ts`) → `shared/blocks/`
-   - `page-blocks/` → `product/ui/blocks/` (kills the `blocks/` vs `page-blocks/` alias collision)
-   - `EquipAdminDashboard.tsx` → admin (misfiled — imports `AdminStatusBadge`, `equip-admin-types`)
-   - `equip-admin-types.ts` → `admin/types/`
-   - `BlockGallery`, `BlockTypeViewer`, `DayComposer` → `admin/blocks/`; `BlockRenderer` → `product/app/blocks/`
-3. **Fix imports** — mechanical, driven by the typecheck ratchet. `lib/blocks` → `shared/blocks` catches all 26 importers on the path string.
-4. **Fork `ui/`** — copy the 16 shared primitives into `admin/ui/`, trim admin to its 27, relocate the 11 misfiled admin components: `admin-action-bar`, `wizard-layout`, `wizard-stepper`, `rich-text-editor`, `unsaved-changes-dialog`, `image-upload`, `file-upload`, `empty-state`, `error-state`, `form-field-error`, `tag-input`.
-5. **Lint boundary LAST** — `no-restricted-imports` in the existing `eslint.config.js`, ratcheted: `admin/` ⇄ `product/` blocked both ways; both may import `shared/`; inside `product/`, site↔app free. Only `BlockRenderer` should legitimately cross — it won't, it's in `product/`.
+**Stage 1 — site + app. DONE `84300a1a` (local, not pushed).** `site/pages/` (11 pages + `pages/homepage/`), `site/ui/` (Footer, PublicNavBar, PublicBottomNavMobile), `app/screens/` (21 + account/ + onboarding/), `app/features/` (player, payments, notifications, safety, integrations), `app/shell/navigation/` (member nav). `Breadcrumbs`/`Pagination`/`SearchBar` stay in `components/navigation/` — site, app and admin all use them. `CmsPageRenderer` does not exist.
 
+**Stage 2 — admin. DONE `62ee2d0b` (local, not pushed).** `admin/screens/` (18), `admin/components/` (was `components/admin`), `admin/builder/`, `admin/blocks/` (BlockGallery, BlockTypeViewer, DayComposer), `admin/ui/` (the 10 admin-only primitives). `BlockRenderer` → `app/blocks/`. `equip-admin-types.ts` no longer exists (folded into `lib/blocks`), so `admin/types/` is empty for now. `empty-state` stays shared — app's EquipDetail uses it. **2b DONE `ba0d9b99`:** the 20 `components/ui` primitives admin uses were COPIED into `admin/ui/` (decided: fork, not move); site/app keep `components/ui` until the new UI replaces it.
+
+**Stage 3 — shared + shell. DONE `5bd61928` (local, not pushed).** `lib/blocks/` → `shared/blocks/`; `api-client`/`api-types`/`supabase-client`/`validation`/`logger` → `shared/`; `scoring-engine`/`scoring-context`/`recommendation-engine` → `shared/engine/`; `RouteGuard`/`ChunkErrorBoundary`/`OfflineBanner`/`LoginScreen`/`AuthForm` → `app/shell/`. Kept put on purpose: `App.tsx` stays at `src/` as the composition root — it routes admin + site + app, so inside `app/shell/` it would make app import admin. `ErrorBoundary`/`LoadingSpinner`/`Logo`/`Icon` and `page-blocks/` stay in `components/` — all three surfaces use them; they split with the UI work. `shared/` is not yet self-contained: `api-client` imports `hooks/useOfflineSync`, and `shared/blocks` + `validation` import server modules (Workstream C).
+
+**Stage 4 — lint boundary. DONE `f5de4970` (local, not pushed).** `no-restricted-imports` blocks in `eslint.config.js`: admin ⇄ app ⇄ site blocked in every direction; `shared/` may not import any surface or `components/`. Warn-level for editors, counted by `scripts/boundary-ratchet.mjs` (`npm run lint:boundary`, CI step) against `.boundary-baseline` = 5. The 5, all into `app/`: `admin/blocks/BlockGallery` → `app/blocks/BlockRenderer` and `admin/screens/EquipProgramWizard` → `app/features/player/ProgramPlayer` (admin previews member rendering), `admin/screens/AdminDashboard` → `app/shell/navigation/SideNav`, `site/{pages/Sitemap,ui/Footer}` → `app/shell/navigation/NavBadge`. `.lint-baseline` 887 → 892 for those same 5 warnings.
+
+**Boundary fixes. DONE `6ceefe12`.** Crossings 5 → 0: `NavBadge` → `site/ui/` (only site used it), `SideNav` → `admin/components/` (only AdminDashboard used it). Admin's two previews (`BlockRenderer`, `ProgramPlayer`) are allowed BY NAME in `eslint.config.js` — a copy would drift from what members see. `.boundary-baseline` = 0.
+
+**UI split. DONE `91c48f61` (moves) + `ce452cf4` (copies).** `components/` is empty except `CorporateProgramCard.tsx`. Everything app or the root uses → `app/ui/` (page-blocks → `app/ui/blocks/`), `app/features/widgets/`, `app/features/assessment/`, `app/shell/`. The 27 never-imported primitives → `admin/ui/` (the old library is admin's). site/ and admin/ got their own copies of what they reach (23 + 8). Baselines raised only for per-file-verified duplicates: typecheck 177, lint 900, raw-hex 507, a11y 54 — they fall as each surface's UI is replaced.
+
+**OUT OF SCOPE (Vedanshu, 2026-09-21):**
+- Corporate deletion — leave all corporate code and routes alone.
+- Any Supabase change — tables, KV, the edge function. The Supabase mapping stays shared by admin, app and site. This also takes **Workstream C** (edge `_shared/` dedup) off the list.
+
+**Remaining:** bring in app's NEW UI (from Vedanshu's other repo — which repo is TBD) to replace `app/ui/`; push the branch; Vercel preview LAST (blocked by the project's verified-commits requirement — commits are unsigned).
 ---
 
 ## Also outstanding (stale refs the B PRs left behind — small, do anytime)

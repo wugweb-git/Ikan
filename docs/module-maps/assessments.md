@@ -910,27 +910,27 @@ Everything that touches an assessment, with what it does and whether it holds lo
 | screens/AssessmentFlow.tsx | 660 | Loads, maps, adapts, hosts the player, scores, saves | the missing slug is here, line 532 |
 | player/ProgramPlayer.tsx | 627 | Step navigation; computes `totalScore` as a flat sum | shared with equip |
 | player/BlockRenderer.tsx | 999 | Draws each block; switches on `interaction` | shared with equip |
-| lib/assessment-adapter.ts | 137 | Legacy `questions[]` → `Activity[]` for the player | the `\\|\\| 0` weight fallback lives here |
+| app/lib/assessment-adapter.ts | 137 | Legacy `questions[]` → `Activity[]` for the player | the `\\|\\| 0` weight fallback lives here |
 | lib/assessment-section-presets.ts | 398 | **The scoring authority.** All 7 instruments' scoped item sets, reversals, offsets and bands | content living as code · no admin path |
-| lib/assessment-sections.ts | 346 | Pure scoring engine — `computeSectionScores`, `resolveAnswerValue`, banding | dependency-free and testable |
+| app/lib/assessment-sections.ts | 346 | Pure scoring engine — `computeSectionScores`, `resolveAnswerValue`, banding | dependency-free and testable |
 | **Results & history** | | | |
 | screens/AssessmentResults.tsx | 436 | Score ring, interpretation, recommendation card | gates the report card on `sections.length >= 2` |
 | screens/AssessmentHistoryDetail.tsx | 772 | Past results; reads `section_scores ?? sectionScores` | renders nothing — no result has a breakdown |
 | blocks/SectionReportCard.tsx | 184 | The per-scale breakdown; second gate at `sections.length === 0` | — |
 | **Transport, cache, catalog** | | | |
-| lib/api-client.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
-| hooks/useOfflineSync.ts | 251 | Queue, retry, `cacheForOffline` (24 h TTL) | wholesale queue replacement on sync |
-| hooks/useMetadata.ts | 242 | All 21 catalog vocabularies | returns empty buckets on failure |
-| lib/slug.ts | 30 | `slugify`, `assessmentUrl` | the title-fallback depends on it |
+| shared/api-client.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
+| shared/hooks/useOfflineSync.ts | 251 | Queue, retry, `cacheForOffline` (24 h TTL) | wholesale queue replacement on sync |
+| shared/hooks/useMetadata.ts | 242 | All 21 catalog vocabularies | returns empty buckets on failure |
+| app/lib/slug.ts | 30 | `slugify`, `assessmentUrl` | the title-fallback depends on it |
 | **Server** | | | |
 | server/assessment-routes.ts | 212 | Result save and history; derives `scoring.ranges` | `section_scores: data.sectionScores ?? null` |
 | server/admin-routes.ts | 1579 | Assessment CRUD, scoring profiles, categories | — |
 | server/index.tsx | 4956 | `/api/assessments` list and by-id | — |
 | **Downstream** | | | |
-| lib/recommendation-engine.ts | 570 | `evaluateAssessment()` — severity, messaging, targeting | hardcoded messaging, no override path |
+| shared/engine/recommendation-engine.ts | 570 | `evaluateAssessment()` — severity, messaging, targeting | hardcoded messaging, no override path |
 | server/recommendation-service.ts | 179 | `severityFromScore()` from score ÷ max_score | consumes the unstable denominator |
 | server/ikan-score-routes.ts | 445 | Wellness score — assessments lane, 40% | own `KNOWN_MAX_SCORES` table |
-| lib/reassessment-triggers.ts | 126 | When to prompt a re-test | — |
+| app/lib/reassessment-triggers.ts | 126 | When to prompt a re-test | — |
 
 > **[WARNING] Five of the twenty-two are shared with equip, not owned by assessments.**
 >
@@ -1227,6 +1227,6 @@ There are **12 `professional:` records** and nothing routes a high-severity resu
 
 **A correction to the earlier version of this page.** It reported **137 stored results**. 137 is the number of *keys* under the `assessment_result:` prefix: **95 records plus 42 `:latest` duplicates**. Of the 95, **70** are real assessment completions and **25** are equip check-ins. Every count on this page now uses 95 / 70 / 25.
 
-**Where this disagrees with the repo docs, this page is the later reading.** `src/docs/assessments/burnout.md` states 22 items; the database holds 23. `sleep.md` records the "Pooo" typo as fixed; it is not. The assessments README still carries the pre-2026-08-07 counts of 27 / 10 / 23.
+**Where this disagrees with the repo docs, this page is the later reading.** `docs/assessments/burnout.md` states 22 items; the database holds 23. `sleep.md` records the "Pooo" typo as fixed; it is not. The assessments README still carries the pre-2026-08-07 counts of 27 / 10 / 23.
 
 **Not verified.** The provenance of Burnout's stored `max_score` values 88 and 92. Whether the 2026-09-01 scoring repair has held since — something reverted part of it once already, between 05:58 and 10:05 that day, and the cause was never found.

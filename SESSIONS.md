@@ -445,3 +445,61 @@ Backup `backup_pre_avatar_path_2026_09_15`.
 **Privacy fix folded in:** a stored avatar path is accepted only inside that
 user's own folder. Before this, `PUT /users/profile` would store any link, and
 signing on read would have served another user's private picture.
+
+## Claimed 2026-09-21 — CODEBASE SEPARATION session (Claude Code, branch `restructure/codebase-separation`)
+
+Working in a separate worktree (`../ikan-restructure`) so this shared tree stays on
+`equip-carry-forward`. First claim is setup only:
+
+| file | change |
+|---|---|
+| `vercel.json` | add `restructure/codebase-separation` to `git.deploymentEnabled` so the branch builds for `staging.ikanhealth.in` |
+
+Stage 1 (`product/site/` + `product/app/` screen moves) will be claimed here file-by-file before it starts.
+
+### 2026-09-21 · Stage 1 claim — `src/site/` + `src/app/` (branch `restructure/codebase-separation`)
+
+Pure `git mv` + relative-import rewrites. No logic, content or copy changes. Moves:
+
+- → `src/site/pages/`: `screens/{Homepage,AboutUs,FAQ,ContactUs,Sitemap,NotFound,PrivacyPolicy,TermsOfUse,CancellationPolicy,ReturnPolicy,ProfessionalApplication}.tsx`, `screens/homepage/**` (→ `pages/homepage/`)
+- → `src/site/ui/`: `components/Footer.tsx`, `navigation/{PublicNavBar,PublicBottomNavMobile}.tsx`
+- → `src/app/screens/`: every non-admin screen in `screens/` (incl. `account/**`, `onboarding/**`)
+- → `src/app/shell/navigation/`: member nav + `navigation/index.tsx`; `Breadcrumbs`/`Pagination`/`SearchBar` stay in `components/navigation/` (used by site, app and admin)
+- → `src/app/features/`: `components/{player,payments,notifications,safety,integrations}/**`
+- Import-only edits in any file that imports a moved file (incl. `App.tsx`), plus `src/tsconfig.json` include and the `src/components` roots (now `components`+`app`+`site`) in `scripts/lint-raw-hex.mjs` + `scripts/lint-a11y-static.mjs`
+
+**Crosses owned files:** BLOCKS `src/components/player/**`; ASSESSMENT `screens/Assessment{Detail,Flow,HistoryDetail,Results,s}.tsx`, `screens/Equip{Detail,Programs}.tsx`. Moves only, contents untouched — if either session is live, rebase onto this branch; git follows the renames.
+Admin/editor screens stay in `screens/` until Stage 2.
+
+### 2026-09-21 · Stage 2 claim — `src/admin/` (branch `restructure/codebase-separation`)
+
+Pure `git mv` + relative-import rewrites, same rules as Stage 1. Moves:
+
+- → `src/admin/screens/`: the 18 admin/editor screens left in `components/screens/`
+- → `src/admin/components/`: `components/admin/**`
+- → `src/admin/builder/`: `components/builder/**`
+- → `src/admin/blocks/`: `components/blocks/{BlockGallery,BlockTypeViewer,DayComposer}.tsx`; `BlockRenderer.tsx` → `src/app/blocks/`
+- → `src/admin/ui/`: the admin-only primitives `components/ui/{admin-action-bar,wizard-layout,wizard-stepper,rich-text-editor,unsaved-changes-dialog,image-upload,file-upload,error-state,form-field-error,tag-input}.tsx`
+- Import-only edits in importers (incl. `App.tsx`, `src/dev/*`), `src/tsconfig.json` include, lint roots
+
+**Crosses owned files:** ASSESSMENT none directly; BLOCKS `components/blocks/**` (move only).
+- **Stage 2b (ui fork):** copies the 20 `components/ui` files admin uses into `src/admin/ui/` and repoints 66 admin files at the copies. `components/ui` itself is untouched — site and app keep it until the new UI replaces it.
+
+### 2026-09-21 · Stage 3 claim — `src/shared/` + `src/app/shell/` (branch `restructure/codebase-separation`)
+
+Pure `git mv` + relative-import rewrites, same rules.
+
+- → `src/shared/blocks/`: `src/lib/blocks/**` (BLOCKS-owned — move only)
+- → `src/shared/`: `lib/{api-client,api-types,supabase-client,validation,logger}.ts`
+- → `src/shared/engine/`: `lib/{scoring-engine,scoring-context,recommendation-engine}.ts`
+- → `src/app/shell/`: `components/{RouteGuard,ChunkErrorBoundary,OfflineBanner,LoginScreen,AuthForm}.tsx`
+- Stay put: `App.tsx` (routes all three surfaces), `ErrorBoundary`/`LoadingSpinner`/`Logo`/`Icon` and `page-blocks/` (used by admin, app and site)
+- Import-only edits in importers, `src/tsconfig.json` include
+
+### 2026-09-21 · Stage 4 claim — surface lint boundary (branch `restructure/codebase-separation`)
+
+`eslint.config.js` (boundary blocks), `scripts/boundary-ratchet.mjs` (new), `.boundary-baseline` (new, 5), `.lint-baseline` (887 → 892), `package.json` (`lint:boundary`), `.github/workflows/ci.yml` (one step).
+
+### 2026-09-21 · Boundary fixes + UI split (branch `restructure/codebase-separation`, committed `6ceefe12`, `91c48f61`, `ce452cf4`)
+
+Recorded after the fact — should have been claimed first. Touched: everything that was under `src/components/` (now in `app/ui/`, `app/features/{widgets,assessment}/`, `app/shell/`, `admin/ui/`, `site/ui/`; only `CorporateProgramCard.tsx` remains), import-only edits across `src/`, `eslint.config.js`, `scripts/boundary-ratchet.mjs`, and the `.typecheck/.lint/.rawhex/.a11y/.boundary` baselines. **Crosses owned files:** ASSESSMENT `page-blocks/**` (now `app/ui/blocks/**`), moves only. Out of scope and untouched: corporate code, anything under `src/supabase/`.

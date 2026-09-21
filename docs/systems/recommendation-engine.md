@@ -9,7 +9,7 @@ and Rule Engine rules (`rule-engine.md`) and turns them into an actual recommend
 
 | | Frontend | Backend |
 |---|---|---|
-| File | `src/lib/recommendation-engine.ts` | `src/supabase/functions/server/recommendation-service.ts` |
+| File | `src/shared/engine/recommendation-engine.ts` | `src/supabase/functions/server/recommendation-service.ts` |
 | Entry point | `evaluateAssessment()` | `RecommendationService.getRecommendations()`, served via `GET /recommendations` |
 | Runs | Immediately after finishing an assessment, client-side | Server-side, on demand |
 | Called from | `AssessmentFlow.tsx` → shown on `AssessmentResults.tsx` | `Dashboard.tsx`, `EquipProgramCompletion.tsx` |
@@ -38,7 +38,7 @@ other, any one of which alone would have broken it:
    name — this lookup could not have matched, ever, for any user.
 3. **`equip.name` doesn't exist.** Even in the hypothetical case both bugs above were fixed and a
    rule matched, the result was built as `equip_name: equip.name` — real equip records use `title`,
-   confirmed via `shared-types.ts`'s `Equip` interface and every equip doc in `src/docs/equips/`.
+   confirmed via `shared-types.ts`'s `Equip` interface and every equip doc in `docs/equips/`.
    `equip_name` would have been `undefined` on every recommendation ever returned.
 
 Between (1) and (2), the function returned `[]` for literally every user, every time, since it was

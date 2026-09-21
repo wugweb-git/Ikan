@@ -18,7 +18,7 @@ fetches the backend's answer anyway and then never renders it. Two different fin
 
 | | Frontend — `evaluateAssessment()` | Backend — `RecommendationService.getRecommendations()` |
 |---|---|---|
-| Location | `src/lib/recommendation-engine.ts:433-571` | `src/supabase/functions/server/recommendation-service.ts:58-153` |
+| Location | `src/shared/engine/recommendation-engine.ts:433-571` | `src/supabase/functions/server/recommendation-service.ts:58-153` |
 | Input | The score just computed in-memory, not yet saved | Every saved `assessment_result:{userId}:*` row |
 | Reads | `scoring-profile:` (via `loadScoringProfiles()`, cached), `recommendation_rule:` (via `loadAdminRules()`, cached) | `assessment_result:`, `assessment_def:.category`, `recommendation_rule:`, `equip:.title` |
 | Auth | None required — works pre-save, pre-auth-check | `requireAuth` — real session needed |

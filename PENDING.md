@@ -6,7 +6,7 @@ something that changes what's here — see `GOVERNANCE.md` for the rule.
 *Last updated: 2026-09-08 — blocks module section added at the top; §19 (a day carries its own
 policy and layout, not a type) completed and deployed. Previously: 2026-08-12, after finding and fixing a double-JSON-encoding bug affecting
 `activity_log:` (604 rows, migrated in place) and 2 dormant call sites (`corporate_program:`,
-`user_employer:`, 0 live rows) — see `src/docs/systems/schema-relations.md` for the full write-up.
+`user_employer:`, 0 live rows) — see `docs/systems/schema-relations.md` for the full write-up.
 Previously: 2026-08-07, removing 7 dead/placeholder questions across General, Burnout, and Stress
 (found via a systematic live-vs-scoring-config check run across all 7 assessments after a user
 screenshot caught General's), a real production bug fix (General's admin builder was behind what
@@ -111,7 +111,7 @@ layout for its whole life; now plays the video).
   `block_type`/`exercise_subtype` taxonomy Equip and Assessment already share. Its own KV mirror
   (`checkin_block_type`, 7 records, hyphen format, e.g. `emoji-scale`) has zero real readers.
   Migrating Check-in onto Blocks needs a value-format normalization pass (underscore → hyphen), not
-  just a pointer swap. See `src/docs/systems/block-architecture.md`.
+  just a pointer swap. See `docs/systems/block-architecture.md`.
 - 🟡 **`interaction_type` and `day_config_type` Metadata Catalog types are decorative** — read only
   by `AdminBlockTypeViewer.tsx` (a real, accurate, read-only reference screen), never by an
   authoring or rendering path. `day_config_type`'s 11 KV values disagree three ways with code (the
@@ -136,7 +136,7 @@ layout for its whole life; now plays the video).
   instead of re-running `evaluateAssessment()`, or stop fetching `GET /recommendations` in
   `Dashboard.tsx` entirely if the frontend engine's richer output (messaging/secondary
   actions/severity bands) is what should stay canonical. Not fixed this pass (documentation-only
-  turn, by explicit decision) — see `src/docs/systems/recommendation-frontend-vs-backend.md`.
+  turn, by explicit decision) — see `docs/systems/recommendation-frontend-vs-backend.md`.
 - ~~`AdminBlockTypeViewer.tsx`'s URL and nav entry disagreed~~ **fixed 2026-08-06** —
   `'/admin/block-type-viewer'` added to `validRoutes` (`App.tsx:230`). The sidebar click still
   doesn't call `pushState` to update the address bar to match (a smaller, cosmetic gap, not fixed) —
@@ -169,9 +169,9 @@ take one **General** and one **Burnout** assessment on production and confirm:
 | ~~`checkInConfig`/`scale_key` documented as linked~~ **corrected 2026-08-06** | `mood-checkin.md` and the artifact's §04 equip diagram wrongly claimed an equip's `checkInConfig` links to `checkin_template:` via a `scale_key` field. Repo-wide `grep` for `scale_key` confirmed it exists only on `checkin_template:` steps, never on an equip record. `checkInConfig` actually triggers `ProgramCheckIn.tsx` — see §A above. Docs and artifact corrected; nothing to deploy, this was a documentation error, not a code bug. |
 | ~~5 of 7 ghost `user:` KV rows~~ **deleted 2026-08-06** | `user:` KV vs. `auth.users` live check: 13 rows, 6 real, 7 ghost. 5 had zero downstream references (2 plain orphans + 3 keyed by email instead of UUID, a distinct key-shape bug) — deleted via a single `DELETE ... WHERE key IN (...)`, verified against `progress:`/`journal_by_user:`/`enrollment:`/`assessment_result:`/`ikan_score:` first. See `schema-relations.md`. |
 | **2 ghost `user:` rows NOT deleted — need a product decision** | `user:00000000-0000-0000-0000-00000000a001` has 7 real `journal_by_user:` entries attached; `user:107e08ee-d7cc-4535-8c4a-49dad0c3c89b` has a live `enrollment:` + `ikan_score:` record. Neither is a plain orphan — deleting the profile row wouldn't remove the attached data, and whether that data should be purged, reassigned, or kept (e.g. for compliance after an account deletion) is a decision, not a cleanup. See `schema-relations.md`. |
-| **"25 route modules" stale count** | **Fixed 2026-08-06** — corrected to 33 files / 18 route modules in `CLAUDE.md`, `README.md`, `src/docs/BACKEND-GUIDE.md`, `src/docs/PROJECT-STRUCTURE.md`, `src/docs/ARCHITECTURE.md`. See `repo-hygiene-audit.md`. |
+| **"25 route modules" stale count** | **Fixed 2026-08-06** — corrected to 33 files / 18 route modules in `CLAUDE.md`, `README.md`, `docs/BACKEND-GUIDE.md`, `docs/PROJECT-STRUCTURE.md`, `docs/ARCHITECTURE.md`. See `repo-hygiene-audit.md`. |
 | ~~`activity_log: → user:` had no `RELATIONS` entry~~ **fixed 2026-08-06, its "0 orphaned" was corrected 2026-08-12** | Added as the 7th declared relation in `kv-audit-routes.ts` (field `user_id`/`userId`). The original "584 rows, 0 orphaned" claim was checking a field that couldn't actually be read — see the double-encoding fix below, found the same day this relation was re-verified for real. |
-| **`activity_log:`, `corporate_program:`, `user_employer:` were double-JSON-encoded — fixed 2026-08-12** | `index.tsx:2255` and `corporate-routes.ts:157,189` all called `kv.set(key, JSON.stringify(value))` — `kv.set()` already serializes whatever it's given (confirmed by reading both its implementations), so this stored a JSON *string* inside the `jsonb` column instead of an object. Unique to these 3 call sites (repo-wide grep for `JSON.stringify(` immediately before a `kv.set(` found no others). `activity_log:` had 604 live affected rows (migrated in place: `jsonb_typeof` now `object` for all, verified); `corporate_program:`/`user_employer:` had 0 live rows (dormant — that feature's write path has never fired in production) but had **no** defensive read-side workaround, unlike `activity_log:`'s `GET /admin/activity-logs`. All 3 write sites fixed to pass a plain object. Full write-up incl. the `activity_log:` action/user/day breakdown: `src/docs/systems/schema-relations.md`. |
+| **`activity_log:`, `corporate_program:`, `user_employer:` were double-JSON-encoded — fixed 2026-08-12** | `index.tsx:2255` and `corporate-routes.ts:157,189` all called `kv.set(key, JSON.stringify(value))` — `kv.set()` already serializes whatever it's given (confirmed by reading both its implementations), so this stored a JSON *string* inside the `jsonb` column instead of an object. Unique to these 3 call sites (repo-wide grep for `JSON.stringify(` immediately before a `kv.set(` found no others). `activity_log:` had 604 live affected rows (migrated in place: `jsonb_typeof` now `object` for all, verified); `corporate_program:`/`user_employer:` had 0 live rows (dormant — that feature's write path has never fired in production) but had **no** defensive read-side workaround, unlike `activity_log:`'s `GET /admin/activity-logs`. All 3 write sites fixed to pass a plain object. Full write-up incl. the `activity_log:` action/user/day breakdown: `docs/systems/schema-relations.md`. |
 | **Admin KV Audit dashboard showed stale numbers (594 "Uncategorized Keys", 94 "Schema & Relations") — traced to deployed-function drift, redeployed** | User flagged this directly. Simulated the exact `classifyKey()` logic server-side against live data: only **1** key is genuinely uncategorized (not ~595), and `KV_SCHEMA.length` in source is **96** (not 94). Both dashboard numbers are computed live at request time (`uncategorizedCount: uncategorizedKeys.length`, `totalPrefixes: KV_SCHEMA.length` — not hardcoded, not a frontend cache), so the mismatch meant the *deployed* function was behind the current source. **Fixed**: redeployed `make-server-cc205da9` this pass. Reload the KV Audit admin page to confirm it now shows ~96 prefixes / ~1 uncategorized key — if it still doesn't after a hard refresh, that's a second, deeper bug worth a live follow-up with real admin auth (which this investigation didn't have access to). |
 | ~~"Multi-Tenant Prefix Sync" tile's count wrong, harmful sync target~~ **fixed 2026-08-06** | `AdminKVAudit.tsx`: renamed to "Admin/User Prefix Sync" (the "multi-tenant" label was a misnomer — this is a single-tenant app's admin-write/user-read split, not multiple customer orgs); count now derived from the real `equip:`/`equip_program:` and `assessment_def:`/`assessment:` record-count gap (`schema.liveCounts`) instead of the unrelated critical-growth-warnings count. The `resource: → library:resource:` sync target was checked against the backend `POST /admin/kv-audit/sync-prefixes` route — already correctly removed there (with its own explanatory comment); only the frontend tile's description text still listed it, now removed too. Whether to eliminate the write/read split entirely (read `equip:`/`assessment_def:` directly) instead of maintaining a sync tool remains a larger, undecided architectural question — not this pass's scope. |
 
@@ -182,7 +182,7 @@ take one **General** and one **Burnout** assessment on production and confirm:
   Same shape as the `equip:`/`equip_program:` split. Which one `usePageContent()` actually resolves to
   determines whether editing one in the admin UI has any visible effect — not investigated, not fixed.
 - **Sleep Tight has 16 of 31 duplicated-filler days; Burnout Reset has a "(Copy)"-titled day and
-  repeated exercise text** — flagged in `src/docs/equips/sleep-tight.md` and `burnout-reset.md`
+  repeated exercise text** — flagged in `docs/equips/sleep-tight.md` and `burnout-reset.md`
   respectively, never fixed. Content decisions (what the real day content should say), not mechanical
   fixes — see `repo-hygiene-audit.md`'s "recurring/extra equip content" section for the full list.
 
@@ -217,7 +217,7 @@ take one **General** and one **Burnout** assessment on production and confirm:
   since a hero banner is page-level content. KV models stay separate (`page:`/`cms_page:` vs
   `hero_banner:`) — a navigation merge, not a data-model merge. Confirmed at the bundler level: no
   separate JS chunk for the hero banner manager anymore.
-- **Full public/auth/private/admin URL map written** — new `src/docs/systems/url-map.md`.
+- **Full public/auth/private/admin URL map written** — new `docs/systems/url-map.md`.
   `public/sitemap.xml` and the HTML `/sitemap` page both gained the routes that were missing
   (`/join/professional`, `/sitemap` itself, `/dashboard`, `/timeline`, `/learning-diary`).
   `/dashboard/<username>` is **not implemented** — there's no `username`/handle field in the `user:`
@@ -361,7 +361,7 @@ Two things are needed, neither urgent but both real:
    had 3, and `logger.ts` has 2 (`ImportMeta.env`, a missing `vite/client` type reference).
    A handful of imports and one type reference would take a visible bite out of it.
 
-Note also that **`src/tsconfig.json` excludes `supabase`**, so none of the edge-function
+Note also that **`tsconfig.json` excludes `supabase`**, so none of the edge-function
 code is typechecked at all. `scoring-validation.ts` and the `admin-routes.ts` scoring
 changes are covered only by the scratch harness and by review — see the deploy hold.
 
@@ -401,11 +401,11 @@ changes are covered only by the scratch harness and by review — see the deploy
   wrote to the unused key shape, so `current_day_number` was stuck at 1 for every enrollment.
 - **Sectioned assessment scoring** shipped for General and Burnout — see §A/§B above for what's still
   open on the content side.
-- **Full assessment content audit** — one file per assessment under `src/docs/assessments/`, pulled
+- **Full assessment content audit** — one file per assessment under `docs/assessments/`, pulled
   live from the DB. Found the Balance direction bug, the Stress/Balance max-mismatch, the Sleep typo,
   and confirmed `scoring.ranges`/`resultCategories` were dead across the board. This doubles as the
   reusable verification artifact for future content edits — re-run the query at the bottom of
-  `src/docs/assessments/README.md` rather than re-auditing from scratch.
+  `docs/assessments/README.md` rather than re-auditing from scratch.
 - **All 5 previously-unscored assessments (Anxiety, Depression, Stress, Sleep, Balance) now produce a
   real result.** New `overallCalc` presets added in `assessment-section-presets.ts`
   (`ANXIETY_SCORING`/`DEPRESSION_SCORING`/`STRESS_SCORING`/`SLEEP_SCORING`/`BALANCE_SCORING`),
@@ -488,7 +488,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   refs. Two minor open items found and left unfixed (product/data-quality calls, not urgent):
   `freehand_text_content` on journal entries is sometimes a number instead of a string; one journal
   entry has an `extra_responses` key that doesn't map to any current template step. Full detail
-  with every record's content: `src/docs/systems/mood-checkin.md`.
+  with every record's content: `docs/systems/mood-checkin.md`.
 - **`metadata-seed.ts` renamed to `metadata-catalog.ts` 2026-08-06** — "seed" implied something
   automatic; it isn't (confirmed: only runs when an admin clicks "Sync All" in
   `AdminCategoryManager.tsx` and confirms a dialog — nothing on page load/app start/build).
@@ -502,7 +502,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   framing this file previously gave it. Confirmed 0 enrollments/progress in both KV and the Postgres
   shadow table before deleting both `equip:73034a14-...` and the stale
   `equip_slug:program-1767123350909` index key. Verified gone from `GET /equip/programs` after.
-  Full detail: `src/docs/equips/_unnamed-73034a14.md`.
+  Full detail was in `docs/equips/_unnamed-73034a14.md`, which no longer exists.
 - ✅ **Metadata Catalog audited AND fixed 2026-08-06** (all 21 admin-configurable taxonomy types —
   content type, block type, consultant type, assessment type, etc. — the same system `mood_type`
   turned out to be a broken outlier in). No type had zero records this time, but two real bugs were
@@ -536,8 +536,8 @@ changes are covered only by the scratch harness and by review — see the deploy
     actual route handlers on all 21, not assumed), a real frontend consumer confirmed by grep+read
     for every one, no same-type duplicate slugs, no placeholder/test content, no orphaned
     `resource → category` references. Full detail with the per-type table and ER diagram:
-    `src/docs/systems/metadata-catalog.md`.
-- **Remaining 3 equips audited 2026-08-06** (`src/docs/equips/{productivity-reset,cognitive-behavioral-therapy,mindfulness-meditation}.md`), completing all 7 (was 3/7):
+    `docs/systems/metadata-catalog.md`.
+- **Remaining 3 equips audited 2026-08-06** (`docs/equips/{productivity-reset,cognitive-behavioral-therapy,mindfulness-meditation}.md`), completing all 7 (was 3/7):
   - **Productivity Reset**: content itself is clean (no missing/duplicate days, no leaked build
     notes). But `published: false` despite real enrollment/completion activity against it, 4 of 8
     landing-page metadata fields are the literal placeholder string `"yes"`, `subtitle` is empty.
@@ -551,7 +551,7 @@ changes are covered only by the scratch harness and by review — see the deploy
     content gap, not a routing/lookup bug (slug resolution and id-or-slug fallback both verified
     correct). Systemic pattern, not equip-specific: whoever builds these out should know they're
     starting from zero, not recovering lost content.
-  - All 7 equip programs now have a full verbatim-content doc under `src/docs/equips/`.
+  - All 7 equip programs now have a full verbatim-content doc under `docs/equips/`.
 - ✅ **CBT and Mindfulness deleted 2026-08-06** — both were empty pricing stubs (see above), confirmed
   zero enrollments/progress/day-content/recommendation-rule references before deleting
   `equip:cbt-10week`/`equip:mindfulness-8week` and their `equip_slug:` index entries. **4 real
@@ -575,7 +575,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   `equip.title`. Deployed and smoke-tested at the infra level; full in-app confirmation needs a real
   user session since the endpoint requires real auth, not just the anon key — the one piece of this
   fix not independently confirmed by direct query. Full writeup:
-  `src/docs/systems/recommendation-engine.md`. Kept as 3 separate docs per direction: Scoring Engine
+  `docs/systems/recommendation-engine.md`. Kept as 3 separate docs per direction: Scoring Engine
   (`scoring-engine.md`, correctly wired, 0 profiles, reserved for the future iKan Score — not a
   bug), Rule Engine (`rule-engine.md`, 18 real rules — no rule targets Productivity Reset at all,
   and several category/severity combos have coverage gaps, both content decisions not bugs), and
@@ -592,7 +592,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   General's flat score sums higher-is-distress items (GAD-2/PHQ-2) together with higher-is-better
   items (WHO-5/self-efficacy/resilience) with no reversal, then the wellness formula inverts the
   whole mixed sum as if uniformly bad — needs section-aware scoring ported to this backend file, a
-  design decision not made here. Full detail: `src/docs/systems/ikan-wellness-score.md`.
+  design decision not made here. Full detail: `docs/systems/ikan-wellness-score.md`.
 - **Builder/Editor architecture mapped 2026-08-06 — corrected same day: 1 shared builder reused
   correctly twice, 1 outlier, not 3 independent systems.** First pass checked whether each wizard
   calls `useMetadata()` directly and concluded 3 independent builders — missed that
@@ -614,7 +614,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   flagged for a decision rather than done unasked. Separately confirmed: Equip's own block palette
   is hardcoded to 4 types while its own `block_type` catalog has 7 (`Checklist`/`Reflection`/
   `Sleep Diary` exist as data with no way to add one via the UI) — this part of the original
-  finding held up. Full detail: `src/docs/systems/builder-editor-architecture.md`.
+  finding held up. Full detail: `docs/systems/builder-editor-architecture.md`.
 - 🟡 **Confirmed: `user_enrollments`/`user_program_progress` are genuinely "shadow copy only," not
   live-syncing** — matches this file's own migration table, not a new bug. Found while sweeping for
   orphans against the final 4-equip list: 4 Postgres rows referenced equip slugs/ids already
@@ -669,7 +669,7 @@ left open (CMS page CRUD slug maintenance, 3 equips missing user copies) are fol
   +`number` (12 rows), in **both** KV and `metadata-catalog.ts` — `POST /categories/sync`
   upserts from seed and never deletes, so a KV-only change does not survive a Sync All.
   Backup: `backup_pre_block_vocab_2026-09-02` (18 rows).
-- **Block census baseline** at `src/docs/module-maps/census/`. There is no test
+- **Block census baseline** at `docs/module-maps/census/`. There is no test
   infrastructure in this repo — no test files, no test deps, no CI — so this is the
   substitute. Diff against it after every content change.
 - **Four subtypes mapped** in `resolveInteraction()` (`matrix`, `scale`, `row_list`,
@@ -725,7 +725,7 @@ Frontend live at `ikanhealth.in`; edge function **v315**. Typecheck **216 → 21
 
 | Commit | What |
 |---|---|
-| `9251d21a` | **Block census baseline**, 498 rows, at `src/docs/module-maps/census/`. There is no test infrastructure in this repo — no test files, no test deps, no CI — so this is the substitute. Diff against it after every content change |
+| `9251d21a` | **Block census baseline**, 498 rows, at `docs/module-maps/census/`. There is no test infrastructure in this repo — no test files, no test deps, no CI — so this is the substitute. Diff against it after every content change |
 | `8633b97d` | **Catalog reconciled** — `block_type` +`quiz` −`sleep-diary`, `exercise_subtype` +`number`, in **both** KV and `metadata-catalog.ts` (`/categories/sync` upserts from seed and never deletes). `UNDECLARED_TYPE` 12→0 |
 | `f3e732f7` | **`slug` carried through** in `AssessmentFlow` — the interface never declared it, so preset lookup ran entirely on the `slugify(title)` fallback |
 | `dc430d64` | **Group B**, 10 code fixes — B1, B2, B4, B6, B7, B8, B9, B13 |
@@ -823,7 +823,7 @@ changed"), by another session. CI has been green for the last five runs.
 Two notes for the record:
 
 - **`.lint-baseline` was raised, 905 → 911.** The plan written at the time
-  (`src/docs/ci-lint-ratchet-plan.md`) argued against this: the ratchet's own
+  (`docs/ci-lint-ratchet-plan.md`) argued against this: the ratchet's own
   comment says lower it when problems clear and never raise it silently. It was
   raised anyway. Not re-litigating it here — recording that the line moved, so
   the next person knows 911 is not a historic floor.
@@ -1166,8 +1166,9 @@ score. The raw sum stays — `ikan-score-routes` aggregates from it.
 disagreeing, live right now. The label lookup is ordered so the computed
 breakdown wins.
 
-### A whole duplicate build setup exists and never runs
-`/src/vite.config.ts`, `/src/package.json`, `/src/index.html` and
+### ~~A whole duplicate build setup exists and never runs~~ — RESOLVED 2026-09-21
+Deleted on `restructure/codebase-separation` (`cbded856`), with the rest of the dead
+`src/` build config. Original note: `/src/vite.config.ts`, `/src/package.json`, `/src/index.html` and
 `/src/public/sw.js`. Vite's root is the project root. This is why `/sw.js`
 returns SPA HTML with a 200 and no service worker has ever installed, and why a
 caching fix was written this session for code that never executes.
@@ -1371,7 +1372,7 @@ were wrong — the exact signature of a 0-4 map read against 1-5 bands.
    `'excluded'` branch is unreachable for a different reason than stated.
 
 ### W2 — active time on task. DONE
-Owner chose active time. `lib/active-time.ts` counts only while visible AND
+Owner chose active time. `app/lib/active-time.ts` counts only while visible AND
 focused; a resumed run seeds from the draft's banked seconds, so two sittings
 of two minutes are four minutes. Stopped before scoring and the network write.
 Absent stays absent all the way to the record — no `?? 0`. `useOfflineSync`
@@ -1383,7 +1384,7 @@ question, so the field is `duration_seconds` — a duration, not a claim about
 attention.
 
 ### W3 — equip duration. DONE
-`lib/equip-meta.ts`. Days resolve from `daily_content.length`;
+`app/lib/equip-meta.ts`. Days resolve from `daily_content.length`;
 `duration_days` agrees with it on **one of four** live programmes.
 `equipDurationLooksImplausible()` reports the disagreement rather than hiding
 it. Three call sites repointed — and `EquipPrograms:150` read `total_days ||
@@ -1404,7 +1405,7 @@ untouched. W5 alone needs rule-table schema changes, a `primary` flag on
 
 ### ⚠ Concurrent sessions are writing this repo
 
-A second Claude session was committing throughout this pass. It ran a broad
+A second outputs/vocabulary.md session was committing throughout this pass. It ran a broad
 `git add` and swept part of W2 — `active-time.ts`, its test,
 `assessment-routes.ts`, `useOfflineSync.ts` and the `api-client` timing
 parameter — into **667cba1e, "feat(blocks): the requirements table runs against

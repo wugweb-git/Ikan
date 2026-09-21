@@ -22,7 +22,7 @@ Edge function (unaffected — this was frontend-only + direct KV fixes) and fron
 `GET /categories` confirmed clean via the live endpoint post-deploy.
 
 The brief for this audit named 20 types; the actual `MetadataType` union in
-`src/lib/metadata-catalog.ts` and the `ALL_TYPES` array in `AdminCategoryManager.tsx` both list
+`src/shared/lib/metadata-catalog.ts` and the `ALL_TYPES` array in `AdminCategoryManager.tsx` both list
 **21** (the 20 named plus `checkin_block_type`, which is also in the requested list — the
 requester's count was just off by one). All 21 are covered below. `mood_type` is a 22nd value
 still wired into `useMetadata.ts`'s bucket map but deliberately excluded from `ALL_TYPES` and from
@@ -54,7 +54,7 @@ All 21 types use the same write path (`AdminCategoryManager.tsx` → `POST/PUT/D
 /admin/categories`, `admin-routes.ts`) and the same read path (`GET /categories`, `index.tsx`) —
 **confirmed identical for every type**, unlike the mood_type case where write and read pointed at
 different prefixes. The catalog counts below are `METADATA_CATALOG_ITEMS` entries in
-`src/lib/metadata-catalog.ts`; "extra" means real records exist beyond the catalog seed.
+`src/shared/lib/metadata-catalog.ts`; "extra" means real records exist beyond the catalog seed.
 
 | Type | KV records | vs. catalog seed | Real consumer(s) | Status |
 |---|---:|---|---|---|
@@ -86,7 +86,7 @@ type, no placeholder/test content. 4 types have confirmed issues, detailed below
 
 ## How the system actually works (verified, not inferred from names)
 
-- `useMetadata()` (`src/hooks/useMetadata.ts`) fetches once via `apiClient.getPublicCategories()`
+- `useMetadata()` (`src/shared/hooks/useMetadata.ts`) fetches once via `apiClient.getPublicCategories()`
   → `GET /categories` (`index.tsx` line 3260, the live handler — a second, byte-identical `GET
   /categories` at line 4298 is dead code, shadowed because Hono matches the first-registered route
   and `registerAdminRoutes`/direct `app.get` calls execute before line 4298 is ever reached).
@@ -300,7 +300,7 @@ flowchart TD
 1. All 21 per-type counts came from one grouped query
    (`select value->>'type', count(*) from kv_store_cc205da9 where key like 'category:%' group by
    1`), cross-checked against `METADATA_CATALOG_ITEMS` counted directly from
-   `src/lib/metadata-catalog.ts`, not from memory or documentation.
+   `src/shared/lib/metadata-catalog.ts`, not from memory or documentation.
 2. The 22 null-type rows were pulled with full record bodies (`select key, value ...`), not just
    counted — their `group`/`created_at`/`id` fields were read directly to determine they're a
    pre-catalog legacy shape, not a query artifact.
