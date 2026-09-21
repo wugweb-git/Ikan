@@ -91,7 +91,7 @@ fresh page visit.
 | `/admin/payment-gateway` | AdminPaymentGateway | Newly given a URL this pass |
 | `/admin/kv-audit` | AdminKVAudit | Newly given a URL this pass |
 
-**Removed this pass** (see `repo-hygiene-audit.md`/`CHANGELOG.md` for why): `/admin/analytics`
+**Removed this pass** (see `repo-hygiene-audit.md`/`docs/CHANGELOG.md` for why): `/admin/analytics`
 (redundant, same component already embedded on Reporting), `/admin/crud` ("System Health" — actually
 a raw KV CRUD-testing tool, mislabeled), `/admin/backup` (real functionality, removed from nav only
 per direct instruction — not broken).

@@ -10,8 +10,8 @@ rule below traces to something that actually broke.
 When you ship a change (edge function deploy, frontend deploy, or a Supabase migration that
 changes schema/data), update before you consider the work done:
 
-- **`CHANGELOG.md`** — always. One entry, dated, describing what changed and why.
-- **`PENDING.md`** — when the change closes or opens an item there. Don't let it silently drift out
+- **`docs/CHANGELOG.md`** — always. One entry, dated, describing what changed and why.
+- **`docs/PENDING.md`** — when the change closes or opens an item there. Don't let it silently drift out
   of sync with reality.
 - **`CLAUDE.md`** — when the change affects an architectural fact stated there (a new KV prefix, a
   new table, a changed deploy step, a new "don't do X" rule).
@@ -35,7 +35,7 @@ The same applies to any new reverse-index prefix (a `{thing}_slug:` or similar l
 entity's registry entry should declare it via `linkedPrefixes`, and the entity's create/update/delete
 handlers must all maintain it. A slug index written by create but not cleaned up by delete, or
 maintained by only one of two duplicate CRUD code paths, is exactly the kind of drift that produces
-orphans — see `PENDING.md` §C for the current list of prefixes with this problem.
+orphans — see `docs/PENDING.md` §C for the current list of prefixes with this problem.
 
 ## 3. Relations are checked on value fields, not key structure
 
@@ -66,7 +66,7 @@ Repeated in several places historically; stated here as the authority:
 - **Frontend and edge function deploy independently** and nothing links them. Run
   `deploy-edge.sh` whenever a merge touches `src/supabase/functions/server/`, and smoke-test
   `/health`, `/assessments`, `/equip/programs`, `/scales/moods` immediately after every edge deploy.
-- Because of the above, **"committed" does not mean "live."** Check `PENDING.md` and the
+- Because of the above, **"committed" does not mean "live."** Check `docs/PENDING.md` and the
   actual Vercel/Supabase deployment state before assuming a fix is in production.
 
 ## 5. Don't purge KV without checking the registry and taking a snapshot
@@ -79,6 +79,6 @@ Rule 2. Take a fresh backup snapshot before any bulk delete that isn't purely ad
 ## 6. Docs hygiene
 
 - Don't create a new top-level `.md` file for a one-off note — it becomes stale and nobody deletes
-  it. Use `PENDING.md` for open work, `CHANGELOG.md` for what shipped.
-- When a doc becomes fully superseded (like `docs/KNOWN-ISSUES.md` → `CHANGELOG.md`), delete it
+  it. Use `docs/PENDING.md` for open work, `docs/CHANGELOG.md` for what shipped.
+- When a doc becomes fully superseded (like `docs/KNOWN-ISSUES.md` → `docs/CHANGELOG.md`), delete it
   in the same commit as the replacement, and grep for references to the old filename first.

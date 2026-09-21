@@ -67,7 +67,7 @@ this fix not independently confirmed by direct query, unlike everything else in 
 ## Frontend engine (`evaluateAssessment`) — already audited and fixed earlier this session
 
 - **Fixed**: hardcoded `'stress'`/`'burnout'` program-slug fallback (real slugs are
-  `stress-buster`/`burnout-reset`) — see `PENDING.md`.
+  `stress-buster`/`burnout-reset`) — see `docs/PENDING.md`.
 - **Fixed**: `loadEngineConfig()`'s false `loadedFromBackend: true` — it now only reports success
   when a rule actually has the `.severity`/`.message`/etc. fields it looks for (no real rule ever
   has), instead of inferring success from row count alone.

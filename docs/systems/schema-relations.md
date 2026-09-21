@@ -275,7 +275,7 @@ from an earlier answer.
 All five shadow tables carry `RLS` with `auth.uid() = user_id` (verified by impersonation test —
 see root `CLAUDE.md`). The edge function uses the service role and bypasses RLS entirely, so this
 protects only direct client-side Postgres access, not the API. None of the five is a live read path
-yet — KV remains authoritative for all five entities until an explicit cutover (`PENDING.md` §D).
+yet — KV remains authoritative for all five entities until an explicit cutover (`docs/PENDING.md` §D).
 
 ## Relations that hold vs. relations with breaks (tight vs. loose)
 
@@ -336,10 +336,10 @@ orphans/mismatches likely if untouched. Each links to its full write-up rather t
 | `activity_log:`, `corporate_program:`, `user_employer:` were double-JSON-encoded at write time | `JSON.stringify()` passed into `kv.set()`, which serializes itself | **Fixed 2026-08-12** — 3 call sites corrected, 604 existing `activity_log:` rows migrated in place, above |
 | `activity:daily:` has no size cap | Unlike `user_activity:`; unbounded growth per purge run | Registered, cap not added |
 | 2 ghost `user:` rows have real data attached elsewhere | `00000000...a001` (7 journal entries), `107e08ee...` (enrollment + ikan_score) | Found this turn, above — needs a product decision |
-| `Dashboard.tsx` fetches a backend result it never renders | `recData`/`topRecDetails`, dead in the render tree | `recommendation-frontend-vs-backend.md`, `PENDING.md` |
-| `/admin/block-type-viewer` missing from `validRoutes` | URL and sidebar nav disagree | `PENDING.md` |
-| Admin KV Audit dashboard showed stale numbers (deployed-vs-source drift) | User caught this directly; live-simulated `classifyKey()` gave 1 uncategorized key vs. dashboard's ~595, `KV_SCHEMA.length` 96 vs. dashboard's 94 | Redeployed `make-server-cc205da9` this pass — `PENDING.md` |
-| "Multi-Tenant Prefix Sync" tile's count is mislabeled; one sync target is harmful | Count is actually critical-growth-warning count, unrelated; `resource: → library:resource:` sync target contradicts the registry's own "deprecated, regression if populated" note | Found this turn, not fixed — `PENDING.md` |
+| `Dashboard.tsx` fetches a backend result it never renders | `recData`/`topRecDetails`, dead in the render tree | `recommendation-frontend-vs-backend.md`, `docs/PENDING.md` |
+| `/admin/block-type-viewer` missing from `validRoutes` | URL and sidebar nav disagree | `docs/PENDING.md` |
+| Admin KV Audit dashboard showed stale numbers (deployed-vs-source drift) | User caught this directly; live-simulated `classifyKey()` gave 1 uncategorized key vs. dashboard's ~595, `KV_SCHEMA.length` 96 vs. dashboard's 94 | Redeployed `make-server-cc205da9` this pass — `docs/PENDING.md` |
+| "Multi-Tenant Prefix Sync" tile's count is mislabeled; one sync target is harmful | Count is actually critical-growth-warning count, unrelated; `resource: → library:resource:` sync target contradicts the registry's own "deprecated, regression if populated" note | Found this turn, not fixed — `docs/PENDING.md` |
 
 ## Appendix: full audit history (from the published artifact)
 

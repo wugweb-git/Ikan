@@ -14,14 +14,13 @@ product surfaces `product/app/` and `product/site/` — plus one **non-UI** laye
 ```
 /
 ├── CLAUDE.md · AGENTS.md    # AI/developer rules (read every session)
-├── README.md · CHANGELOG.md · PENDING.md
-├── SESSIONS.md             # concurrent-session protocol
+├── README.md
 ├── index.html               # the only Vite entry (GA tag, OG/Twitter meta)
 ├── vite.config.ts · tsconfig.json · eslint.config.js · package.json
 ├── vercel.json              # SPA rewrites, headers, git deploy branches
 ├── scripts/                 # ratchets + guarded deploy scripts; baselines/ holds each ratchet's number
 ├── public/                  # static files served at /
-├── docs/                    # all other documentation: BUILD, BRAND, GOVERNANCE, architecture… (archive/ = superseded)
+├── docs/                    # all other documentation: PENDING, CHANGELOG, SESSIONS, BUILD, BRAND, GOVERNANCE, architecture… (archive/ = superseded)
 ├── dev/                     # dev-only harness pages (vite dev → /dev/<name>.html); not built
 └── src/
 ```

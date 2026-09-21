@@ -5,7 +5,7 @@ missing-slug-fallback bug fixed 2026-08-06** — this equip's real UUID id is wh
 here, but any user who started the program via its `/equip/sleep-tight` slug URL had their
 progress silently miskeyed under the raw slug string instead. Two separate users hit this
 (discovered in two passes); both were migrated by hand. The underlying code bug is now fixed, so
-this should not recur for future enrollments. See `PENDING.md` and the stability audit artifact's
+this should not recur for future enrollments. See `docs/PENDING.md` and the stability audit artifact's
 §04 for the full root-cause writeup.
 
 ## Meta

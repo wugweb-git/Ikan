@@ -1,7 +1,7 @@
 # Changelog — iKan Health
 
 Dated record of what shipped and why. See `GOVERNANCE.md` for the rule that keeps this updated, and
-`PENDING.md` for what's still open. Reverse chronological.
+`docs/PENDING.md` for what's still open. Reverse chronological.
 
 Entries before 2026-08-05 are reconstructed from `src/docs/KNOWN-ISSUES.md` (now retired — its
 Sessions 1–13 log became this file) and are dated by commit history where available, otherwise left
@@ -11,10 +11,10 @@ undated under their original session number.
 
 ## History moved from PENDING.md (2026-09-21)
 
-On 2026-09-21 `PENDING.md` was cut down to open work only. Everything below was moved here
+On 2026-09-21 `docs/PENDING.md` was cut down to open work only. Everything below was moved here
 **verbatim**, in its original order and with its original headings — which is why some headings
 below are `##` and some sit under small `###` labels added only to say where a fragment came from.
-Open items inside these blocks were first copied into `PENDING.md`, tagged with the block they came
+Open items inside these blocks were first copied into `docs/PENDING.md`, tagged with the block they came
 from. The only edits to moved text: the reference to the deleted `docs/ci-lint-ratchet-plan.md` in
 the Assessments module closeout is annotated, and two clearly marked notes (a "MOOT 2026-09-21" on
 the `page_slug:` row, a "Resolution note" after the §C1 player item) were added.
@@ -33,7 +33,7 @@ Previously: 2026-08-07, removing 7 dead/placeholder questions across General, Bu
 (found via a systematic live-vs-scoring-config check run across all 7 assessments after a user
 screenshot caught General's), a real production bug fix (General's admin builder was behind what
 live users saw, root-caused to a stale `daily_content` cache), and finding the admin notification
-bell is unwired from real data. See `CHANGELOG.md` for full detail. All work through this point is
+bell is unwired from real data. See `docs/CHANGELOG.md` for full detail. All work through this point is
 committed and pushed to `origin/equip-carry-forward`.*
 
 ### From PENDING.md § Blocks module — closed list
@@ -473,7 +473,7 @@ changes are covered only by the scratch harness and by review — see the deploy
   for any future KV data-shape fixes.
 - **Repo doc cleanup** — the 2 iKan-specific plan-mode scratch files (Batch 1–6, and this session's
   own working plan) were deleted from `~/.claude/plans/` now that their content is fully carried into
-  this file / `CHANGELOG.md`. The 10 plan files belonging to other projects in that same directory
+  this file / `docs/CHANGELOG.md`. The 10 plan files belonging to other projects in that same directory
   were confirmed unrelated and left untouched.
 
 ## Prior-session context (Batch 1–6) — condensed
@@ -662,7 +662,7 @@ Two notes for the record:
   `AssessmentResults.tsx`, `useState<any[]>` for `recommended` / `articles`,
   and an unused `backgroundAlt` on `SectionHero`. Clearing those is the honest
   way back down; the plan document listed them file by file (now carried in
-  `PENDING.md` §C2).
+  `docs/PENDING.md` §C2).
 
 ### Open — owner decisions, not work in progress
 - ~~**Public bucket.**~~ **Resolved 2026-09-15.** The content buckets are public,
@@ -1358,7 +1358,7 @@ B6 shipped early (`1e781990`). B1 is unblocked now A6 has passed.
 ### Carried from `docs/archive/ci-lint-ratchet-plan.md` (deleted 2026-09-21)
 
 Written 2026-09-08 as "planned, not executed". Its §1 (the `AdminWidget` rules-of-hooks crash) was
-fixed in `0f035d83`; its §2 warnings are carried in `PENDING.md` §C2; its §3 ("do not raise the
+fixed in `0f035d83`; its §2 warnings are carried in `docs/PENDING.md` §C2; its §3 ("do not raise the
 baseline") was overridden (905 → 911) — all recorded in the Assessments module closeout above.
 Its verification step 3 is now standing practice: for any UI change, grep the served chunk for a
 string the feature must contain and report that grep beside the test result.
@@ -1371,11 +1371,11 @@ string the feature must contain and report that grep beside the test result.
   at `src/` as the composition root); Stage 4 lint boundary `f5de4970` (`no-restricted-imports`,
   `scripts/boundary-ratchet.mjs`, `npm run lint:boundary` in CI); boundary fixes `6ceefe12`
   (crossings 5 → 0; admin's `BlockRenderer`/`ProgramPlayer` previews allowed by name); UI split
-  `91c48f61` + `ce452cf4`. Remaining work is in `PENDING.md` §F.
+  `91c48f61` + `ce452cf4`. Remaining work is in `docs/PENDING.md` §F.
 - The CMS Pages + Hero Banner unmap (old Workstream B) was merged in PRs #13/#14/#15.
 - Confirmed 2026-09-21: `src/shared/api.ts` no longer exports `getHeroBanner`/`updateHeroBanner`/
   `resetHeroBanner`; `AdminBackupManager` and `AdminCRUDTesting` were deleted in `bf1f67d3`
-  (flagged for Vedanshu in `PENDING.md` §F); `src/components/` no longer exists.
+  (flagged for Vedanshu in `docs/PENDING.md` §F); `src/components/` no longer exists.
 
 ### Carried from `docs/archive/HANDOFF-2026-09-01.md` (deleted 2026-09-21)
 
@@ -1415,7 +1415,7 @@ Report what changed, what you verified it against, and what you did **not** veri
 
 ### Carried from `docs/archive/MASTER-PENDING-2026-09-01.md` (deleted 2026-09-21)
 
-Its open items went to `PENDING.md` (§A compliance decisions, §C audit residue). The closed record
+Its open items went to `docs/PENDING.md` (§A compliance decisions, §C audit residue). The closed record
 follows verbatim. The two repair SQL statements (§2.5, run 2026-09-01) are not reproduced; they are
 in git history at that path.
 
@@ -1460,7 +1460,7 @@ in git history at that path.
 
 ### 2.2 Burnout 22 vs 23 — resolved [NEW, VERIFIED]
 
-`PENDING.md` §A has carried this as an open decision: *"Burnout has 22 real items; BAT-23 defines 23. Author a genuine 23rd item, or treat 22 as intentional."*
+`docs/PENDING.md` §A has carried this as an open decision: *"Burnout has 22 real items; BAT-23 defines 23. Author a genuine 23rd item, or treat 22 as intentional."*
 
 **Neither.** I pulled all 23 item texts. **Items 9 and 10 are the same question:**
 
@@ -1469,7 +1469,7 @@ in git history at that path.
 10:  At work, I do not think much about what I am doing, and I function on autopilot
 ```
 
-23 rows, **22 unique items**. `PENDING.md`'s "22 real items" was right; the 23rd is a duplicate, not a gap. **The fix is deleting one row, not authoring new clinical content.**
+23 rows, **22 unique items**. `docs/PENDING.md`'s "22 real items" was right; the 23rd is a duplicate, not a gap. **The fix is deleting one row, not authoring new clinical content.**
 
 Consequence: every Burnout result in the live data was scored against a duplicated item, inflating the total by up to one item's weight. 133 assessment results exist — determine how many are Burnout before deciding whether to rescore.
 
@@ -1556,7 +1556,7 @@ rather than accurate-by-citation, and **should get a legal read** before it is t
 ## Blocked — and the approved fix was unsafe
 
 **C-1 / §2.2 Burnout must not be actioned as written.** The plan, this document, `burnout.md:5,25`
-and `PENDING.md` §A all prescribe deleting one of items 9/10 as a duplicate. Deleting a row would
+and `docs/PENDING.md` §A all prescribe deleting one of items 9/10 as a duplicate. Deleting a row would
 **destroy a real BAT item** and drop Mental Distancing from 5 scored items to 4.
 
 The two ids are referenced in `assessment-section-presets.ts:174-175` as *different* items. Three
@@ -2810,7 +2810,7 @@ targets would create the exact regression the registry warns against.** The tile
 Its `resource: → library:resource:` target (`AdminKVAudit.tsx:745`) syncs into a prefix `KV_SCHEMA`
 explicitly documents as a deprecated mirror that should stay empty — running this sync as built would
 create a real regression. Also: "multi-tenant" mischaracterizes what this is (a single-tenant app's
-admin-write/user-read prefix split, not multiple customer orgs). See `PENDING.md`.
+admin-write/user-read prefix split, not multiple customer orgs). See `docs/PENDING.md`.
 
 **Live ghost-user cleanup: 5 of 7 orphaned `user:` KV rows deleted.** `user:` KV vs. `auth.users`:
 13 rows, 6 real, 7 ghost. 2 had zero downstream references and were plain orphans; 3 more were
@@ -2839,7 +2839,7 @@ zero data, like the Scoring Engine).**
 sidebar nav disagree; `day-presets.ts`'s `allowedBlocks` enforcement is computed and then silently
 discarded (`blockedComponents` alone is enforced); a 4th block vocabulary
 (`mcq_single`/`table_input`/etc.) bridges to `block_type`/`exercise_subtype` only via hardcoded
-string matching. All precisely written up in `PENDING.md` for a future pass.
+string matching. All precisely written up in `docs/PENDING.md` for a future pass.
 
 ## 2026-08-06 (continued V)
 
@@ -3057,7 +3057,7 @@ direction-aware severity colouring (a high WHO-5 is good news; a high GAD-2 is n
 raw percentage would invert the positively-worded scales). Sections reference questions by ID, not
 position — the original spec's positional ranges (q1–2, q3–4, etc.) did not match the actual
 question order. Two content gaps remain open (Depression/PHQ-2 has no mapped questions; Anxiety/GAD-2
-has 1 of 2 items) — see `PENDING.md`. Fixed a latent bug found along the way: both offline-queue
+has 1 of 2 items) — see `docs/PENDING.md`. Fixed a latent bug found along the way: both offline-queue
 payloads dropped `maxScore` on sync, corrupting the iKAN score's fallback path.
 
 **KV orphan detection rebuilt; cascading deletes added.** The orphan auditor was wrong in both

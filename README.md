@@ -37,7 +37,7 @@ rules around adding a new one (there's a specific incident behind why that rule 
 **User data is mid-migration to real tables.** Five entities (assessment results, enrollments,
 program progress, journal entries, iKAN scores) are being moved out of the KV blob into typed
 Postgres tables with row-level security. Journal is dual-writing today; KV remains the source of
-truth until each entity's read path cuts over. Status: `PENDING.md` §D.
+truth until each entity's read path cuts over. Status: `docs/PENDING.md` §D.
 
 **Routing is client-side**, custom, in `src/App.tsx`. Public detail pages use human-readable slugs
 resolved by the backend (with a client fallback): `/assessment/<slug>`, `/equip/<slug>` (legacy
@@ -72,8 +72,8 @@ ratchets and a build on every pull request and on pushes to `equip-carry-forward
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Stack detail, KV prefix map, CMS content rules, explicit don'ts |
 | [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) | Process rules — why they exist, what incident each one prevents |
-| [`PENDING.md`](PENDING.md) | Outstanding work, known defects, items blocked on external action |
-| [`CHANGELOG.md`](CHANGELOG.md) | Dated record of what shipped |
+| [`docs/PENDING.md`](docs/PENDING.md) | Outstanding work, known defects, items blocked on external action |
+| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Dated record of what shipped |
 | [`docs/BRAND.md`](docs/BRAND.md) | Voice, identity, crisis-resource copy standard, domain/email conventions |
 | [`docs/BUILD.md`](docs/BUILD.md) | Build/deploy reference, env vars, migrations |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture decisions and deep-dive |

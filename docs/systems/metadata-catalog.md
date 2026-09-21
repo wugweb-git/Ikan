@@ -100,7 +100,7 @@ type, no placeholder/test content. 4 types have confirmed issues, detailed below
 - **`POST /categories/sync`** (`index.tsx` line 3284) is real and functional — it bulk-upserts
   `METADATA_CATALOG_ITEMS` from `metadata-catalog.ts`, keyed by `type::slug`, skipping items that
   already exist unless `updateExisting` is passed. This *is* how most of the 203 typed records got
-  their exact catalog-matching counts (confirmed via `CHANGELOG.md`'s Session-13 entry describing
+  their exact catalog-matching counts (confirmed via `docs/CHANGELOG.md`'s Session-13 entry describing
   this exact sync run). **Initial investigation of this repo's uncommitted working-tree diff
   briefly suggested this route had been deleted — it has not; `git diff HEAD` shows the deletion
   comment refers only to the already-removed `POST/PUT/DELETE /categories` trio, and the sync

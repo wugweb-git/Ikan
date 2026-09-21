@@ -2,7 +2,7 @@
 
 This file is read by AI coding assistants. It documents the conventions, architecture decisions, and sharp edges that aren't obvious from reading the code.
 
-**Also read:** [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) (process rules — each one traces to a real incident), [`PENDING.md`](PENDING.md) (outstanding work, updated per deploy), [`CHANGELOG.md`](CHANGELOG.md) (dated record of what shipped).
+**Also read:** [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) (process rules — each one traces to a real incident), [`docs/PENDING.md`](docs/PENDING.md) (outstanding work, updated per deploy), [`docs/CHANGELOG.md`](docs/CHANGELOG.md) (dated record of what shipped).
 
 ---
 
@@ -102,7 +102,7 @@ Key prefixes:
 
 ## Migration in progress: user data → real tables
 
-User data is being moved out of the KV blob into real Postgres tables, one entity at a time: **shadow tables + RLS → dual-write → cut over reads → retire the KV prefix.** Row counts change as usage continues; see `PENDING.md` §D for current status, not this file.
+User data is being moved out of the KV blob into real Postgres tables, one entity at a time: **shadow tables + RLS → dual-write → cut over reads → retire the KV prefix.** Row counts change as usage continues; see `docs/PENDING.md` §D for current status, not this file.
 
 | Table | Source prefix | Status |
 |-------|---------------|--------|
@@ -328,10 +328,6 @@ softened local wording in place of PHQ-9's validated item, so the 0-27 range and
 edges are PHQ-9-*derived*, not validated cut-offs. GAD-7 and the embedded GAD-2/PHQ-2 screens are
 unmodified and may be named as such.
 
-`depression-q9` ("Feeling that life is meaningless") stays **scored and unflagged** — decided
-2026-09-03. The crisis pathway (`triggerCrisisSupport` in `AssessmentFlow.tsx`) therefore fires
-only from General's `general-q5`.
-
 **Burnout** — declared 1-5 (BAT published), five scores on `calc: 'mean'`, sub-scale values 1-5.
 Allocation is **BAT-23 8/5/5/5, decided 2026-09-03**: Exhaustion q1-q8, Mental distance q9-q13,
 Cognitive q14-q18, Emotional q19-q23, plus an overall mean across all 23. `burnout-q11` is now
@@ -465,7 +461,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 - Email confirmation is ON. New users get a Supabase native confirmation email.
 - `/reset-password` route exists (`src/product/app/screens/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
-- Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
+- Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `docs/PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
 
 ---

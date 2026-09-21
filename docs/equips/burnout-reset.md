@@ -1,7 +1,7 @@
 # Unburn — "Burnout Reset"
 
 Pulled live from `equip:416feb50-e73f-4898-a996-f8a4695a708e` on 2026-08-06. **Note:**
-`EquipService.getEquip()`'s missing-slug-fallback bug (fixed 2026-08-06, see `PENDING.md`) meant
+`EquipService.getEquip()`'s missing-slug-fallback bug (fixed 2026-08-06, see `docs/PENDING.md`) meant
 any equip could in principle have progress silently miskeyed under its slug instead of its real id
 when started via a `/equip/<slug>` URL — confirmed hitting Sleep Tight twice; no evidence found of
 it affecting this program specifically, but the fix now covers all equips going forward.

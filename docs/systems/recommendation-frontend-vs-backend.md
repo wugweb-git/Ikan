@@ -71,7 +71,7 @@ Read `Dashboard.tsx` directly (not just grepped) to get this right:
 So `Dashboard.tsx` makes a real network round-trip (`GET /recommendations` + a follow-up
 `getEquipProgram()` call) whose result is fetched, cached, and never shown to the user — while doing
 separate, real work via `evaluateAssessment()` that *is* shown. **Not fixed here, per this turn's
-scope (documentation only)** — see `PENDING.md` for the precise fix.
+scope (documentation only)** — see `docs/PENDING.md` for the precise fix.
 
 ## Hardcoded content flagged along the way (per the "no orphaned/hardcoded mapping" standard)
 

@@ -93,6 +93,6 @@ source-of-truth decision) and predates several changes documented in `systems/`.
 - [`docs/BUILD.md`](BUILD.md) — build and deploy reference.
 - [`docs/BRAND.md`](BRAND.md) — brand and content standards.
 - [`docs/GOVERNANCE.md`](GOVERNANCE.md) — process rules, each traced to an incident.
-- [`PENDING.md`](../PENDING.md) — what's still open, kept current per fix.
-- [`CHANGELOG.md`](../CHANGELOG.md) — dated record of what shipped.
-- [`SESSIONS.md`](../SESSIONS.md) — concurrent-session protocol: who owns which files and KV prefixes.
+- [`docs/PENDING.md`](PENDING.md) — what's still open, kept current per fix.
+- [`docs/CHANGELOG.md`](CHANGELOG.md) — dated record of what shipped.
+- [`docs/SESSIONS.md`](SESSIONS.md) — concurrent-session protocol: who owns which files and KV prefixes.

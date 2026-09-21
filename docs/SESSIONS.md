@@ -70,7 +70,7 @@ two tokens for one value:
 resolve, so no call site in either session's work breaks** — `AboutUs.tsx` points
 at `-on-wash`, the other five hues use `-text`. The value is defined once.
 
-This was a shared-file seam that `SESSIONS.md` did not cover: neither session was
+This was a shared-file seam that `docs/SESSIONS.md` did not cover: neither session was
 wrong, and neither could have seen the other's token before it landed. If a third
 token for the same job appears, alias it the same way rather than picking a winner
 and rewriting call sites.
@@ -423,7 +423,7 @@ routes (`index.tsx` `/upload` and `/upload-image`, `admin-routes.ts`
 `/admin/media/upload`), `scripts/deploy-guard.sh`, `scripts/deploy-prod.sh`,
 `scripts/deploy-edge.sh` (new), `src/App.tsx` + `src/lib/route-config.ts` (the
 dead `/admin/pages` entry left by the Page Manager removal), `BUILD.md`,
-`CLAUDE.md`, `PENDING.md`, `CHANGELOG.md`.
+`CLAUDE.md`, `docs/PENDING.md`, `docs/CHANGELOG.md`.
 
 `App.tsx` is listed above as SYSTEM MAP-claimed; this touches only one string in
 the valid-routes array, the same list the Page Manager removal already edited.

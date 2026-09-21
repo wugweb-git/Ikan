@@ -15,7 +15,7 @@ skip) despite being **known, documented dead weight since 2026-08-06** —
 `gen-dep-q1`/`gen-dep-q2`, and were never removed once the real replacements were added. Caught when
 a user screenshotted them live in production. Removed from `questions[]` on both `assessment_def:`
 and the `assessment:` mirror; the stale `daily_content` builder cache (a separate bug fixed earlier
-the same day — see `PENDING.md`) was cleared again since this edit changed `questions[]` again.
+the same day — see `docs/PENDING.md`) was cleared again since this edit changed `questions[]` again.
 
 This was found by systematically checking every assessment's live `questions[]` against every
 question id referenced by its own scoring preset in `assessment-section-presets.ts` — any question
@@ -100,4 +100,4 @@ issue in Burnout and Stress — see those docs.
    the reversal.
 5. q2/q3/q4 are permanently unscored under the current section design. If they should form their
    own section rather than being dropped, that's a product decision, not a bug — flagged in
-   `PENDING.md`.
+   `docs/PENDING.md`.

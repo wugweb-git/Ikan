@@ -5,11 +5,11 @@ something that changes what's here — see `docs/GOVERNANCE.md` for the rule.
 
 *Last updated: 2026-09-21 — restructured to hold **only open work**. Every closed item, the
 "Verified fixed" section, the Batch 1–6 summary and the eleven dated session-closeout / module-pass /
-Phase A blocks moved verbatim to `CHANGELOG.md` § "History moved from PENDING.md (2026-09-21)".
+Phase A blocks moved verbatim to `docs/CHANGELOG.md` § "History moved from PENDING.md (2026-09-21)".
 Open items found inside those blocks were extracted into the sections below, each tagged with the
 block it came from. `HANDOFF.md`, `docs/archive/MASTER-PENDING-2026-09-01.md`,
 `docs/archive/HANDOFF-2026-09-01.md` and `docs/archive/ci-lint-ratchet-plan.md` were folded in
-here or into `CHANGELOG.md` and deleted.*
+here or into `docs/CHANGELOG.md` and deleted.*
 
 ---
 
@@ -81,7 +81,7 @@ live blocks, and nothing is broken while it is undecided.
   three escalating ones).
 - **Leaked-password protection** → Supabase → Auth → Providers → enable HaveIBeenPwned check.
 - **Wellness score (iKAN) aggregation logic** — the per-assessment scoring fixed this session (see
-  "Verified fixed", now in `CHANGELOG.md`) is upstream of it, not it. Revisiting how the overall iKAN wellness score
+  "Verified fixed", now in `docs/CHANGELOG.md`) is upstream of it, not it. Revisiting how the overall iKAN wellness score
   is computed from per-assessment results is **explicitly deferred to a later session** (confirmed
   2026-08-06) — don't start on it opportunistically.
 - 🟡 **Check-in has no "Builder" of its own — by design, per this session's direction — but hasn't
@@ -101,7 +101,7 @@ live blocks, and nothing is broken while it is undecided.
   all** — 4 fully hardcoded questions, a commented-out `customQuestions // (future)` field that was
   never built. Distinct from the Mood Journal's daily check-in (`checkin_template:`) despite the
   similar name — confirmed while correcting a wrong claim that conflated the two (see "Verified
-  fixed", now in `CHANGELOG.md`). Not a bug, a real feature gap — flagging for whoever next touches program
+  fixed", now in `docs/CHANGELOG.md`). Not a bug, a real feature gap — flagging for whoever next touches program
   check-ins.
 - **`Dashboard.tsx` fetches the backend recommendation and never renders it.** `recData`
   (`apiClient.getRecommendations()`, line 222-224) and its follow-up `topRecDetails`
@@ -211,7 +211,7 @@ Also needs a human pass:
 - **`/dashboard/<username>` is not implemented** — there is no `username`/handle field in the
   `user:` schema to build it on. (Full URL map: `docs/systems/url-map.md`.)
 - 🟡 **("The above" = General's admin builder showing 24 of 27 questions, fixed 2026-08-07 — now in
-  `CHANGELOG.md`. Partly addressed 2026-09-01 in `5d60a9b3`: the wizard now reconciles
+  `docs/CHANGELOG.md`. Partly addressed 2026-09-01 in `5d60a9b3`: the wizard now reconciles
   `daily_content` against `questions[]` id-by-id on load; re-check whether a text-only edit still
   desyncs.)** **The underlying pattern that caused the above is still live — will recur on the next direct-SQL
   edit to any assessment's `questions[]`.** `AssessmentEditPageWizard.tsx:291`'s "only regenerate
@@ -363,7 +363,7 @@ only for display. Until then, every option rewording is a silent data loss event
 
 These were written while the 2026-09-01 deploy hold was active. The hold has since been lifted: the
 edge function was redeployed 2026-09-03 (see "Session closeout — 2026-09-03 (B1 / B5 / C1 / D3)"
-and "Final deployment — 2026-09-03", now in `CHANGELOG.md`), and `CLAUDE.md` describes Guardrail 11
+and "Final deployment — 2026-09-03", now in `docs/CHANGELOG.md`), and `CLAUDE.md` describes Guardrail 11
 as enforced. Whether each server-side refusal below is live has **not** been re-verified item by
 item — confirm with the §B scoring-guardrail pass before counting any of them as a guardrail.
 

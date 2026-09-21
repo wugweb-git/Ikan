@@ -338,7 +338,7 @@ gap.**
 `AdminBlockTypeViewer.tsx` is real and already builds a version of the comparison this doc
 formalizes — reachable at `/admin/block-type-viewer` directly (works on a fresh page load/bookmark)
 or via Admin → Config → "Block Types" in the sidebar. The URL and the sidebar click don't currently
-agree with each other (see `PENDING.md` for the precise, not-yet-fixed cause) — until that's fixed,
+agree with each other (see `docs/PENDING.md` for the precise, not-yet-fixed cause) — until that's fixed,
 bookmark the URL directly rather than relying on in-app navigation to reach it.
 
 ## Verification notes
