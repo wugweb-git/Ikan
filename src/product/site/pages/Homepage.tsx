@@ -19,8 +19,8 @@ import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 
 import { assessmentMeta, assessmentImage } from '../content/assessment-meta';
-import { apiClient } from '../../../shared/api';
-import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
+import { apiClient } from '../../../shared/api/api';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { NEWSLETTER_CONTENT } from '../content/content';
 
 interface HomepageProps {

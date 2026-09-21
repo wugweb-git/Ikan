@@ -7,10 +7,10 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { NotificationProvider } from '../src/shared/contexts/NotificationContext';
-import { EquipProgramWizard } from '../src/admin/screens/EquipProgramWizard';
-import '../src/product/styles/index.css';
-import '../src/admin/styles/index.css';
+import { NotificationProvider } from '../src/shared/state/NotificationContext';
+import { EquipProgramWizard } from '../src/admin/programs/EquipProgramWizard';
+import '../src/product/site/ui/styles/index.css';
+import '../src/admin/ui/styles/index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

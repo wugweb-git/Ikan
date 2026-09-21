@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
-import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
 
 interface AudienceCard {
   title: string;

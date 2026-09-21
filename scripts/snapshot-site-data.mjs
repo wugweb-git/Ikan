@@ -2,7 +2,7 @@
 //
 // ikanhealth.in serves static pages only (2026-09-21): the assessment, equip
 // and consultation pages render from JSON committed under
-// src/product/site/data/, not from live API calls. This script refreshes that
+// src/product/site/content/data/, not from live API calls. This script refreshes that
 // JSON from the same public, read-only endpoints any visitor's browser calls
 // (anon key). It writes nothing anywhere else.
 //
@@ -19,7 +19,7 @@ const info = readFileSync(join(ROOT, 'src/shared/config/supabase-info.tsx'), 'ut
 const projectId = info.match(/projectId\s*=\s*"([^"]+)"/)[1];
 const anonKey = info.match(/publicAnonKey\s*=\s*"([^"]+)"/)[1];
 const API = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
-const OUT = join(ROOT, 'src/product/site/data');
+const OUT = join(ROOT, 'src/product/site/content/data');
 
 async function get(path) {
   const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${anonKey}` } });
@@ -31,7 +31,7 @@ async function get(path) {
 //
 // ONLY the fields the five static pages read (src/product/site/pages/
 // {Assessments,AssessmentDetail,EquipPrograms,EquipDetail,Consultation}.tsx,
-// via src/product/site/lib/catalog.ts). Everything else the API returns is
+// via src/product/site/content/catalog.ts). Everything else the API returns is
 // dropped here, on purpose:
 //   - equip day/activity content (`daily_content`, `days`, onboarding, check-in
 //     config) is the paid programme itself — only its day/activity COUNTS ship;
@@ -75,7 +75,7 @@ function pickAssessment(a) {
 }
 
 function pickProgram(p) {
-  // Counts only — the same rule as src/product/app/lib/equip-meta.ts.
+  // Counts only — the same rule as src/product/app/programs/equip-meta.ts.
   const days = Array.isArray(p.daily_content) && p.daily_content.length > 0 ? p.daily_content
     : Array.isArray(p.days) ? p.days : [];
   let activities = 0;

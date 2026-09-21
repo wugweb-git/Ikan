@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
+import { useAuth } from '../../../shared/state/AuthContext';
 
 // Journey types from JSON specification
 export type JourneyStep = 

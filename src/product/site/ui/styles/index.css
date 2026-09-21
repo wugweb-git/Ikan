@@ -1,0 +1,6 @@
+@import 'tailwindcss' source(none);
+@import 'tw-animate-css';
+@import './globals.css';
+/* Scan all of src/: App.tsx mounts AdminWidget eagerly, so its classes must
+   exist before admin's own stylesheet loads. This generates classes; it shares no code. */
+@source '../../../../**/*.{js,ts,jsx,tsx}';

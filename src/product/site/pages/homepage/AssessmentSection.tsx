@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
-import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
-import imgPhoneMockup from "../../assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
+import imgPhoneMockup from "../../content/assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";
 
 interface AssessmentSectionProps {
   onGetStarted: () => void;

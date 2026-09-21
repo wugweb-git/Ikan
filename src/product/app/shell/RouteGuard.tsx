@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { requiresAuth } from '../lib/route-config';
+import { useAuth } from '../../../shared/state/AuthContext';
+import { requiresAuth } from '../ui/route-config';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 // Lazy-load LoginScreen to prevent it from being eagerly evaluated

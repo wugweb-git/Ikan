@@ -5,7 +5,7 @@ import { cn } from '../ui/utils';
 import { PageHero } from '../ui/PageHero';
 import { AssessmentCard } from '../ui/blocks/AssessmentCard';
 import { assessmentImage } from '../content/assessment-meta';
-import { getAssessments, type SiteAssessment } from '../lib/catalog';
+import { getAssessments, type SiteAssessment } from '../content/catalog';
 
 /**
  * The public assessment catalogue — static.

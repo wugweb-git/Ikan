@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { House, ArrowLeft, Search } from 'lucide-react';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
-import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 
 interface NotFoundProps {

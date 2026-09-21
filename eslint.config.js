@@ -101,7 +101,7 @@ export default tseslint.config(
   // actually see. Nothing else crosses.
   ...[
     { dir: 'admin', blocked: ['app', 'site'],
-      allow: ['app/blocks/BlockRenderer', 'app/features/player/ProgramPlayer'] },
+      allow: ['app/programs/BlockRenderer', 'app/programs/ProgramPlayer'] },
     { dir: 'app', blocked: ['admin', 'site'] },
     { dir: 'site', blocked: ['admin', 'app'] },
     { dir: 'shared', blocked: ['admin', 'app', 'site', 'components'] },

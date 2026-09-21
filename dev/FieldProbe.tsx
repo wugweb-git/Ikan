@@ -14,10 +14,10 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BlockEditorPane } from '../src/admin/builder/editor/BlockEditorPane';
-import type { Activity } from '../src/shared/blocks/block-model';
-import '../src/product/styles/index.css';
-import '../src/admin/styles/index.css';
+import { BlockEditorPane } from '../src/admin/block-builder/editor/BlockEditorPane';
+import type { Activity } from '../src/admin/block-builder/model/block-model';
+import '../src/product/site/ui/styles/index.css';
+import '../src/admin/ui/styles/index.css';
 
 interface ProbeSpec {
   type: string;

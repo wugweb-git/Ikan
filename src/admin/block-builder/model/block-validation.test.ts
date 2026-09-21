@@ -24,7 +24,7 @@ import type { Activity } from './block-model.ts';
 // so the strangler seam could never take hold, and any provenance a migration
 // wrote (`retyped_from`) would vanish on the next editor save.
 
-import { normaliseBlock } from '../../../shared/blocks/block-normalise.ts';
+import { normaliseBlock } from '../../../shared/api/block-normalise.ts';
 
 test('normaliseBlock preserves every field it does not normalise', () => {
   const stored = {

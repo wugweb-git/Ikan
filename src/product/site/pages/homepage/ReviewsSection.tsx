@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
 import { ImageWithFallback } from '../../ui/ImageWithFallback';
-import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
 
 /* ─── Data ─── */
 interface Review {

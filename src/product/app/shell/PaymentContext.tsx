@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useNotifications } from '../../../shared/contexts/NotificationContext';
-import { apiClient } from '../../../shared/api';
+import { useAuth } from '../../../shared/state/AuthContext';
+import { useNotifications } from '../../../shared/state/NotificationContext';
+import { apiClient } from '../../../shared/api/api';
 
 // Payment types from JSON specification
 export interface PaymentPlan {

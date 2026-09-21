@@ -3,9 +3,9 @@ import {
   LayoutDashboard, Smile, ClipboardCheck, LayoutGrid, Menu, X, LogOut, ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../ui/utils';
-import { useMobileOptimizations } from '../../hooks/useMobileOptimizations';
-import { preloadMoodJournal } from '../../lib/lazy-with-retry';
-import { useAuth } from '../../../../shared/contexts/AuthContext';
+import { useMobileOptimizations } from '../useMobileOptimizations';
+import { preloadMoodJournal } from '../lazy-with-retry';
+import { useAuth } from '../../../../shared/state/AuthContext';
 
 /** The More tab is a sheet, not a route. A sentinel keeps it out of the router. */
 const MORE = '__more__';

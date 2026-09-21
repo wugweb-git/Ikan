@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
 import { useIsMobile } from '../../ui/hooks/useIsMobile';
-import { DEFAULT_CMS_CONTENT } from '../../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../../content/cms-defaults';
 
 interface StatItem {
   value: string;

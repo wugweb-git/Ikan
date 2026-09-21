@@ -1,5 +1,5 @@
 import { Icon, AccountIcon, MoreIcon } from '../../ui/Icon';
-import { navigationConfig } from '../../lib/navigation';
+import { navigationConfig } from './';
 import { Button } from '../../ui/button';
 import { LogoIcon } from '../../ui/Logo';
 import { usePublicSettings } from '../../ui/hooks/usePublicSettings';

@@ -3,11 +3,11 @@ import { AssessmentBentoGrid } from '../ui/blocks/AssessmentBentoGrid';
 import { AssessmentBlock } from '../ui/blocks/AssessmentBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { MobileHeader } from '../ui/MobileHeader';
-import { useSeo } from '../hooks/useSeo';
+import { useSeo } from '../ui/hooks/useSeo';
 import { ASSESSMENT_CONTENT, NEWSLETTER_CONTENT } from '../content/content';
 import { assessmentImage } from '../content/assessment-meta';
-import { getAssessment, getAssessments, type SiteAssessment } from '../lib/catalog';
-import { APP_LOGIN_URL } from '../lib/app-origin';
+import { getAssessment, getAssessments, type SiteAssessment } from '../content/catalog';
+import { APP_LOGIN_URL } from '../content/app-origin';
 import { NotFound } from './NotFound';
 
 /**

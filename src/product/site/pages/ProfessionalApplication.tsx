@@ -1,5 +1,5 @@
-import { projectId } from '../../../shared/config/supabase-info';
-import { getAuthHeaders } from '../../../shared/supabase';
+import { projectId } from '../../../shared/api/supabase-info';
+import { getAuthHeaders } from '../../../shared/api/supabase';
 import { useState, useRef, useEffect } from 'react';
 import {
   User,

@@ -5,10 +5,10 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent } from '../ui/card';
-import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
-import { apiClient } from '../../../shared/api';
-import { useNotifications } from '../../../shared/contexts/NotificationContext';
+import { apiClient } from '../../../shared/api/api';
+import { useNotifications } from '../../../shared/state/NotificationContext';
 
 interface ContactUsProps {
   className?: string;

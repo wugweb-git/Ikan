@@ -1,7 +1,7 @@
 import { PageHero } from '../ui/PageHero';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
-import { getPrograms, type SiteProgram } from '../lib/catalog';
+import { getPrograms, type SiteProgram } from '../content/catalog';
 
 /**
  * The public Equip listing — static.

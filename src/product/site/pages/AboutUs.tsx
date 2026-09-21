@@ -4,7 +4,7 @@ import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { ResourceBlock } from '../ui/blocks/ResourceBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
-import { apiClient } from '../../../shared/api';
+import { apiClient } from '../../../shared/api/api';
 import {
   Heart,
   Shield,
@@ -15,7 +15,7 @@ import { NEWSLETTER_CONTENT } from '../content/content';
 import { PageHero } from '../ui/PageHero';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
-import { DEFAULT_CMS_CONTENT } from '../lib/cms-defaults';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 
 interface AboutUsProps {
   onNavigate?: (route: string, resourceId?: string) => void;

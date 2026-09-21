@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '../utils';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { LayoutGrid } from 'lucide-react';
-import { apiClient } from '../../../../shared/api';
+import { apiClient } from '../../../../shared/api/api';
 
 interface NewsletterBlockProps {
   title?: string;

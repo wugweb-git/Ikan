@@ -9,8 +9,8 @@ import { Checkbox } from '../ui/checkbox';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { PageHero } from '../ui/PageHero';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getConsultants } from '../lib/catalog';
-import { APP_LOGIN_URL } from '../lib/app-origin';
+import { getConsultants } from '../content/catalog';
+import { APP_LOGIN_URL } from '../content/app-origin';
 
 /**
  * The public consultant directory — static.

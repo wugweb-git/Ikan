@@ -8,9 +8,9 @@
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { AdminBlockTypeViewer } from '../src/admin/blocks/BlockTypeViewer';
-import '../src/product/styles/index.css';
-import '../src/admin/styles/index.css';
+import { AdminBlockTypeViewer } from '../src/admin/block-types/BlockTypeViewer';
+import '../src/product/site/ui/styles/index.css';
+import '../src/admin/ui/styles/index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode><AdminBlockTypeViewer onBack={() => {}} /></StrictMode>,

@@ -12,12 +12,12 @@ import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DayEditor } from '../src/admin/blocks/DayComposer';
-import { BuilderShell } from '../src/admin/builder/BuilderShell';
-import { BuilderTopBar } from '../src/admin/builder/BuilderTopBar';
-import type { DayContent } from '../src/shared/blocks/block-model';
-import '../src/product/styles/index.css';
-import '../src/admin/styles/index.css';
+import { DayEditor } from '../src/admin/block-builder/DayComposer';
+import { BuilderShell } from '../src/admin/block-builder/BuilderShell';
+import { BuilderTopBar } from '../src/admin/block-builder/BuilderTopBar';
+import type { DayContent } from '../src/admin/block-builder/model/block-model';
+import '../src/product/site/ui/styles/index.css';
+import '../src/admin/ui/styles/index.css';
 
 type Prog = { id: string; title: string; daily_content: DayContent[] };
 

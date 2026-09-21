@@ -3,12 +3,12 @@ import { EquipBentoGrid } from '../ui/blocks/EquipBentoGrid';
 import { EquipBlock } from '../ui/blocks/EquipBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 import { MobileHeader } from '../ui/MobileHeader';
-import { useSeo } from '../hooks/useSeo';
-import { recordImage, cmsLines } from '../lib/cms-content';
+import { useSeo } from '../ui/hooks/useSeo';
+import { recordImage, cmsLines } from '../content/cms-content';
 import { EmptyState } from '../ui/empty-state';
 import { NEWSLETTER_CONTENT, LEGACY_PROGRAM_IDS } from '../content/content';
-import { getProgram, getPrograms, type SiteProgram } from '../lib/catalog';
-import { APP_LOGIN_URL } from '../lib/app-origin';
+import { getProgram, getPrograms, type SiteProgram } from '../content/catalog';
+import { APP_LOGIN_URL } from '../content/app-origin';
 
 /**
  * An Equip programme's public landing page — static.
