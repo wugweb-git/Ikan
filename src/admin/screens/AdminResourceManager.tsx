@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../components/AdminStatusBadge';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
 import { AdminDataTable, Column, FilterOption } from '../components/AdminDataTable';
-import { ImageWithFallback } from '../../app/ui/ImageWithFallback';
+import { ImageWithFallback } from '../ui/ImageWithFallback';
 import { ErrorState } from '../ui/error-state';
 import { EmptyState } from '../ui/empty-state';
 import { SkeletonTable } from '../ui/skeleton-loader';

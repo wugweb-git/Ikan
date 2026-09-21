@@ -31,9 +31,9 @@ import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { SideNav, SideNavGroup } from '../components/SideNav';
-import { LogoIcon } from '../../app/ui/Logo';
+import { LogoIcon } from '../ui/Logo';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
-import { ErrorBoundary } from '../../app/ui/ErrorBoundary';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 // ── ALL admin screens are lazy-loaded ──────────────────────────────
 // Only the screen the user navigates to gets downloaded & parsed.

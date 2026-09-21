@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
-import { ImageWithFallback } from '../../../app/ui/ImageWithFallback';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
+import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { ClipboardCheck, Users, Sparkles } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';

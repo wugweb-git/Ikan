@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
-import { ImageWithFallback } from '../../../app/ui/ImageWithFallback';
+import { ImageWithFallback } from '../../ui/ImageWithFallback';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 
 /* ─── Data ─── */

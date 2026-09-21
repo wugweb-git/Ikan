@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { ClipboardCheck, Heart } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';

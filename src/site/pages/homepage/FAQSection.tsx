@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '../../../app/ui/accordion';
+} from '../../ui/accordion';
 
 interface FAQSectionProps {
   onNavigate?: (route: string) => void;

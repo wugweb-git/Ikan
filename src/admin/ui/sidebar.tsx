@@ -9,14 +9,14 @@ import { useIsMobile } from "./use-mobile";
 import { cn } from "./utils";
 import { Button } from "./button";
 import { Input } from "./input";
-import { Separator } from "../../app/ui/separator";
+import { Separator } from "./separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "../../app/ui/sheet";
+} from "./sheet";
 import { Skeleton } from "./skeleton";
 import {
   Tooltip,

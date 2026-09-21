@@ -1,7 +1,7 @@
 import type React from 'react';
-import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
-import { Button } from '../../../app/ui/button';
-import { cn } from '../../../app/ui/utils';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 import { useMemo, useState, useEffect, useRef } from 'react';
 

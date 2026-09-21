@@ -1,6 +1,6 @@
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { PageHero } from '../../app/ui/PageHero';
+import { PageHero } from '../ui/PageHero';
 
 interface CancellationPolicyProps {
   className?: string;

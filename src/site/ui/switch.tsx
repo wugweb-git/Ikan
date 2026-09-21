@@ -1,6 +1,6 @@
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
-import { cn } from "../../app/ui/utils"
+import { cn } from "./utils"
 
 // Filter out Figma inspector internal props (_fg*) to prevent React DOM warnings
 function filterFigmaProps(props: Record<string, unknown>) {

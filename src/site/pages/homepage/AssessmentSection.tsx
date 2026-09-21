@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ErrorBoundary } from '../../../app/ui/ErrorBoundary';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { DEFAULT_CMS_CONTENT } from '../../../utils/cms-defaults';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import imgPhoneMockup from "../../../assets/25d8d01a36eaa618a0c4fdd22ae73fb856925905.png";

@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react';
 import { Search, MessageSquarePlus } from 'lucide-react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../../utils/cms-defaults';
-import { PageHero } from '../../app/ui/PageHero';
+import { PageHero } from '../ui/PageHero';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '../../app/ui/accordion';
+} from '../ui/accordion';
 
 interface FAQProps {
   className?: string;

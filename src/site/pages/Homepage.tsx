@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { ErrorBoundary } from '../../app/ui/ErrorBoundary';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 // Import modular sections
 import { HeroSection } from './homepage/HeroSection';
@@ -12,11 +12,11 @@ import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { ReviewsSection } from './homepage/ReviewsSection';
 
 // Import RECYCLED Blocks
-import { AssessmentBlock, AssessmentProgram } from '../../app/ui/blocks/AssessmentBlock';
-import { EquipBlock, EquipProgram } from '../../app/ui/blocks/EquipBlock';
-import { ResourceBlock } from '../../app/ui/blocks/ResourceBlock';
-import { NewsletterBlock } from '../../app/ui/blocks/NewsletterBlock';
-import { ResourcePost } from '../../app/ui/blocks/ResourceCard';
+import { AssessmentBlock, AssessmentProgram } from '../ui/blocks/AssessmentBlock';
+import { EquipBlock, EquipProgram } from '../ui/blocks/EquipBlock';
+import { ResourceBlock } from '../ui/blocks/ResourceBlock';
+import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
+import { ResourcePost } from '../ui/blocks/ResourceCard';
 
 import { assessmentMeta, assessmentImage } from '../../lib/assessment-meta';
 import { apiClient } from '../../shared/api-client';
