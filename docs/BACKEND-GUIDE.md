@@ -103,7 +103,7 @@ The per-day / per-block REST routes (`/equip/programs/:id/days`, `/equip/days/:d
 
 ### CMS pages
 
-**Removed** (PR #14). The `/cms/pages` routes no longer exist; site page copy lives in `src/product/site/lib/cms-defaults.ts`.
+**Removed** (PR #14). The `/cms/pages` routes no longer exist; site page copy lives in `src/product/site/content/cms-defaults.ts`.
 
 ---
 
@@ -183,12 +183,12 @@ Progress tracking, day completion, streak management — `progress-routes.ts`.
 
 ```typescript
 // Authenticated — via ApiClient (preferred)
-import { apiClient } from '../../shared/api';  // src/shared/api.ts — adjust the relative path
+import { apiClient } from '../../shared/api';  // src/shared/api/api.ts — adjust the relative path
 const data = await apiClient.get('/users/profile');
 await apiClient.post('/health-connect/data', payload);
 
 // Public — anon key is the bearer token
-const ANON = 'eyJhbGc...';  // publicAnonKey from src/shared/config/supabase-info.tsx
+const ANON = 'eyJhbGc...';  // publicAnonKey from src/shared/api/supabase-info.tsx
 const res = await fetch(`${BASE_URL}/api/assessments`, {
   headers: { Authorization: `Bearer ${ANON}` },
 });

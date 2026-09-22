@@ -19,7 +19,8 @@
  */
 export const APP_ORIGIN = 'https://app.ikanhealth.in';
 
-const MARKETING_HOSTS = new Set(['ikanhealth.in', 'www.ikanhealth.in']);
+// staging mirrors production so it can be verified as the real thing.
+const MARKETING_HOSTS = new Set(['ikanhealth.in', 'www.ikanhealth.in', 'staging.ikanhealth.in']);
 
 export function isMarketingHost(hostname: string): boolean {
   return MARKETING_HOSTS.has(hostname.toLowerCase());

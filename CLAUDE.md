@@ -91,7 +91,7 @@ Key prefixes:
 | `day:{id}` | **DEAD — nothing reads these.** Legacy program day (105 rows). Related to its equip via an `equip_id` field, not a key convention |
 | `block:{id}` | **DEAD — nothing reads these.** Legacy content block (223 rows). Related to its day via `equip_day_id` |
 | `security_event:{YYYY-MM-DD}` | Day-bucketed security events, capped at 5000/day. Public write; identity comes from a verified token, never the request body |
-| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/product/site/lib/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/product/site/content/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
 | `mood:{moodId}` | Mood-scale definition (emoji, label, colour, order) — **global config, not user data**. Verified live 2026-09-01: 5 rows, none user-scoped. Journal entries live under `journal:` / `journal_by_user:`. |
@@ -446,20 +446,20 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
 ## CMS content architecture
 
-Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/product/site/lib/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
+Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/product/site/content/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
 
 ---
 
 ## Slug URL system
 
-`src/product/app/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
+`src/product/app/ui/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
 
 ---
 
 ## Auth
 
 - Email confirmation is ON. New users get a Supabase native confirmation email.
-- `/reset-password` route exists (`src/product/app/screens/ResetPassword.tsx`).
+- `/reset-password` route exists (`src/product/app/account/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
 - Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `docs/PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
@@ -479,11 +479,11 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
   defensive (a refresh token looked broken, a session check failed) — so one transient error in one
   tab logged the user out of their phone, and the tab still holding an unexpired JWT then got
   `session_not_found` from GoTrue, which reads like a library fault and is not one. Use
-  `signOutLocal()` from `src/shared/supabase.ts`; pass `'global'` only for a deliberate
+  `signOutLocal()` from `src/shared/api/supabase.ts`; pass `'global'` only for a deliberate
   "sign out everywhere". Related: `SecurityProvider`'s 30-minute idle sign-out is for the
   patient-facing app and **exempts admins** — an author reading a long day of content is not idle,
   and being signed out mid-edit loses work.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/supabase.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/api/supabase.ts` is public by design.
 - **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
 
 | rollback past | what breaks | how to tell | fix |
@@ -502,13 +502,13 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 | What | Where |
 |------|-------|
 | App shell + routing | `src/App.tsx` |
-| Auth context | `src/shared/contexts/AuthContext.tsx` |
-| API client | `src/shared/api.ts` |
-| Supabase client | `src/shared/supabase.ts` |
-| CMS defaults | `src/product/site/lib/cms-defaults.ts` |
-| Slug helpers | `src/product/app/lib/slug.ts` |
-| Health Connect / Google Fit | `src/product/app/features/integrations/GoogleFitContext.tsx`, `src/product/app/lib/google-fit.ts` |
-| Design system tokens | `src/product/styles/globals.css` (product) · `src/admin/styles/globals.css` (admin — a fork, may drift) |
+| Auth context | `src/shared/state/AuthContext.tsx` |
+| API client | `src/shared/api/api.ts` |
+| Supabase client | `src/shared/api/supabase.ts` |
+| CMS defaults | `src/product/site/content/cms-defaults.ts` |
+| Slug helpers | `src/product/app/ui/slug.ts` |
+| Health Connect / Google Fit | `src/product/app/integrations/GoogleFitContext.tsx`, `src/product/app/integrations/google-fit.ts` |
+| Design system tokens | `src/product/site/ui/styles/globals.css` (product) · `src/admin/ui/styles/globals.css` (admin — a fork, may drift) |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
 | Brand docs | `docs/BRAND.md` |
 | Build/deploy steps | `docs/BUILD.md` |

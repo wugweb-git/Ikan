@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ClipboardList, Plus, Eye, MoreHorizontal, EyeOff, Trash2, Pencil } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
-import { AdminHeader } from '../shell/AdminHeader';
+import type { AssessmentData } from '../../shared/api/api-types';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../ui/kit/AdminStatusBadge';
 import { AssessmentEditPageWizard as AssessmentEditPage, Assessment } from './AssessmentEditPageWizard';
 import { AdminDataTable, Column, FilterOption } from '../ui/kit/AdminDataTable';
-import { Skeleton } from '../ui/skeleton-loader';
 import { ImageWithFallback } from '../ui/ImageWithFallback';
 import { useMetadata } from '../ui/hooks/useMetadata';
 import {
@@ -20,18 +22,15 @@ import {
 } from "../ui/dropdown-menu";
 
 interface AdminAssessmentManagerProps {
-  onBack?: () => void;
   className?: string;
 }
 
 type ViewMode = 'list' | 'edit' | 'create';
 
-export function AdminAssessmentManager({ onBack, className }: AdminAssessmentManagerProps) {
+export function AdminAssessmentManager({ className }: AdminAssessmentManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
-
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
 
   // All metadata from KV
   const { assessmentTypes: metaAssessmentTypes, categories: metaCategories } = useMetadata();
@@ -39,52 +38,47 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (viewMode === 'list') {
-      loadAssessments();
-    }
-  }, [viewMode]);
+  const {
+    data: assessments,
+    setData: setAssessments,
+    loading,
+    error,
+    reload,
+  } = useAdminResource<Assessment[]>(async () => {
+    const response = await apiClient.getAdminAssessments();
+    const data = Array.isArray(response) ? response : response.assessments || [];
 
-  const loadAssessments = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.getAdminAssessments();
-      const data = Array.isArray(response) ? response : response.assessments || [];
-      
-      const mappedAssessments = data.map((item: any) => {
-        const uniqueId = item.assessment_id || item.id || `assessment-${Date.now()}-${Math.random()}`;
-        return {
-          id: uniqueId,
-          title: item.title || 'Untitled Assessment',
-          description: item.description || '',
-          category: item.category || '',
-          published: item.published !== undefined ? item.published : true,
-          questions: item.questions || [],
-          duration: item.duration || 10,
-          difficulty: item.difficulty || 'beginner',
-          completionCount: item.completionCount || item.completion_count || 0,
-          featured: item.featured || false,
-          scoringMethod: item.scoringMethod || item.scoring_method,
-          resultCategories: item.resultCategories || item.result_categories,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          thumbnail: item.thumbnail || item.hero_image || item.image_url || ''
-        };
-      });
+    const mappedAssessments: Assessment[] = data.map((item: any) => {
+      const uniqueId = item.assessment_id || item.id || `assessment-${Date.now()}-${Math.random()}`;
+      return {
+        id: uniqueId,
+        title: item.title || 'Untitled Assessment',
+        description: item.description || '',
+        category: item.category || '',
+        published: item.published !== undefined ? item.published : true,
+        questions: item.questions || [],
+        duration: item.duration || 10,
+        difficulty: item.difficulty || 'beginner',
+        completionCount: item.completionCount || item.completion_count || 0,
+        featured: item.featured || false,
+        scoringMethod: item.scoringMethod || item.scoring_method,
+        resultCategories: item.resultCategories || item.result_categories,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        thumbnail: item.thumbnail || item.hero_image || item.image_url || ''
+      };
+    });
 
-      const uniqueAssessments = Array.from(
-        new Map(mappedAssessments.map(item => [item.id, item])).values()
-      );
-
-      setAssessments(uniqueAssessments);
-    } catch (error: any) {
-      console.error('Failed to load assessments:', error);
-      showToast('error', 'API Error', 'Failed to load assessments');
-      setAssessments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return Array.from(
+      new Map(mappedAssessments.map((item) => [item.id, item])).values()
+    );
+  }, {
+    deps: [viewMode],
+    enabled: viewMode === 'list',
+    initialData: [],
+    errorTitle: 'API Error',
+    errorMessage: 'Failed to load assessments',
+  });
 
   const handleCreateNew = () => {
     setSelectedAssessmentId(undefined);
@@ -103,7 +97,7 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
 
   const handleTogglePublish = async (id: string, published: boolean) => {
     try {
-      await apiClient.updateAssessment(id, { published });
+      await apiClient.updateAssessment(id, { published } as Partial<AssessmentData> as AssessmentData);
       setAssessments((prev) => prev.map((a) => (a.id === id ? { ...a, published } : a)));
       showToast('success', 'Assessment Updated', `Assessment ${published ? 'published' : 'unpublished'}`);
     } catch (error: any) {
@@ -113,7 +107,12 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) return;
+    if (!(await confirm({
+      title: 'Are you sure you want to delete this assessment?',
+      description: 'This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))) return;
     try {
       await apiClient.deleteAssessment(id);
       setAssessments((prev) => prev.filter((a) => a.id !== id));
@@ -282,45 +281,23 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
     );
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="space-y-4">
-          <Skeleton height="32px" width="300px" />
-          <Skeleton height="20px" width="500px" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)' }}>
-                <Skeleton height="16px" width="100px" className="mb-2" />
-                <Skeleton height="24px" width="60px" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg-card)' }}>
-          <Skeleton height="40px" width="100%" className="mb-4" />
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="mb-3"><Skeleton height="60px" width="100%" /></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Assessment Manager"
-        description="Manage mental health assessments and questionnaires"
-        stats={stats}
-        actions={
-          <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-            <Plus className="w-4 h-4 mr-2" />
-            {!isMobile && 'Add Assessment'}
-          </Button>
-        }
-      />
-
+    <AdminPageLayout
+      title="Assessment Manager"
+      description="Manage mental health assessments and questionnaires"
+      stats={stats}
+      actions={
+        <Button onClick={handleCreateNew} style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+          <Plus className="w-4 h-4 mr-2" />
+          {!isMobile && 'Add Assessment'}
+        </Button>
+      }
+      loading={loading}
+      error={error}
+      onRetry={reload}
+      maxWidth="2xl"
+      className={className}
+    >
       <AdminDataTable 
         columns={columns} 
         data={assessments} 
@@ -329,6 +306,6 @@ export function AdminAssessmentManager({ onBack, className }: AdminAssessmentMan
         searchPlaceholder="Search assessments..."
         onRowClick={(item) => handleEdit(item.id)}
       />
-    </div>
+    </AdminPageLayout>
   );
 }

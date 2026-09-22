@@ -1,6 +1,6 @@
 import { durationLooksImplausible } from './assessment-meta';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Trash2, Plus, X, Upload, AlertTriangle } from 'lucide-react';
+import { Save, Trash2, Plus, X, Upload, AlertTriangle, LayoutTemplate } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
 import { AdminFormField } from '../ui/kit/AdminFormField';
@@ -16,11 +16,12 @@ import { WizardStep } from '../ui/wizard-stepper';
 import { AssessmentScoresEditor } from './AssessmentScoresEditor';
 import { buildScoringContext } from '../engines/scoring-context';
 import { computeCoverage, type AssessmentScore, type ScoringProfile } from '../engines/scoring-engine';
-import { AssessmentLandingPageRichTextEditor } from './AssessmentLandingPageRichTextEditor';
+import { LandingCopyForm, linesField, type LandingCopyConfig } from '../ui/kit/LandingCopyForm';
 import { UnifiedBasicInfoForm } from '../ui/kit/UnifiedBasicInfoForm';
 import { useFormValidation, ValidationSchema } from '../ui/hooks/useFormValidation';
 import { validateUrl } from '../ui/lib/validation';
 import { useMetadata } from '../ui/hooks/useMetadata';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { useUnsavedChanges } from '../ui/hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
@@ -30,6 +31,60 @@ import { DayEditor as DailyBuilder } from '../block-builder/DayComposer';
 import { DayContent, Activity, renderActivityOf, warnFallback } from '../block-builder/model/block-model';
 import { AdminLoading } from '../ui/kit/AdminLoading';
 import { seedDayFromTemplate } from '../block-builder/model/day-policy';
+
+// Landing page copy slots (wizard step 1). Section titles are fixed.
+const ASSESSMENT_LANDING_COPY: LandingCopyConfig<Partial<Assessment>> = {
+  intro: {
+    icon: <LayoutTemplate className="w-5 h-5 mt-0.5 text-[var(--color-info-default)]" />,
+    title: 'Section 2: Landing Page Content',
+    body: 'Configure the main assessment information displayed in the bento grid. Section titles are fixed.',
+  },
+  sections: [
+    {
+      title: 'What is this assessment?',
+      fields: [
+        {
+          label: 'Description (2-3 paragraphs)', required: true, rows: 6,
+          placeholder: "Enter 2-3 paragraphs describing what this assessment measures...\n\nExample:\nThis assessment helps you understand how stressed or overwhelmed you've been feeling lately, and whether life has felt manageable or out of control.\n\nIt focuses on how you've been responding to everyday pressures—at work, at home, or in your personal life—and how often stress has affected your thoughts and emotions.",
+          get: (d) => d.section2_content || '',
+          set: (value) => ({ section2_content: value }),
+        },
+        linesField<Partial<Assessment>>({
+          label: 'What it measures (3 items - one per line)', required: true, rows: 3, maxLines: 3,
+          help: 'Enter exactly 3 items, one per line. Each will display with a checkmark icon.',
+          placeholder: 'Perceived stress and overwhelm\nSense of control vs pressure\nHow unpredictable or demanding life has felt',
+          get: (d) => d.section2_bullets || [],
+          set: (lines) => ({ section2_bullets: lines }),
+        }),
+      ],
+    },
+    {
+      title: 'Things to Remember Before You Start',
+      fields: [
+        linesField<Partial<Assessment>>({
+          label: '4 reminder items (one per line)', required: true, rows: 4, maxLines: 4,
+          help: 'Enter exactly 4 items, one per line.',
+          placeholder: "Answer based on how you've felt over the <strong>past month</strong>\nChoose the option that best reflects your experience\nThere are no right or wrong answers\nResults are shown immediately after completion",
+          get: (d) => (d.section4_notes || []).map((n: any) => (typeof n === 'string' ? n : n.title)),
+          // Stored as {title, description} objects, as the landing page reads them.
+          set: (lines) => ({ section4_notes: lines.map((line) => ({ title: line, description: '' })) as any }),
+        }),
+      ],
+    },
+    {
+      title: 'Important',
+      fields: [
+        linesField<Partial<Assessment>>({
+          label: 'Important notes (2 items - one per line)', required: true, rows: 2,
+          help: 'Enter exactly 2 important safety notes, one per line.',
+          placeholder: 'This is a self-help and awareness tool, not a medical diagnosis\nNot intended for emergency or crisis situations',
+          get: (d) => [d.metadata?.important_note_1 || '', d.metadata?.important_note_2 || ''],
+          set: (lines, d) => ({ metadata: { ...d.metadata, important_note_1: lines[0] || '', important_note_2: lines[1] || '' } }),
+        }),
+      ],
+    },
+  ],
+};
 
 // Normalize options to plain strings so the scoring-map key lookup matches
 // regardless of whether the option was authored as a string or an
@@ -190,8 +245,19 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
   // Categories and difficulty from KV via useMetadata (no hardcoded fallbacks)
   const { categories: metaCategories, difficultyLevels: metaDifficulty, scoringMethods: metaScoringMethods } = useMetadata();
 
-  // Scoring profiles from backend
-  const [scoringProfiles, setScoringProfiles] = useState<ScoringProfile[]>([]);
+  // Scoring profiles from backend. Full records: step 5 needs each profile's
+  // calc, direction, basis and bands to compute the achievable range and check
+  // band tiling. Mapping to {id, name} here is what limited step 4 to a bare
+  // dropdown. A failed load toasts — it was once swallowed, and the scoring step
+  // then showed an empty list with no hint the load had failed.
+  const { data: scoringProfiles } = useAdminResource<ScoringProfile[]>(async () => {
+    const data: { profiles?: unknown } | null = await apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0);
+    return Array.isArray(data?.profiles) ? (data.profiles as ScoringProfile[]) : [];
+  }, {
+    initialData: [],
+    errorTitle: 'Error',
+    errorMessage: 'Failed to load scoring profiles',
+  });
   /**
    * Set when the builder cache and `questions[]` disagree on load.
    *
@@ -209,25 +275,6 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
     { field: string; questionId: string; inQuestions: string; inBuilder: string }[] | null
   >(null);
   const [pendingRebuild, setPendingRebuild] = useState<any>(null);
-  useEffect(() => {
-    apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0)
-      .then((data: any) => {
-        if (data?.profiles && Array.isArray(data.profiles)) {
-          // Full records: step 5 needs each profile's calc, direction, basis and
-          // bands to compute the achievable range and check band tiling. Mapping
-          // to {id, name} here is what limited step 4 to a bare dropdown.
-          setScoringProfiles(data.profiles);
-        }
-      })
-      .catch((err: unknown) => {
-        // Was swallowed: the scoring step then showed an empty profile list
-        // with no hint that the load had failed rather than there being none.
-        console.error('Failed to load scoring profiles:', err);
-        showToast('error', 'Error', 'Failed to load scoring profiles');
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const [formData, setFormData] = useState<Partial<Assessment>>({
     title: '',
     description: '',
@@ -962,7 +1009,8 @@ export function AssessmentEditPageWizard({ assessmentId, onBack, onSave }: Asses
         {/* Step 1: Landing Page */}
         {currentStep === 1 && (
           <div className="space-y-8">
-            <AssessmentLandingPageRichTextEditor
+            <LandingCopyForm
+              config={ASSESSMENT_LANDING_COPY}
               data={formData}
               onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
             />

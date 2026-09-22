@@ -229,7 +229,7 @@ Also needs a human pass:
   feature — the write-side may exist, the read/display-side was never wired in. Not fixed this pass.
 - **`src/product/site/pages/AboutUs.tsx:55` — stale comment** describing the removed
   `getHeroBanner('about')` override. Remove it. (`getHeroBanner`/`updateHeroBanner`/
-  `resetHeroBanner` are no longer exported from `src/shared/api.ts` — confirmed 2026-09-21.)
+  `resetHeroBanner` are no longer exported from `src/shared/api/api.ts` — confirmed 2026-09-21.)
   (from HANDOFF.md, 2026-09-15)
 - **`src/App.tsx` still lets `/page/<slug>` routes through** (~L371-373, ~L731), commented "CMS
   page", though `CmsPageRenderer` and the Page Manager were removed. Dead route handling — remove,
@@ -471,7 +471,7 @@ content/copy; corporate code and routes and any Supabase change are out of scope
   Vercel's git integration, never the scripts.
 - **After merge, remove the branch from `vercel.json` → `git.deploymentEnabled`** (it is there now).
 - **`shared/` is not yet self-contained:** `shared/engine/{scoring,recommendation}-engine.ts` and
-  `shared/lib/validation-core.test.ts` import `supabase/functions/server/*` modules. Resolving it
+  `admin/ui/lib/validation-core.test.ts` import `supabase/functions/server/*` modules. Resolving it
   is Workstream C (§E).
 - **Confirm with Vedanshu:** `AdminBackupManager` and `AdminCRUDTesting` were deleted in
   `bf1f67d3` ("delete 30 files nothing imports"), but HANDOFF had flagged them "wire, don't delete —

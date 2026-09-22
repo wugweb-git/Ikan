@@ -30,6 +30,8 @@ export interface Column<T> {
   type?: 'text' | 'image' | 'badge' | 'date' | 'custom'; // NEW: column type
   imageKey?: keyof T; // NEW: key for image URL
   imageFallback?: string; // NEW: fallback image
+  /** Extra classes for the header cell only (applied after `className`). */
+  headerClassName?: string;
 }
 
 export interface FilterOption {
@@ -48,6 +50,20 @@ interface AdminDataTableProps<T> {
   onRowClick?: (item: T) => void;
   pageSize?: number;
   idField?: keyof T;
+  /** Show the search/filter/actions bar. Default true. */
+  showToolbar?: boolean;
+  /** Paginate rows. Set false to render every row with no pager. Default true. */
+  paginate?: boolean;
+  /** Shown when there are no rows (after search/filters). */
+  emptyMessage?: ReactNode;
+  /** Row key when `idField` is not unique/present. */
+  getRowKey?: (item: T, index: number) => string;
+  /** Extra classes for a desktop row. */
+  rowClassName?: (item: T) => string | undefined;
+  /** Mobile rendering: stacked cards (default) or the same scrollable table. */
+  mobileLayout?: 'cards' | 'table';
+  /** Cap the table's height (e.g. 420): the body scrolls under a sticky header. */
+  maxHeight?: number | string;
 }
 
 export function AdminDataTable<T extends { [key: string]: any }>({ 
@@ -59,9 +75,18 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   actions,
   onRowClick,
   pageSize = 10,
-  idField = 'id'
+  idField = 'id',
+  showToolbar = true,
+  paginate = true,
+  emptyMessage,
+  getRowKey,
+  rowClassName,
+  mobileLayout = 'cards',
+  maxHeight,
 }: AdminDataTableProps<T>) {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile() && mobileLayout === 'cards';
+  const rowKey = (item: T, index: number): string =>
+    getRowKey ? getRowKey(item, index) : ((item[idField] as unknown as string) || String(index));
   
   // -- State --
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,8 +170,10 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   }, [data, searchTerm, searchKeys, activeFilters, sortConfig]);
 
   // -- Pagination --
-  const totalPages = Math.ceil(processedData.length / currentPageSize);
-  const paginatedData = processedData.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize);
+  const totalPages = paginate ? Math.ceil(processedData.length / currentPageSize) : 1;
+  const paginatedData = paginate
+    ? processedData.slice((currentPage - 1) * currentPageSize, currentPage * currentPageSize)
+    : processedData;
 
   const getSortIcon = (key: keyof T) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
@@ -158,6 +185,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
+      {showToolbar && (
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -209,6 +237,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Table / Mobile Cards */}
       {isMobile ? (
@@ -216,7 +245,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           {paginatedData.length > 0 ? (
             paginatedData.map((item, rowIdx) => (
               <Card 
-                key={(item[idField] as unknown as string) || rowIdx}
+                key={rowKey(item, rowIdx)}
                 className={onRowClick ? "cursor-pointer transition-colors" : ""}
                 style={onRowClick ? { cursor: 'pointer' } : undefined}
                 onClick={() => onRowClick && onRowClick(item)}
@@ -254,20 +283,23 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             ))
           ) : (
             <div className="text-center p-8" style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border-default)' }}>
-              No results found
+              {emptyMessage ?? 'No results found'}
             </div>
           )}
         </div>
       ) : (
       <div className="overflow-hidden" style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-        <div className="overflow-x-auto">
+        <div
+          className={maxHeight === undefined ? 'overflow-x-auto' : 'overflow-auto [&_[data-slot=table-container]]:overflow-visible'}
+          style={maxHeight === undefined ? undefined : { maxHeight }}
+        >
         <Table className="w-full">
-          <TableHeader>
+          <TableHeader className={maxHeight === undefined ? undefined : 'sticky top-0 z-[1] bg-[var(--color-bg-card)]'}>
             <TableRow>
               {columns.map((col, index) => (
                 <TableHead 
                   key={index} 
-                  className={`${col.className || ''} ${col.sortable ? 'cursor-pointer select-none' : ''}`}
+                  className={`${col.className || ''} ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.headerClassName || ''}`}
                   onClick={() => col.sortable && col.accessorKey && handleSort(col.accessorKey)}
                   style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                 >
@@ -283,8 +315,8 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             {paginatedData.length > 0 ? (
               paginatedData.map((item, rowIdx) => (
                 <TableRow 
-                  key={(item[idField] as unknown as string) || rowIdx} 
-                  className={onRowClick ? "cursor-pointer" : ""}
+                  key={rowKey(item, rowIdx)} 
+                  className={[onRowClick ? "cursor-pointer" : "", rowClassName?.(item) ?? ''].join(' ').trim()}
                   onClick={() => onRowClick && onRowClick(item)}
                 >
                   {columns.map((col, colIdx) => (
@@ -320,7 +352,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results found.
+                  {emptyMessage ?? 'No results found.'}
                 </TableCell>
               </TableRow>
             )}
@@ -331,6 +363,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
       )}
 
       {/* Pagination */}
+      {paginate && (
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-2">
         <div className="flex items-center space-x-2">
           <p className="whitespace-nowrap" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>
@@ -364,6 +397,7 @@ export function AdminDataTable<T extends { [key: string]: any }>({
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 }

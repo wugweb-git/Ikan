@@ -140,7 +140,7 @@ without being its child record. This is the shape the "Builder" conversation kep
 
 | Consumer | Depends on | Relationship |
 |---|---|---|
-| `AssessmentEditPageWizard.tsx` | `src/admin/blocks/DayComposer.tsx` (`DayEditor`) — the shared block builder, formerly `EquipDailyEditor.tsx` / `EquipBlockEditor.tsx` | **Component reuse**, not a KV relation — Assessment literally renders Equip's editor via a `convertQuestionsToDay()` adapter (`builder-editor-architecture.md`) |
+| `AssessmentEditPageWizard.tsx` | `src/admin/block-builder/DayComposer.tsx` (`DayEditor`) — the shared block builder, formerly `EquipDailyEditor.tsx` / `EquipBlockEditor.tsx` | **Component reuse**, not a KV relation — Assessment literally renders Equip's editor via a `convertQuestionsToDay()` adapter (`builder-editor-architecture.md`) |
 | Mood Journal (`mood:` entries) | `checkin_scale:` (Check-in Scales) | **Vocabulary reuse** — the mood entry UI is built from an admin-configured `checkin_scale:moods` record (emoji set + labels), not hardcoded (`mood-checkin.md`) |
 | `resource:` | `category:` | **Value-matched, not id-matched** — `resource.category` holds a slug string (`"mental-health"`), checked against `category.slug`, never `category:{id}` directly |
 | Recommendation Engine | `assessment_result:` + `recommendation_rule:` + `equip:` | **Read-only cross-system join** at evaluation time — no stored relation, computed fresh per request (`recommendation-engine.md`) |

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Plus, Pencil, Trash2, MoreVertical, Search, 
   LayoutGrid, Users, ChevronRight 
@@ -18,41 +18,37 @@ import { apiClient } from '../../shared/api/api';
 import { EquipProgram } from '../block-builder/model/block-model';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';
-import { AdminHeader } from '../shell/AdminHeader';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 
-interface EquipAdminDashboardProps {
-  onBack?: () => void;
-}
+/** The admin list endpoint adds an enrollment count to each program. */
+type ProgramRow = EquipProgram & { enrollmentCount?: number };
 
-export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
-  const [programs, setPrograms] = useState<EquipProgram[]>([]);
-  const [loading, setLoading] = useState(true);
+export function EquipAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<'list' | 'editor'>('list');
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
+  const confirm = useConfirm();
 
-  // Load Programs
-  useEffect(() => {
-    loadPrograms();
-  }, []);
-
-  const loadPrograms = async () => {
-    setLoading(true);
-    try {
-      // Fetch list of programs (admin endpoint — includes unpublished + enrollment counts)
-      const data = await apiClient.getAdminEquipPrograms();
-      const loadedPrograms = Array.isArray(data) ? data : (data as any).programs || [];
-      setPrograms(loadedPrograms);
-    } catch (error) {
-      console.error('Failed to load programs:', error);
-      showToast('error', 'Error', 'Failed to load programs');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Admin endpoint — includes unpublished programs + enrollment counts.
+  const {
+    data: programs,
+    setData: setPrograms,
+    loading,
+    error,
+    reload: loadPrograms,
+  } = useAdminResource<ProgramRow[]>(async () => {
+    const data = await apiClient.getAdminEquipPrograms();
+    return Array.isArray(data) ? data : (data as any).programs || [];
+  }, {
+    initialData: [],
+    errorTitle: 'Error',
+    errorMessage: 'Failed to load programs',
+  });
 
   const handleCreateNew = () => {
     setSelectedProgramId(null);
@@ -65,7 +61,11 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this program?')) return;
+    if (!(await confirm({
+      title: 'Are you sure you want to delete this program?',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))) return;
     try {
       await apiClient.deleteEquipProgram(id);
       setPrograms(prev => prev.filter(p => p.id !== id));
@@ -98,23 +98,26 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Equip Program Manager"
-        description="Manage wellness and therapeutic programs"
-        stats={[
-          { label: 'Total Programs', value: programs.length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-primary-default)' }} /> },
-          { label: 'Published', value: programs.filter(p => p.published).length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} /> },
-          { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <Users className="h-4 w-4" style={{ color: 'var(--color-status-info)' }} /> },
-        ]}
-        actions={
-          <Button onClick={handleCreateNew} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-            <Plus size={16} />
-            {!isMobile && 'Add Program'}
-          </Button>
-        }
-      />
-
+    <AdminPageLayout
+      title="Equip Program Manager"
+      description="Manage wellness and therapeutic programs"
+      stats={[
+        { label: 'Total Programs', value: programs.length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-primary-default)' }} /> },
+        { label: 'Published', value: programs.filter(p => p.published).length, icon: <LayoutGrid className="h-4 w-4" style={{ color: 'var(--color-status-success)' }} /> },
+        { label: 'Total Enrollments', value: programs.reduce((acc, p) => acc + (p.enrollmentCount || 0), 0), icon: <Users className="h-4 w-4" style={{ color: 'var(--color-status-info)' }} /> },
+      ]}
+      actions={
+        <Button onClick={handleCreateNew} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+          <Plus size={16} />
+          {!isMobile && 'Add Program'}
+        </Button>
+      }
+      loading={loading}
+      loadingFallback={<ProgramListSkeleton />}
+      error={error}
+      onRetry={loadPrograms}
+      maxWidth="2xl"
+    >
       {/* Search */}
       <div className="flex items-center gap-4 p-4 rounded-lg border shadow-sm" style={{ backgroundColor: 'var(--color-bg-card)' }}>
         <div className="relative flex-1 max-w-sm">
@@ -131,38 +134,7 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
 
       {/* Program List */}
       <div className="grid grid-cols-1 gap-6">
-        {loading ? (
-           <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="hover:shadow-md transition-shadow">
-                <div className="flex flex-col md:flex-row p-6 gap-6">
-                  <div className="w-full md:w-48 h-32 rounded-lg flex-shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                    <Skeleton className="w-full h-full" />
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="w-full mr-4">
-                        <div className="flex items-center gap-2 mb-2">
-                           <Skeleton className="w-20 h-5 rounded-full" />
-                           <Skeleton className="w-20 h-5 rounded-full" />
-                        </div>
-                        <Skeleton className="w-1/2 h-7 mb-2" />
-                        <Skeleton className="w-3/4 h-5" />
-                      </div>
-                      <Skeleton className="w-8 h-8 rounded-md" />
-                    </div>
-                    <div className="flex items-center gap-6 pt-2">
-                      <Skeleton className="w-24 h-5" />
-                      <Skeleton className="w-24 h-5" />
-                      <div className="flex-1" />
-                      <Skeleton className="w-32 h-9 rounded-md" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : filteredPrograms.length === 0 ? (
+        {filteredPrograms.length === 0 ? (
           <div className="text-center py-24 rounded-xl border border-dashed" style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)' }}>
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)', color: 'var(--color-text-muted)' }}>
               <LayoutGrid size={32} />
@@ -237,6 +209,41 @@ export function EquipAdminDashboard({ onBack }: EquipAdminDashboardProps = {}) {
           ))
         )}
       </div>
+    </AdminPageLayout>
+  );
+}
+
+function ProgramListSkeleton() {
+  return (
+    <div className="space-y-6">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="hover:shadow-md transition-shadow">
+          <div className="flex flex-col md:flex-row p-6 gap-6">
+            <div className="w-full md:w-48 h-32 rounded-lg flex-shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+              <Skeleton className="w-full h-full" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="w-full mr-4">
+                  <div className="flex items-center gap-2 mb-2">
+                     <Skeleton className="w-20 h-5 rounded-full" />
+                     <Skeleton className="w-20 h-5 rounded-full" />
+                  </div>
+                  <Skeleton className="w-1/2 h-7 mb-2" />
+                  <Skeleton className="w-3/4 h-5" />
+                </div>
+                <Skeleton className="w-8 h-8 rounded-md" />
+              </div>
+              <div className="flex items-center gap-6 pt-2">
+                <Skeleton className="w-24 h-5" />
+                <Skeleton className="w-24 h-5" />
+                <div className="flex-1" />
+                <Skeleton className="w-32 h-9 rounded-md" />
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }

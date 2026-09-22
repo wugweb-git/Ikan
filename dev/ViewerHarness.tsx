@@ -9,9 +9,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AdminBlockTypeViewer } from '../src/admin/block-types/BlockTypeViewer';
+import { NotificationProvider } from '../src/shared/state/NotificationContext';
 import '../src/product/site/ui/styles/index.css';
 import '../src/admin/ui/styles/index.css';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><AdminBlockTypeViewer onBack={() => {}} /></StrictMode>,
+  <StrictMode><NotificationProvider><AdminBlockTypeViewer /></NotificationProvider></StrictMode>,
 );

@@ -39,6 +39,24 @@ export interface ApiHttpError extends Error {
   userMessage?: string;
 }
 
+/**
+ * The parsed JSON body of a non-2xx response thrown by `apiClient.request`
+ * (its message is `API Error: <status> <body>`), or null when there is none.
+ */
+export function apiErrorBody(err: unknown): any | null {
+  const msg = err instanceof Error ? err.message : '';
+  const m = /^API Error: \d{3} ([\s\S]*)$/.exec(msg);
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+}
+
+/** The server's `error`/`message` from a thrown API error, else `fallback`. */
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  const body = apiErrorBody(err);
+  const fromBody = body && (body.error || body.message);
+  return typeof fromBody === 'string' && fromBody ? fromBody : fallback;
+}
+
 /** Per-request timeout. Uploads (FormData bodies) get longer. Override with `options.timeoutMs`. */
 const REQUEST_TIMEOUT_MS = 20_000;
 const UPLOAD_TIMEOUT_MS = 120_000;
@@ -1544,6 +1562,121 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ channel, recipient })
     }, true);
+  }
+
+  // ── Admin: communication (templates, queue, Brevo config/account/logs) ──
+  // (admin-communication-methods)
+  async getCommunicationTemplates(signal?: AbortSignal): Promise<{ templates?: any[] }> {
+    return this.request('/admin/communication/templates', { method: 'GET', signal }, true);
+  }
+
+  async saveCommunicationTemplate(template: unknown): Promise<{ template?: any }> {
+    return this.request('/admin/communication/templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    }, true);
+  }
+
+  async deleteCommunicationTemplate(id: string) {
+    return this.request(`/admin/communication/templates/${id}`, { method: 'DELETE' }, true);
+  }
+
+  async getCommunicationQueue(signal?: AbortSignal): Promise<{ queue?: any[] }> {
+    return this.request('/admin/communication/queue', { method: 'GET', signal }, true);
+  }
+
+  async queueCommunicationBroadcast(item: { type: string; recipient: string; subject: string; body: string }): Promise<{ item?: any }> {
+    return this.request('/admin/communication/queue', {
+      method: 'POST',
+      body: JSON.stringify(item),
+    }, true);
+  }
+
+  async getBrevoConfig(signal?: AbortSignal): Promise<{ config?: any; apiKeyConfigured?: boolean }> {
+    return this.request('/brevo/config', { method: 'GET', signal }, true);
+  }
+
+  async saveBrevoConfig(config: unknown) {
+    return this.request('/brevo/config', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    }, true);
+  }
+
+  async getBrevoAccount(signal?: AbortSignal): Promise<{ connected?: boolean; account?: any }> {
+    return this.request('/brevo/account', { method: 'GET', signal }, true);
+  }
+
+  async getBrevoLogs(limit = 20, signal?: AbortSignal): Promise<{ logs?: any[] }> {
+    return this.request(`/brevo/logs?limit=${limit}`, { method: 'GET', signal }, true);
+  }
+
+  // ── Admin: payment gateway ──
+  // (admin-payment-methods)
+  async getAdminPaymentConfigs(): Promise<{ configs?: any[] }> {
+    return this.request('/admin/payment/config', { method: 'GET' }, true);
+  }
+
+  async getAdminPaymentTransactions(): Promise<{ transactions?: any[] }> {
+    return this.request('/admin/payment/transactions', { method: 'GET' }, true);
+  }
+
+  async saveAdminPaymentConfig(gateway: string, config: Record<string, unknown>) {
+    return this.request('/admin/payment/config', {
+      method: 'POST',
+      body: JSON.stringify({ gateway, config }),
+    }, true);
+  }
+
+  async testAdminPaymentGateway(gateway: string, amount: number) {
+    return this.request('/admin/payment/test', {
+      method: 'POST',
+      body: JSON.stringify({ gateway, amount }),
+    }, true);
+  }
+
+  // ── Admin: consultations ──
+  // (admin-consultation-methods)
+  async getProfessionalApplications() {
+    return this.request('/admin/professional-applications', { method: 'GET' }, true);
+  }
+
+  async getProfessionalApplication(id: string) {
+    return this.request(`/admin/professional-applications/${id}`, { method: 'GET' }, true);
+  }
+
+  async approveProfessionalApplication(id: string) {
+    return this.request(`/admin/professional-applications/${id}/approve`, { method: 'POST' }, true);
+  }
+
+  async rejectProfessionalApplication(id: string, reason: string) {
+    return this.request(`/admin/professional-applications/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }, true);
+  }
+
+  // ── Admin: check-in scales manager ──
+  // (admin-scales-methods)
+
+  // ── Admin: block editor ──
+  // (admin-block-editor-methods)
+  /** POST FormData { file, bucket } to /upload-image; resolves `{ url }`. */
+  async uploadImage(file: File, bucket: string): Promise<{ url?: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+    return this.request('/upload-image', { method: 'POST', body: formData }, true);
+  }
+
+  // ── Admin: image upload fallback (ui/image-upload) ──
+  /** POST FormData { file, category, professionalId } to /upload/professional-file. */
+  async uploadProfessionalFile(file: Blob, category: string, professionalId: string): Promise<{ success?: boolean; url?: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    formData.append('professionalId', professionalId);
+    return this.request('/upload/professional-file', { method: 'POST', body: formData }, true);
   }
 }
 

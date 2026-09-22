@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Save, Globe, Mail, Share2, Bell, Shield, Palette, Code, Send,
   Eye, EyeOff, Image as ImageIcon, Phone, BarChart3, Loader2, Award
 } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
-import { AdminHeader } from '../shell/AdminHeader';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
 import { AdminLoading } from '../ui/kit/AdminLoading';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { AdminSection } from '../shell/AdminSection';
 import { AdminFormField } from '../ui/kit/AdminFormField';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
@@ -95,7 +96,6 @@ interface SiteSettings {
 }
 
 interface AdminSettingsManagerProps {
-  onBack?: () => void;
   className?: string;
 }
 
@@ -117,86 +117,83 @@ function normalizeLegacySettings(data: any): Partial<SiteSettings> {
   };
 }
 
-export function AdminSettingsManager({ onBack, className }: AdminSettingsManagerProps) {
+const DEFAULT_SETTINGS: SiteSettings = {
+  siteName: '',
+  siteDescription: '',
+  companyDescription: '',
+  logoUrl: '',
+  faviconUrl: '',
+  logoIconUrl: '',
+  logoFullLightUrl: '',
+  logoFullDarkUrl: '',
+  contactEmail: '',
+  contactPhone: '',
+  contactWhatsapp: '',
+  contactAddress: '',
+  facebookUrl: '',
+  xUrl: '',
+  instagramUrl: '',
+  linkedinUrl: '',
+  youtubeUrl: '',
+  smtpHost: '',
+  smtpPort: '587',
+  smtpUser: '',
+  smtpPassword: '',
+  smtpFromEmail: '',
+  smtpFromName: '',
+  smtpProvider: 'brevo',
+  newsletterEnabled: false,
+  newsletterTitle: '',
+  newsletterDescription: '',
+  newsletterImageUrl: '',
+  seoTitle: '',
+  seoDescription: '',
+  seoKeywords: '',
+  ogImage: '',
+  certifications: [],
+  exploreCardProgramsImage: '',
+  exploreCardAssessmentsImage: '',
+  primaryColor: '#2A2A2A',
+  accentColor: '#E9EBEF',
+  enableUserRegistration: true,
+  enableComments: false,
+  enableNotifications: true,
+  enableAnalytics: false,
+  maintenanceMode: false,
+  googleAnalyticsId: '',
+  facebookPixelId: '',
+  customCss: '',
+  customJs: '',
+};
+
+export function AdminSettingsManager({ className }: AdminSettingsManagerProps) {
   const { showToast } = useNotifications();
   const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testEmail, setTestEmail] = useState('');
 
-  const [settings, setSettings] = useState<SiteSettings>({
-    siteName: '',
-    siteDescription: '',
-    companyDescription: '',
-    logoUrl: '',
-    faviconUrl: '',
-    logoIconUrl: '',
-    logoFullLightUrl: '',
-    logoFullDarkUrl: '',
-    contactEmail: '',
-    contactPhone: '',
-    contactWhatsapp: '',
-    contactAddress: '',
-    facebookUrl: '',
-    xUrl: '',
-    instagramUrl: '',
-    linkedinUrl: '',
-    youtubeUrl: '',
-    smtpHost: '',
-    smtpPort: '587',
-    smtpUser: '',
-    smtpPassword: '',
-    smtpFromEmail: '',
-    smtpFromName: '',
-    smtpProvider: 'brevo',
-    newsletterEnabled: false,
-    newsletterTitle: '',
-    newsletterDescription: '',
-    newsletterImageUrl: '',
-    seoTitle: '',
-    seoDescription: '',
-    seoKeywords: '',
-    ogImage: '',
-    certifications: [],
-    exploreCardProgramsImage: '',
-    exploreCardAssessmentsImage: '',
-    primaryColor: '#2A2A2A',
-    accentColor: '#E9EBEF',
-    enableUserRegistration: true,
-    enableComments: false,
-    enableNotifications: true,
-    enableAnalytics: false,
-    maintenanceMode: false,
-    googleAnalyticsId: '',
-    facebookPixelId: '',
-    customCss: '',
-    customJs: '',
-  });
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      setLoading(true);
+  const { data: settings, setData: setSettings, loading, error, reload } = useAdminResource<SiteSettings>(
+    async () => {
       const response = await apiClient.getSettings();
       const data = response.settings || response;
-      const normalized = normalizeLegacySettings(data);
-      setSettings(prev => ({ ...prev, ...normalized }));
-    } catch (error: any) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { ...DEFAULT_SETTINGS, ...normalizeLegacySettings(data) };
+    },
+    {
+      initialData: DEFAULT_SETTINGS,
+      errorMessage: 'Failed to load settings',
+      toastOnError: false,
+    },
+  );
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      // On save, also write the legacy duplicate fields so old consumers don't break
+      // On save, also write the legacy duplicate fields. Kept deliberately: the
+      // public GET /settings allowlist (server/index.tsx PUBLIC_SETTINGS_FIELDS)
+      // still publishes brandLogoUrl, metaImageUrl and twitterUrl, and PUT
+      // merges, so dropping them here would leave stale values being served.
       const payload = {
         ...settings,
         brandLogoUrl: settings.logoUrl,       // keep legacy key in sync
@@ -234,36 +231,40 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
     }
   };
 
-  if (loading) {
-    return <AdminLoading message="Loading settings..." />;
-  }
+  // No Save button until the record has loaded: PUT /admin/settings merges,
+  // so saving the blank defaults would overwrite every stored field.
+  const saveButton = loading || error ? undefined : (
+    <Button
+      onClick={handleSave}
+      disabled={saving}
+      className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium bg-[var(--color-primary-default)] text-[var(--color-primary-on)]"
+    >
+      {saving ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Saving...
+        </>
+      ) : (
+        <>
+          <Save className="w-4 h-4" />
+          {!isMobile && 'Save Settings'}
+        </>
+      )}
+    </Button>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <AdminHeader
-        title="Global Settings"
-        description="Site identity, branding, contact, email, and feature configuration"
-        actions={
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="gap-2 h-[var(--ikan-component-button-height)] rounded-[var(--ikan-component-border-radius)] font-medium bg-[var(--color-primary-default)] text-[var(--color-primary-on)]"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                {!isMobile && 'Save Settings'}
-              </>
-            )}
-          </Button>
-        }
-      />
-
+    <AdminPageLayout
+      title="Global Settings"
+      description="Site identity, branding, contact, email, and feature configuration"
+      actions={saveButton}
+      loading={loading}
+      loadingFallback={<AdminLoading message="Loading settings..." />}
+      error={error}
+      onRetry={reload}
+      maxWidth="md"
+      className={className}
+    >
       {/* ═══ 1. SITE IDENTITY ═══ */}
       <AdminSection
         title="Site Identity"
@@ -832,6 +833,6 @@ export function AdminSettingsManager({ onBack, className }: AdminSettingsManager
           )}
         </Button>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

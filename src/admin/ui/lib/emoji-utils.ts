@@ -1,6 +1,8 @@
 // emoji-utils.ts - iKan emoji system utilities
 // ALL scale data comes from server (KV). No hardcoded fallbacks.
 
+import { apiClient } from '../../../shared/api/api';
+
 export interface EmojiData {
   id: string;
   label: string;
@@ -71,21 +73,17 @@ let _loadPromise: Promise<void> | null = null;
  * Server endpoints lazy-init defaults into KV on first read,
  * so this will always return data (never empty on a fresh tenant).
  */
-export async function loadCustomScales(apiBase: string, anonKey: string): Promise<void> {
+export async function loadCustomScales(): Promise<void> {
   if (_loadPromise) return _loadPromise;
 
   _loadPromise = (async () => {
-    const headers = { Authorization: `Bearer ${anonKey}` };
+    // Public reads (anon key) through apiClient.
+    const getPublic = (path: string) => apiClient.request(path, { method: 'GET' }, false);
     // Each scale falls back to its built-in default on failure, but the failure
     // is now logged instead of silently swallowed — a broken endpoint used to be
     // indistinguishable from "no custom scale configured".
     const fetchScale = (name: string) =>
-      fetch(`${apiBase}/scales/${name}`, { headers })
-        .then(r => {
-          if (r.ok) return r.json();
-          console.warn(`[emoji-utils] /scales/${name} returned ${r.status}; using defaults`);
-          return null;
-        })
+      getPublic(`/scales/${name}`)
         .catch((err: unknown) => {
           console.warn(`[emoji-utils] /scales/${name} failed; using defaults`, err);
           return null;
@@ -164,15 +162,13 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
       }
 
       // Load custom scales from /scales/list
-      const listRes = await fetch(`${apiBase}/scales/list`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null);
+      const listRes = await getPublic('/scales/list').catch(() => null);
       if (listRes?.scales && Array.isArray(listRes.scales)) {
         const customScaleMetas = listRes.scales.filter((s: any) => s.isCustom);
         // Fetch items for each custom scale in parallel
         const customFetches = await Promise.all(
           customScaleMetas.map((meta: any) =>
-            fetch(`${apiBase}/scales/custom/${meta.key}`, { headers })
-              .then(r => r.ok ? r.json() : null)
-              .catch(() => null)
+            getPublic(`/scales/custom/${meta.key}`).catch(() => null)
           )
         );
         _cachedCustomScales = new Map();
@@ -190,7 +186,6 @@ export async function loadCustomScales(apiBase: string, anonKey: string): Promis
         });
       }
 
-      console.log('Custom check-in scales loaded from server');
     } catch (e) {
       console.warn('Could not load custom scales from server:', e);
     }

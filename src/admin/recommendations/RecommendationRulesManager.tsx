@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { clearEngineConfigCache } from '../engines/recommendation-engine';
 import { Trash2, Plus, Save, BookOpen, FileText, ClipboardList, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
-import { AdminHeader } from '../shell/AdminHeader';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminDataTable, type Column } from '../ui/kit/AdminDataTable';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
 import { apiClient } from '../../shared/api/api';
@@ -40,10 +41,65 @@ interface TargetItem {
   type: 'equip' | 'resource' | 'assessment';
 }
 
-export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
-  const [rules, setRules] = useState<RecommendationRule[]>([]);
-  const [targets, setTargets] = useState<TargetItem[]>([]);
-  const [loading, setLoading] = useState(true);
+interface RulesData {
+  targets: TargetItem[];
+  rules: RecommendationRule[];
+}
+
+async function loadRulesData(): Promise<RulesData> {
+  // Load all three target types in parallel; each falls back independently.
+  const [equips, resources, assessments, rulesData] = await Promise.all([
+    apiClient.getEquipPrograms().catch(() => []),
+    apiClient.getResources().catch(() => []),
+    apiClient.getAssessments().catch(() => []),
+    apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0).catch(() => ({ rules: [] })),
+  ]);
+
+  // Normalize targets
+  const equipList = (Array.isArray(equips) ? equips : equips.programs || []).map((e: any) => ({
+    id: e.equip_id || e.id,
+    title: e.title || e.name || 'Untitled',
+    type: 'equip' as const,
+  }));
+  const resourceList = (Array.isArray(resources) ? resources : resources.resources || []).map((r: any) => ({
+    id: r.resource_id || r.id,
+    title: r.title || 'Untitled',
+    type: 'resource' as const,
+  }));
+  const assessmentList = (Array.isArray(assessments) ? assessments : assessments.assessments || []).map((a: any) => ({
+    id: a.assessment_id || a.id,
+    title: a.title || 'Untitled',
+    type: 'assessment' as const,
+  }));
+
+  // Map rules — support legacy field names
+  const rules: RecommendationRule[] = (rulesData.rules || []).map((r: any) => ({
+    id: r.id,
+    assessment_category: r.assessment_category || r.assessment_type || '',
+    min_severity: r.min_severity || r.min_score_severity || 'moderate',
+    recommendation_type: r.recommendation_type || 'equip',
+    target_id: r.target_id || r.equip_id || '',
+    priority: r.priority || 10,
+    rationale: r.rationale || r.reason || '',
+    title: r.title || '',
+    body: r.body || '',
+    cta: r.cta || '',
+    // Absent means enabled: the 18 existing rows predate the field and were
+    // all live. Only an explicit false parks a rule.
+    enabled: r.enabled !== false,
+  }));
+
+  return { targets: [...equipList, ...resourceList, ...assessmentList], rules };
+}
+
+export function RecommendationRulesManager() {
+  const { data, setData, loading, error, reload } = useAdminResource<RulesData>(loadRulesData, {
+    initialData: { targets: [], rules: [] },
+    errorTitle: 'Failed to load rules',
+  });
+  const { targets, rules } = data;
+  const setRules = (update: (prev: RecommendationRule[]) => RecommendationRule[]) =>
+    setData(prev => ({ ...prev, rules: update(prev.rules) }));
   const [deduplicating, setDeduplicating] = useState(false);
   const { showToast } = useNotifications();
 
@@ -79,66 +135,6 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
     : FALLBACK_SEVERITY_LEVELS
   ).filter(s => CLINICAL_SEVERITIES.includes(s.value));
 
-  // Load Data
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // Load all three target types in parallel
-      const [equips, resources, assessments, rulesData] = await Promise.all([
-        apiClient.getEquipPrograms().catch(() => []),
-        apiClient.getResources().catch(() => []),
-        apiClient.getAssessments().catch(() => []),
-        apiClient.request('/admin/recommendations/rules', { method: 'GET' }, true, 0).catch(() => ({ rules: [] })),
-      ]);
-
-      // Normalize targets
-      const equipList = (Array.isArray(equips) ? equips : equips.programs || []).map((e: any) => ({
-        id: e.equip_id || e.id,
-        title: e.title || e.name || 'Untitled',
-        type: 'equip' as const,
-      }));
-      const resourceList = (Array.isArray(resources) ? resources : resources.resources || []).map((r: any) => ({
-        id: r.resource_id || r.id,
-        title: r.title || 'Untitled',
-        type: 'resource' as const,
-      }));
-      const assessmentList = (Array.isArray(assessments) ? assessments : assessments.assessments || []).map((a: any) => ({
-        id: a.assessment_id || a.id,
-        title: a.title || 'Untitled',
-        type: 'assessment' as const,
-      }));
-
-      setTargets([...equipList, ...resourceList, ...assessmentList]);
-
-      // Map rules — support legacy field names
-      const loadedRules = (rulesData.rules || []).map((r: any) => ({
-        id: r.id,
-        assessment_category: r.assessment_category || r.assessment_type || '',
-        min_severity: r.min_severity || r.min_score_severity || 'moderate',
-        recommendation_type: r.recommendation_type || 'equip',
-        target_id: r.target_id || r.equip_id || '',
-        priority: r.priority || 10,
-        rationale: r.rationale || r.reason || '',
-        title: r.title || '',
-        body: r.body || '',
-        cta: r.cta || '',
-        // Absent means enabled: the 18 existing rows predate the field and were
-        // all live. Only an explicit false parks a rule.
-        enabled: r.enabled !== false,
-      }));
-      setRules(loadedRules);
-    } catch (e) {
-      console.error('Failed to load rules data:', e);
-      showToast('error', 'Failed to load rules');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeduplicate = async () => {
     setDeduplicating(true);
     try {
@@ -170,7 +166,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
       }
 
       showToast('success', `Cleaned up ${deletedCount} duplicate rules.`);
-      loadData();
+      void reload();
     } catch (e: any) {
       console.error(e);
       showToast('error', `Cleanup failed: ${e.message}`);
@@ -180,7 +176,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   };
 
   const handleAddRule = () => {
-    setRules([...rules, {
+    setRules(prev => [...prev, {
       id: `temp-${Date.now()}`,
       assessment_category: metaCategories[0]?.value || '',
       min_severity: 'moderate',
@@ -254,7 +250,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
           method: 'POST',
           body: JSON.stringify(data),
         }, true, 0);
-        setRules(rules.map(r => r.id === rule.id ? { ...rule, id: res.rule?.id || rule.id } : r));
+        setRules(prev => prev.map(r => r.id === rule.id ? { ...rule, id: res.rule?.id || rule.id } : r));
       } else {
         await apiClient.request(`/admin/recommendations/rules/${rule.id}`, {
           method: 'PUT',
@@ -270,12 +266,12 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
 
   const handleDeleteRule = async (id: string) => {
     if (id.startsWith('temp-')) {
-      setRules(rules.filter(r => r.id !== id));
+      setRules(prev => prev.filter(r => r.id !== id));
       return;
     }
     try {
       await apiClient.request(`/admin/recommendations/rules/${id}`, { method: 'DELETE' }, true, 0);
-      setRules(rules.filter(r => r.id !== id));
+      setRules(prev => prev.filter(r => r.id !== id));
       showToast('success', 'Rule deleted');
     } catch (e) {
       showToast('error', 'Failed to delete rule');
@@ -283,7 +279,7 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
   };
 
   const updateLocalRule = (id: string, updates: Partial<RecommendationRule>) => {
-    setRules(rules.map(r => r.id === id ? { ...r, ...updates } : r));
+    setRules(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
   };
 
   // Get filtered targets by type
@@ -322,269 +318,263 @@ export function RecommendationRulesManager({ onBack }: { onBack: () => void }) {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader title="Rules Engine" description="Loading rules..." />
-        <Card style={{ borderRadius: 'var(--radius-lg)' }}>
-          <CardContent className="p-8 text-center">
-            <div className="animate-pulse space-y-3">
-              <div className="h-8 w-full rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-              <div className="h-12 w-full rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-              <div className="h-12 w-full rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const columns: Column<RecommendationRule>[] = [
+    {
+      // Assessment Category — from Meta Manager
+      header: 'Assessment Category',
+      className: 'min-w-[140px]',
+      render: (rule) => (
+        <Select
+          value={rule.assessment_category}
+          onValueChange={(val) => updateLocalRule(rule.id, { assessment_category: val })}
+        >
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectContent>
+            {metaCategories.length > 0 ? (
+              metaCategories.map(c => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))
+            ) : (
+              <SelectItem value="" disabled>No categories in KV</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      header: 'Severity ≥',
+      className: 'min-w-[130px]',
+      render: (rule) => (
+        <Select
+          value={rule.min_severity}
+          onValueChange={(val) => updateLocalRule(rule.id, { min_severity: val })}
+        >
+          <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {severityLevels.map(s => (
+              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      header: 'Type',
+      className: 'min-w-[120px]',
+      render: (rule) => (
+        <Select
+          value={rule.recommendation_type}
+          onValueChange={(val: RecommendationRule['recommendation_type']) => updateLocalRule(rule.id, { recommendation_type: val, target_id: '' })}
+        >
+          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="equip">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5" /> Equip
+              </div>
+            </SelectItem>
+            <SelectItem value="resource">
+              <div className="flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5" /> Resource
+              </div>
+            </SelectItem>
+            <SelectItem value="assessment">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-3.5 h-3.5" /> Assessment
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      header: 'Recommend',
+      className: 'min-w-[200px]',
+      render: (rule) => {
+        const options = getTargetsByType(rule.recommendation_type);
+        return (
+          <Select
+            value={rule.target_id}
+            onValueChange={(val) => updateLocalRule(rule.id, { target_id: val })}
+          >
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Select content" /></SelectTrigger>
+            <SelectContent>
+              {options.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                  <span className="truncate">{t.title}</span>
+                </SelectItem>
+              ))}
+              {options.length === 0 && (
+                <SelectItem value="" disabled>No {rule.recommendation_type}s available</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        );
+      },
+    },
+    {
+      header: 'Priority',
+      className: 'min-w-[80px]',
+      render: (rule) => (
+        <Input
+          type="number"
+          className="w-20"
+          value={rule.priority}
+          onChange={(e) => updateLocalRule(rule.id, { priority: parseInt(e.target.value) || 0 })}
+        />
+      ),
+    },
+    {
+      // Card copy + internal note.
+      // `rationale` is the author's own note; title/body/cta are what the
+      // person who finished the assessment reads. They were not authorable at
+      // all, which is why every result stored primaryAction.type "none".
+      header: 'Rationale',
+      className: 'min-w-[200px]',
+      render: (rule) => (
+        <div className="flex flex-col gap-1.5 min-w-[260px]">
+          <Input
+            value={rule.title}
+            onChange={(e) => updateLocalRule(rule.id, { title: e.target.value })}
+            placeholder="Card heading, e.g. Unburn"
+          />
+          <Input
+            value={rule.body}
+            onChange={(e) => updateLocalRule(rule.id, { body: e.target.value })}
+            placeholder="One or two lines saying why this helps"
+          />
+          <Input
+            value={rule.cta}
+            onChange={(e) => updateLocalRule(rule.id, { cta: e.target.value })}
+            placeholder="Button text, e.g. Start program"
+          />
+          <Input
+            value={rule.rationale}
+            onChange={(e) => updateLocalRule(rule.id, { rationale: e.target.value })}
+            placeholder="Internal note — not shown to the user"
+            className="text-xs"
+          />
+          <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            <input
+              type="checkbox"
+              checked={rule.enabled}
+              onChange={(e) => updateLocalRule(rule.id, { enabled: e.target.checked })}
+            />
+            Enabled
+          </label>
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'w-[100px]',
+      render: (rule) => (
+        <div className="flex items-center gap-1">
+          <Button size="icon" variant="ghost" onClick={() => handleSaveRule(rule)} title="Save rule">
+            <Save className="w-4 h-4 text-[var(--color-status-success)]" />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => handleDeleteRule(rule.id)} title="Delete rule">
+            <Trash2 className="w-4 h-4 text-[var(--color-status-danger)]" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const legendLabel = 'text-xs text-[var(--color-text-muted)]';
+  const helpText = 'text-xs text-[var(--color-text-muted)] leading-[1.5]';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Rules Engine"
-        description="Configure assessment-to-recommendation mapping. Rules can recommend programs, resources, or follow-up assessments based on severity."
-        stats={stats}
-        actions={
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={handleDeduplicate} disabled={deduplicating} className="gap-2">
-              <AlertTriangle className="w-4 h-4" /> {deduplicating ? 'Cleaning...' : 'Deduplicate'}
-            </Button>
-            <Button onClick={handleAddRule} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-              <Plus className="w-4 h-4" /> Add Rule
-            </Button>
-          </div>
-        }
-      />
-
+    <AdminPageLayout
+      title="Rules Engine"
+      description={loading
+        ? 'Loading rules...'
+        : 'Configure assessment-to-recommendation mapping. Rules can recommend programs, resources, or follow-up assessments based on severity.'}
+      stats={stats}
+      loading={loading}
+      error={error}
+      onRetry={reload}
+      maxWidth="2xl"
+      actions={
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleDeduplicate} disabled={deduplicating} className="gap-2">
+            <AlertTriangle className="w-4 h-4" /> {deduplicating ? 'Cleaning...' : 'Deduplicate'}
+          </Button>
+          <Button onClick={handleAddRule} className="gap-2 bg-[var(--color-primary-default)] text-[var(--color-primary-on)]">
+            <Plus className="w-4 h-4" /> Add Rule
+          </Button>
+        </div>
+      }
+    >
       {/* Legend */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-1.5">
           {getTypeIcon('equip')}
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Equip Program</span>
+          <span className={legendLabel}>Equip Program</span>
         </div>
         <div className="flex items-center gap-1.5">
           {getTypeIcon('resource')}
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Resource</span>
+          <span className={legendLabel}>Resource</span>
         </div>
         <div className="flex items-center gap-1.5">
           {getTypeIcon('assessment')}
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)' }}>Assessment</span>
+          <span className={legendLabel}>Assessment</span>
         </div>
       </div>
 
       {rules.length === 0 ? (
-        <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-border-default)' }}>
+        <Card className="rounded-lg border border-dashed border-[var(--color-border-default)]">
           <CardContent className="p-8 text-center">
-            <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} />
-            <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-1)' }}>
+            <Sparkles className="w-10 h-10 mx-auto mb-3 text-[var(--color-text-muted)] opacity-50" />
+            <p className="text-base font-medium text-[var(--color-text-primary)] mb-1">
               No Recommendation Rules
             </p>
-            <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)' }}>
+            <p className="text-sm text-[var(--color-text-muted)] mb-4">
               Create rules to automatically recommend content based on assessment severity scores.
             </p>
-            <Button onClick={handleAddRule} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+            <Button onClick={handleAddRule} className="gap-2 bg-[var(--color-primary-default)] text-[var(--color-primary-on)]">
               <Plus className="w-4 h-4" /> Create First Rule
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead style={{ minWidth: 140 }}>Assessment Category</TableHead>
-                    <TableHead style={{ minWidth: 130 }}>Severity ≥</TableHead>
-                    <TableHead style={{ minWidth: 120 }}>Type</TableHead>
-                    <TableHead style={{ minWidth: 200 }}>Recommend</TableHead>
-                    <TableHead style={{ minWidth: 80 }}>Priority</TableHead>
-                    <TableHead style={{ minWidth: 200 }}>Rationale</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rules.map((rule) => (
-                    <TableRow key={rule.id}>
-                      {/* Assessment Category — from Meta Manager */}
-                      <TableCell>
-                        <Select
-                          value={rule.assessment_category}
-                          onValueChange={(val) => updateLocalRule(rule.id, { assessment_category: val })}
-                        >
-                          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Category" /></SelectTrigger>
-                          <SelectContent>
-                            {metaCategories.length > 0 ? (
-                              metaCategories.map(c => (
-                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="" disabled>No categories in KV</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-
-                      {/* Severity Level */}
-                      <TableCell>
-                        <Select
-                          value={rule.min_severity}
-                          onValueChange={(val) => updateLocalRule(rule.id, { min_severity: val })}
-                        >
-                          <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {severityLevels.map(s => (
-                              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-
-                      {/* Recommendation Type */}
-                      <TableCell>
-                        <Select
-                          value={rule.recommendation_type}
-                          onValueChange={(val: any) => updateLocalRule(rule.id, { recommendation_type: val, target_id: '' })}
-                        >
-                          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="equip">
-                              <div className="flex items-center gap-2">
-                                <BookOpen className="w-3.5 h-3.5" /> Equip
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="resource">
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-3.5 h-3.5" /> Resource
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="assessment">
-                              <div className="flex items-center gap-2">
-                                <ClipboardList className="w-3.5 h-3.5" /> Assessment
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-
-                      {/* Target Content */}
-                      <TableCell>
-                        <Select
-                          value={rule.target_id}
-                          onValueChange={(val) => updateLocalRule(rule.id, { target_id: val })}
-                        >
-                          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Select content" /></SelectTrigger>
-                          <SelectContent>
-                            {getTargetsByType(rule.recommendation_type).map(t => (
-                              <SelectItem key={t.id} value={t.id}>
-                                <span className="truncate">{t.title}</span>
-                              </SelectItem>
-                            ))}
-                            {getTargetsByType(rule.recommendation_type).length === 0 && (
-                              <SelectItem value="" disabled>No {rule.recommendation_type}s available</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-
-                      {/* Priority */}
-                      <TableCell>
-                        <Input
-                          type="number"
-                          className="w-20"
-                          value={rule.priority}
-                          onChange={(e) => updateLocalRule(rule.id, { priority: parseInt(e.target.value) || 0 })}
-                        />
-                      </TableCell>
-
-                      {/* Card copy + internal note.
-                          `rationale` is the author's own note; title/body/cta
-                          are what the person who finished the assessment reads.
-                          They were not authorable at all, which is why every
-                          result stored primaryAction.type "none". */}
-                      <TableCell>
-                        <div className="flex flex-col gap-1.5" style={{ minWidth: 260 }}>
-                          <Input
-                            value={rule.title}
-                            onChange={(e) => updateLocalRule(rule.id, { title: e.target.value })}
-                            placeholder="Card heading, e.g. Unburn"
-                          />
-                          <Input
-                            value={rule.body}
-                            onChange={(e) => updateLocalRule(rule.id, { body: e.target.value })}
-                            placeholder="One or two lines saying why this helps"
-                          />
-                          <Input
-                            value={rule.cta}
-                            onChange={(e) => updateLocalRule(rule.id, { cta: e.target.value })}
-                            placeholder="Button text, e.g. Start program"
-                          />
-                          <Input
-                            value={rule.rationale}
-                            onChange={(e) => updateLocalRule(rule.id, { rationale: e.target.value })}
-                            placeholder="Internal note — not shown to the user"
-                            style={{ fontSize: 'var(--text-xs)' }}
-                          />
-                          <label className="flex items-center gap-2" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                            <input
-                              type="checkbox"
-                              checked={rule.enabled}
-                              onChange={(e) => updateLocalRule(rule.id, { enabled: e.target.checked })}
-                            />
-                            Enabled
-                          </label>
-                        </div>
-                      </TableCell>
-
-                      {/* Actions */}
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleSaveRule(rule)} title="Save rule">
-                            <Save className="w-4 h-4" style={{ color: 'var(--color-status-success)' }} />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleDeleteRule(rule.id)} title="Delete rule">
-                            <Trash2 className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <AdminDataTable<RecommendationRule>
+          columns={columns}
+          data={rules}
+          showToolbar={false}
+          paginate={false}
+          mobileLayout="table"
+        />
       )}
 
       {/* Help Text */}
-      <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
+      <Card className="rounded-lg border border-[var(--color-border-default)]">
         <CardContent className="p-4">
-          <h5 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-2)' }}>
+          <h5 className="font-medium text-sm text-[var(--color-text-primary)] mb-2">
             How Rules Work
           </h5>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                <strong style={{ fontWeight: 'var(--font-weight-medium)' }}>1. Assessment Category</strong><br />
+              <p className={helpText}>
+                <strong className="font-medium">1. Assessment Category</strong><br />
                 Categories come from the Meta Manager (KV). When a user completes an assessment tagged with this category...
               </p>
             </div>
             <div>
-              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                <strong style={{ fontWeight: 'var(--font-weight-medium)' }}>2. Severity Threshold</strong><br />
+              <p className={helpText}>
+                <strong className="font-medium">2. Severity Threshold</strong><br />
                 ...and their score maps to this severity level or higher (via the Scoring Engine)...
               </p>
             </div>
             <div>
-              <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                <strong style={{ fontWeight: 'var(--font-weight-medium)' }}>3. Recommendation</strong><br />
+              <p className={helpText}>
+                <strong className="font-medium">3. Recommendation</strong><br />
                 ...they are recommended this program, resource, or follow-up assessment. Higher priority rules appear first.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </AdminPageLayout>
   );
 }

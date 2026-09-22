@@ -25,14 +25,13 @@
  */
 import { useRef } from 'react';
 import { Image as ImageIcon, Video, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useNotifications } from '../../../shared/state/NotificationContext';
+import { apiClient } from '../../../shared/api/api';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Activity, interactionsOfBlock, activityOf, normalizeSubtype } from '../model/block-model';
 import { validateBlock } from '../model/block-validation';
 import { useMetadata } from '../../ui/hooks/useMetadata';
-import { projectId } from '../../../shared/api/supabase-info';
-import { getAuthHeaders } from '../../../shared/api/supabase';
 import { BlockFieldSections, ActivityPicker } from './BlockFieldSections';
 import { BlockFlowFooter } from './BlockFlowFooter';
 import { BlockTypePicker } from './BlockTypePicker';
@@ -54,6 +53,7 @@ export interface BlockEditorPaneProps {
 
 export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPolicy, readOnly, openTypePickerAt }: BlockEditorPaneProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useNotifications();
   const { exerciseSubtypes: kvExerciseSubtypes, blockTypes: kvBlockTypes } = useMetadata();
 
   const currentActivity = normalizeSubtype(activityOf(block)) ?? activityOf(block);
@@ -64,29 +64,21 @@ export function BlockEditorPane({ block, onChange, onDelete, isAssessment, dayPo
   const blockIssues = validateBlock(block);
   const isVideo = !!block.image_url && (block.image_url.includes('youtube') || block.image_url.includes('vimeo') || block.image_url.endsWith('.mp4'));
 
-  /* Moved verbatim from `BlockEditor` — same bucket, same headers, same toasts. */
+  /* Moved from `BlockEditor` — same bucket, same endpoint, same toasts. */
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      showToast('error', 'Please select an image file');
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', 'equip-program-images');
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload-image`,
-        { method: 'POST', headers: await getAuthHeaders(), body: formData },
-      );
-      if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
-      const data = await response.json();
+      const data = await apiClient.uploadImage(file, 'equip-program-images');
       if (data.url) {
         onChange({ image_url: data.url });
-        toast.success('Image uploaded');
+        showToast('success', 'Image uploaded');
       }
     } catch (err) {
       console.error('Upload error:', err);
-      toast.error('Upload failed. Try pasting a URL instead.');
+      showToast('error', 'Upload failed. Try pasting a URL instead.');
     }
   };
 

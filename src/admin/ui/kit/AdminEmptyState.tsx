@@ -2,7 +2,8 @@ import React from 'react';
 import { Button } from '../button';
 
 interface AdminEmptyStateProps {
-  icon: React.ReactNode;
+  /** A rendered node (<Inbox />) or a component (Inbox). */
+  icon: React.ReactNode | React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   title: string;
   description: string;
   actionLabel?: string;
@@ -29,7 +30,7 @@ export function AdminEmptyState({
       return icon;
     }
     // If it's a component (LucideIcon), render it
-    const IconComp = icon as React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+    const IconComp = icon as unknown as React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
     return <IconComp className="w-8 h-8" style={{ color: 'var(--color-text-muted)', opacity: 0.5 }} />;
   };
 

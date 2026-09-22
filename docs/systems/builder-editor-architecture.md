@@ -8,9 +8,9 @@ the actual render tree, not just each file's own imports.
 
 > **Renamed since this was written (2026-09-21 note).** `EquipDailyEditor.tsx` → `DayEditor.tsx`
 > and `EquipBlockEditor.tsx` → `BlockEditor.tsx` (commit `0340aa21`, 2026-09-02); the builder was then
-> rebuilt. Today the shared day editor is `src/admin/blocks/DayComposer.tsx` (exports `DayEditor` — a
-> thin adapter over `src/admin/builder/content/ContentScreen.tsx`), and per-block editing is
-> `src/admin/builder/editor/BlockEditorPane.tsx` + `BlockFieldSections.tsx` + `BlockFlowFooter.tsx`.
+> rebuilt. Today the shared day editor is `src/admin/block-builder/DayComposer.tsx` (exports `DayEditor` — a
+> thin adapter over `src/admin/block-builder/content/ContentScreen.tsx`), and per-block editing is
+> `src/admin/block-builder/editor/BlockEditorPane.tsx` + `BlockFieldSections.tsx` + `BlockFlowFooter.tsx`.
 > Names below are updated; the Verification notes keep the names that were grepped at the time.
 
 ## Corrected answer: 1 shared builder (correctly reused), 1 outlier

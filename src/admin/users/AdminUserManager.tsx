@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Users, Download, Pencil, Shield, Building, UserPlus, MoreHorizontal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Download, Pencil, Shield, Building, UserPlus, MoreHorizontal, Trash2, FileQuestion } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
-import { AdminHeader } from '../shell/AdminHeader';
+import type { AdminUserData } from '../../shared/api/api-types';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../ui/kit/AdminStatusBadge';
+import { AdminEmptyState } from '../ui/kit/AdminEmptyState';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { UserEditPage } from './UserEditPage';
 import { AdminDataTable, Column, FilterOption } from '../ui/kit/AdminDataTable';
-import { SkeletonTable } from '../ui/skeleton-loader';
-import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../ui/empty-state';
 import { useMetadata } from '../ui/hooks/useMetadata';
 import {
   DropdownMenu,
@@ -39,72 +40,70 @@ interface UserProfile {
   linkedinConnected?: boolean;
 }
 
-interface AdminUserManagerProps {
-  onBack?: () => void;
-  className?: string;
+interface UsersData {
+  users: UserProfile[];
+  enrollments: any[];
+  programs: any[];
 }
+
+const EMPTY: UsersData = { users: [], enrollments: [], programs: [] };
 
 type ViewMode = 'list' | 'edit' | 'create';
 
-export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
+function isPermissionError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : '';
+  return message.includes('insufficient permissions') || message.includes('Admin access required');
+}
+
+export function AdminUserManager() {
   const { showToast } = useNotifications();
+  const confirm = useConfirm();
   const isMobile = useIsMobile();
   const { accountTypes: kvAccountTypes } = useMetadata();
-
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (viewMode === 'list') {
-      loadData();
-    }
-  }, [viewMode]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [usersData, enrollmentsData, programsData] = await Promise.all([
-        apiClient.getUsers(),
-        apiClient.getEquipEnrollments(),
-        apiClient.getEquipPrograms()
-      ]);
-
-      if (usersData.users) {
-        setUsers(usersData.users);
-      } else {
-        setUsers([]);
+  const { data, setData, loading, error, reload } = useAdminResource<UsersData>(
+    async () => {
+      try {
+        const [usersData, enrollmentsData, programsData] = await Promise.all([
+          apiClient.getUsers(),
+          apiClient.getEquipEnrollments(),
+          apiClient.getEquipPrograms()
+        ]);
+        return {
+          users: usersData.users || [],
+          enrollments: enrollmentsData || [],
+          programs: programsData || [],
+        };
+      } catch (err) {
+        // A non-admin gets a pointer to the fix, not an error screen.
+        if (isPermissionError(err)) {
+          console.error('Failed to load data:', err);
+          showToast(
+            'error',
+            'Admin Access Required',
+            'You need admin privileges to view users. Please go back to the Dashboard and click "Promote to Admin" in the Debug Panel.'
+          );
+          return EMPTY;
+        }
+        throw err;
       }
-
-      setEnrollments(enrollmentsData || []);
-      setPrograms(programsData || []);
-      
-      setLoading(false);
-    } catch (error: any) {
-      console.error('Failed to load data:', error);
-
-      if (
-        error.message?.includes('insufficient permissions') ||
-        error.message?.includes('Admin access required')
-      ) {
-        showToast(
-          'error',
-          'Admin Access Required',
-          'You need admin privileges to view users. Please go back to the Dashboard and click "Promote to Admin" in the Debug Panel.'
-        );
-        setLoading(false);
-      } else {
-        console.error('Backend error:', error);
-        setError('Failed to load users. Please try again later.');
-      }
+    },
+    {
+      initialData: EMPTY,
+      enabled: viewMode === 'list',
+      deps: [viewMode],
+      toastOnError: false,
+      errorTitle: 'Failed to Load Users',
+      errorMessage: 'Failed to load users. Please try again later.',
     }
-  };
+  );
+  const { users, enrollments, programs } = data;
+  const setUsers = (update: (prev: UserProfile[]) => UserProfile[]) =>
+    setData((prev) => ({ ...prev, users: update(prev.users) }));
 
   const handleExport = () => {
     // Export all loaded users
@@ -153,10 +152,11 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
 
   const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
     try {
-      await apiClient.updateUserAdmin(userId, { is_admin: !currentIsAdmin });
+      const patch: Partial<AdminUserData> = { is_admin: !currentIsAdmin };
+      await apiClient.updateUserAdmin(userId, patch as AdminUserData);
       setUsers((prev) => prev.map((u) => (u.user_id === userId ? { ...u, is_admin: !currentIsAdmin } : u)));
       showToast('success', 'User Updated', `Admin privileges ${!currentIsAdmin ? 'granted' : 'removed'}`);
-      loadData(); // Reload to get fresh data
+      void reload(); // Reload to get fresh data
     } catch (error: any) {
       console.error('Failed to update user:', error);
       showToast('error', 'API Error', 'Failed to update user');
@@ -164,8 +164,14 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
-    
+    const ok = await confirm({
+      title: `Are you sure you want to delete user "${userName}"?`,
+      description: 'This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+
     try {
       await apiClient.deleteUser(userId);
       setUsers((prev) => prev.filter((u) => u.user_id !== userId));
@@ -243,7 +249,6 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
     },
     {
       header: 'Active Program',
-      accessorKey: 'program_progress', // Virtual key
       render: (user) => {
         const userEnrollment = enrollments.find(e => e.user_id === user.user_id && e.status === 'active');
         if (!userEnrollment) return <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>-</span>;
@@ -355,83 +360,50 @@ export function AdminUserManager({ onBack, className }: AdminUserManagerProps) {
     return <UserEditPage userId={selectedUserId} onBack={handleBackToList} onSave={handleBackToList} />;
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Account Management"
-          description="Loading users..."
-        />
-        <SkeletonTable rows={10} columns={5} />
-      </div>
-    );
-  }
+  const isEmpty = !loading && !error && users.length === 0;
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Account Management"
-          description="Manage platform access, roles, and user profiles"
-        />
-        <ErrorState
-          variant="error"
-          title="Failed to Load Users"
-          message={error}
-          onRetry={loadData}
-          onGoBack={onBack}
-        />
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Account Management"
-          description="Manage platform access, roles, and user profiles"
-        />
-        <EmptyState
-          variant="default"
+  return (
+    <AdminPageLayout
+      title="Account Management"
+      description={loading ? 'Loading users...' : 'Manage platform access, roles, and user profiles'}
+      stats={isEmpty ? undefined : stats}
+      actions={isEmpty || loading ? undefined : (
+        <Button onClick={handleCreateNew} className="gap-2">
+          <UserPlus className="w-4 h-4" />
+          {!isMobile && 'Add User'}
+        </Button>
+      )}
+      loading={loading}
+      error={error}
+      errorTitle="Failed to Load Users"
+      onRetry={reload}
+      maxWidth="2xl"
+    >
+      {isEmpty ? (
+        <AdminEmptyState
+          icon={<FileQuestion className="w-8 h-8 text-[var(--color-text-muted)] opacity-50" />}
           title="No Users Found"
           description="There are no users registered in the system yet."
           actionLabel="Add First User"
           onAction={handleCreateNew}
         />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Account Management"
-        description="Manage platform access, roles, and user profiles"
-        stats={stats}
-        actions={
-          <Button onClick={handleCreateNew} className="gap-2">
-            <UserPlus className="w-4 h-4" />
-            {!isMobile && 'Add User'}
-          </Button>
-        }
-      />
-
-      <AdminDataTable 
-        columns={columns} 
-        data={usersWithRole} 
-        searchKeys={['name', 'email', 'phone']}
-        filters={filters}
-        searchPlaceholder="Search users..."
-        onRowClick={(item) => handleEdit(item.user_id)}
-        idField="user_id"
-        actions={
+      ) : (
+        <AdminDataTable
+          columns={columns}
+          data={usersWithRole}
+          searchKeys={['name', 'email', 'phone']}
+          filters={filters}
+          searchPlaceholder="Search users..."
+          onRowClick={(item) => handleEdit(item.user_id)}
+          idField="user_id"
+          actions={
             <Button variant="outline" onClick={handleExport} className="gap-2">
-            <Download className="w-4 h-4" />
-            {!isMobile && 'Export'}
-          </Button>
-        }
-      />
-    </div>
+              <Download className="w-4 h-4" />
+              {!isMobile && 'Export'}
+            </Button>
+          }
+        />
+      )}
+    </AdminPageLayout>
   );
 }

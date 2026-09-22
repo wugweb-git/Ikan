@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const info = readFileSync(join(ROOT, 'src/shared/config/supabase-info.tsx'), 'utf8');
+const info = readFileSync(join(ROOT, 'src/shared/api/supabase-info.tsx'), 'utf8');
 const projectId = info.match(/projectId\s*=\s*"([^"]+)"/)[1];
 const anonKey = info.match(/publicAnonKey\s*=\s*"([^"]+)"/)[1];
 const API = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;

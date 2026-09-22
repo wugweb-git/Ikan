@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
 import { Activity, CircleCheck, CircleAlert, RefreshCw, Trash2, Search, ShieldAlert } from 'lucide-react';
-import { AdminHeader } from '../shell/AdminHeader';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 
 interface HealthResult {
   name: string;
@@ -40,8 +41,9 @@ function isSuspect(text: string | undefined | null): string | null {
   return null;
 }
 
-export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
+export function AdminCRUDTesting() {
   const { showToast } = useNotifications();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -259,8 +261,12 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
 
   // Delete a suspect item
   const deleteSuspect = async (item: SuspectItem) => {
-    const confirmMsg = `Delete ${item.type} "${item.title}"? This cannot be undone.`;
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await confirm({
+      title: `Delete ${item.type} "${item.title}"?`,
+      description: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))) return;
 
     setDeleting(item.id);
     try {
@@ -290,8 +296,12 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
   // Purge all suspects
   const purgeAll = async () => {
     if (suspects.length === 0) return;
-    const confirmMsg = `Delete ALL ${suspects.length} suspect items? This cannot be undone.`;
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await confirm({
+      title: `Delete ALL ${suspects.length} suspect items?`,
+      description: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))) return;
 
     setDeleting('all');
     let deleted = 0;
@@ -346,11 +356,10 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
   };
 
   return (
-    <div className="space-y-6">
-      <AdminHeader
+    <AdminPageLayout
+        maxWidth="none"
         title="System Health"
         description="Read-only system health checks, entity audits, and test data scanner. No data is created or modified automatically."
-        onBack={onBack}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -397,7 +406,7 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
             </Button>
           </div>
         }
-      />
+      >
 
       {/* Health Status Cards */}
       {healthData && (
@@ -686,6 +695,6 @@ export function AdminCRUDTesting({ onBack }: { onBack?: () => void }) {
           </CardContent>
         </Card>
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

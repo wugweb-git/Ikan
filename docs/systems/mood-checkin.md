@@ -75,7 +75,7 @@ nothing a real user ever saw.
    which used to embed `AdminMoodManager` inline for that one metadata type.
 4. Removed the dead `GET/POST/PUT/DELETE /moods` handlers from `mood-routes.ts` (backed by
    `mood_type:`) — kept `/user/journal`, which is real and unrelated.
-5. Removed `mood_type` from `src/shared/lib/metadata-catalog.ts` (renamed from `metadata-seed.ts` the same
+5. Removed `mood_type` from `src/admin/catalog/metadata-catalog.ts` (renamed from `metadata-seed.ts` the same
    day — see that file's own header) — its `MetadataType` union, labels, icons, groups, and 8 seed
    entries (`Happy/Calm/Sad/Anxious/Angry/Stressed/Tired/Grateful` — yet a **third**, independently
    invented mood vocabulary that was never live; the seed file's own header comment had already

@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Calculator, Save, Plus, Trash2, CircleAlert, Info, ArrowUpDown,
   ChevronDown, ChevronUp, Lock, LockOpen, TriangleAlert, Check,
 } from 'lucide-react';
-import { AdminHeader } from '../shell/AdminHeader';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -123,15 +125,16 @@ function isLegacyProfile(p: any): boolean {
   return !!p && (p.severity_bands !== undefined || p.normalize_to_100 !== undefined || p.method !== undefined);
 }
 
-interface AdminScoringEngineProps {
-  onBack?: () => void;
-}
-
-export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
+export function AdminScoringEngine() {
   const { showToast } = useNotifications();
+  const confirm = useConfirm();
   const { severityLevels: kvSeverityLevels } = useMetadata();
-  const [profiles, setProfiles] = useState<ScoringProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  // A failed load leaves the list empty (no toast): the request error is
+  // swallowed deliberately, exactly as before.
+  const { data: profiles, setData: setProfiles, loading } = useAdminResource<ScoringProfile[]>(async () => {
+    const data = await apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0).catch(() => null);
+    return Array.isArray(data?.profiles) ? data.profiles : [];
+  }, { initialData: [], toastOnError: false });
   const [saving, setSaving] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -154,21 +157,6 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
     }
     return map;
   }, [kvSeverityLevels]);
-
-  useEffect(() => { loadProfiles(); }, []);
-
-  const loadProfiles = async () => {
-    try {
-      setLoading(true);
-      const data = await apiClient.request('/admin/scoring-profiles', { method: 'GET' }, true, 0).catch(() => null);
-      setProfiles(Array.isArray(data?.profiles) ? data.profiles : []);
-    } catch (e) {
-      console.error('Failed to load scoring profiles:', e);
-      setProfiles([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddProfile = () => {
     const stamp = Date.now();
@@ -240,7 +228,12 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
 
   const handleDeleteProfile = async (id: string) => {
     const profile = profiles.find(p => p.id === id);
-    if (!confirm(`Delete "${profile?.name || id}"? This cannot be undone.`)) return;
+    if (!(await confirm({
+      title: `Delete "${profile?.name || id}"?`,
+      description: 'This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))) return;
     // An unsaved draft (version 0) exists only locally — nothing to call.
     if (!profile || profile.version === 0) {
       setProfiles(ps => ps.filter(p => p.id !== id));
@@ -309,24 +302,6 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto space-y-6">
-        <AdminHeader title="Scoring Engine" description="Loading scoring profiles..." />
-        <div className="space-y-4">
-          {[1, 2].map(i => (
-            <Card key={i} style={{ borderRadius: 'var(--radius-lg)' }}>
-              <CardContent className="p-6">
-                <div className="h-6 w-48 rounded" style={{ backgroundColor: 'var(--color-bg-muted)' }} />
-                <div className="h-4 w-96 rounded mt-2" style={{ backgroundColor: 'var(--color-bg-muted)', opacity: 0.6 }} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   const labelStyle = { fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-medium)' } as const;
   const mutedText = {
     fontFamily: 'var(--font-family-base)',
@@ -336,17 +311,20 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
   } as const;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <AdminHeader
-        title="Scoring Engine"
-        description="Scoring profiles: how a score is calculated and which severity band it lands in"
-        stats={stats}
-        actions={
-          <Button onClick={handleAddProfile} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-            <Plus className="w-4 h-4" /> Add Profile
-          </Button>
-        }
-      />
+    <AdminPageLayout
+      title="Scoring Engine"
+      description={loading
+        ? 'Loading scoring profiles...'
+        : 'Scoring profiles: how a score is calculated and which severity band it lands in'}
+      stats={stats}
+      actions={loading ? undefined : (
+        <Button onClick={handleAddProfile} className="gap-2" style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
+          <Plus className="w-4 h-4" /> Add Profile
+        </Button>
+      )}
+      loading={loading}
+      maxWidth="lg"
+    >
 
       <Card style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-status-info)', backgroundColor: 'var(--color-status-info-light)' }}>
         <CardContent className="p-4 flex items-start gap-3">
@@ -747,6 +725,6 @@ export function AdminScoringEngine({ onBack }: AdminScoringEngineProps) {
           </Card>
         );
       })}
-    </div>
+    </AdminPageLayout>
   );
 }

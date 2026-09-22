@@ -1,13 +1,12 @@
-import { projectId } from '../../shared/api/supabase-info';
-import { getAuthHeaders } from '../../shared/api/supabase';
+import { apiClient, type ApiHttpError } from '../../shared/api/api';
+import { useNotifications } from '../../shared/state/NotificationContext';
 import { useRef, useState } from 'react';
 import { Upload, X, Image as ImageIcon, Crop, Eye } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './utils';
-import { toast } from 'sonner';
 import { ImageCropDialog } from './image-crop-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
-import { compressImage, formatFileSize } from '../media/image-compress';
+import { compressImage } from '../media/image-compress';
 
 interface ImageUploadProps {
   value?: string;
@@ -49,6 +48,7 @@ export function ImageUpload({
   cropAspectRatio,
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useNotifications();
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -71,12 +71,12 @@ export function ImageUpload({
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Invalid File Type', { description: 'Please select an image file (JPG, PNG, WebP)' });
+      showToast('error', 'Invalid File Type', 'Please select an image file (JPG, PNG, WebP)');
       return;
     }
 
     if (file.size > maxSizeMB * 1024 * 1024) {
-      toast.error('File Too Large', { description: `Image must be smaller than ${maxSizeMB}MB` });
+      showToast('error', 'File Too Large', `Image must be smaller than ${maxSizeMB}MB`);
       return;
     }
 
@@ -87,10 +87,10 @@ export function ImageUpload({
       await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = objectUrl; });
       URL.revokeObjectURL(objectUrl);
       if (img.width > 4000 || img.height > 4000) {
-        toast.warning('Large Image', { description: 'This image is very large and may take longer to upload' });
+        showToast('warning', 'Large Image', 'This image is very large and may take longer to upload');
       }
     } catch (error) {
-      toast.error('Invalid Image', { description: 'The selected file appears to be corrupted' });
+      showToast('error', 'Invalid Image', 'The selected file appears to be corrupted');
       return;
     }
 
@@ -126,44 +126,27 @@ export function ImageUpload({
       try {
         const result = await compressImage(file, { maxDimension: 2048, quality: 0.82 });
         uploadBlob = result.blob;
-        if (result.compressedSize < result.originalSize) {
-          console.log(
-            `[ImageUpload] Compressed ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)} (${result.outputType})${result.wasResized ? ' (resized)' : ''}`
-          );
-        }
       } catch (compressErr) {
         console.warn('[ImageUpload] Compression skipped:', compressErr);
         // Continue with original file
       }
 
-      const formData = new FormData();
-      formData.append('file', uploadBlob);
-      formData.append('bucket', bucket);
-      
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload-image`,
-        {
-          method: 'POST',
-          headers: await getAuthHeaders(),
-          body: formData
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Upload failed:', errorText);
-        if (response.status === 413) throw new Error('File is too large for server');
-        else if (response.status === 415) throw new Error('Unsupported file format');
-        else if (response.status === 401) throw new Error('Authentication failed');
-        else throw new Error(`Upload failed: ${response.status}`);
+      let data: { url?: string };
+      try {
+        data = await apiClient.uploadImage(uploadBlob as File, bucket);
+      } catch (uploadErr) {
+        console.error('Upload failed:', uploadErr);
+        const status = (uploadErr as Partial<ApiHttpError>)?.status;
+        if (status === 413) throw new Error('File is too large for server');
+        else if (status === 415) throw new Error('Unsupported file format');
+        else if (status === 401) throw new Error('Authentication failed');
+        else throw new Error(`Upload failed: ${status ?? 'network error'}`);
       }
-
-      const data = await response.json();
       
       if (data.url) {
         onChange(data.url);
         setUploadProgress(100);
-        toast.success('Image Uploaded', { description: 'Your image has been uploaded successfully' });
+        showToast('success', 'Image Uploaded', 'Your image has been uploaded successfully');
       } else {
         throw new Error('No URL returned from server');
       }
@@ -174,34 +157,17 @@ export function ImageUpload({
       
       // Fallback: try the professional-file upload endpoint
       try {
-        const formData = new FormData();
-        formData.append('file', file as File);
-        formData.append('category', 'photo');
-        formData.append('professionalId', 'general');
-
-        const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload/professional-file`,
-          {
-            method: 'POST',
-            headers: await getAuthHeaders(),
-            body: formData
-          }
-        );
-
-        const data = await response.json();
+        const data = await apiClient.uploadProfessionalFile(file, 'photo', 'general');
         if (data.success && data.url) {
           onChange(data.url);
-          toast.success('Image Uploaded', { description: 'Uploaded via fallback endpoint' });
+          showToast('success', 'Image Uploaded', 'Uploaded via fallback endpoint');
           return;
         }
       } catch (fallbackErr) {
         console.error('Fallback upload also failed:', fallbackErr);
       }
 
-      toast.error('Upload Failed', {
-        description: errorMessage + '. Please try again or paste a URL instead.',
-        duration: 5000
-      });
+      showToast('error', 'Upload Failed', errorMessage + '. Please try again or paste a URL instead.', { timeout: 5000 });
     } finally {
       setIsLoading(false);
       setUploadProgress(0);
@@ -278,7 +244,7 @@ export function ImageUpload({
                       setPendingFile(file);
                       setShowCropDialog(true);
                     } catch {
-                      toast.error('Cannot load image for cropping');
+                      showToast('error', 'Cannot load image for cropping');
                     }
                   }}
                   style={{ backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)' }}

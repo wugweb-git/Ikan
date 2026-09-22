@@ -1,7 +1,7 @@
 import type React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-interface AdminHeaderProps {
+export interface AdminHeaderProps {
   title: string;
   description?: string;
   actions?: React.ReactNode;
@@ -11,8 +11,6 @@ interface AdminHeaderProps {
     icon?: React.ReactNode;
     trend?: 'up' | 'down' | 'neutral';
   }[];
-  /** @deprecated Back button has been globally removed from AdminHeader */
-  onBack?: () => void;
   breadcrumbs?: {
     label: string;
     onClick?: () => void;

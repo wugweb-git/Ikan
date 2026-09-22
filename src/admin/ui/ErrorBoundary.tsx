@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private logErrorDetails(error: Error, errorInfo: ErrorInfo) {
     try {
-      console.log('Error details:', {
+      console.error('Error details:', {
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,

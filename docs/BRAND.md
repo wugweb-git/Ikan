@@ -52,7 +52,7 @@ Do **not** reference 988, 911, "Text HOME to 741741", or any US crisis lines.
 
 ## Design tokens (key colours)
 
-Defined in `src/product/styles/globals.css`. Light-mode defaults:
+Defined in `src/product/site/ui/styles/globals.css`. Light-mode defaults:
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -63,7 +63,7 @@ Defined in `src/product/styles/globals.css`. Light-mode defaults:
 | `--color-text-muted` | Mid-grey | Labels, captions |
 | `--grey-8` | Body-copy grey | Lesson text, paragraph copy |
 
-Full palette and component semantics are in `src/product/styles/globals.css`.
+Full palette and component semantics are in `src/product/site/ui/styles/globals.css`.
 
 ---
 

@@ -41,7 +41,7 @@ truth until each entity's read path cuts over. Status: `docs/PENDING.md` §D.
 
 **Routing is client-side**, custom, in `src/App.tsx`. Public detail pages use human-readable slugs
 resolved by the backend (with a client fallback): `/assessment/<slug>`, `/equip/<slug>` (legacy
-`?id=` query params still work). Slug helpers: `src/product/app/lib/slug.ts`.
+`?id=` query params still work). Slug helpers: `src/product/app/ui/slug.ts`.
 
 **Code layout** is `src/{admin,app,site,shared}` — see
 [`docs/PROJECT-STRUCTURE.md`](docs/PROJECT-STRUCTURE.md).
@@ -82,7 +82,7 @@ ratchets and a build on every pull request and on pushes to `equip-carry-forward
 
 ## SEO
 
-Meta/OpenGraph/Twitter/canonical + JSON-LD via `useSeo` (`src/product/app/hooks/useSeo.ts`), used on the
+Meta/OpenGraph/Twitter/canonical + JSON-LD via `useSeo` (`src/product/app/ui/useSeo.ts`), used on the
 equip and assessment detail pages only (`EquipDetail.tsx`, `AssessmentDetail.tsx`). Static
 `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`. Google Analytics loads from the shell
 `index.html`.

@@ -315,7 +315,7 @@ Every assessment carries a parallel `daily_content` array — one day, one block
 >
 > Anxiety's items have 4 options and weights `[0,1,2,3]` — a true per-item max of 3. Six of the ten blocks store `scoring.maxScore: 4`; the other four correctly store 3. Nothing reads `maxScore` at score time — the player sums weights — so this changes no result today. It means any builder or tool that trusts the field computes Anxiety's ceiling as 36 instead of 30. Every other assessment is internally consistent.
 
-The shared taxonomy behind these shapes is covered in the Blocks survey; the relevant fact here is that **assessments and equip programs use the same editor and the same block vocabulary** — Assessment imports `DayEditor` (`src/admin/blocks/DayComposer.tsx`, was `EquipDailyEditor`) directly and bridges through `convertQuestionsToDay()`. That reuse is the system working. The divergence above is what happens when only some records pass through it.
+The shared taxonomy behind these shapes is covered in the Blocks survey; the relevant fact here is that **assessments and equip programs use the same editor and the same block vocabulary** — Assessment imports `DayEditor` (`src/admin/block-builder/DayComposer.tsx`, was `EquipDailyEditor`) directly and bridges through `convertQuestionsToDay()`. That reuse is the system working. The divergence above is what happens when only some records pass through it.
 
 ## 07 · The content, item by item
 *92 items*
@@ -899,8 +899,8 @@ Everything that touches an assessment, with what it does and whether it holds lo
 | screens/AssessmentEditPageWizard.tsx | 922 | The 4-step editor; `convertQuestionsToDay()` and `persistWizard()` | lossy in production |
 | screens/AdminAssessmentManager.tsx | 334 | Admin list, create, delete | — |
 | admin/UnifiedBasicInfoForm.tsx | 235 | Step 1 fields; reads category, difficulty, assessment_type | shared with equip |
-| admin/blocks/DayComposer.tsx — was screens/EquipDailyEditor.tsx (967) | 48 | Step 3 — exports `DayEditor`, a thin adapter over `admin/builder/content/ContentScreen.tsx` (634). **Borrowed from the block system**, not an assessment component | shared |
-| admin/builder/editor/BlockEditorPane.tsx + BlockFieldSections.tsx — was screens/EquipBlockEditor.tsx (836) | 237 + 510 | Per-block editing inside step 3 | shared |
+| admin/block-builder/DayComposer.tsx — was screens/EquipDailyEditor.tsx (967) | 48 | Step 3 — exports `DayEditor`, a thin adapter over `admin/block-builder/content/ContentScreen.tsx` (634). **Borrowed from the block system**, not an assessment component | shared |
+| admin/block-builder/editor/BlockEditorPane.tsx + BlockFieldSections.tsx — was screens/EquipBlockEditor.tsx (836) | 237 + 510 | Per-block editing inside step 3 | shared |
 | **Discovery** | | | |
 | screens/Assessments.tsx | 862 | Public list; maps `metadata.tile1–5` onto cards | — |
 | screens/AssessmentDetail.tsx | 351 | Public detail page | reads 4 of the 21 landing groups |
@@ -918,16 +918,16 @@ Everything that touches an assessment, with what it does and whether it holds lo
 | screens/AssessmentHistoryDetail.tsx | 772 | Past results; reads `section_scores ?? sectionScores` | renders nothing — no result has a breakdown |
 | blocks/SectionReportCard.tsx | 184 | The per-scale breakdown; second gate at `sections.length === 0` | — |
 | **Transport, cache, catalog** | | | |
-| shared/api.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
-| shared/hooks/useOfflineSync.ts | 251 | Queue, retry, `cacheForOffline` (24 h TTL) | wholesale queue replacement on sync |
-| shared/hooks/useMetadata.ts | 242 | All 21 catalog vocabularies | returns empty buckets on failure |
+| shared/api/api.ts | 1389 | `getAssessment`, `getAssessments`, result save | 24-hour offline cache fallback |
+| shared/api/useOfflineSync.ts | 251 | Queue, retry, `cacheForOffline` (24 h TTL) | wholesale queue replacement on sync |
+| admin/ui/hooks/useMetadata.ts | 242 | All 21 catalog vocabularies | returns empty buckets on failure |
 | app/lib/slug.ts | 30 | `slugify`, `assessmentUrl` | the title-fallback depends on it |
 | **Server** | | | |
 | server/assessment-routes.ts | 212 | Result save and history; derives `scoring.ranges` | `section_scores: data.sectionScores ?? null` |
 | server/admin-routes.ts | 1579 | Assessment CRUD, scoring profiles, categories | — |
 | server/index.tsx | 4956 | `/api/assessments` list and by-id | — |
 | **Downstream** | | | |
-| shared/engine/recommendation-engine.ts | 570 | `evaluateAssessment()` — severity, messaging, targeting | hardcoded messaging, no override path |
+| admin/engines/recommendation-engine.ts | 570 | `evaluateAssessment()` — severity, messaging, targeting | hardcoded messaging, no override path |
 | server/recommendation-service.ts | 179 | `severityFromScore()` from score ÷ max_score | consumes the unstable denominator |
 | server/ikan-score-routes.ts | 445 | Wellness score — assessments lane, 40% | own `KNOWN_MAX_SCORES` table |
 | app/lib/reassessment-triggers.ts | 126 | When to prompt a re-test | — |

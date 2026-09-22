@@ -18,6 +18,7 @@ import {
 import { ACTIVITIES, interactionsOf, type ActivityName } from '../block-builder/model/vocabulary';
 import { LEAF_BLOCK_TYPES } from '../block-builder/model/block-model';
 import { DAY_TYPE_PRESETS } from '../block-builder/model/block-type-rules';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
 
 /**
  * Permitted activities per block type.
@@ -54,8 +55,6 @@ function activitiesForType(t: string): ActivityName[] {
   const preset = (DAY_TYPE_PRESETS as Record<string, { allowedActivities?: ActivityName[] }>)[t];
   return preset?.allowedActivities ?? FALLBACK_ACTIVITIES[t] ?? [];
 }
-
-interface Props { onBack?: () => void }
 
 /** Sample config per activity. Enough to make each control real. */
 const SAMPLE: Record<string, { title: string; subtitle?: string; content?: string; cfg: ActivityConfig }> = {
@@ -106,7 +105,9 @@ function sampleBlock(type: BlockType, activity: string): Activity {
   } as Activity;
 }
 
-export function AdminBlockGallery({ onBack }: Props) {
+const SELECT = 'text-sm px-3.5 py-2.5 min-h-11 rounded-sm border border-[var(--color-border-default)] bg-[var(--color-bg-card)] text-[var(--color-text-primary)]';
+
+export function AdminBlockGallery() {
   const [fType, setFType] = useState('');
   const [fAct, setFAct] = useState('');
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
@@ -121,57 +122,39 @@ export function AdminBlockGallery({ onBack }: Props) {
 
   const shown = pairs.filter(p => (!fType || p.type === fType) && (!fAct || p.activity === fAct));
 
-  const sel: React.CSSProperties = {
-    fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)',
-    padding: '10px 14px', minHeight: 44, borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--color-border-default)',
-    backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)',
-  };
-
   return (
-    <div style={{ padding: 24, backgroundColor: 'var(--color-bg-page)', minHeight: '100vh' }}>
-      <header style={{ marginBottom: 20 }}>
-        {onBack && (
-          <button onClick={onBack} style={{ ...sel, marginBottom: 16, cursor: 'pointer' }}>← Back</button>
-        )}
-        <h1 style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-2xl)', fontWeight: 500, margin: '0 0 6px' }}>
-          Block gallery
-        </h1>
-        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', maxWidth: '72ch', margin: 0 }}>
-          Every permitted block type × activity pair, drawn by <code>BlockRenderer</code> itself — not a mock.
-          {' '}<strong>{shown.length}</strong> of {pairs.length} pairs shown. Controls are live; nothing is saved.
-        </p>
-      </header>
-
-      <nav aria-label="Filters" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
-        <select aria-label="Block type" style={sel} value={fType} onChange={e => setFType(e.target.value)}>
+    <AdminPageLayout
+      title="Block gallery"
+      description={
+        `Every permitted block type × activity pair, drawn by BlockRenderer itself — not a mock. ` +
+        `${shown.length} of ${pairs.length} pairs shown. Controls are live; nothing is saved.`
+      }
+      maxWidth="none"
+    >
+      <nav aria-label="Filters" className="flex gap-3 flex-wrap">
+        <select aria-label="Block type" className={SELECT} value={fType} onChange={e => setFType(e.target.value)}>
           <option value="">All block types</option>
           {LEAF_BLOCK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <select aria-label="Activity" style={sel} value={fAct} onChange={e => setFAct(e.target.value)}>
+        <select aria-label="Activity" className={SELECT} value={fAct} onChange={e => setFAct(e.target.value)}>
           <option value="">All activities</option>
           {ACTIVITIES.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
       </nav>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(390px, 390px))', gap: 28, justifyContent: 'center' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(390px,390px))] gap-7 justify-center">
         {shown.map(({ type, activity }) => {
           const key = `${type}/${activity}`;
           const block = sampleBlock(type, activity);
           return (
-            <figure key={key} style={{ margin: 0 }}>
-              <figcaption style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 8, flexWrap: 'wrap' }}>
-                <strong style={{ fontSize: 15, fontWeight: 500 }}>{type}</strong>
-                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: 'var(--color-text-muted)' }}>
+            <figure key={key} className="m-0">
+              <figcaption className="flex gap-2 items-baseline mb-2 flex-wrap">
+                <strong className="text-[15px] font-medium">{type}</strong>
+                <span className="font-mono text-[12px] text-[var(--color-text-muted)]">
                   {activity} · {interactionsOf(activity as never).join(' · ')}
                 </span>
               </figcaption>
-              <div style={{
-                width: 390, maxWidth: '100%', height: 700, overflowY: 'auto',
-                backgroundColor: 'var(--color-bg-page)', borderRadius: 24,
-                border: '1px solid var(--color-border-default)', padding: 24,
-                boxShadow: 'var(--shadow-sm)',
-              }}>
+              <div className="w-[390px] max-w-full h-[700px] overflow-y-auto bg-[var(--color-bg-page)] rounded-[24px] border border-[var(--color-border-default)] p-6 shadow-[var(--shadow-sm)]">
                 <BlockRenderer
                   block={block}
                   value={answers[key]}
@@ -182,6 +165,6 @@ export function AdminBlockGallery({ onBack }: Props) {
           );
         })}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

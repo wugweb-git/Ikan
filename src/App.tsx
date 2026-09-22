@@ -3,7 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useTokens } from './product/app/shell/react-tokens';
-import { crossHostSignInUrl } from './product/app/shell/app-host';
+import { crossHostSignInUrl, isMarketingHost } from './product/app/shell/app-host';
 import { useIsMobile } from './admin/ui/hooks/useIsMobile';
 import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './product/app/shell/useMobileOptimizations';
 import { AuthProvider, useAuth } from './shared/state/AuthContext';
@@ -148,6 +148,7 @@ const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').t
 
 // --- Eagerly loaded non-screen components ---
 import { AdminWidget } from './admin/shell/AdminWidget';
+import { ADMIN_ROUTE_PATHS } from './admin/shell/sections';
 import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
 import { Footer } from './product/site/ui/Footer';
 
@@ -358,8 +359,7 @@ function AppContent() {
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
         '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
-        '/admin', '/admin/reporting', '/admin/login', '/admin/resources', '/admin/equip', '/admin/equip-analytics', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/settings', '/admin/media', '/admin/contact-newsletter', '/admin/block-type-viewer', '/admin/block-gallery',
-        '/admin/categories', '/admin/checkin-scales', '/admin/recommendations', '/admin/communication', '/admin/payment-gateway', '/admin/kv-audit', '/admin/checkin-builder', '/admin/scoring-engine',
+        ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
         '/join/professional',
         '/timeline',
         '/learning-diary',
@@ -455,8 +455,11 @@ function AppContent() {
       const target = hasCompletedFirstRun() ? DEFAULT_PRIVATE_ROUTE : '/get-started';
       startTransition(() => setCurrentRoute(target));
       if (typeof window !== 'undefined') window.history.replaceState({}, '', target);
-    } else if (!user && isMobile && currentRoute === '/' && !hasSeenOnboarding()) {
-      // A signed-out first-time visitor on mobile enters through the splash.
+    } else if (!user && isMobile && currentRoute === '/' && !hasSeenOnboarding()
+      && !(typeof window !== 'undefined' && isMarketingHost(window.location.hostname))) {
+      // A signed-out first-time visitor on mobile enters through the splash — but not on
+      // the static marketing site (ikanhealth.in), where visitors see the homepage and
+      // sign in on app.ikanhealth.in.
       startTransition(() => setCurrentRoute('/welcome'));
       if (typeof window !== 'undefined') window.history.replaceState({}, '', '/welcome');
     }

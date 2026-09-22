@@ -9,7 +9,7 @@ and Rule Engine rules (`rule-engine.md`) and turns them into an actual recommend
 
 | | Frontend | Backend |
 |---|---|---|
-| File | `src/shared/engine/recommendation-engine.ts` | `src/supabase/functions/server/recommendation-service.ts` |
+| File | `src/admin/engines/recommendation-engine.ts` | `src/supabase/functions/server/recommendation-service.ts` |
 | Entry point | `evaluateAssessment()` | `RecommendationService.getRecommendations()`, served via `GET /recommendations` |
 | Runs | Immediately after finishing an assessment, client-side | Server-side, on demand |
 | Called from | `AssessmentFlow.tsx` → shown on `AssessmentResults.tsx` | `Dashboard.tsx`, `EquipProgramCompletion.tsx` |

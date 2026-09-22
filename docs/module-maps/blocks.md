@@ -542,9 +542,9 @@ Everything that defines, authors, resolves or draws a block. The last column is 
 | **Authoring — shared by both modules** | | | |
 | components/screens/BlockEditor.tsx — was BlockEditor | 837 | The block editor. Imported by the equip wizard, the day editor, `AdminBlockTypeViewer` and `AdminBlockFormTemplate` | Reads the catalog via `useMetadata`; two fallback arrays at lines 38 and 53 |
 | components/screens/DayEditor.tsx — was DayEditor | 968 | The day editor. Imported by **both** wizards | Day-type list, block palette |
-| admin/components/UnifiedBasicInfoForm.tsx | 235 | Shared basic-info form, both wizards | No — reads the catalog |
-| admin/screens/AssessmentEditPageWizard.tsx | 926 | Imports `DayEditor` and bridges via `convertQuestionsToDay()` | **Yes** — the 7-value legacy question union and an 11-entry alias map |
-| admin/components/AdminCheckinTemplateBuilder.tsx | — | The check-in builder. Imports neither editor | **Yes** — its own hardcoded 6-value snake_case step list |
+| admin/ui/kit/UnifiedBasicInfoForm.tsx | 235 | Shared basic-info form, both wizards | No — reads the catalog |
+| admin/assessments/AssessmentEditPageWizard.tsx | 926 | Imports `DayEditor` and bridges via `convertQuestionsToDay()` | **Yes** — the 7-value legacy question union and an 11-entry alias map |
+| admin/check-ins/AdminCheckinTemplateBuilder.tsx | — | The check-in builder. Imports neither editor | **Yes** — its own hardcoded 6-value snake_case step list |
 | **Runtime** | | | |
 | components/player/BlockRenderer.tsx | 1,016 | Renders one block. The single render path for both modules | **Yes** — the 12-case interaction switch is tier 4 of the schema |
 | app/features/player/ProgramPlayer.tsx | 627 | Day sequencing, completion, response collection | Its own `totalScore` — one of three scoring implementations |
@@ -552,7 +552,7 @@ Everything that defines, authors, resolves or draws a block. The last column is 
 | app/screens/MoodJournal.tsx | — | The check-in renderer — **a separate 6-case switch** | **Yes** — a parallel renderer for content that is already Blocks |
 | **Inspection** | | | |
 | components/admin/AdminBlockTypeViewer.tsx | 1,324 | Read-only reference screen. The **only** reader of `interaction_type` and `day_config_type` | Documents the intended end state at line 403 — see §13 |
-| admin/components/AdminBlockFormTemplate.tsx | — | Renders `BlockEditor` for preview | — |
+| admin/block-types/AdminBlockFormTemplate.tsx | — | Renders `BlockEditor` for preview | — |
 
 > **[NOTE] The block system is shared correctly. As of 2026-09-02 it is also named that way.**
 >
@@ -878,7 +878,7 @@ These are live defects with no dependency on the content model. Parking them beh
 | 0.1 | **Build the fixture set.** One collection of each kind; **every one of the 12 interactions authored exactly once**; a rendered snapshot of each | There is **no test file, no test dependency and no CI** in this repo. "Migrate post testing" currently means "post looking at it". This is the safety net and it doubles as the spec — if all 12 render from fixtures, the model is right | — |
 | 0.2 | ~~**Find the third writer.**~~ **CLOSED 2026-09-04** | It is `src/components/wizard/types.ts` — the `FieldType` union, a Figma Make import, holding all five strings. It reads content and never writes it, and no server route writes `subtype`. **Phase 1 is no longer provisional** | done |
 | 0.3 | **Survey the engines.** Scoring, rule, recommendation, wellness score — module 6, unsurveyed | They consume the content model, so this plan changes them. It is the only part whose size I cannot currently estimate | — |
-| 0.4 | ~~Run `npm run build` once and record the baseline error count~~ **CLOSED 2026-09-04** | `npm run typecheck` on `a67e17da` → **207 errors**, exit 0. That is the number a later change must not raise. `npm run build` still unrun. Test infra: **one** test file exists (`src/product/app/lib/result-presentation.test.ts`); the `test` script globs `src/**/*.test.ts` | done |
+| 0.4 | ~~Run `npm run build` once and record the baseline error count~~ **CLOSED 2026-09-04** | `npm run typecheck` on `a67e17da` → **207 errors**, exit 0. That is the number a later change must not raise. `npm run build` still unrun. Test infra: **one** test file exists (`src/product/app/assessments/result-presentation.test.ts`); the `test` script globs `src/**/*.test.ts` | done |
 
 ### Phase 1 · Make the catalog able to say what it means
 

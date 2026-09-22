@@ -1,129 +1,32 @@
 /**
  * AdminBlockFormTemplate.tsx
- * 
+ *
  * Shared, templatised building blocks for block editor UIs.
  * Used by:
  *   - AdminBlockTypeViewer (EditorPreview mocks)
- *   - BlockEditor (actual Equip block editing forms)
- *   - AdminCheckinTemplateBuilder (actual check-in step editing)
- * 
+ *
  * Purpose: visual consistency between preview & real admin forms.
  */
 
 import React from 'react';
 import { GripVertical, ChevronDown, Image as ImageIcon, Layers } from 'lucide-react';
+import { cn } from '../ui/utils';
 
-// ── Style Tokens ─────────────────────────────────────────────────
-const S = {
-  font: 'var(--font-family-base)',
-  fwMedium: 'var(--font-weight-medium)' as any,
-  textPrimary: 'var(--color-text-primary)',
-  textMuted: 'var(--color-text-muted)',
-  textInverse: 'var(--color-primary-on)',
-  bgCard: 'var(--color-bg-card)',
-  bgMuted: 'var(--color-bg-muted)',
-  bgInput: 'var(--color-bg-input)',
-  bgPrimary: 'var(--color-primary-default)',
-  bgAccent: 'var(--color-accent-default)',
-  border: 'var(--color-border-default)',
-  radiusLg: 'var(--radius-lg)',
-  radiusMd: 'var(--radius-md)',
+// ── Shared class strings ─────────────────────────────────────────
+const MOCK_FIELD =
+  'w-full rounded-[8px] bg-[var(--color-bg-input)] border border-[var(--color-border-default)] px-2 flex text-xs text-[var(--color-text-muted)]';
+
+export const blockFormClasses = {
+  wrap: 'rounded-lg bg-[var(--color-bg-card)] border border-[var(--color-border-default)] overflow-hidden',
+  headerBar: 'flex items-center gap-2 px-3 py-2 bg-[var(--color-bg-muted)] border-b border-[var(--color-border-default)]',
+  body: 'p-3 flex flex-col gap-2.5',
+  fieldLabel: 'text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-[0.05em]',
+  inputMock: cn(MOCK_FIELD, 'h-7 items-center'),
+  textareaMock: cn(MOCK_FIELD, 'h-12 py-1.5 items-start whitespace-pre-line'),
+  selectMock: cn(MOCK_FIELD, 'h-7 items-center justify-between'),
+  checkboxRow: 'flex items-center gap-1.5 px-2 py-1.5 rounded-[6px] bg-[var(--color-bg-muted)] border border-[var(--color-border-default)]',
+  sectionDivider: 'border-t border-[var(--color-border-default)] pt-2',
 } as const;
-
-// ── Shared styles ────────────────────────────────────────────────
-export const blockFormStyles = {
-  wrap: {
-    borderRadius: S.radiusLg,
-    backgroundColor: S.bgCard,
-    border: `1px solid ${S.border}`,
-    overflow: 'hidden',
-  } satisfies React.CSSProperties,
-
-  headerBar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 12px',
-    backgroundColor: S.bgMuted,
-    borderBottom: `1px solid ${S.border}`,
-  } satisfies React.CSSProperties,
-
-  body: {
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  } satisfies React.CSSProperties,
-
-  fieldLabel: {
-    fontFamily: S.font,
-    fontSize: '10px',
-    fontWeight: S.fwMedium,
-    color: S.textMuted,
-    marginBottom: '2px',
-    display: 'block',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  } satisfies React.CSSProperties,
-
-  inputMock: {
-    width: '100%',
-    height: '28px',
-    borderRadius: '8px',
-    backgroundColor: S.bgInput,
-    border: `1px solid ${S.border}`,
-    padding: '0 8px',
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: 'var(--text-xs)',
-    color: S.textMuted,
-    fontFamily: S.font,
-  } satisfies React.CSSProperties,
-
-  textareaMock: {
-    width: '100%',
-    height: '48px',
-    borderRadius: '8px',
-    backgroundColor: S.bgInput,
-    border: `1px solid ${S.border}`,
-    padding: '6px 8px',
-    display: 'flex',
-    alignItems: 'flex-start',
-    fontSize: 'var(--text-xs)',
-    color: S.textMuted,
-    fontFamily: S.font,
-  } satisfies React.CSSProperties,
-
-  selectMock: {
-    width: '100%',
-    height: '28px',
-    borderRadius: '8px',
-    backgroundColor: S.bgInput,
-    border: `1px solid ${S.border}`,
-    padding: '0 8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    fontSize: 'var(--text-xs)',
-    color: S.textMuted,
-    fontFamily: S.font,
-  } satisfies React.CSSProperties,
-
-  checkboxRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '6px 8px',
-    borderRadius: '6px',
-    backgroundColor: S.bgMuted,
-    border: `1px solid ${S.border}`,
-  } satisfies React.CSSProperties,
-
-  sectionDivider: {
-    borderTop: `1px solid ${S.border}`,
-    paddingTop: '8px',
-  } satisfies React.CSSProperties,
-};
 
 // ── Reusable Sub-Components ──────────────────────────────────────
 
@@ -142,36 +45,23 @@ export function BlockHeaderBar({
   children?: React.ReactNode;
 }) {
   return (
-    <div style={blockFormStyles.headerBar}>
-      <GripVertical size={12} style={{ color: S.textMuted }} />
-      {emoji && <span style={{ fontSize: '14px' }}>{emoji}</span>}
+    <div className={blockFormClasses.headerBar}>
+      <GripVertical size={12} className="text-[var(--color-text-muted)]" />
+      {emoji && <span className="text-[14px]">{emoji}</span>}
       {icon}
-      <span style={{
-        fontSize: '9px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: S.textMuted,
-        fontFamily: S.font,
-        fontWeight: S.fwMedium,
-        ...(emoji ? {
-          padding: '1px 6px',
-          backgroundColor: S.bgAccent,
-          borderRadius: '4px',
-        } : {}),
-      }}>
+      <span
+        className={cn(
+          'text-[9px] uppercase tracking-[0.05em] text-[var(--color-text-muted)] font-medium',
+          emoji && 'px-1.5 py-px bg-[var(--color-accent-default)] rounded-[4px]',
+        )}
+      >
         {typeBadge}
       </span>
-      <span style={{
-        fontSize: '11px',
-        color: S.textPrimary,
-        fontFamily: S.font,
-        fontWeight: S.fwMedium,
-        flex: 1,
-      }}>
+      <span className="text-[11px] text-[var(--color-text-primary)] font-medium flex-1">
         {title}
       </span>
       {children}
-      <ChevronDown size={12} style={{ color: S.textMuted }} />
+      <ChevronDown size={12} className="text-[var(--color-text-muted)]" />
     </div>
   );
 }
@@ -179,10 +69,7 @@ export function BlockHeaderBar({
 /** Label for a form field */
 export function FieldLabel({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <span style={{
-      ...blockFormStyles.fieldLabel,
-      ...(icon ? { display: 'flex', alignItems: 'center', gap: '4px' } : {}),
-    }}>
+    <span className={cn(blockFormClasses.fieldLabel, 'mb-0.5', icon ? 'flex items-center gap-1' : 'block')}>
       {icon}
       {children}
     </span>
@@ -191,24 +78,13 @@ export function FieldLabel({ children, icon }: { children: React.ReactNode; icon
 
 /** Mock text input (for preview rendering) */
 export function MockInput({ children, mono }: { children?: React.ReactNode; mono?: boolean }) {
-  return (
-    <div style={{
-      ...blockFormStyles.inputMock,
-      ...(mono ? { fontFamily: 'monospace' } : {}),
-    }}>
-      {children}
-    </div>
-  );
+  return <div className={cn(blockFormClasses.inputMock, mono && 'font-mono')}>{children}</div>;
 }
 
 /** Mock textarea (for preview rendering) */
 export function MockTextarea({ children, height }: { children?: React.ReactNode; height?: string }) {
   return (
-    <div style={{
-      ...blockFormStyles.textareaMock,
-      ...(height ? { height } : {}),
-      whiteSpace: 'pre-line',
-    }}>
+    <div className={blockFormClasses.textareaMock} style={height ? { height } : undefined}>
       {children}
     </div>
   );
@@ -217,7 +93,7 @@ export function MockTextarea({ children, height }: { children?: React.ReactNode;
 /** Mock select dropdown (for preview rendering) */
 export function MockSelect({ children }: { children?: React.ReactNode }) {
   return (
-    <div style={blockFormStyles.selectMock}>
+    <div className={blockFormClasses.selectMock}>
       <span>{children}</span>
       <ChevronDown size={10} />
     </div>
@@ -227,43 +103,42 @@ export function MockSelect({ children }: { children?: React.ReactNode }) {
 /** Mock checkbox row */
 export function MockCheckbox({ label, checked }: { label: string; checked?: boolean }) {
   return (
-    <div style={blockFormStyles.checkboxRow}>
-      <div style={{
-        width: 12,
-        height: 12,
-        borderRadius: 3,
-        border: `1.5px solid ${checked ? S.bgPrimary : S.border}`,
-        backgroundColor: checked ? S.bgPrimary : 'transparent',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {checked && <span style={{ color: 'white', fontSize: '8px' }}>✓</span>}
+    <div className={blockFormClasses.checkboxRow}>
+      <div
+        className={cn(
+          'w-3 h-3 rounded-[3px] border-[1.5px] flex items-center justify-center',
+          checked
+            ? 'border-[var(--color-primary-default)] bg-[var(--color-primary-default)]'
+            : 'border-[var(--color-border-default)] bg-transparent',
+        )}
+      >
+        {checked && <span className="text-white text-[8px]">✓</span>}
       </div>
-      <span style={{ fontSize: '10px', fontFamily: S.font, color: S.textPrimary }}>{label}</span>
+      <span className="text-[10px] text-[var(--color-text-primary)]">{label}</span>
     </div>
   );
 }
 
 /** 2-column grid layout */
 export function FieldGrid({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-      {children}
-    </div>
-  );
+  return <div className="grid grid-cols-2 gap-2">{children}</div>;
 }
 
 /** Section separator with optional label */
-export function SectionDivider({ label, icon }: { label?: string; icon?: React.ReactNode }) {
+export function SectionDivider({ label, icon, children }: {
+  label?: string;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
   return (
-    <div style={blockFormStyles.sectionDivider}>
+    <div className={blockFormClasses.sectionDivider}>
       {label && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+        <div className="flex items-center gap-1 mb-1.5">
           {icon}
-          <span style={{ ...blockFormStyles.fieldLabel, margin: 0 }}>{label}</span>
+          <span className={cn(blockFormClasses.fieldLabel, 'block m-0')}>{label}</span>
         </div>
       )}
+      {children}
     </div>
   );
 }
@@ -271,19 +146,10 @@ export function SectionDivider({ label, icon }: { label?: string; icon?: React.R
 /** Media upload placeholder */
 export function MockMediaUpload({ label }: { label?: string }) {
   return (
-    <div style={blockFormStyles.sectionDivider}>
+    <div className={blockFormClasses.sectionDivider}>
       <FieldLabel icon={<ImageIcon size={10} />}>Block Media</FieldLabel>
-      <div style={{
-        width: '100%',
-        height: '32px',
-        borderRadius: '8px',
-        border: `1px dashed ${S.border}`,
-        backgroundColor: S.bgMuted,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <span style={{ fontSize: '10px', color: S.textMuted }}>{label || 'Upload image or paste video URL'}</span>
+      <div className="w-full h-8 rounded-[8px] border border-dashed border-[var(--color-border-default)] bg-[var(--color-bg-muted)] flex items-center justify-center">
+        <span className="text-[10px] text-[var(--color-text-muted)]">{label || 'Upload image or paste video URL'}</span>
       </div>
     </div>
   );
@@ -292,7 +158,7 @@ export function MockMediaUpload({ label }: { label?: string }) {
 /** Wizard flow checkboxes (for Equip blocks) */
 export function WizardFlowSection() {
   return (
-    <SectionDivider label="Wizard Flow" icon={<Layers size={10} style={{ color: S.bgPrimary }} />}>
+    <SectionDivider label="Wizard Flow" icon={<Layers size={10} className="text-[var(--color-primary-default)]" />}>
       <FieldGrid>
         <MockCheckbox label="Auto-Advance" checked />
         <MockCheckbox label="Required" />
@@ -304,13 +170,7 @@ export function WizardFlowSection() {
 /** Indented sub-section (for exercise config, etc.) */
 export function IndentedSection({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      borderLeft: `2px solid ${S.bgAccent}`,
-      paddingLeft: '10px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-    }}>
+    <div className="border-l-2 border-[var(--color-accent-default)] pl-2.5 flex flex-col gap-2">
       {children}
     </div>
   );

@@ -17,7 +17,7 @@ import { useUnsavedChanges } from '../ui/hooks/useUnsavedChanges';
 import { UnsavedChangesDialog } from '../ui/unsaved-changes-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { EquipProgram, OnboardingQuestion, Activity, DayContent, DEFAULT_CHECKIN_CONFIG } from '../block-builder/model/block-model';
-import { EquipLandingPageRichTextEditor } from './EquipLandingPageRichTextEditor';
+import { LandingCopyForm, linesField, type LandingCopyConfig } from '../ui/kit/LandingCopyForm';
 import { DayEditor as DailyBuilder } from '../block-builder/DayComposer';
 import { UnifiedBasicInfoForm } from '../ui/kit/UnifiedBasicInfoForm';
 import { useMetadata } from '../ui/hooks/useMetadata';
@@ -116,6 +116,73 @@ const mapBlockToQuestion = (b: Activity): OnboardingQuestion => {
   };
 };
 
+
+type EquipLandingData = Partial<EquipProgram>;
+const meta = (key: string) => ({
+  get: (d: EquipLandingData) => (d.metadata?.[key] as string) || '',
+  set: (value: string, d: EquipLandingData) => ({ metadata: { ...(d.metadata || {}), [key]: value } }),
+});
+
+// Landing page copy slots (the second half of Setup). All stored on `metadata`.
+const EQUIP_LANDING_COPY: LandingCopyConfig<EquipLandingData> = {
+  sections: [
+    {
+      title: 'What is this program about?',
+      fields: [
+        {
+          label: 'Description', required: true, rows: 6, className: 'min-h-[120px] resize-none',
+          help: 'Describe the program, its purpose, duration, and what participants will work on.',
+          placeholder: "Example: Sleep Tight is a guided, self-help program designed to help you understand and improve your sleep. Over the next 18 days, you'll identify factors that disrupt your sleep and gradually build healthier sleep patterns...",
+          ...meta('tile1_content'),
+        },
+        linesField<EquipLandingData>({
+          label: 'Is this for you? (5 lines)', required: true, rows: 5, className: 'resize-none font-mono text-sm',
+          help: 'Enter intro line and 4 eligibility points (one per line, 5 lines total).',
+          placeholder: 'Sleep Tight may be helpful if:\nYou have trouble falling asleep or staying asleep\nYou find yourself worrying about your sleep\nYou wake up too early and struggle to fall back asleep\nPoor sleep is starting to affect your day-to-day life',
+          get: (d) => ['eligibility_intro', 'eligibility_point_1', 'eligibility_point_2', 'eligibility_point_3', 'eligibility_point_4']
+            .map((k) => (d.metadata?.[k] as string) || ''),
+          set: (lines, d) => ({
+            metadata: {
+              ...d.metadata,
+              eligibility_intro: lines[0] || '',
+              eligibility_point_1: lines[1] || '',
+              eligibility_point_2: lines[2] || '',
+              eligibility_point_3: lines[3] || '',
+              eligibility_point_4: lines[4] || '',
+            },
+          }),
+        }),
+      ],
+    },
+    {
+      title: 'The program includes:',
+      fields: [{
+        label: 'Program components (4-6 items - one per line)', required: true, rows: 6, className: 'min-h-[120px] resize-none',
+        help: 'Enter key program components, one per line.',
+        placeholder: 'Daily micro-lessons (5-10 minutes)\nEvidence-based CBT techniques\nProgress tracking & insights\nPersonalized sleep plan',
+        ...meta('tile2_content'),
+      }],
+    },
+    {
+      title: 'How it works',
+      fields: [{
+        label: 'Process steps (3-4 items - one per line)', required: true, rows: 5, className: 'min-h-[100px] resize-none',
+        help: 'Describe the step-by-step process, one step per line.',
+        placeholder: 'Complete your daily lesson at your own pace\nTrack your sleep patterns and progress\nPractice new techniques each day\nReview your insights and adjust your plan',
+        ...meta('tile3_content'),
+      }],
+    },
+    {
+      title: "What you'll gain",
+      fields: [{
+        label: 'Benefits (4 items with descriptions)', required: true, rows: 6, className: 'min-h-[120px] resize-none',
+        help: 'Format: Title - Description (one per line). Example: Better Sleep - Fall asleep faster and wake up refreshed',
+        placeholder: 'Better Sleep Quality - Fall asleep faster and wake up refreshed\nReduced Sleep Anxiety - Stop worrying about sleep and feel more in control\nSustainable Habits - Build routines that last beyond the program\nImproved Daily Energy - Feel more alert and energized during the day',
+        ...meta('tile4_content'),
+      }],
+    },
+  ],
+};
 
 export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWizardProps) {
   const { showToast } = useNotifications();
@@ -675,7 +742,8 @@ export function EquipProgramWizard({ programId, onBack, onSave }: EquipProgramWi
           </div>
 
           {/* LANDING PAGE — the second half of Setup, unchanged. */}
-          <EquipLandingPageRichTextEditor 
+          <LandingCopyForm
+            config={EQUIP_LANDING_COPY}
             data={formData}
             onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
           />

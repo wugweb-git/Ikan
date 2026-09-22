@@ -48,7 +48,7 @@ settings, and (see below) two decorative security-adjacent toggles.
 | Piece | Location |
 |---|---|
 | Backend | `index.tsx` (auth/profile routes are inline, not a separate `*-routes.ts` file), `security.tsx` (session/alert read-management), `validation.tsx` (profile validation/sanitization, password hashing) |
-| Frontend | `AuthForm.tsx`/`LoginScreen.tsx` (sign-in/up), `AuthContext.tsx` (session state), `src/product/app/screens/Account.tsx` + `src/components/screens/account/*.tsx` (profile editing, incl. `Security.tsx`) |
+| Frontend | `AuthForm.tsx`/`LoginScreen.tsx` (sign-in/up), `AuthContext.tsx` (session state), `src/product/app/account/Account.tsx` + `src/components/screens/account/*.tsx` (profile editing, incl. `Security.tsx`) |
 | Auth | Supabase Auth v2, email confirmation on, no OAuth identities linked today (`auth.identities` where `provider != 'email'` → 0 rows) — the real Google OAuth this app has (Google Fit linking, `linkIdentity`, see `health-connect.md`) is a **separate, legitimate** feature from the fake "Connect Google" button below |
 
 ## Live profile schema (redacted — no signed URLs/PII reproduced here)

@@ -181,9 +181,9 @@ async function loadEngineConfig(): Promise<EngineConfig> {
         }
 
         _cachedConfig = { rules: rulesMap, severityBands, loadedFromBackend: appliedAnyOverride };
-        console.log(appliedAnyOverride
-          ? `[RecommendationEngine] Applied global overrides from ${backendRules.length} backend rule(s)`
-          : `[RecommendationEngine] ${backendRules.length} backend rule(s) found, but none carry global-override fields (severity/message/severity_bands) — using built-in defaults. Per-category equip targeting still works via loadAdminRules().`);
+        // When no backend rule carries global-override fields (severity/message/
+        // severity_bands) the built-in defaults stay in force; per-category equip
+        // targeting still works via loadAdminRules().
       } else {
         // No admin rules configured — use defaults
         _cachedConfig = {
@@ -191,7 +191,6 @@ async function loadEngineConfig(): Promise<EngineConfig> {
           severityBands: DEFAULT_SEVERITY_BANDS,
           loadedFromBackend: false,
         };
-        console.log('[RecommendationEngine] No backend rules found, using built-in defaults');
       }
     } catch (err) {
       console.warn('[RecommendationEngine] Failed to load backend rules, using defaults:', err);
@@ -282,7 +281,6 @@ export async function loadAdminRules(): Promise<void> {
         cta: r.cta || '',
         enabled: r.enabled !== false,
       }));
-      console.log(`[RecommendationEngine] Loaded ${_adminRulesCache?.length ?? 0} admin rules`);
     }
   } catch {
     // Admin rules not available

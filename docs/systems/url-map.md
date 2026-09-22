@@ -67,16 +67,23 @@ All fixed this pass — previously about half of these had no working direct URL
 `validRoutes` entry). Every one below now updates the browser URL on click and loads correctly on a
 fresh page visit.
 
+**Since 2026-09-21 the admin routes come from one registry:** `src/admin/shell/sections.ts`
+(`ADMIN_SECTIONS` — id, label, icon, group, keywords, path, lazy screen). It drives the side nav,
+the header search, the screen switch in `AdminDashboard`, and `ADMIN_ROUTE_PATHS`, which
+`App.tsx` spreads into `validRoutes`. Add an admin section there and it is routable everywhere;
+`hidden: true` keeps it routable but out of the nav/search (as `equip-analytics` is). The header
+bell now navigates too, so `/admin/communication` shows in the URL when opened from it.
+
 | URL | Screen | Notes |
 |---|---|---|
 | `/admin/login` | Admin sign-in | |
-| `/admin` (alias) / `/admin/reporting` | AdminDashboard, landing view | Renamed "Reporting" in the UI this pass — was previously "Dashboard", colliding with the user-facing `/dashboard` name. `/admin` kept working as an alias so old links don't break. |
+| `/admin` (alias) / `/admin/reporting` | AdminDashboard, landing view (`shell/ReportingHome.tsx`) | Renamed "Reporting" in the UI this pass — was previously "Dashboard", colliding with the user-facing `/dashboard` name. `/admin` kept working as an alias so old links don't break. |
 | `/admin/users` | AdminUserManager | |
 | `/admin/consultants` | AdminConsultationManager | |
 | `/admin/resources` | AdminResourceManager | |
 | `/admin/assessments` | AdminAssessmentManager | Confirmed KV-driven, not hardcoded |
 | `/admin/equip` | EquipAdminDashboard | Confirmed KV-driven, not hardcoded |
-| `/admin/equip-analytics` | AdminEquipAnalytics | Newly given a URL this pass |
+| `/admin/equip-analytics` | AdminEquipAnalytics | Newly given a URL this pass. Hidden from nav/search (`hidden: true` in `sections.ts`) |
 | `/admin/media` | AdminMediaManager | |
 | `/admin/categories` | AdminCategoryManager ("Meta Manager") | Newly given a URL this pass |
 | `/admin/checkin-scales` | AdminCheckinScalesManager | Newly given a URL this pass |
@@ -84,7 +91,7 @@ fresh page visit.
 | `/admin/recommendations` | RecommendationRulesManager ("Rules Engine") | Newly given a URL this pass |
 | `/admin/scoring-engine` | AdminScoringEngine | Newly given a URL this pass |
 | `/admin/block-type-viewer` | AdminBlockTypeViewer | Fixed in an earlier pass this session |
-| `/admin/block-gallery` | AdminBlockGallery (`src/admin/blocks/BlockGallery.tsx`) | Added 2026-09-10 — every block type × activity pair, drawn by the real renderer |
+| `/admin/block-gallery` | AdminBlockGallery (`src/admin/block-types/BlockGallery.tsx`) | Added 2026-09-10 — every block type × activity pair, drawn by the real renderer |
 | `/admin/settings` | AdminSettingsManager | |
 | `/admin/communication` | AdminCommunication | Newly given a URL this pass |
 | `/admin/contact-newsletter` | AdminContactSubmissions | |
@@ -100,7 +107,7 @@ per direct instruction — not broken).
 `AdminHeroBannerManager` into a tab of `AdminPageManager` at `/admin/pages`. Both are gone: the Page
 Manager was removed in PR #14 (2026-09-10) and the dead `/admin/pages` route entry was dropped on
 2026-09-15. Neither `/admin/pages` nor `/admin/hero-banner` resolves today; page copy lives in
-`src/product/site/lib/cms-defaults.ts`.
+`src/product/site/content/cms-defaults.ts`.
 
 ## Still open
 

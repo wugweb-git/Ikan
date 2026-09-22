@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, Star } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Download, Pencil, Plus, Eye, Tag, MoreHorizontal, EyeOff, Trash2, Star, FolderOpen } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
-import { AdminHeader } from '../shell/AdminHeader';
+import type { ResourceData } from '../../shared/api/api-types';
+import { AdminPageLayout } from '../shell/AdminPageLayout';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../ui/kit/AdminStatusBadge';
+import { AdminEmptyState } from '../ui/kit/AdminEmptyState';
+import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { ResourceEditPage, Resource } from './ResourceEditPage';
 import { AdminDataTable, Column, FilterOption } from '../ui/kit/AdminDataTable';
 import { ImageWithFallback } from '../ui/ImageWithFallback';
-import { ErrorState } from '../ui/error-state';
-import { EmptyState } from '../ui/empty-state';
-import { SkeletonTable } from '../ui/skeleton-loader';
 import { useMetadata } from '../ui/hooks/useMetadata';
 import {
   DropdownMenu,
@@ -22,75 +23,47 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-interface AdminResourceManagerProps {
-  onBack?: () => void;
-  className?: string;
-}
-
 type ViewMode = 'list' | 'edit' | 'create';
 
-export function AdminResourceManager({ onBack, className }: AdminResourceManagerProps) {
-  const { showToast } = useNotifications();
-  const isMobile = useIsMobile();
-  const { categories: kvCategories, filterTypes: kvFilterTypes, contentTypes: kvContentTypes } = useMetadata();
+async function loadResources(): Promise<Resource[]> {
+  let data = await apiClient.getResources();
+  data = Array.isArray(data) ? data : data.resources || [];
 
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  // Map API response to Component Resource type
+  const mappedResources: Resource[] = data.map((item: any) => ({
+    ...item,
+    id: item.resource_id || item.id,
+    readTime: item.read_time_minutes || item.readTime,
+    // Ensure required fields exist
+    author: item.author || 'Unknown',
+    published: item.published !== undefined ? item.published : true,
+    viewCount: item.viewCount || 0,
+    likes: item.likes || 0,
+    tags: item.tags || []
+  }));
+
+  // Ensure unique keys by filtering duplicates
+  return mappedResources.reduce((acc: Resource[], current: Resource) =>
+    acc.some(item => item.id === current.id) ? acc : acc.concat([current]), []);
+}
+
+export function AdminResourceManager() {
+  const { showToast } = useNotifications();
+  const confirm = useConfirm();
+  const isMobile = useIsMobile();
+  const { categories: kvCategories, filterTypes: kvFilterTypes } = useMetadata();
 
   // Navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedResourceId, setSelectedResourceId] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (viewMode === 'list') {
-      loadData();
-    }
-  }, [viewMode]);
-
-  const loadData = async () => {
-    setLoading(true);
-    await loadResources();
-    setLoading(false);
-  };
-
-  const loadResources = async () => {
-    try {
-      let data = await apiClient.getResources();
-      data = Array.isArray(data) ? data : data.resources || [];
-      
-      // Map API response to Component Resource type
-      const mappedResources = data.map((item: any) => ({
-        ...item,
-        id: item.resource_id || item.id,
-        readTime: item.read_time_minutes || item.readTime,
-        // Ensure required fields exist
-        author: item.author || 'Unknown',
-        published: item.published !== undefined ? item.published : true, 
-        viewCount: item.viewCount || 0,
-        likes: item.likes || 0,
-        tags: item.tags || []
-      }));
-
-      // Ensure unique keys by filtering duplicates
-      const uniqueResources = mappedResources.reduce((acc: Resource[], current: Resource) => {
-        const x = acc.find(item => item.id === current.id);
-        if (!x) {
-          return acc.concat([current]);
-        } else {
-          return acc;
-        }
-      }, []);
-      
-      setResources(uniqueResources);
-      // Loading state handled in loadData
-    } catch (error: any) {
-      console.error('Failed to load resources:', error);
-      showToast('error', 'API Error', 'Failed to load resources');
-      setResources([]);
-      // Loading state handled in loadData
-    }
-  };
+  const { data: resources, setData: setResources, loading, error, reload } = useAdminResource(loadResources, {
+    initialData: [] as Resource[],
+    enabled: viewMode === 'list',
+    deps: [viewMode],
+    errorTitle: 'API Error',
+    errorMessage: 'Failed to load resources',
+  });
 
   const handleExport = () => {
     // Export all resources currently loaded
@@ -133,7 +106,8 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
 
   const handleTogglePublish = async (id: string, published: boolean) => {
     try {
-      await apiClient.updateResource(id, { published });
+      const patch: Partial<ResourceData> = { published };
+      await apiClient.updateResource(id, patch as ResourceData);
       setResources((prev) => prev.map((r) => (r.id === id ? { ...r, published } : r)));
       showToast('success', 'Resource Updated', `Resource ${published ? 'published' : 'unpublished'}`);
     } catch (error: any) {
@@ -144,7 +118,8 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
 
   const handleToggleFeatured = async (id: string, featured: boolean) => {
     try {
-      await apiClient.updateResource(id, { featured });
+      const patch: Partial<ResourceData> = { featured };
+      await apiClient.updateResource(id, patch as ResourceData);
       setResources((prev) => prev.map((r) => (r.id === id ? { ...r, featured } : r)));
       showToast('success', 'Resource Updated', `Resource ${featured ? 'marked as featured' : 'removed from featured'}`);
     } catch (error: any) {
@@ -154,8 +129,14 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
   };
 
   const handleDelete = async (id: string, resourceTitle: string) => {
-    if (!confirm(`Are you sure you want to delete resource "${resourceTitle}"? This action cannot be undone.`)) return;
-    
+    const ok = await confirm({
+      title: `Are you sure you want to delete resource "${resourceTitle}"?`,
+      description: 'This action cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+
     try {
       await apiClient.deleteResource(id);
       setResources((prev) => prev.filter((r) => r.id !== id));
@@ -371,84 +352,49 @@ export function AdminResourceManager({ onBack, className }: AdminResourceManager
     );
   }
 
-  // Show list view
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Resource Manager"
-          description="Loading resources..."
-        />
-        <SkeletonTable rows={8} columns={6} />
-      </div>
-    );
-  }
+  const isEmpty = !loading && !error && resources.length === 0;
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Resource Manager"
-          description="Manage educational content, articles, and guides"
-        />
-        <ErrorState
-          variant="error"
-          title="Failed to Load Resources"
-          message="An error occurred while loading resources. Please try again."
-          onRetry={loadResources}
-          onGoBack={onBack}
-        />
-      </div>
-    );
-  }
-
-  if (resources.length === 0) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <AdminHeader
-          title="Resource Manager"
-          description="Manage educational content, articles, and guides"
-        />
-        <EmptyState
-          variant="folder"
+  return (
+    <AdminPageLayout
+      title="Resource Manager"
+      description={loading ? 'Loading resources...' : 'Manage educational content, articles, and guides'}
+      stats={isEmpty ? undefined : stats}
+      actions={isEmpty || loading ? undefined : (
+        <Button onClick={handleCreateNew} className="gap-2 bg-[var(--color-primary-default)] text-[var(--color-primary-on)]" aria-label="Create new resource">
+          <Plus className="w-4 h-4" />
+          {!isMobile && 'Add Resource'}
+        </Button>
+      )}
+      loading={loading}
+      error={error ? 'An error occurred while loading resources. Please try again.' : null}
+      errorTitle="Failed to Load Resources"
+      onRetry={reload}
+      maxWidth="2xl"
+    >
+      {isEmpty ? (
+        <AdminEmptyState
+          icon={<FolderOpen className="w-8 h-8 text-[var(--color-text-muted)] opacity-50" />}
           title="No Resources Found"
           description="Get started by creating your first educational resource."
           actionLabel="Create First Resource"
           onAction={handleCreateNew}
         />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <AdminHeader
-        title="Resource Manager"
-        description="Manage educational content, articles, and guides"
-        stats={stats}
-        actions={
-          <Button onClick={handleCreateNew} className="gap-2" aria-label="Create new resource"
-            style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}>
-             <Plus className="w-4 h-4" />
-             {!isMobile && 'Add Resource'}
-          </Button>
-        }
-      />
-
-      <AdminDataTable 
-        columns={columns} 
-        data={resources} 
-        searchKeys={['title', 'description', 'category', 'tags']}
-        filters={filters}
-        searchPlaceholder="Search resources by title, category, tags..."
-        onRowClick={(item) => handleEdit(item.id)}
-        actions={
-          <Button variant="outline" onClick={handleExport} className="gap-2" aria-label="Export resources to CSV">
-            <Download className="w-4 h-4" />
-            {!isMobile && 'Export CSV'}
-          </Button>
-        }
-      />
-    </div>
+      ) : (
+        <AdminDataTable
+          columns={columns}
+          data={resources}
+          searchKeys={['title', 'description', 'category', 'tags']}
+          filters={filters}
+          searchPlaceholder="Search resources by title, category, tags..."
+          onRowClick={(item) => handleEdit(item.id)}
+          actions={
+            <Button variant="outline" onClick={handleExport} className="gap-2" aria-label="Export resources to CSV">
+              <Download className="w-4 h-4" />
+              {!isMobile && 'Export CSV'}
+            </Button>
+          }
+        />
+      )}
+    </AdminPageLayout>
   );
 }

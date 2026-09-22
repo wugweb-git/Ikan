@@ -190,7 +190,7 @@ unnoticed for months. Specifically confirm, signed in as an ordinary user:
 ### Frontend
 The app reads **no `VITE_*` env vars** — nothing needs setting in the Vercel dashboard.
 
-- Supabase project id and anon key: `src/shared/config/supabase-info.tsx` (the anon key is public by design).
+- Supabase project id and anon key: `src/shared/api/supabase-info.tsx` (the anon key is public by design).
 - Google Analytics measurement id: hardcoded in the gtag snippet in the root `index.html`.
 
 ### Supabase edge function
