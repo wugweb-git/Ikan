@@ -455,8 +455,8 @@ changes are covered only by the scratch harness and by review — see §C1.
 ## F. Codebase separation (`restructure/codebase-separation`) — remaining
 
 From `HANDOFF.md` (deleted 2026-09-21). Stages 1–4, the boundary fixes (crossings 5 → 0) and the UI
-split are done on the branch — see git log (`84300a1a` … `ce452cf4`, then the move/dedupe commits
-through `bf1f67d3`). Standing rules for this branch: no database change (KV or Postgres) without
+split are done on the branch — see git log (`b2991531` … `b6f4f9f1`, then the move/dedupe commits
+through `bcd27566`). Standing rules for this branch: no database change (KV or Postgres) without
 asking Vedanshu — read-only SQL is fine; no commit or push without asking; do not change
 content/copy; corporate code and routes and any Supabase change are out of scope.
 
@@ -474,7 +474,7 @@ content/copy; corporate code and routes and any Supabase change are out of scope
   `admin/ui/lib/validation-core.test.ts` import `supabase/functions/server/*` modules. Resolving it
   is Workstream C (§E).
 - **Confirm with Vedanshu:** `AdminBackupManager` and `AdminCRUDTesting` were deleted in
-  `bf1f67d3` ("delete 30 files nothing imports"), but HANDOFF had flagged them "wire, don't delete —
+  `bcd27566` ("delete 30 files nothing imports"), but HANDOFF had flagged them "wire, don't delete —
   Vedanshu's decision". Restore from git if he wanted them wired.
 - **Docs describing `usePageContent` as live** (`ARCHITECTURE.md`, `PROJECT-STRUCTURE.md`,
   `systems/repo-hygiene-audit.md`) — being corrected in the concurrent docs pass; confirm.
