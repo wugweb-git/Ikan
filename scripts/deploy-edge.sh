@@ -56,7 +56,20 @@ for f in $(grep -rhoE "from '\./[^']+'" "$STAGE/supabase/functions/$FN"/*.ts* | 
   fi
 done
 
-ANON=$(grep -oE 'publicAnonKey = "[^"]+"' src/utils/supabase/info.tsx | sed 's/.*"\(.*\)"/\1/')
+# The restructure moved this file. With the old path the grep failed silently,
+# ANON was empty, every smoke call went out unauthenticated and came back 401 —
+# before AND after — so the script reported "smoke unchanged" while testing
+# nothing. A broken deploy would have passed.
+ANON_FILE="src/shared/api/supabase-info.tsx"
+if [ ! -f "$ANON_FILE" ]; then
+  echo "✗ $ANON_FILE not found — cannot smoke-test, refusing to deploy." >&2
+  exit 1
+fi
+ANON=$(grep -oE 'publicAnonKey = "[^"]+"' "$ANON_FILE" | sed 's/.*"\(.*\)"/\1/')
+if [ -z "$ANON" ]; then
+  echo "✗ could not read publicAnonKey from $ANON_FILE — smoke would be vacuous." >&2
+  exit 1
+fi
 BASE="https://$PROJECT_REF.supabase.co/functions/v1/$FN"
 SMOKE=(/health /assessments /equip/programs /scales/moods)
 smoke() {
