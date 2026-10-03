@@ -6,42 +6,42 @@
     {
       "source": "/assessment/:slug*",
       "destination": "https://app.ikanhealth.in/assessments",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/assessment",
       "destination": "https://app.ikanhealth.in/assessments",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/equip/:slug*",
       "destination": "https://app.ikanhealth.in/program",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/equip",
       "destination": "https://app.ikanhealth.in/program",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/resource/:slug*",
       "destination": "https://app.ikanhealth.in/resources",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/resource",
       "destination": "https://app.ikanhealth.in/resources",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/consultation/:slug*",
       "destination": "https://app.ikanhealth.in/consult",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/consultation",
       "destination": "https://app.ikanhealth.in/consult",
-      "permanent": true
+      "statusCode": 301
     }
   ],
   "rewrites": [
