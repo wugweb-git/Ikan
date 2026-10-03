@@ -10,15 +10,16 @@
  * A static rule cannot see the rendered tree, so it errs toward silence:
  * it reports only patterns that are wrong regardless of what wraps them.
  *
- * Ratchets against .a11y-baseline. No dependencies.
+ * Ratchets against scripts/baselines/a11y. No dependencies.
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'src/components');
-const BASELINE_FILE = join(ROOT, '.a11y-baseline');
+/* The three UI surfaces. components/ was emptied into them. */
+const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
+const BASELINE_FILE = join(ROOT, 'scripts/baselines/a11y');
 const SKIP = /\.(test|spec|stories)\.tsx?$/;
 
 const RULES = [
@@ -100,12 +101,12 @@ function walk(dir, out = []) {
   return out;
 }
 
-if (!existsSync(SRC)) { console.error(`a11y lint: cannot read ${SRC}`); process.exit(2); }
+for (const d of SRCS) if (!existsSync(d)) { console.error(`a11y lint: cannot read ${d}`); process.exit(2); }
 
 const counts = Object.fromEntries(RULES.map(r => [r.id, []]));
 let total = 0;
 
-for (const file of walk(SRC)) {
+for (const file of SRCS.flatMap(d => walk(d))) {
   const src = readFileSync(file, 'utf8');
   const lines = src.split('\n');
   /* match an opening tag and its attributes, across line breaks */

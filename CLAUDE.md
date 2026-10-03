@@ -2,7 +2,7 @@
 
 This file is read by AI coding assistants. It documents the conventions, architecture decisions, and sharp edges that aren't obvious from reading the code.
 
-**Also read:** [`GOVERNANCE.md`](GOVERNANCE.md) (process rules — each one traces to a real incident), [`PENDING.md`](PENDING.md) (outstanding work, updated per deploy), [`CHANGELOG.md`](CHANGELOG.md) (dated record of what shipped).
+**Also read:** [`docs/GOVERNANCE.md`](docs/GOVERNANCE.md) (process rules — each one traces to a real incident), [`docs/PENDING.md`](docs/PENDING.md) (outstanding work, updated per deploy), [`docs/CHANGELOG.md`](docs/CHANGELOG.md) (dated record of what shipped).
 
 ---
 
@@ -13,7 +13,7 @@ This file is read by AI coding assistants. It documents the conventions, archite
 | Frontend | React + TypeScript | 18.3.1 / TS 5 |
 | Styling | Tailwind CSS v4 + Radix UI | 4.1.12 |
 | Animation | Framer Motion | 12.x |
-| Build | Vite | 6.3.5 |
+| Build | Vite | 6.4.x |
 | Backend | Supabase Edge Function (Deno + Hono) | single function |
 | Database | Supabase Postgres KV table | `kv_store_cc205da9` |
 | Auth | Supabase Auth | v2, email confirmation ON |
@@ -55,11 +55,11 @@ rollback restores what was actually running rather than a guessed commit.
 
 All API routes live in one Deno/Hono function: **`make-server-cc205da9`**.
 
-- Source: `src/supabase/functions/server/` (33 `.ts`/`.tsx` files, 18 of them `*-routes.ts` route modules)
+- Source: `src/supabase/functions/server/` (`*-routes.ts` route modules plus shared services/types/middleware)
 - Entry point: `index.tsx` in that directory
-- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, hero-banner, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales (18 route modules; 33 files total in the directory, including shared services/types/middleware)
+- Routes: admin, assessment, brevo, checkin-template, contact, corporate, equip, health-connect, ikan-score, kv-audit, mood, newsletter, progress, recommendation, reminder, resource, scales
 - Auth: `verify_jwt: true`. Routes use `requireAuth` (user JWT) or `requireAdmin` (admin JWT) middleware.
-- Deploy: see `BUILD.md` — requires a staging directory trick because the Supabase CLI needs a project directory, not a subdirectory.
+- Deploy: `bash scripts/deploy-edge.sh` (guarded; see `docs/BUILD.md`) — never the Supabase CLI by hand, which needs a staging-directory trick because it wants a project directory, not a subdirectory.
 
 **Do not redeploy the edge function without smoke-testing** `/health`, assessments, equip, and scales endpoints afterwards. A bad deploy silently breaks the entire API.
 
@@ -77,7 +77,7 @@ exists twice: the inline `daily_content` array on the `equip:` record, which is 
 whose REST surface was removed 2026-08-06 (`equip-routes.ts:210-214`) and which nothing reads.
 The two disagree — 406 live blocks vs 223 dead ones, with different subtype values. Counting the
 dead set produced a published figure that was wrong by 5x. The live census lives in
-`src/docs/module-maps/census/`; diff against it rather than writing a fresh count.
+`docs/module-maps/census/`; diff against it rather than writing a fresh count.
 
 Key prefixes:
 
@@ -91,7 +91,7 @@ Key prefixes:
 | `day:{id}` | **DEAD — nothing reads these.** Legacy program day (105 rows). Related to its equip via an `equip_id` field, not a key convention |
 | `block:{id}` | **DEAD — nothing reads these.** Legacy content block (223 rows). Related to its day via `equip_day_id` |
 | `security_event:{YYYY-MM-DD}` | Day-bucketed security events, capped at 5000/day. Public write; identity comes from a verified token, never the request body |
-| `cms_page:{pageId}` | CMS page content (overrides code defaults) |
+| `cms_page:{pageId}` | **DEAD — nothing reads these.** Page content since the Page Manager's removal (PR #14, `31015ad5`); pages render `src/product/site/content/cms-defaults.ts`. 17 rows (+ `page:`/`page_slug:`, 7 each) left in KV, untouched |
 | `settings:site` | Global site settings (phone, email, etc.) |
 | `checkin_scale:{key}` | Custom check-in scale (emoji set + labels) |
 | `mood:{moodId}` | Mood-scale definition (emoji, label, colour, order) — **global config, not user data**. Verified live 2026-09-01: 5 rows, none user-scoped. Journal entries live under `journal:` / `journal_by_user:`. |
@@ -102,7 +102,7 @@ Key prefixes:
 
 ## Migration in progress: user data → real tables
 
-User data is being moved out of the KV blob into real Postgres tables, one entity at a time: **shadow tables + RLS → dual-write → cut over reads → retire the KV prefix.** Row counts change as usage continues; see `PENDING.md` §D for current status, not this file.
+User data is being moved out of the KV blob into real Postgres tables, one entity at a time: **shadow tables + RLS → dual-write → cut over reads → retire the KV prefix.** Row counts change as usage continues; see `docs/PENDING.md` §D for current status, not this file.
 
 | Table | Source prefix | Status |
 |-------|---------------|--------|
@@ -118,31 +118,6 @@ User data is being moved out of the KV blob into real Postgres tables, one entit
 - `kv_key` on each row links back to the originating KV key.
 - Helper casts `try_numeric()` / `try_timestamptz()` exist because KV is untyped; EXECUTE is revoked from `anon`/`authenticated`.
 - **There are two incompatible enrollment shapes in KV**, both introduced the same day: `enrollment:{enrollmentId}` (the real one, used everywhere) and `enrollment:{userId}:{equipId}` (defined in `progress-service.ts` but never actually written). Code that reads/writes enrollments must resolve by scanning `enrollment:` and matching `userId`/`programId` fields — not by constructing the composite key.
-
-### `assessment:` is the fifth two-representations-of-one-entity — and it is dead
-
-Audited 2026-09-02. `assessment_def:` is canonical and is read in **15** places (the player via
-`/assessments/:id`, recommendation-service, ikan-score, progress, admin, index). `assessment:` is
-read in **2**, and both are inside the sync routines themselves, checking existence before copying.
-**No product code reads it.**
-
-The writes are not symmetric — three writers touch only one side:
-
-| site | writes |
-|---|---|
-| `admin-routes.ts:182-183, 216-217` (assessment save) | both |
-| `admin-routes.ts:711` (bulk import/restore) | `assessment_def:` **only** |
-| `admin-routes.ts:1429`, `kv-audit-routes.ts:890` (sync) | `assessment:` **only** |
-
-And both sync routines guard on `if (!existingAssessment)` — they create a *missing* mirror and
-never refresh a *stale* one. A bulk import through line 711 desyncs the mirror permanently while
-the sync reports nothing to do. It is a sync that cannot re-sync, which is exactly how `day:` /
-`block:` died.
-
-The two are byte-identical today only because the assessment save writes both.
-
-**To retire it, the order matters:** remove the mirror writes → deploy the function → then delete
-the 7 rows. Deleting first just means the next save recreates them.
 
 ### Severity vocabulary — two types, not one
 
@@ -164,36 +139,6 @@ as `SEVERITY_ORDER` in `recommendation-engine.ts`, asserting things nobody decid
   (`Completed` ×82, null ×40, `Poor Sleep`, `New Category`…). Zero of 140 carry a severity term.
 
 Backup: `backup_pre_vocab_split_2026-09-02` (209 rows).
-
-### Scoring specs — Sleep is authored, the other six are not
-
-Sleep (`struggling-with-quality-sleep`) is the first assessment with a v2 spec, done 2026-09-02.
-Backup: `backup_pre_sleep_scale_2026-09-02` (17 rows).
-
-- **Option values are declared, not inferred.** Each option is now `{text, value}` with values
-  **1-5**. The labels always read "1 …" to "5 …" while the scored weight was the array index, so
-  the option displayed as "1" scored 0. Declaring 1-5 makes the labels honest and removes the
-  `offset` concept. Option `text` was left byte-identical so the stored responses still resolve.
-- **The per-question `scoring` map was updated in the same write.** Two code paths read option
-  weights (`assessment-sections.ts` by value, `AssessmentFlow.tsx:287` by the map); changing one
-  without the other splits them silently.
-- **Total moved 0-32 → 8-40**, so `scoring.ranges` was re-tiled in the same pass. Leaving the old
-  0-16/17-32 bands would have banded an 8-40 score against a 0-32 scale.
-- **Three bands, not two.** Sleep has two rules gated at `moderate` and `moderately-severe`; two
-  bands cannot distinguish two thresholds, so the `moderately-severe` rule would be dead on
-  arrival once the join is fixed. Now `Healthy Sleep` (minimal) · `Poor Sleep` (moderate) ·
-  `Very Poor Sleep` (severe), tiling 8→25→33→40 half-open.
-
-**`scoring_provenance` on a result** records how its score was produced:
-
-| state | meaning |
-|---|---|
-| `rescored` | recomputed under the current spec; carries `profile_id` and `profile_version` |
-| `pre-spec` | could not be re-scored honestly; original score untouched, `excluded_from_trends: true` |
-
-Sleep: 7 unique results re-scored, 3 stamped `pre-spec`. Note the stored scores were **not all
-produced the same way** — most shifted by exactly +8 as expected from 0-based → 1-based, but two
-did not move at all, and one moved from "Poor Sleep" to "Healthy Sleep" as a genuine correction.
 
 ### Three ways a score has been computed — and how to tell which
 
@@ -257,33 +202,6 @@ still supplies `SectionScoreResult`/`SectionScore` types, `severityForSection` a
 Risk indicators now come **only** from a question's own `is_risk_indicator` flag, since the
 presets' `riskIndicatorQuestionIds` went with the file.
 
-### (superseded) The player scores from the spec, with a transitional fallback
-
-`AssessmentFlow` computes from the assessment's own `scores[]` when the spec exists **and** its
-profiles have loaded, via `buildScoringContext` → `computeScores` → `toSectionScoreResult`.
-Otherwise it falls back to `SECTION_PRESETS`.
-
-**The fallback is temporary.** It exists only because `GET /scoring-profiles` is not deployed, so
-a non-admin cannot fetch profiles and would otherwise get no score at all. When that route is
-live, delete the fallback branch, `assessment-section-presets.ts` and `assessment-sections.ts`
-together — until then the code presets and the live specs are a seventh
-two-representations-of-one-entity, kept in step **by hand** (both were edited together for
-Burnout's 8/5/5/5 and General's 7/7). A spec whose profiles fail to load logs a warning naming the
-assessment.
-
-`computeScores` honours each profile's `missing` policy — `invalidate` produces no value and a
-reason, `prorate` scales the answered items up, `zero` treats an unanswered item as zero — rather
-than presenting a partial instrument as a complete one. `resolveAnswer` matches option **text**
-only and has deliberately **no leading-digit fallback**: whether the digit equals the value
-differs per assessment, and several carry answers from a replaced scale whose labels collide with
-the current ones at a different value.
-
-**Risk-indicator detection reads both sources** (a question's `is_risk_indicator` and the preset's
-`riskIndicatorQuestionIds`) so it works on either path, and fires when the answer exceeds that
-question's **own lowest option value**, not zero. Option values are no longer all 0-based: on a
-1-5 scale `v > 0` is true for every possible answer, which would have fired the crisis panel on
-"Never". `general-q5` is the only flagged question live, and its scale is 0-3.
-
 ### Question text is mutable — and now recorded
 
 Guardrail 11 protects **identity**, not content. `burnout-q9`'s clobber passed every guard it
@@ -294,11 +212,6 @@ Each write path now diffs question text against the saved record and appends
 `{from, to, at, by}` to that question's **`text_history`** (capped at 20, oldest dropped first;
 the backups remain the long-tail record). It blocks nothing — text must stay editable — it makes
 the change legible. Check `text_history` before reaching for a backup.
-
-The three asymmetric `assessment:` writers, at current line numbers: **`admin-routes.ts:816`**
-writes `assessment_def:` only (bulk import), **`admin-routes.ts:1534`** and
-**`kv-audit-routes.ts:890`** write the mirror only (the syncs). Lines **264-265, 321-322, 364-365**
-write both. All six must be dealt with when retiring the mirror.
 
 ### Guardrail 11 — question ids are immutable once scored
 
@@ -384,6 +297,13 @@ wrong is silent:
 
 Backups: `backup_pre_sleep_scale_2026-09-02` (17 rows), `backup_pre_stress_scale_2026-09-03` (45).
 
+**`scoring_provenance` on a result** records how its score was produced:
+
+| state | meaning |
+|---|---|
+| `rescored` | recomputed under the current spec; carries `profile_id` and `profile_version` |
+| `pre-spec` | could not be re-scored honestly; original score untouched, `excluded_from_trends: true` |
+
 | | Sleep | Stress | Balance | Anxiety | Depression |
 |---|---|---|---|---|---|
 | declared values | 1-5 (was 0-4) | 0-4 (already agreed) | 1-5 | **0-3** | **0-3** |
@@ -407,10 +327,6 @@ carry answers from a former 0-4 frequency scale. Burnout is the sharpest case: t
 softened local wording in place of PHQ-9's validated item, so the 0-27 range and the 5/10/15/20
 edges are PHQ-9-*derived*, not validated cut-offs. GAD-7 and the embedded GAD-2/PHQ-2 screens are
 unmodified and may be named as such.
-
-`depression-q9` ("Feeling that life is meaningless") stays **scored and unflagged** — decided
-2026-09-03. The crisis pathway (`triggerCrisisSupport` in `AssessmentFlow.tsx`) therefore fires
-only from General's `general-q5`.
 
 **Burnout** — declared 1-5 (BAT published), five scores on `calc: 'mean'`, sub-scale values 1-5.
 Allocation is **BAT-23 8/5/5/5, decided 2026-09-03**: Exhaustion q1-q8, Mental distance q9-q13,
@@ -530,48 +446,44 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
 ## CMS content architecture
 
-`usePageContent` (`src/hooks/usePageContent.ts`) fetches from `/cms/pages/{pageId}` with stale-while-revalidate. The code defaults in `src/utils/cms-defaults.ts` render immediately; live KV data overrides them.
-
-**When changing any CMS-backed content (contact info, crisis resources, team copy, etc.) you must update BOTH:**
-1. The default in `src/utils/cms-defaults.ts`
-2. The live record in Supabase KV (via edge function admin endpoint or SQL) so production overrides don't hide your change.
+Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/product/site/content/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
 
 ---
 
 ## Slug URL system
 
-`src/lib/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
+`src/product/app/ui/slug.ts` exports `slugify()`, `assessmentUrl()`, `equipUrl()`. Routes `/assessment/<slug>` and `/equip/<slug>` are handled in `App.tsx` at three sync points: initial `useState`, `handleNavigate`, and `popstate`. The backend resolves both id and slug via a fallback lookup.
 
 ---
 
 ## Auth
 
 - Email confirmation is ON. New users get a Supabase native confirmation email.
-- `/reset-password` route exists (`src/components/screens/ResetPassword.tsx`).
+- `/reset-password` route exists (`src/product/app/account/ResetPassword.tsx`).
 - Auto-create-on-failed-login has been **removed** from `AuthContext.tsx`.
-- Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `PENDING.md` §A.
+- Leaked-password protection is **not** enabled yet — this needs to be turned on from the Supabase dashboard (Auth → Providers). See `docs/PENDING.md` §A.
 - Supabase OAuth provider: Google (for Google Fit linking via `linkIdentity`).
 
 ---
 
 ## Don'ts
 
-- **Don't push to `main` expecting a production deploy.** Use the Vercel CLI.
+- **Don't push to `main` expecting a production deploy.** Deploy with `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — never the Vercel or Supabase CLI directly.
 - **Don't blindly bump major dependency versions.** React 18→19, Vite 6→8, Tailwind 4→next, etc. are breaking changes that need a dedicated session with full test coverage.
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
 - **Don't delete `wrappers_fdw_stats`** — it's extension-owned. It shows as a `rls_disabled_in_public` ERROR in the security advisor; RLS **can** be enabled on it, but only from the Supabase dashboard ("Resolve issue"), because the table is owned by `supabase_admin` and `ALTER TABLE` from a migration fails with `42501: must be owner of table`.
-- **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
+- **Don't purge KV by prefix without checking `KEY_REGISTRY`** (`server/kv-audit-routes.ts`). Reverse-index keys (`assessment_slug:`, `equip_slug:`, `page_slug:`) look like orphans but are load-bearing — purging `assessment_slug:` once broke every `/assessment/<slug>` URL site-wide. The purge endpoint now refuses protected prefixes and requires `force` for registered ones. **Any new KV prefix must be added to `KEY_REGISTRY` in the same commit that introduces it** — see `docs/GOVERNANCE.md` Rule 2 for why this is non-negotiable, not just tidy.
 - **Don't call `supabase.auth.signOut()` without a scope.** Its default is `scope: 'global'`, which
   revokes that user's session on **every device**. Eleven call sites used the default, nine of them
   defensive (a refresh token looked broken, a session check failed) — so one transient error in one
   tab logged the user out of their phone, and the tab still holding an unexpired JWT then got
   `session_not_found` from GoTrue, which reads like a library fault and is not one. Use
-  `signOutLocal()` from `src/lib/supabase-client.ts`; pass `'global'` only for a deliberate
+  `signOutLocal()` from `src/shared/api/supabase.ts`; pass `'global'` only for a deliberate
   "sign out everywhere". Related: `SecurityProvider`'s 30-minute idle sign-out is for the
   patient-facing app and **exempts admins** — an author reading a long day of content is not idle,
   and being signed out mid-edit loses work.
-- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/lib/supabase-client.ts` is public by design.
+- **Don't store secrets in code.** `SUPABASE_SERVICE_ROLE_KEY` lives only in Vercel env + the edge function runtime. The anon key in `src/shared/api/supabase.ts` is public by design.
 - **Don't roll the frontend back past `cc70ac96` (2026-09-04) without rolling the catalog back too.** Two live couplings were created that day where **KV data depends on deployed code**, and a frontend-only rollback breaks both silently:
 
 | rollback past | what breaks | how to tell | fix |
@@ -581,7 +493,7 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 
   Backup of all 192 `category:` rows as they were before both: `backup_pre_blocktype_seed_2026_09_04`.
 
-  **The general rule this is an instance of:** when a catalog rename or a new catalog field needs code to read it, the code must be **deployed and verified `● Ready`** before the data is written — and until the old data shape is gone, the deploy is a floor you cannot roll back beneath. Detail in `src/docs/module-maps/blocks.md` §18 Phase 1.
+  **The general rule this is an instance of:** when a catalog rename or a new catalog field needs code to read it, the code must be **deployed and verified `● Ready`** before the data is written — and until the old data shape is gone, the deploy is a floor you cannot roll back beneath. Detail in `docs/module-maps/blocks.md` §18 Phase 1.
 
 ---
 
@@ -590,15 +502,16 @@ Known data notes: `assessment_result:` stores each result twice in KV (canonical
 | What | Where |
 |------|-------|
 | App shell + routing | `src/App.tsx` |
-| Auth context | `src/contexts/AuthContext.tsx` |
-| API client | `src/lib/api-client.ts` |
-| Supabase client | `src/lib/supabase-client.ts` |
-| CMS defaults | `src/utils/cms-defaults.ts` |
-| Slug helpers | `src/lib/slug.ts` |
-| Health Connect / Google Fit | `src/components/integrations/GoogleFitContext.tsx`, `src/lib/google-fit.ts` |
-| Design system tokens | `src/styles/globals.css` |
+| Auth context | `src/shared/state/AuthContext.tsx` |
+| API client | `src/shared/api/api.ts` |
+| Supabase client | `src/shared/api/supabase.ts` |
+| CMS defaults | `src/product/site/content/cms-defaults.ts` |
+| Slug helpers | `src/product/app/ui/slug.ts` |
+| Health Connect / Google Fit | `src/product/app/integrations/GoogleFitContext.tsx`, `src/product/app/integrations/google-fit.ts` |
+| Design system tokens | `src/product/site/ui/styles/globals.css` (product) · `src/admin/ui/styles/globals.css` (admin — a fork, may drift) |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
-| Brand docs | `BRAND.md` |
-| Build/deploy steps | `BUILD.md` |
-| Architecture deep-dive | `DESIGN.md` |
-| Stale docs archive | `src/docs/archive/` |
+| Brand docs | `docs/BRAND.md` |
+| Build/deploy steps | `docs/BUILD.md` |
+| Architecture deep-dive | `docs/ARCHITECTURE.md` |
+| Project structure | `docs/PROJECT-STRUCTURE.md` |
+| Stale docs archive | `docs/archive/` |

@@ -5,7 +5,7 @@
  * A design token that can be bypassed is a suggestion. This counts the bypasses
  * and fails when they rise, so the number can only go down.
  *
- * Ratchets against .rawhex-baseline, mirroring scripts/lint-ratchet.sh.
+ * Ratchets against scripts/baselines/rawhex, mirroring scripts/lint-ratchet.sh.
  * No dependencies.
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -13,8 +13,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'src/components');
-const BASELINE_FILE = join(ROOT, '.rawhex-baseline');
+/* The three UI surfaces. components/ was emptied into them. */
+const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
+const BASELINE_FILE = join(ROOT, 'scripts/baselines/rawhex');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */
 const SKIP_FILE = /\.(test|spec|stories)\.tsx?$/;
@@ -33,9 +34,9 @@ function walk(dir, out = []) {
   return out;
 }
 
-if (!existsSync(SRC)) { console.error(`raw-hex lint: cannot read ${SRC}`); process.exit(2); }
+for (const d of SRCS) if (!existsSync(d)) { console.error(`raw-hex lint: cannot read ${d}`); process.exit(2); }
 
-const files = walk(SRC);
+const files = SRCS.flatMap(d => walk(d));
 const perFile = [];
 let total = 0;
 
@@ -53,7 +54,7 @@ const baseline = existsSync(BASELINE_FILE)
   ? parseInt(readFileSync(BASELINE_FILE, 'utf8').trim(), 10) || 0
   : Number.MAX_SAFE_INTEGER;
 
-console.log(`raw colour literals in src/components: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
+console.log(`raw colour literals in src/{admin,product}: ${total} across ${perFile.length} files (baseline ${baseline === Number.MAX_SAFE_INTEGER ? 'unset' : baseline})`);
 console.log('');
 for (const [f, n] of perFile.slice(0, 15)) console.log(`  ${String(n).padStart(4)}  ${f}`);
 if (perFile.length > 15) console.log(`  ...and ${perFile.length - 15} more files`);
@@ -61,7 +62,7 @@ console.log('');
 
 if (total > baseline) {
   console.error(`FAIL: raw literals rose by ${total - baseline} above the baseline.`);
-  console.error(`Use a token from src/styles/globals.css, or raise .rawhex-baseline and say why.`);
+  console.error(`Use a token from the surface stylesheet (src/{admin,product}/styles/globals.css), or raise scripts/baselines/rawhex and say why.`);
   process.exit(1);
 }
 if (total < baseline && baseline !== Number.MAX_SAFE_INTEGER) console.log(`Baseline can be lowered to ${total}.`);

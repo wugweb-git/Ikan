@@ -30,11 +30,11 @@ jobs:
       - name: Tests
         run: npm test
 
-      # Fails only if the error count RISES above .typecheck-baseline.
+      # Fails only if the error count RISES above scripts/baselines/typecheck.
       - name: Typecheck (ratchet)
         run: bash scripts/typecheck-ratchet.sh
 
-      # Fails only if the problem count RISES above .lint-baseline.
+      # Fails only if the problem count RISES above scripts/baselines/lint.
       - name: Lint (ratchet)
         run: npm run lint:ratchet
 
@@ -53,6 +53,11 @@ jobs:
       # justify standing one up.
       - name: Static a11y (ratchet)
         run: npm run lint:a11y
+
+      # admin/, app/ and site/ may not import each other; shared/ imports no
+      # surface. Fails when the number of crossings rises above scripts/baselines/boundary.
+      - name: Surface boundary (ratchet)
+        run: npm run lint:boundary
 
       # A broken build is the one thing that must never merge.
       - name: Build

@@ -2,34 +2,33 @@ import React, { useState, useEffect, useCallback, lazy, Suspense, startTransitio
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
-import { useTokens } from './lib/react-tokens';
-import { crossHostSignInUrl } from './lib/app-host';
-import { useIsMobile } from './hooks/useIsMobile';
-import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './hooks/useMobileOptimizations';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
-import { PaymentProvider } from './contexts/PaymentContext';
-import { JourneyProvider } from './contexts/JourneyContext';
-import { Navigation } from './components/navigation/Navigation';
-import { BottomNavBarMobile } from './components/navigation/BottomNavBarMobile';
-import { PublicBottomNavMobile } from './components/navigation/PublicBottomNavMobile';
-import { RouteGuard } from './components/RouteGuard';
-import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './lib/route-config';
-import { hasSeenOnboarding, hasCompletedFirstRun } from './lib/first-run';
-import { WelcomeSplash } from './components/screens/onboarding/WelcomeSplash';
-import { MobileOnboarding } from './components/screens/onboarding/MobileOnboarding';
-import { VerifyEmail } from './components/screens/onboarding/VerifyEmail';
-import { GetStarted } from './components/screens/onboarding/GetStarted';
+import { useTokens } from './product/app/shell/react-tokens';
+import { crossHostSignInUrl } from './product/app/shell/app-host';
+import { useIsMobile } from './admin/ui/hooks/useIsMobile';
+import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './product/app/shell/useMobileOptimizations';
+import { AuthProvider, useAuth } from './shared/state/AuthContext';
+import { NotificationProvider, useNotifications } from './shared/state/NotificationContext';
+import { PaymentProvider } from './product/app/shell/PaymentContext';
+import { JourneyProvider } from './product/app/shell/JourneyContext';
+import { Navigation } from './product/app/shell/navigation/Navigation';
+import { BottomNavBarMobile } from './product/app/shell/navigation/BottomNavBarMobile';
+import { PublicBottomNavMobile } from './product/site/ui/PublicBottomNavMobile';
+import { useIsCompactNav } from './product/site/ui/hooks/useIsMobile';
+import { RouteGuard } from './product/app/shell/RouteGuard';
+import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './product/app/ui/route-config';
+import { MobileOnboarding } from './product/app/onboarding/MobileOnboarding';
+import { VerifyEmail } from './product/app/onboarding/VerifyEmail';
+import { GetStarted } from './product/app/onboarding/GetStarted';
 
-import { PushPermissionPrompt, usePushPermissionPrompt } from './components/notifications/PushPermissionPrompt';
-import { Toaster } from './components/ui/sonner';
-import { cn } from './components/ui/utils';
-import { logger } from './lib/logger';
-import { setupGlobalErrorHandlers } from './lib/error-handlers';
-import { LoadingSpinner } from './components/LoadingSpinner';
-import { useNotificationBadges } from './hooks/useNotificationBadges';
-import { lazyRetry } from './lib/lazy-with-retry';
-import { equipSubPage } from './lib/slug';
+import { PushPermissionPrompt, usePushPermissionPrompt } from './product/app/notifications/PushPermissionPrompt';
+import { Toaster } from './product/app/ui/sonner';
+import { cn } from './product/app/ui/utils';
+import { logger } from './product/app/shell/logger';
+import { setupGlobalErrorHandlers } from './product/app/shell/error-handlers';
+import { LoadingSpinner } from './product/app/ui/LoadingSpinner';
+import { useNotificationBadges } from './product/app/shell/useNotificationBadges';
+import { lazyRetry } from './product/app/shell/lazy-with-retry';
+import { equipSubPage } from './product/app/ui/slug';
 
 // ── DIAGNOSTIC: Global error handler fires before React mounts ──
 // This ensures ANY crash (module eval, React mount, etc.) shows something.
@@ -40,16 +39,36 @@ if (typeof window !== 'undefined') {
     const el = document.createElement('div');
     el.id = 'ikan-fatal-error';
     el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#F5F5F5;font-family:system-ui,sans-serif;padding:24px;';
-    el.innerHTML = `
-      <div style="max-width:480px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
-        <h2 style="font-size:20px;font-weight:500;color:#151515;margin:0 0 12px;">Something went wrong</h2>
-        <p style="font-size:14px;color:#717182;line-height:1.5;margin:0 0 16px;">${msg}</p>
-        ${source ? `<p style="font-size:12px;color:#999;word-break:break-all;margin:0 0 16px;">${source}</p>` : ''}
-        <button onclick="location.reload()" style="padding:10px 24px;background:#2A2A2A;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;">Reload App</button>
-        <p style="font-size:12px;color:#717182;margin:16px 0 0;">If this keeps happening, try clearing your browser cache.</p>
-      </div>
-    `;
+    // Build the overlay with DOM APIs + textContent: `msg` and `source` come
+    // from arbitrary error events and must never be parsed as HTML.
+    const box = document.createElement('div');
+    box.style.cssText = 'max-width:480px;text-align:center;';
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:48px;margin-bottom:16px;';
+    icon.textContent = '⚠️';
+    const h2 = document.createElement('h2');
+    h2.style.cssText = 'font-size:20px;font-weight:500;color:#151515;margin:0 0 12px;';
+    h2.textContent = 'Something went wrong';
+    const p = document.createElement('p');
+    p.style.cssText = 'font-size:14px;color:#717182;line-height:1.5;margin:0 0 16px;';
+    p.textContent = msg;
+    box.append(icon, h2, p);
+    if (source) {
+      const src = document.createElement('p');
+      src.style.cssText = 'font-size:12px;color:#999;word-break:break-all;margin:0 0 16px;';
+      src.textContent = source;
+      box.appendChild(src);
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'padding:10px 24px;background:#2A2A2A;color:#fff;border:none;border-radius:12px;font-size:14px;cursor:pointer;';
+    btn.textContent = 'Reload App';
+    btn.addEventListener('click', () => location.reload());
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:12px;color:#717182;margin:16px 0 0;';
+    hint.textContent = 'If this keeps happening, try clearing your browser cache.';
+    box.append(btn, hint);
+    el.appendChild(box);
     (document.getElementById('root') || document.body).appendChild(el);
   };
 
@@ -71,11 +90,11 @@ if (typeof window !== 'undefined') {
 
 // --- ALL screens are now lazy-loaded to prevent module-level crashes ---
 // Previously eagerly loaded screens moved to lazy:
-const Dashboard = lazy(() => lazyRetry(() => import('./components/screens/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
-const Homepage = lazy(() => lazyRetry(() => import('./components/screens/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
-const NotFound = lazy(() => lazyRetry(() => import('./components/screens/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
-const LoginScreen = lazy(() => lazyRetry(() => import('./components/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
-const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
+const Dashboard = lazy(() => lazyRetry(() => import('./product/app/dashboard/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
+const Homepage = lazy(() => lazyRetry(() => import('./product/site/pages/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
+const NotFound = lazy(() => lazyRetry(() => import('./product/site/pages/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
+const LoginScreen = lazy(() => lazyRetry(() => import('./product/app/shell/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
+const ResetPassword = lazy(() => lazyRetry(() => import('./product/app/account/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
 // Onboarding flow screens are imported eagerly (not lazy): they are small, sit
 // at the entry of the app, and lazy-loading them deadlocks the AnimatePresence
 // `mode="wait"` transition when entering an unloaded chunk.
@@ -83,59 +102,77 @@ const ResetPassword = lazy(() => lazyRetry(() => import('./components/screens/Re
 // --- Lazy loaded screens (split by category) ---
 
 // Assessment screens
-const Assessments = lazy(() => lazyRetry(() => import('./components/screens/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
-const AssessmentDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
-const AssessmentFlow = lazy(() => lazyRetry(() => import('./components/screens/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
-const AssessmentResults = lazy(() => lazyRetry(() => import('./components/screens/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
-const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./components/screens/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
+/* Static catalogue pages (2026-09-21): ikanhealth.in serves these from a
+   build-time snapshot for everyone; account actions link out to the member app
+   (APP_ORIGIN). The app screens of the same names stay in product/app/screens,
+   unrouted. */
+const Assessments = lazy(() => lazyRetry(() => import('./product/site/pages/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
+const AssessmentDetail = lazy(() => lazyRetry(() => import('./product/site/pages/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
+const AssessmentFlow = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
+const AssessmentResults = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
+const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
 
 // Equip screens
-const EquipPrograms = lazy(() => lazyRetry(() => import('./components/screens/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
-const EquipDetail = lazy(() => lazyRetry(() => import('./components/screens/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
-const EquipOnboarding = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
-const EquipProgramFlow = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
-const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./components/screens/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
+const EquipPrograms = lazy(() => lazyRetry(() => import('./product/site/pages/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
+const EquipDetail = lazy(() => lazyRetry(() => import('./product/site/pages/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
+const EquipOnboarding = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
+const EquipProgramFlow = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
+const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
 
 // User screens
-const Consultation = lazy(() => lazyRetry(() => import('./components/screens/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
-const ConsultantDetail = lazy(() => lazyRetry(() => import('./components/screens/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
-const Library = lazy(() => lazyRetry(() => import('./components/screens/Library').then(m => ({ default: m.Library })), 'Library'));
-const Account = lazy(() => lazyRetry(() => import('./components/screens/Account').then(m => ({ default: m.Account })), 'Account'));
-const MoodJournal = lazy(() => lazyRetry(() => import('./components/screens/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
-const ResourceDetail = lazy(() => lazyRetry(() => import('./components/screens/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
-const ProfessionalApplication = lazy(() => lazyRetry(() => import('./components/screens/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
-const WellnessTimeline = lazy(() => lazyRetry(() => import('./components/screens/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
-const LearningDiary = lazy(() => lazyRetry(() => import('./components/screens/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
+const Consultation = lazy(() => lazyRetry(() => import('./product/site/pages/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
+const ConsultantDetail = lazy(() => lazyRetry(() => import('./product/app/consultations/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
+const Library = lazy(() => lazyRetry(() => import('./product/app/resources/Library').then(m => ({ default: m.Library })), 'Library'));
+const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
+const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
+const ResourceDetail = lazy(() => lazyRetry(() => import('./product/app/resources/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
+const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
+const LearningDiary = lazy(() => lazyRetry(() => import('./product/app/journal/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
 
 // Static/legal pages
-const AboutUs = lazy(() => lazyRetry(() => import('./components/screens/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
-const FAQ = lazy(() => lazyRetry(() => import('./components/screens/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
-const PrivacyPolicy = lazy(() => lazyRetry(() => import('./components/screens/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
-const TermsOfUse = lazy(() => lazyRetry(() => import('./components/screens/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
-const ContactUs = lazy(() => lazyRetry(() => import('./components/screens/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
-const ReturnPolicy = lazy(() => lazyRetry(() => import('./components/screens/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
-const CancellationPolicy = lazy(() => lazyRetry(() => import('./components/screens/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
-const Sitemap = lazy(() => lazyRetry(() => import('./components/screens/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
+const AboutUs = lazy(() => lazyRetry(() => import('./product/site/pages/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
+const Services = lazy(() => lazyRetry(() => import('./product/site/pages/Services').then(m => ({ default: m.Services })), 'Services'));
+const FAQ = lazy(() => lazyRetry(() => import('./product/site/pages/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
+const PrivacyPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
+const TermsOfUse = lazy(() => lazyRetry(() => import('./product/site/pages/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
+const ContactUs = lazy(() => lazyRetry(() => import('./product/site/pages/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
+const ReturnPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
+const CancellationPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
+const Sitemap = lazy(() => lazyRetry(() => import('./product/site/pages/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
 
 // Admin screens
-const AdminDashboard = lazy(() => lazyRetry(() => import('./components/screens/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
-const AdminLoginScreen = lazy(() => lazyRetry(() => import('./components/admin/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
+const AdminDashboard = lazy(() => lazyRetry(() => import('./admin/shell/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
+const AdminLoginScreen = lazy(() => lazyRetry(() => import('./admin/shell/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
+const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').then(m => ({ default: m.AdminGate })), 'AdminGate'));
 
 // --- Eagerly loaded non-screen components ---
-import { AdminWidget } from './components/admin/AdminWidget';
-import { GoogleFitProvider } from './components/integrations/GoogleFitContext';
-import { Footer } from './components/Footer';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { ChunkErrorBoundary } from './components/ChunkErrorBoundary';
-import { SecurityProvider } from './components/security/SecurityProvider';
-import { usePublicSettings } from './hooks/usePublicSettings';
-import { CrisisSupport, useCrisisSupport } from './components/safety/CrisisSupport';
-import { SafePerformanceMonitor } from './components/monitoring/SafePerformanceMonitor';
-import { SkipToMainContent, useReducedMotion } from './components/ui/accessibility-helpers';
-import { OfflineBanner } from './components/OfflineBanner';
-import { useOfflineSync } from './hooks/useOfflineSync';
-import { installBlocksFallbackReporter } from './lib/blocks/block-fallback-reporter';
-import { usePullToRefresh } from './hooks/usePullToRefresh';
+import { AdminWidget } from './admin/shell/AdminWidget';
+import { ADMIN_ROUTE_PATHS } from './admin/shell/sections';
+import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
+import { Footer } from './product/site/ui/Footer';
+
+import { ErrorBoundary } from './product/app/ui/ErrorBoundary';
+import { ChunkErrorBoundary } from './product/app/shell/ChunkErrorBoundary';
+import { SecurityProvider } from './product/app/shell/SecurityProvider';
+import { usePublicSettings } from './admin/ui/hooks/usePublicSettings';
+import { CrisisSupport, useCrisisSupport } from './product/app/safety/CrisisSupport';
+import { SafePerformanceMonitor } from './product/app/shell/SafePerformanceMonitor';
+import { SkipToMainContent, useReducedMotion } from './product/app/ui/accessibility-helpers';
+import { OfflineBanner } from './product/app/shell/OfflineBanner';
+import { useOfflineSync } from './shared/api/useOfflineSync';
+import { installBlocksFallbackReporter } from './product/app/shell/block-fallback-reporter';
+import { usePullToRefresh } from './product/app/shell/usePullToRefresh';
+import { hasCompletedFirstRun } from './product/app/shell/first-run';
+
+/** Marketing-site routes (the pages under product/site/pages). */
+const SITE_FOOTER_ROUTES = new Set([
+  '/', '/about', '/service', '/services', '/faq', '/contact', '/sitemap',
+  '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
+  '/assessment', '/assessment-landing', '/assessment-detail',
+  '/equip', '/equip-programs-landing', '/equip-detail',
+  '/consultation', '/join/professional',
+]);
 
 // --- Suspense fallback ---
 // Uses a delayed render so fast-loading chunks don't flash a spinner
@@ -205,12 +242,15 @@ function MaintenanceScreen({ siteName }: { siteName?: string }) {
 
 function AppContent() {
   // ✅ ALL HOOKS MUST BE CALLED FIRST - BEFORE ANY CONDITIONAL LOGIC OR EARLY RETURNS
-  const { user, isInitialized } = useAuth();
+  const { user, isInitialized, verifiedIsAdmin } = useAuth();
   const { settings: publicSettings } = usePublicSettings();
   const { showToast } = useNotifications();
   const { shouldShowPrompt } = usePushPermissionPrompt();
   const { isVisible: isCrisisVisible, triggerReason, hideCrisisSupport } = useCrisisSupport();
   const isMobile = useIsMobile();
+  /* The public bar swaps to its compact form at 1024, not 768: the menu is six
+     links and the capsule cannot hold them below that. See useIsCompactNav. */
+  const isCompactNav = useIsCompactNav();
   const { triggerHapticFeedback } = useMobileOptimizations();
   useMobileKeyboard();
   useMobileViewport();
@@ -322,13 +362,12 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
-        '/admin', '/admin/reporting', '/admin/login', '/admin/resources', '/admin/equip', '/admin/equip-analytics', '/admin/users', '/admin/consultants', '/admin/assessments', '/admin/settings', '/admin/media', '/admin/contact-newsletter', '/admin/block-type-viewer', '/admin/block-gallery',
-        '/admin/categories', '/admin/checkin-scales', '/admin/recommendations', '/admin/communication', '/admin/payment-gateway', '/admin/kv-audit', '/admin/checkin-builder', '/admin/scoring-engine',
+        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
+        ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
         '/join/professional',
         '/timeline',
         '/learning-diary',
-        '/welcome', '/onboarding', '/verify-email', '/get-started'
+        '/onboarding', '/verify-email', '/get-started'
       ];
       
       // Handle consultant detail route pattern
@@ -420,11 +459,11 @@ function AppContent() {
       const target = hasCompletedFirstRun() ? DEFAULT_PRIVATE_ROUTE : '/get-started';
       startTransition(() => setCurrentRoute(target));
       if (typeof window !== 'undefined') window.history.replaceState({}, '', target);
-    } else if (!user && isMobile && currentRoute === '/' && !hasSeenOnboarding()) {
-      // A signed-out first-time visitor on mobile enters through the splash.
-      startTransition(() => setCurrentRoute('/welcome'));
-      if (typeof window !== 'undefined') window.history.replaceState({}, '', '/welcome');
     }
+    /* The mobile splash that used to live at /welcome is gone. It was the member
+       app's first-run screen, and the member app is iKAN 2 now — on a static
+       marketing site it sent a first-time visitor to an onboarding dead end
+       instead of the homepage. */
   }, [user, isInitialized, currentRoute, isMobile]);
 
   // Mobile viewport optimization effect
@@ -598,10 +637,15 @@ function AppContent() {
         // bare kept as a working alias so existing bookmarks/links don't break.
         const view = (currentRoute === '/admin' || currentRoute === '/admin/reporting') ? 'dashboard' : adminPath;
         
+        // Signed in is not enough: AdminGate renders the console only once the
+        // server-loaded profile says is_admin === true (never the cached
+        // localStorage hint), and shows "Not authorised" otherwise.
         return (
           <ErrorBoundary>
             <Suspense fallback={<LazyFallback />}>
-              <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+              <AdminGate onNavigate={handleNavigate}>
+                <AdminDashboard onNavigate={handleNavigate} initialView={view} />
+              </AdminGate>
             </Suspense>
           </ErrorBoundary>
         );
@@ -663,6 +707,9 @@ function AppContent() {
           return withSuspense(<MoodJournal onNavigate={handleNavigate} />, 'Mood Journal');
         case '/about':
           return withSuspense(<AboutUs onNavigate={handleNavigate} />);
+        case '/service':
+        case '/services':
+          return withSuspense(<Services onNavigate={handleNavigate} />);
         case '/faq':
           return withSuspense(<FAQ onNavigate={handleNavigate} />);
         case '/privacy':
@@ -678,8 +725,6 @@ function AppContent() {
           return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
         case '/sitemap':
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
-        case '/welcome':
-          return withSuspense(<WelcomeSplash onNavigate={handleNavigate} />);
         case '/onboarding':
           return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
         case '/verify-email':
@@ -705,7 +750,7 @@ function AppContent() {
     }
   };
 
-  const isOnboardingFlow = currentRoute === '/welcome' || currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
+  const isOnboardingFlow = currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
   const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && !isOnboardingFlow;
   const showPrivateNav = !!user &&
     currentRoute !== '/' &&
@@ -715,20 +760,9 @@ function AppContent() {
     !currentRoute.startsWith('/equip-program-flow') &&
     !currentRoute.startsWith('/equip-program-onboarding') &&
     !isOnboardingFlow;
-  const shouldShowFooter = currentRoute === '/' ||
-                           currentRoute === '/about' ||
-                           currentRoute === '/contact' ||
-                           currentRoute === '/terms' ||
-                           currentRoute === '/privacy' ||
-                           currentRoute === '/privacy-policy' ||
-                           currentRoute === '/return-policy' ||
-                           currentRoute === '/cancellation-policy' ||
-                           currentRoute === '/faq' ||
-                           currentRoute === '/sitemap' ||
-                           currentRoute === '/resource' ||
-                           currentRoute === '/assessment-detail' ||
-                           currentRoute === '/equip-detail' ||
-                           currentRoute.startsWith('/page/');
+  // The site footer shows on every marketing-site route and on no member or
+  // admin route (App.tsx serves both from one bundle).
+  const shouldShowFooter = SITE_FOOTER_ROUTES.has(currentRoute) || currentRoute.startsWith('/page/');
 
   const isFullScreenFlow = currentRoute.startsWith('/assessment-flow') ||
                            currentRoute.startsWith('/equip-program-flow') ||
@@ -760,7 +794,7 @@ function AppContent() {
   // description promises, and no more.
   const inMaintenance =
     publicSettings?.maintenanceMode === true &&
-    !user?.is_admin &&
+    verifiedIsAdmin !== true &&
     !currentRoute.startsWith('/admin');
 
   if (inMaintenance) {
@@ -784,11 +818,10 @@ function AppContent() {
       />
 
       {/* Top Navigation - Floating Capsule (Desktop only) */}
-      {!isMobile && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
+      {!isCompactNav && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
         <Navigation 
           user={user} 
           onNavigate={handleNavigate} 
-          onGetStarted={handleSignIn}
           currentRoute={currentRoute}
         />
       )}
@@ -836,11 +869,10 @@ function AppContent() {
       )}
 
       {/* Mobile Navigation - Public Top, Private Bottom */}
-      {isMobile && showPublicNav && (
+      {isCompactNav && showPublicNav && (
         <PublicBottomNavMobile 
           currentRoute={currentRoute}
           onNavigate={handleNavigate}
-          onSignIn={handleSignIn}
           className=""
         />
       )}

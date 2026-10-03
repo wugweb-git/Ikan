@@ -1,0 +1,4966 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* iKan Design Tokens */
+  
+  /* Typography */
+  --font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+  --font-size: 16px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 48px;
+  --line-height-xs: 1.2;
+  --line-height-sm: 1.4;
+  --line-height-md: 1.5;
+  --line-height-lg: 1.6;
+  --font-weight-regular: 400;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  /* semibold & bold kept as tokens for rare admin-only use; public UI must only use 400/500 */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+
+  /* Colors - Primary & Accent */
+  --color-primary-default: #2A2A2A;
+  --color-primary-on: #FFFFFF;
+  --color-accent-default: #E9EBEF;
+  --color-accent-on: #2A2A2A;
+
+  /* Colors - Brand Accent Palette (themed sections) */
+  --ikan-brand-teal: #4ABDAC;
+  --ikan-brand-amber: #F0A830;
+  --ikan-brand-coral: #E87B7B;
+  --ikan-brand-slate: #7B93DB;
+  --ikan-brand-teal-dark: #3D7A66;
+  /* --ikan-brand-teal-dark measures 4.46:1 on --ikan-brand-teal-bg and 4.08:1
+     on --ikan-brand-teal-bg-end, so it fails AA for text on the wash at any
+     size. Use --ikan-teal-on-wash for TEXT on a teal surface; keep
+     --ikan-brand-teal-dark for fills, borders and icons.
+     5.48:1 on #E8F4F0 · 5.01:1 on #D4EDE5. Measured 2026-09-10, axe-core 4.13. */
+  /* Single source of truth: this is an ALIAS of --ikan-brand-teal-text, which
+     carries the same #356B5A and belongs to the six-hue -text family below.
+     Two sessions solved this failure independently on 2026-09-10 and landed two
+     names for one value. Both names are kept so neither set of call sites
+     breaks, but the value is defined once. Prefer --ikan-brand-teal-text in new
+     code; --ikan-teal-on-wash reads better where the ground is specifically the
+     teal wash, and the ratios in the comment above are the ones that apply there. */
+  --ikan-teal-on-wash: var(--ikan-brand-teal-text);
+  --ikan-brand-teal-bg: #E8F4F0;
+  --ikan-brand-teal-bg-end: #D4EDE5;
+  --ikan-brand-library-accent: #00A991;
+  --ikan-brand-cta-gradient-start: #FFA07A;
+  --ikan-brand-cta-gradient-end: #FFC0CB;
+
+  /* Brand hues, accessible as TEXT (WCAG 2.1 AA, >= 4.5:1 on --bg-card #FFFFFF
+     and --bg-page #F5F5F5). The raw --ikan-brand-* hues above are decoration:
+     fills, borders, illustration. They must not be used as a text colour.
+     This mirrors the pattern --color-status-success-text already established.
+     Ratios on #FFFFFF / #F5F5F5 noted per line. Measured 2026-09-10. */
+  --ikan-brand-teal-text: #356B5A;            /* 6.17 / 5.66 */
+  --ikan-brand-amber-text: #8A5A00;           /* 5.93 / 5.44 */
+  --ikan-brand-coral-text: #A83E38;           /* 6.16 / 5.65 */
+  --ikan-brand-slate-text: #455B9E;           /* 6.48 / 5.94 */
+  --ikan-brand-library-accent-text: #00695C;  /* 6.61 / 6.07 */
+  --color-status-info-text: #6636D6;          /* 6.85 / 6.29 */
+
+  /* Colors - Special */
+  --color-rating-star: #FFA500;
+  --color-rating-star-inactive: var(--grey-3);
+
+  /* Colors - Gradients (brand explore widgets) */
+  --ikan-gradient-equip-from: #1B4332;
+  --ikan-gradient-equip-to: #2D6A4F;
+  --ikan-gradient-assessment-from: #312E81;
+  --ikan-gradient-assessment-to: #4338CA;
+
+  /* Colors - Background */
+  --color-bg-page: #F5F5F5;
+  --color-bg-card: #FFFFFF;
+  --color-bg-muted: #F0F0F0;
+  --color-bg-input: #F3F3F5;
+
+  /* Colors - Text */
+  --color-text-primary: #151515;
+  /* WCAG AA. Measured, not guessed: the previous #717182 was 4.79:1 on a white
+     card but only 4.39:1 on the #F5F5F5 page background — a fail. #6B6B7B is
+     4.80 on page / 5.23 on card and keeps the same violet cast.
+     The dark theme overrides this below; a single shared value cannot pass on
+     both grounds. */
+  --color-text-muted: #6B6B7B;
+  /* Perceivable boundary for form controls. --color-border-default is
+     #0000001A — 10% black, ~1.1:1 — so an unchecked switch or an empty input
+     has no visible edge. 4.54:1 on white, 4.17:1 on the page background. */
+  --color-border-control: #767676;
+  /* Text colours for alert bodies. The status hues below are tuned for fills
+     and icons, not for type: #22C55E on its own wash is 2.07:1 and #EAB308 is
+     1.78:1. These are the AA-passing equivalents at 6.49:1 and 6.37:1. */
+  --color-status-success-text: #166534;
+  --color-status-warning-text: #854D0E;
+  --color-text-inverse: #FFFFFF;
+
+  /* Colors - Border */
+  --color-border-default: #0000001A;
+  --color-border-light: #0000000D;
+
+  /* Colors - Status */
+  --color-status-success: #22C55E;
+  --color-status-success-light: #DCFCE7;
+  --color-status-danger: #D4183D;
+  --color-status-danger-light: #FEECEE;
+  --color-status-warning: #EAB308;
+  --color-status-warning-light: #FFF7D6;
+  --color-status-info: #8B5CF6;
+  --color-status-info-light: #F3F4F6;
+
+  /* Colors - Grey Scale Primitives (0-10 UI Neutral Scale) */
+  --grey-0: #FFFFFF;  /* Pure White / Surface Highlighting */
+  --grey-1: #F5F5F5;  /* App Background (Original) */
+  --grey-2: #E4E4E4;  /* Section / Card Background (Original) */
+  --grey-3: #D9D9D9;  /* Dividers / Soft Borders (Original) */
+  --grey-4: #BDBDBD;  /* Disabled Text / Decorative Icons (New) */
+  --grey-5: #9E9E9E;  /* Medium Grey (The "Bridge") (New) */
+  --grey-6: #757575;  /* Secondary Text / Captions (Original).
+                         4.61:1 on --color-bg-card, but only 4.23:1 on
+                         --color-bg-page — below AA. On the page ground use
+                         --color-text-muted (4.80:1) instead. */
+  --grey-7: #545454;  /* Muted Heading / Sub-headers (New) */
+  --grey-8: #333333;  /* Primary Body Text (Original) */
+  --grey-9: #1A1A1A;  /* High-Contrast Text / Deep Backgrounds (New) */
+  --grey-10: #0D0D0D; /* Deepest UI Layer / "Off-Black" (New) */
+
+  /* Colors - Neutral Scale (Legacy mappings) */
+  --color-neutral-100: #FAFAFA;
+  --color-neutral-200: #F5F5F5;
+  --color-neutral-300: #E5E5E5;
+  --color-neutral-400: #8B8B8B;
+  --color-neutral-500: #4A4A4A;
+  --color-neutral-600: #2A2A2A;
+  --color-neutral-700: #1A1A1A;
+
+  /* Colors - Charts */
+  --color-chart-1: #2A2A2A;
+  --color-chart-2: #4A4A4A;
+  --color-chart-3: #6A6A6A;
+  --color-chart-4: #8A8A8A;
+  --color-chart-5: #AAAAAA;
+
+  /* Colors - Analytics Chart Palette (colorful, for data visualization) */
+  --ikan-chart-1: #3B82F6;
+  --ikan-chart-1-light: #E0F2FE;
+  --ikan-chart-1-muted: #DBEAFE;
+  --ikan-chart-1-dark: #0369A1;
+  --ikan-chart-2: #10B981;
+  --ikan-chart-2-light: #D1FAE5;
+  --ikan-chart-2-dark: #059669;
+  --ikan-chart-3: #F59E0B;
+  --ikan-chart-4: #EF4444;
+  --ikan-chart-4-light: #FEE2E2;
+  --ikan-chart-4-dark: #DC2626;
+  --ikan-chart-5: #8B5CF6;
+  --ikan-chart-5-light: #F3E8FF;
+  --ikan-chart-5-dark: #9333EA;
+  --ikan-chart-6: #EC4899;
+  --ikan-chart-neutral: #6B7280;
+  --ikan-chart-fill-default: #8884d8;
+
+  /* Data Visualization — Wellness Dimensions */
+  --color-viz-red: #E53935;
+  --color-viz-red-light: #FFEBEE;
+  --color-viz-green: #43A047;
+  --color-viz-green-light: #E8F5E9;
+  --color-viz-blue: #1E88E5;
+  --color-viz-blue-light: #E3F2FD;
+  --color-viz-purple: #8E24AA;
+  --color-viz-purple-light: #F3E5F5;
+  --color-viz-orange: #F57C00;
+  --color-viz-orange-light: #FFF3E0;
+
+  /* Data Visualization — Extended Health Accents */
+  --color-viz-teal: #00897B;
+  --color-viz-deep-blue: #1565C0;
+  --color-viz-deep-purple: #5E35B1;
+  --color-viz-brown: #5D4037;
+  --color-viz-slate: #455A64;
+  --color-viz-pink: #D81B60;
+  --color-viz-amber: #FF8F00;
+  --color-viz-hydration: #2196F3;
+
+  /* Data Visualization — Sleep Stages */
+  --color-sleep-deep: #1A237E;
+  --color-sleep-light: #7986CB;
+  --color-sleep-rem: #CE93D8;
+  --color-sleep-awake: #FFCC80;
+
+  /* Data Visualization — Level Indicators */
+  --color-level-thriving: #34C759;
+  --color-level-growing: #007AFF;
+  --color-level-building: #FF9500;
+  --color-level-starting: #8E8E93;
+
+  /* Data Visualization — Trends */
+  --color-trend-positive: #34C759;
+  --color-trend-negative: #FF3B30;
+
+  /* Data Visualization — BMI Scale */
+  --color-bmi-normal: #4CAF50;
+  --color-bmi-caution: #FF9800;
+  --color-bmi-danger: #E53935;
+
+  /* Time of Day — Gradient Stops */
+  --color-tod-dawn-1: #FFE4C9;
+  --color-tod-dawn-2: #FFD0A0;
+  --color-tod-dawn-3: #FFC085;
+  --color-tod-morning-1: #E8F4FD;
+  --color-tod-morning-2: #D4ECFB;
+  --color-tod-morning-3: #B8DFF7;
+  --color-tod-afternoon-1: #FFF8E1;
+  --color-tod-afternoon-2: #FFE9B0;
+  --color-tod-afternoon-3: #FFD97A;
+  --color-tod-evening-1: #E8D5F5;
+  --color-tod-evening-2: #D4B8EA;
+  --color-tod-evening-3: #C09FDE;
+  --color-tod-night-1: #2A2A3E;
+  --color-tod-night-2: #1E1E30;
+  --color-tod-night-3: #151525;
+
+  /* Time of Day — Text */
+  --color-tod-night-text: #E8E8F0;
+  --color-tod-night-muted: #A0A0C0;
+
+  /* Time of Day — Accents */
+  --color-tod-dawn-accent: #E87C3A;
+  --color-tod-morning-accent: #3B82F6;
+  --color-tod-afternoon-accent: #F59E0B;
+  --color-tod-evening-accent: #8B5CF6;
+  --color-tod-night-accent: #6366F1;
+
+  /* Celestial & Weather Decorative */
+  --color-celestial-moon-fill: #E8E4D4;
+  --color-celestial-moon-shadow: #D4D0C0;
+  --color-celestial-crater: #D0CDB8;
+  --color-celestial-star: #FBBF24;
+  --color-celestial-star-alt: #E8D5F5;
+  --color-celestial-dawn-sun: #FFB347;
+  --color-celestial-evening-sun: #FF8C42;
+  --color-celestial-dawn-horizon: #FFD4A0;
+  --color-celestial-evening-horizon: #D4A0C0;
+  --color-celestial-morning-sun: #FFD166;
+  --color-celestial-afternoon-sun: #FFB800;
+  --color-weather-cloud-day: #9CA3AF;
+  --color-weather-cloud-night: #6B7290;
+  --color-weather-rain-day: #60A5FA;
+  --color-weather-rain-night: #7DA0D4;
+  --color-weather-snow: #93C5FD;
+  --color-weather-thunder-cloud: #6B7280;
+  --color-weather-lightning: #FBBF24;
+
+  /* iKan Logo */
+  --color-logo-bg: #101010;
+  --color-logo-accent: #FFBE1A;
+
+  /* Spacing */
+  --spacing-unit: 4px;
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* Border Radius */
+  --radius-xs: 8px;    /* Badges/Labels */
+  --radius-sm: 16px;   /* Buttons & Inputs (Refined Corner Scale) */
+  --radius-md: 20px;   /* History Cards/Small Content Tokens */
+  --radius-lg: 24px;   /* Main Content Cards / Soft Pods */
+  --radius-xl: 32px;   /* Hero Sections */
+  --radius-pill: 9999px; /* Nav Pills / Search Bars */
+  --radius: 16px;      /* Default radius updated to 16px base */
+
+  /* Navigation Pills */
+  --ikan-capsule-radius: 9999px;
+
+  /* CBT Semantic Tokens */
+  --cbt-surface: var(--grey-0);
+  --cbt-bg: var(--grey-1);
+  --cbt-hero: var(--grey-2);
+  --cbt-border: var(--grey-3);
+  --cbt-border-med: var(--grey-3);
+  --cbt-border-light: var(--grey-2);
+  --cbt-muted: var(--grey-4);
+  --cbt-placeholder: var(--grey-5);
+  --cbt-secondary: var(--grey-6);
+  --cbt-text-body: var(--grey-8);
+  --cbt-text-head: var(--grey-9);
+
+  /* CBT Layout Tokens */
+  --max-content: 1280px;
+  --desktop-padding: 100px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+
+  /* Borders */
+  --border-thin: 1px solid #0000001A;
+  --border-thick: 2px solid #0000001A;
+
+  /* Breakpoints */
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1440px;
+
+  /* Z-Index */
+  --z-overlay: 20;
+  --z-toast: 40;
+  --z-nav: 50;
+  --z-sticky: 60;
+  --z-modal: 100;
+  --z-tooltip: 200;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(.4,0,.2,1);
+  --transition-base: 200ms cubic-bezier(.4,0,.2,1);
+  --transition-slow: 400ms cubic-bezier(.4,0,.2,1);
+
+  /* Motion */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-easing-in-out: cubic-bezier(0.4,0,0.2,1);
+  --motion-easing-linear: linear;
+  --motion-easing-in: cubic-bezier(0.4,0,1,1);
+  --motion-easing-out: cubic-bezier(0,0,0.2,1);
+
+  /* Layout Constraints */
+  --constraint-component-min: 240px;
+  --constraint-component-max: 760px;
+  --constraint-card-min: 280px;
+  --constraint-card-max: 520px;
+  --constraint-input-min: 240px;
+  --constraint-input-max: 560px;
+  --constraint-content-min: 640px;
+  --constraint-content-max: 1200px;
+  --constraint-nav-mobile-min: 360px;
+  --constraint-nav-mobile-max: 100vw;
+  --constraint-nav-desktop-min: 960px;
+  --constraint-nav-desktop-max: 100vw;
+  --constraint-sidebar-min: 64px;
+
+  /* iKan Component Standards (48px height, 12px radius per guidelines) */
+  --ikan-component-button-height: 52px;
+  --ikan-component-button-height-sm: 32px;
+  --ikan-component-input-height: 52px;
+  --ikan-component-border-radius: var(--radius-sm); /* 16px */
+  --ikan-component-spacing-default: var(--spacing-4); /* 16px */
+  --ikan-component-spacing-large: var(--spacing-6); /* 24px */
+  --ikan-component-spacing-small: var(--spacing-2); /* 8px */
+  --ikan-animation-normal: var(--motion-duration-normal); /* 300ms */
+  --constraint-sidebar-max: 280px;
+
+  /* Semantic Tokens */
+  --semantic-button-primary-bg: var(--color-primary-default);
+  --semantic-button-primary-fg: var(--color-primary-on);
+  --semantic-button-primary-radius: var(--radius-sm);
+  --semantic-button-primary-padding-x: var(--spacing-4);
+  --semantic-button-primary-padding-y: var(--spacing-2);
+
+  --semantic-input-bg: var(--color-bg-input);
+  --semantic-input-fg: var(--color-text-primary);
+  --semantic-input-radius: var(--radius-sm);
+  --semantic-input-border: var(--border-thin);
+
+  --semantic-card-bg: var(--color-bg-card);
+  --semantic-card-fg: var(--color-text-primary);
+  --semantic-card-radius: var(--radius-lg);
+  --semantic-card-padding: var(--spacing-4);
+
+  /* Component-specific semantic tokens */
+  --ikan-component-spacing-small: var(--spacing-2);
+  
+  /* Navigation semantic tokens */
+  --ikan-nav-height-desktop: 80px;
+  --ikan-nav-height-mobile: 60px;
+  --ikan-nav-clearance-desktop: calc(var(--ikan-nav-height-desktop) + var(--spacing-6));
+  --ikan-nav-clearance-mobile: calc(var(--ikan-nav-height-mobile) + var(--spacing-4));
+  
+  /* Pull-to-refresh semantic tokens */
+  --ikan-pull-refresh-max-distance: 80px;
+  --ikan-pull-refresh-trigger-distance: 80px;
+  --ikan-pull-refresh-indicator-size: 24px;
+  
+  /* Mobile touch targets */
+  --ikan-touch-target-min: 44px;
+  --ikan-touch-target-preferred: 48px;
+  
+  /* Animation durations */
+  --ikan-animation-fast: var(--motion-duration-fast);
+  --ikan-animation-normal: var(--motion-duration-normal);
+  --ikan-animation-slow: var(--motion-duration-slow);
+
+  --semantic-navbar-default-bg: var(--color-bg-card);
+  --semantic-navbar-default-fg: var(--color-text-primary);
+  --semantic-navbar-default-border: var(--color-border-default);
+  --semantic-navbar-scrolled-shadow: var(--shadow-sm);
+
+  --semantic-notification-bg-info: var(--color-accent-default);
+  --semantic-notification-fg-info: var(--color-accent-on);
+  --semantic-notification-bg-success: var(--color-status-success);
+  --semantic-notification-fg-success: var(--color-bg-card);
+  --semantic-notification-bg-error: var(--color-status-danger);
+  --semantic-notification-fg-error: var(--color-bg-card);
+  --semantic-notification-bg-warning: var(--color-status-warning);
+  --semantic-notification-fg-warning: var(--color-bg-card);
+
+  /* Notification specific tokens */
+  --notification-width: var(--constraint-component-max);
+  --notification-min-width: var(--constraint-component-min);
+  --notification-timeout-default: 5000;
+  --notification-timeout-sticky: 0;
+
+  /* Legacy Shadcn mappings for compatibility */
+  --background: var(--color-bg-page);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-card);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-card);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-primary-default);
+  --primary-foreground: var(--color-primary-on);
+  --secondary: var(--color-neutral-200);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-accent-default);
+  --accent-foreground: var(--color-accent-on);
+  --destructive: var(--color-status-danger);
+  --destructive-foreground: var(--color-text-inverse);
+  --border: var(--color-border-default);
+  --input: transparent;
+  --input-background: var(--color-bg-input);
+  --switch-background: var(--color-neutral-300);
+  --ring: var(--color-neutral-400);
+  
+  /* Sidebar compatibility */
+  --sidebar: var(--color-bg-card);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-primary-default);
+  --sidebar-primary-foreground: var(--color-primary-on);
+  --sidebar-accent: var(--color-accent-default);
+  --sidebar-accent-foreground: var(--color-accent-on);
+  --sidebar-border: var(--color-border-default);
+  --sidebar-ring: var(--color-neutral-400);
+  /* iKan Scrollbar Customization */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--grey-1);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--grey-3);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--grey-4);
+  }
+}
+
+.dark {
+  /* Contrast overrides. #717182 was already failing in dark mode at 3.64:1 on
+     the #1A1A1A card — darkening it for the light theme would have made that
+     worse, so each theme carries its own value. #9A9AAB is 6.29:1 on card. */
+  --color-text-muted: #9A9AAB;
+  --color-border-control: #8A8A8A;
+  --color-status-success-text: #4ADE80;
+  --color-status-warning-text: #FCD34D;
+
+  /* 1. Base Layers */
+  --background: var(--grey-10);      /* #0D0D0D - The floor */
+  --color-bg-page: var(--grey-10);
+  
+  /* 2. Elevated Surfaces (Cards/Modals) */
+  --card: var(--grey-9);             /* #1A1A1A - Lifted 1 level */
+  --color-bg-card: var(--grey-9);
+  --popover: var(--grey-9);
+  
+  /* 3. Interaction Elements (Inputs/Inactive Buttons) */
+  --input-background: var(--grey-8); /* #333333 - Lifted 2 levels */
+  --color-bg-input: var(--grey-8);
+  --secondary: var(--grey-8);
+
+  /* 4. Borders (Must be subtle so they don't 'glow') */
+  --border: var(--grey-8);           /* #333333 */
+  --color-border-default: rgba(255, 255, 255, 0.1); /* Transparent white is better for dark mode */
+
+  /* 5. Typography (Avoid pure white for long reading) */
+  --foreground: var(--grey-2);       /* #E4E4E4 - Soft white */
+  --primary-foreground: var(--grey-10); /* Black text on white buttons */
+  --muted-foreground: var(--grey-5); /* #9E9E9E */
+  
+  /* 6. Primary Action */
+  --primary: var(--grey-0);          /* Pure white buttons in dark mode look premium */
+  
+  /* CBT Dark Mode Specifics */
+  --cbt-bg: var(--grey-10);
+  --cbt-surface: var(--grey-9);
+  --cbt-hero: var(--grey-9);
+  --cbt-border: var(--grey-8);
+  --cbt-border-light: var(--grey-9);
+  --cbt-text-head: var(--grey-0);
+  --cbt-text-body: var(--grey-2);
+  --cbt-secondary: var(--grey-5);
+  
+  /* Sidebar */
+  --sidebar: var(--grey-10);
+  --sidebar-foreground: var(--grey-2);
+  --sidebar-primary: var(--grey-0);
+  --sidebar-primary-foreground: var(--grey-10);
+  --sidebar-accent: var(--grey-9);
+  --sidebar-accent-foreground: var(--grey-0);
+  --sidebar-border: var(--grey-8);
+  --sidebar-ring: var(--grey-5);
+
+  /* Chart Colors (Restored) */
+  --chart-1: #2A2A2A;
+  --chart-2: #4A4A4A;
+  --chart-3: #6A6A6A;
+  --chart-4: #8A8A8A;
+  --chart-5: #AAAAAA;
+
+  /* Missing ShadCN vars */
+  --input: var(--grey-8);
+  --ring: var(--grey-5);
+  --destructive: #D4183D;
+  --destructive-foreground: #FFFFFF;
+}
+
+@theme inline {
+  /* ── Typography: wire Tailwind v4 font utilities to Inter ── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Text Size Mapping */
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+  --text-4xl: var(--text-4xl);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    transition: background-color var(--transition-base), border-color var(--transition-base);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family-base);
+  }
+
+  /* PWA Mobile Optimizations */
+  @supports (padding: max(0px)) {
+    .pb-safe-area-inset-bottom {
+      padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    }
+  }
+
+  /* Enhanced mobile height handling */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Mobile viewport height units */
+  .mobile-full-height {
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Mobile keyboard optimizations */
+  .keyboard-open {
+    height: auto !important;
+    min-height: auto !important;
+  }
+  
+  .keyboard-open .mobile-nav-backdrop {
+    position: fixed !important;
+    bottom: 0 !important;
+  }
+  
+  /* Mobile performance optimizations */
+  .mobile-optimized {
+    -webkit-overflow-scrolling: touch;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  .slow-connection * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  .slow-connection img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Touch optimization */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* ─── Accessibility: Focus-visible styles ─── */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Remove focus outline for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Ensure interactive elements have minimum touch targets on mobile */
+  @media (pointer: coarse) {
+    button,
+    a,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"],
+    select {
+      min-height: var(--ikan-touch-target-min, 44px);
+      min-width: var(--ikan-touch-target-min, 44px);
+    }
+  }
+
+  /* ─── Accessibility: Reduced motion ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ─── Accessibility: High contrast support ─── */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border-default: #000000;
+      --color-border-light: #333333;
+      --shadow-sm: none;
+      --shadow-md: none;
+      --shadow-lg: none;
+    }
+  }
+
+  /* ─── Skip to main content (visually hidden until focused) ─── */
+  .skip-to-main:focus {
+    position: fixed !important;
+    left: var(--spacing-4) !important;
+    top: var(--spacing-4) !important;
+    z-index: 9999;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* iKan Motion Keyframes */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes mobile-slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mobile-bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(10px); }
+  50% { opacity: 1; transform: scale(1.05) translateY(-2px); }
+  70% { transform: scale(0.95) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  0% { opacity: 0; transform: translateX(8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideRight {
+  0% { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  0% { opacity: 0; transform: scale(.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: .95; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+  100% { transform: rotate(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(.6); opacity: .35; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Utility classes for iKan animations */
+.animate-fade-in { animation: fadeIn var(--motion-duration-fast) var(--motion-easing-out); }
+.animate-fade-out { animation: fadeOut var(--motion-duration-fast) var(--motion-easing-in); }
+.animate-slide-up { animation: slideUp var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-down { animation: slideDown var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-left { animation: slideLeft var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-slide-right { animation: slideRight var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-scale-in { animation: scaleIn var(--motion-duration-normal) var(--motion-easing-out); }
+.animate-pulse { animation: pulse 2s var(--motion-easing-in-out) infinite; }
+.animate-bounce { animation: bounce 1s var(--motion-easing-in-out) infinite; }
+.animate-wiggle { animation: wiggle 0.5s var(--motion-easing-in-out); }
+.animate-spin { animation: spin 1s var(--motion-easing-linear) infinite; }
+.animate-ripple { animation: ripple 0.6s var(--motion-easing-out); }
+
+/* iKan Grid System (Shell Logic) */
+.main-wrapper {
+  display: grid;
+  grid-template-columns: minmax(20px, 1fr) minmax(auto, 1280px) minmax(20px, 1fr);
+  width: 100%;
+}
+
+.content-center {
+  grid-column: 2;
+  padding: 0 20px; /* Safety padding for tablet */
+  width: 100%;
+}
+
+.full-stretch {
+  grid-column: 1 / -1; /* For Hero sections */
+  width: 100%;
+}
+
+/* Internal Component Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px; /* Using your 8pt grid base (24px default for tablet/desktop) */
+}
+
+/* Mobile specific grid overrides */
+@media (max-width: 599px) {
+  .card-grid {
+    gap: 16px;
+  }
+}
+
+/* Consultant Card CSS */
+.consultant-card {
+  display: flex;
+  padding: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--grey-2);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.consultant-card:hover {
+  border-color: var(--color-primary-default);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* Avatar Styling */
+.consultant-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Expertise Badges */
+.expertise-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--grey-1);
+  color: var(--grey-8);
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid var(--grey-2);
+}
+
+/* Availability Filter Pills */
+.filter-pill {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--grey-3);
+  border-radius: 12px; /* Matching smaller interactive elements */
+  background: var(--grey-0);
+  font-size: 14px;
+  color: var(--grey-6);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.filter-pill:hover {
+  background: var(--grey-1);
+}
+
+.filter-pill.active {
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
+}
+
+/* 1280px Grid & Layout Constraints */
+.app-container, .container-1280 {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .app-container, .container-1280 {
+    padding: 0 16px;
+  }
+}
+
+/* Booking Modal CSS */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.4); /* Step 9 at 40% */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7); /* Dark Mode: 70% opacity */
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 560px; /* Comfortable reading width */
+  background: var(--color-bg-card);
+  border-radius: 24px; /* Outer Container Radius */
+  padding: 32px;
+  border: 1px solid var(--color-border-default);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.dark .modal-content {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+.modal-header {
+  margin-bottom: 24px;
+}
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.time-slot {
+  height: 44px;
+  border: 1px solid var(--grey-3);
+  border-radius: 12px; /* Inner Interaction Radius */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--grey-8);
+  transition: all 0.2s;
+}
+
+.time-slot:hover {
+  border-color: var(--grey-9);
+}
+
+.time-slot.selected {
+  background: var(--grey-9);
+  color: var(--grey-0);
+  border-color: var(--grey-9);
+}
+
+.modal-action-btn {
+  height: var(--ikan-component-button-height);
+  border-radius: var(--radius-sm);
+  background: var(--grey-9);
+  color: var(--grey-0);
+  font-weight: var(--font-weight-medium);
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.modal-action-btn:hover {
+  opacity: 0.9;
+}
+
+/* Admin Floating Layout */
+.admin-layout-wrapper {
+  display: flex;
+  max-width: 1440px; /* Aligns with your floating header width */
+  margin: 0 auto;
+  gap: var(--spacing-6); /* 24px gap between sidebar and content */
+  padding-top: 100px; /* Accounts for floating header height */
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+/* Floating Sidebar */
+.admin-sidebar {
+  width: 280px;
+  background: var(--grey-0);
+  border-radius: var(--radius-lg); /* 24px */
+  border: 1px solid var(--grey-3);
+  height: calc(100vh - 120px);
+  position: sticky;
+  top: 100px;
+  flex-shrink: 0;
+}
+
+.dark .admin-sidebar {
+  background: var(--grey-10);
+  border-color: var(--grey-8);
+}
+
+/* Improved Professional Table */
+.admin-table-container {
+  background: var(--grey-0);
+  border: 1px solid var(--grey-3);
+  border-radius: var(--radius-lg); /* 24px */
+  overflow: hidden; /* Ensures rows don't break the corners */
+  margin-top: var(--spacing-6);
+  backdrop-filter: blur(10px);
+}
+
+.dark .admin-table-container {
+  background: var(--grey-9); /* Surface color */
+  border-color: var(--grey-8);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0; /* Changed to 0 to keep borders cleaner */
+}
+
+.admin-table th {
+  background: var(--grey-1);
+  color: var(--grey-6);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 16px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.dark .admin-table th {
+  background: var(--grey-10);
+  color: var(--grey-5);
+}
+
+.admin-table td {
+  padding: 20px 24px; /* Increased vertical padding */
+  border-bottom: 1px solid var(--grey-2);
+  vertical-align: middle;
+}
+
+.dark .admin-table td {
+  border-bottom-color: var(--grey-8);
+}
+
+.admin-table tr {
+  background: var(--grey-0);
+  transition: background-color var(--transition-base);
+}
+
+.dark .admin-table tr {
+  background: var(--grey-9);
+}
+
+.admin-table tr:hover {
+  background-color: var(--grey-1);
+}
+
+.dark .admin-table tr:hover {
+  background-color: var(--grey-8);
+}
+
+/* Admin Dashboard Specifics */
+.admin-dashboard-header h1 {
+  font-size: 32px;
+  font-weight: var(--font-weight-medium);
+  color: var(--cbt-text-head);
+}
+
+.admin-dashboard-header h2 {
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
+  color: var(--cbt-text-head);
+}
+
+/* Mobile Specific Styles */
+@media (max-width: 768px) {
+  /* The Floating Content Container */
+  .mobile-container {
+    padding: 0 var(--spacing-4); /* 16px side breathing room */
+  }
+
+  /* Floating Bottom Nav */
+  .mobile-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--grey-2);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    width: calc(100% - 32px);
+  }
+  
+  .dark .mobile-nav {
+    background: rgba(26, 26, 26, 0.9); /* Grey 9 */
+    border-color: var(--grey-8);
+  }
+
+  /* Card Lists for Settings */
+  .settings-group {
+    background: var(--grey-0);
+    border-radius: var(--radius-md); /* 20px */
+    margin-bottom: var(--spacing-4);
+    overflow: hidden;
+    border: 1px solid var(--grey-2);
+  }
+  
+  .dark .settings-group {
+    background: var(--grey-9);
+    border-color: var(--grey-8);
+  }
+  
+  .settings-item {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-4);
+    border-bottom: 1px solid var(--grey-2);
+  }
+  
+  .dark .settings-item {
+    border-bottom-color: var(--grey-8);
+  }
+  
+  .settings-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* PWA Mobile Optimizations */
+@media (max-width: 768px) {
+  .nav-header {
+    height: 64px; /* Shorter header on mobile */
+  }
+
+  .consultant-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .consultant-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 10px;
+  }
+}
+
+/* General Content Layout Fix */
+.content-wrapper {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding: 0 40px; /* Safety margin for smaller screens */
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 0 20px;
+  }
+}
+
+/* Account pages: override Card default gap for consistent spacing */
+.account-content [data-slot="card"] {
+  gap: 0;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+/* Account pages: consistent CardHeader styling */
+.account-content [data-slot="card-header"] {
+  padding: 20px 24px 16px 24px;
+}
+
+.account-content [data-slot="card-title"] {
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-base);
+  line-height: 22px;
+  color: var(--color-text-primary);
+}
+
+.account-content [data-slot="card-content"] {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.account-content [data-slot="card-content"]:last-child {
+  padding-bottom: 24px;
+}
+
+/* Account layout tablet responsive */
+@media (max-width: 1024px) {
+  .account-layout-desktop {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+/* ─── Floating Desktop Capsule Nav ─── */
+.nav-fixed-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav, 50);
+  display: flex;
+  justify-content: center;
+  padding: 16px 40px;
+    /*
+     * The band is 112px tall and was fully transparent while the pill inside
+     * it is opaque, so page content scrolled through the gaps either side of
+     * the pill and vanished behind nothing. A blur keeps the pill floating
+     * rather than boxing it in; the translucent wash is the fallback where
+     * backdrop-filter is unsupported.
+     */
+    background: color-mix(in srgb, var(--color-bg-page) 72%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+  /*
+   * In-page anchors landed underneath the fixed band because scroll-padding
+   * was `auto`. Reserve the band's own height; the mobile band is shorter.
+   */
+  html {
+    scroll-padding-top: 112px;
+  }
+
+  @media (max-width: 768px) {
+    html { scroll-padding-top: 84px; }
+  }
+
+@media (max-width: 768px) {
+  .nav-fixed-wrapper {
+    padding: 12px 16px;
+  }
+}
+
+/*
+ * Clear the fixed band for a page that starts with its own content rather than
+ * a full-bleed hero. A hero can sit under the band because its top is image;
+ * a heading cannot, and the About page's h1 was landing behind it. Same two
+ * heights as the `scroll-padding-top` rules above — one band, one measurement.
+ */
+.site-page-below-nav {
+  padding-top: 112px;
+}
+
+@media (max-width: 768px) {
+  .site-page-below-nav {
+    padding-top: 84px;
+  }
+}
+
+.ikan-capsule-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1360px;
+  padding: 0 24px;
+  height: var(--ikan-nav-height-desktop, 80px);
+  /* Container taken from app.ikanhealth.in/login: `bg-background/85` over an
+     8px blur, not an opaque white over a 16px one. The app's bar lets the page
+     read through it; this one had been sitting on top of the page like a
+     separate sheet. */
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--ikan-capsule-radius, 9999px);
+  box-shadow: 0 2px 12px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition: box-shadow var(--transition-base), background var(--transition-base);
+}
+
+.dark .ikan-capsule-nav {
+  background: rgba(26, 26, 26, 0.92);
+  border-color: var(--grey-8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Links */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* iKAN 2's `type-label-lg`: 14px / 20px / 500. Every control in the bar is
+     14px — the links were 14 and the two buttons beside them 15, which is a
+     difference you see as a wobble rather than as hierarchy. Weight separates
+     them instead: 500 here, 600 on the buttons. */
+  padding: 9px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: var(--font-sans, var(--font-family-base));
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-muted);
+}
+
+.nav-link.active {
+  color: var(--color-text-primary);
+  background: var(--color-accent-default);
+}
+
+.dark .nav-link {
+  color: var(--grey-5);
+}
+
+.dark .nav-link:hover {
+  color: var(--grey-2);
+  background: var(--grey-8);
+}
+
+.dark .nav-link.active {
+  color: var(--grey-0);
+  background: var(--grey-8);
+}
+
+/* Primary Nav Button (Sign In) */
+/*
+ * The secondary bar CTA ("Let's Talk"). It carried its own Tailwind utilities
+ * at 16px / 500 while the primary beside it sat at 14px / 500, so the two
+ * buttons in one pill were different sizes. Both now match the links at 14px.
+ */
+.btn-nav-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* IDENTICAL to `.nav-link`: 14px / 20px / 500. Not just the same size — the
+     same weight too. At 600 the buttons read as larger than the links beside
+     them even though both measured 14px, because weight is what the eye
+     reports as size at this scale. The fill and the pill separate them. */
+  padding: 10px 20px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: var(--font-sans, var(--font-family-base));
+  color: var(--color-text-primary);
+  background: var(--color-accent-default);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transition-fast);
+}
+
+.btn-nav-secondary:hover {
+  filter: brightness(0.95);
+}
+
+.btn-nav-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* IDENTICAL to `.nav-link`: 14px / 20px / 500. Not just the same size — the
+     same weight too. At 600 the buttons read as larger than the links beside
+     them even though both measured 14px, because weight is what the eye
+     reports as size at this scale. The fill and the pill separate them. */
+  padding: 10px 20px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: var(--font-sans, var(--font-family-base));
+  color: var(--color-primary-on);
+  background: var(--color-primary-default);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+}
+
+.btn-nav-primary:hover {
+  opacity: 0.9;
+}
+
+.dark .btn-nav-primary {
+  background: var(--grey-0);
+  color: var(--grey-10);
+}
+
+/* ─── tailwindcss-animate replacement (Radix UI animation utilities) ─── */
+@keyframes tw-enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes tw-exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+.animate-in {
+  animation-name: tw-enter;
+  animation-duration: 150ms;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+
+.animate-out {
+  animation-name: tw-exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+/* Fade */
+.fade-in-0 { --tw-enter-opacity: 0; }
+.fade-out-0 { --tw-exit-opacity: 0; }
+.fade-in { --tw-enter-opacity: 0; }
+
+/* Zoom */
+.zoom-in-95 { --tw-enter-scale: .95; }
+.zoom-out-95 { --tw-exit-scale: .95; }
+
+/* Slide */
+.slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+.slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+.slide-in-from-left-2 { --tw-enter-translate-x: -0.5rem; }
+.slide-in-from-right-2 { --tw-enter-translate-x: 0.5rem; }
+
+.slide-in-from-top { --tw-enter-translate-y: -100%; }
+.slide-in-from-bottom { --tw-enter-translate-y: 100%; }
+.slide-in-from-left { --tw-enter-translate-x: -100%; }
+.slide-in-from-right { --tw-enter-translate-x: 100%; }
+
+.slide-out-to-top { --tw-exit-translate-y: -100%; }
+.slide-out-to-bottom { --tw-exit-translate-y: 100%; }
+.slide-out-to-left { --tw-exit-translate-x: -100%; }
+.slide-out-to-right { --tw-exit-translate-x: 100%; }
+
+/* Accordion */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 200ms ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 200ms ease-out;
+}
+/* ---------------------------------------------------------------------------
+   Form controls: 16px floor.
+
+   iOS Safari auto-zooms the viewport when a focused form control renders below
+   16px. The previous workaround set user-scalable=no on focusin (App.tsx), which
+   disabled pinch-zoom for the whole page while any field was focused - a WCAG
+   1.4.4 failure at exactly the moment a user is most likely to need to zoom.
+
+   Setting the computed font-size floor to 16px removes the auto-zoom trigger at
+   source, so zoom can stay enabled everywhere. Do not reintroduce a viewport
+   rewrite. Added 2026-09-10.
+   --------------------------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * ABOUT PAGE
+ *
+ * One page, three layouts. The design comes from app.ikanhealth.in/about,
+ * which is a Capacitor app and therefore has ONLY a phone layout — a ~420px
+ * column with no breakpoints at all. Lifting that verbatim gave a website a
+ * 640px ribbon of content floating in an empty 1440px viewport, which is the
+ * bug this block fixes.
+ *
+ * So the app's rhythm — soft cards, stacked sections, the dark Mission card
+ * against the teal Vision one — is kept, and the GRID is allowed to breathe:
+ *
+ *   mobile   < 768    one column, edge to edge
+ *   tablet   >= 768   760px sheet, pairs where pairs read better
+ *   desktop  >= 1024  1080px sheet, the story beside its picture, 4-up values
+ *
+ * Colours are tokens throughout; `lint:rawhex` counts literals in here too.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* Longhand on purpose: the `padding` shorthand would reset the padding-top
+   that `.site-page-below-nav` sets to clear the fixed navigation band, and the
+   h1 would render underneath it. */
+.about-page {
+  background: var(--color-bg-page);
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 56px;
+}
+
+.about-sheet {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: 28px;
+  padding: 36px 0 44px;
+}
+
+.about-section {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.about-title {
+
+
+  color: var(--color-text-primary);
+}
+
+.about-subtitle {
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 28px;
+  color: var(--color-text-muted);
+}
+
+.about-art {
+  margin: 24px 24px 0;
+  height: 176px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+}
+
+.about-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-h2 {
+
+  color: var(--color-text-primary);
+}
+
+.about-story-heading {
+  margin-top: 4px;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-prose {
+  margin-top: 12px;
+  display: grid;
+  gap: 16px;
+}
+
+.about-prose p {
+  font-size: 16px;
+  line-height: 28px;
+  color: var(--color-text-primary);
+}
+
+/* Mission / Vision */
+.about-mv {
+  margin-top: 32px;
+  display: grid;
+  gap: 12px;
+}
+
+.about-mv-card {
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.about-mv-card--dark {
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+}
+
+.about-mv-card--calm {
+  background: var(--ikan-brand-teal-bg);
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-mv-label {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.about-mv-title {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.about-mv-body {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 24px;
+  opacity: 0.85;
+}
+
+/* Values */
+.about-values {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.about-value {
+  border-radius: 20px;
+  padding: 16px;
+  background: var(--color-bg-muted);
+}
+
+.about-value-title {
+  margin-top: 12px;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-value-body {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-muted);
+}
+
+/* How it works */
+.about-steps {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.about-step {
+  display: flex;
+  gap: 16px;
+}
+
+.about-step-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-step-dot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+  flex-shrink: 0;
+}
+
+.about-step-line {
+  margin-top: 4px;
+  width: 1px;
+  flex: 1;
+  background: var(--color-border-light);
+}
+
+.about-step-title {
+  display: block;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-step-tagline {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-step-body {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--color-text-muted);
+}
+
+.about-cta {
+  margin-top: 16px;
+  display: flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Who is it for */
+.about-who {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.about-who-card {
+  border-radius: 24px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-card);
+  padding: 16px;
+}
+
+.about-who-title {
+
+  color: var(--color-text-primary);
+}
+
+.about-who-tagline {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-who-body {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--color-text-muted);
+}
+
+
+.about-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-bg-muted);
+}
+
+/* ── Tablet ───────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .about-page {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 72px;
+  }
+
+  .about-sheet {
+    max-width: 760px;
+    padding: 48px 0 56px;
+    border-radius: 32px;
+  }
+
+  .about-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .about-art {
+    margin: 32px 40px 0;
+    height: 260px;
+  }
+
+  .about-title {}
+
+  .about-subtitle {
+    font-size: 18px;
+  }
+
+
+  /* Two statements side by side — they are a pair, and at this width they
+     finally fit as one. */
+  .about-mv {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-who {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  
+}
+
+/* ── Desktop ──────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .about-sheet {
+    max-width: 1080px;
+    padding: 64px 0 72px;
+    border-radius: 36px;
+  }
+
+  .about-section {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+
+  .about-title {}
+
+  .about-subtitle {
+    font-size: 19px;
+    line-height: 30px;
+  }
+
+  /* The story and its picture stop stacking: at this width the paragraph
+     measure would otherwise run past a comfortable line length. */
+  .about-story-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .about-art {
+    margin: 0;
+    height: 100%;
+    min-height: 320px;
+    border-radius: 24px;
+  }
+
+  .about-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-who {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-steps {
+    gap: 20px;
+  }
+
+  /* A full-width pill across 1080px is a very long target; keep it to the
+     width of the thing it follows. */
+  .about-cta {
+    width: auto;
+    min-width: 240px;
+    padding: 0 32px;
+  }
+}
+
+/*
+ * ABOUT PAGE — iKAN 2's own palette and display face, scoped.
+ *
+ * The two pages are the same page, so they should not look like two brands.
+ * iKAN 2 is Tailwind v4 + shadcn on an oklch ramp with Sora for display type;
+ * this site is on a hex ramp with Inter. Rather than restyle the whole site to
+ * match (which would touch every page), the app's tokens are REDECLARED INSIDE
+ * `.about-page`. Custom properties inherit, so every `.about-*` rule above
+ * resolves against these without any of them changing, and nothing outside
+ * this page is affected.
+ *
+ * Values are copied from iKAN 2's `src/styles.css` verbatim — the oklch ones
+ * from its `:root`, the three greens from `src/routes/about.tsx`, which
+ * hard-codes them. If that file's palette moves, these move with it.
+ *
+ * Light only, deliberately: the marketing site has no dark mode, so iKAN 2's
+ * `.dark` block is not carried over.
+ */
+.about-page {
+  --color-text-primary: oklch(0.16 0.012 255);   /* --foreground */
+  --color-text-muted: oklch(0.5 0.018 255);      /* --muted-foreground */
+  --color-bg-card: oklch(0.995 0.002 240);       /* --background */
+  --color-bg-muted: oklch(0.955 0.006 250);      /* --secondary */
+  --color-border-light: oklch(0.9 0.009 250);    /* --border */
+  --color-primary-default: oklch(0.16 0.012 255);
+  --color-primary-on: oklch(0.995 0.002 240);
+
+  /* about.tsx literals: the eyebrow/tagline green, and the Vision card pair. */
+  --ikan-brand-teal-text: #2B634D;
+  --about-calm-bg: #DFF0E8;
+  --about-calm-fg: #173D2F;
+
+  /* The sheet needs to read as a sheet, so the backdrop goes one step down. */
+  background: oklch(0.96 0.005 250);
+  font-family: var(--font-sans, 'Inter', ui-sans-serif, system-ui, sans-serif);
+}
+
+.about-mv-card--calm {
+  background: var(--about-calm-bg);
+  color: var(--about-calm-fg);
+}
+
+/* Sora on the two display items that carry no type-* role of their own.
+   Everything else takes its face from the ported Material 3 scale. */
+.about-title,
+.about-mv-title {
+  font-family: var(--font-display);
+}
+
+/*
+ * The story picture appears once. Below 1024 it is a band under the hero;
+ * from 1024 it becomes the story's second column. Both nodes are rendered and
+ * one is hidden, because the image is the same asset either way and moving it
+ * in the DOM would cost a second fetch.
+ */
+.about-art-desktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .about-art-mobile {
+    display: none;
+  }
+
+  .about-art-desktop {
+    display: block;
+    height: 100%;
+  }
+}
+
+/*
+ * Step photographs. iKAN 2's steps are icon-only because a phone column has no
+ * width to spare; the site keeps the pictures the old HowItWorksSection used,
+ * from 768px up where there is room for them beside the text. Below that the
+ * step is icon + text exactly as in the app.
+ */
+.about-step-text {
+  padding-bottom: 8px;
+  min-width: 0;
+}
+
+.about-step-photo {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .about-step {
+    align-items: flex-start;
+  }
+
+  .about-step-photo {
+    display: block;
+    flex: 0 0 132px;
+    height: 96px;
+    margin-left: auto;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--color-bg-muted);
+  }
+
+  .about-step-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: 200px;
+    height: 124px;
+    border-radius: 20px;
+  }
+}
+
+/*
+ * Section breakers. The app separates sections with whitespace alone, which
+ * works in a 420px column where only one section is ever in view. On a 1080px
+ * sheet the page ran together, so each major block is introduced by a hairline
+ * inset to the same gutter as the text.
+ */
+.about-divider {
+  height: 1px;
+  margin: 40px 24px 0;
+  background: var(--color-border-light);
+}
+
+@media (min-width: 768px) {
+  .about-divider {
+    margin: 48px 40px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-divider {
+    margin: 56px 64px 0;
+  }
+}
+
+/* A section that opens straight after a breaker does not also need its own
+   top margin — the rule already carries the space. */
+.about-divider + .about-section {
+  margin-top: 32px !important;
+}
+
+/*
+ * ABOUT PAGE — values read off the live app, not guessed.
+ *
+ * Taken from `getComputedStyle` on app.ikanhealth.in/about (3 Oct 2026). Three
+ * of these corrected a hand-mapping that looked right and was not:
+ *
+ *  - the body face is MANROPE, not Inter. Sora is display only.
+ *  - story paragraphs are the foreground at 85% alpha, not solid.
+ *  - the backdrop is oklch(0.955 0.006 250) — the app's `--secondary`, one
+ *    step darker than the sheet rather than the site's grey.
+ *
+ * h1 metrics confirmed exactly: 34px / 600 / 39.1px / -0.34px tracking.
+ */
+/* Set the body face once and let it inherit. Naming the child elements here
+   beat the ported `type-*` roles, because @utility compiles into Tailwind's
+   utilities layer and unlayered rules outrank it — so `type-title-md` asked
+   for Sora and silently got Manrope. An inherited value loses to any direct
+   rule, which is what the roles need. */
+.about-page {
+  font-family: var(--font-sans);
+}
+
+.about-page {
+  background: oklch(0.955 0.006 250);
+}
+
+.about-eyebrow,
+.about-who-tagline,
+.about-step-tagline {
+  line-height: 1.5;
+}
+
+
+/*
+ * Who-is-it-for keeps its photographs. The app gives each card an illustration
+ * header from its own `Art` set, which this repo does not have; the site's own
+ * BenefitsSection images fill the same slot and are already the brand's.
+ */
+.about-who-photo {
+  display: block;
+  height: 120px;
+  margin: -16px -16px 12px;
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+}
+
+.about-who-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-who-card {
+  overflow: hidden;
+}
+
+/*
+ * iKAN 2's design tokens, copied verbatim from its `src/styles.css` :root.
+ *
+ * Declared under their OWN names so this block is a straight transcription you
+ * can diff against the source, then mapped onto the site's names underneath.
+ * Two corrections to the earlier hand-mapping, both from reading the source
+ * rather than sampling the rendered page:
+ *
+ *  - `--card` is pure white (oklch(1 0 0)), not `--background` (0.995). The
+ *    sheet was very slightly grey against its own backdrop.
+ *  - the app's surfaces carry `--shadow-card`, not a 1px border. That soft
+ *    lift is most of why the app reads calmer than a bordered box.
+ *
+ * `--canvas` is the app's name for the backdrop behind a sheet, which is the
+ * same value as `--secondary`.
+ */
+.about-page {
+  --radius: 0.75rem;
+  --background: oklch(0.995 0.002 240);
+  --foreground: oklch(0.16 0.012 255);
+  --canvas: oklch(0.955 0.006 250);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.18 0.012 255);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.955 0.006 250);
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.5 0.018 255);
+  --border: oklch(0.9 0.009 250);
+  --calm: oklch(0.76 0.095 165);
+  --calm-soft: oklch(0.95 0.035 165);
+  --calm-strong: oklch(0.47 0.095 165);
+  --shadow-card: 0 10px 30px oklch(0.2 0.01 255 / 0.06);
+  --shadow-app: 0 0 45px oklch(0.2 0.01 255 / 0.08);
+
+  /* the site's names, pointed at the app's values */
+  --color-text-primary: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-bg-card: var(--card);
+  --color-bg-muted: var(--secondary);
+  --color-border-light: var(--border);
+  --color-primary-default: var(--foreground);
+  --color-primary-on: var(--background);
+
+  background: var(--canvas);
+}
+
+/* Lifted, not outlined — as in the app. */
+.about-sheet {
+  background: var(--card);
+  border: none;
+  box-shadow: var(--shadow-card);
+}
+
+.about-who-card {
+  border: none;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+
+/*
+ * BANDS — the page is no longer one white container.
+ *
+ * Stacking every section inside a single sheet made a 3000px white box, with
+ * nothing to tell a reader where one idea ended and the next began. The page
+ * now alternates full-width bands, white against the canvas, so the breaks are
+ * structural rather than a hairline drawn across a continuous surface.
+ *
+ * Each band is full-bleed; an inner container holds the measure.
+ */
+.about-sheet {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.about-page {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.about-band {
+  padding: 48px 0;
+}
+
+.about-band--white {
+  background: var(--card);
+}
+
+.about-band--canvas {
+  background: var(--canvas);
+}
+
+.about-band__inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .about-band {
+    padding: 64px 0;
+  }
+
+  .about-band__inner {
+    max-width: 760px;
+    padding: 0 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-band {
+    padding: 80px 0;
+  }
+
+  .about-band__inner {
+    max-width: 1080px;
+    padding: 0 64px;
+  }
+}
+
+/* Sections inside a band no longer carry their own gutters or top margins —
+   the band provides both. */
+.about-band .about-section {
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 0 !important;
+}
+
+.about-band .about-art {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.about-divider {
+  display: none;
+}
+
+/*
+ * MOTION — carried over from the sections this page replaced.
+ *
+ * The original's one gesture was a hover lift: translateY(-6px) over 0.35s
+ * ease, on cards and on the primary button. Scroll reveal is new, and is kept
+ * to the same small vocabulary — 12px and a fade, nothing that moves the
+ * layout or draws attention to itself on a page about mental health.
+ */
+.about-lift {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.about-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-app);
+}
+
+.about-cta {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.about-cta:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* The photograph eases in its frame rather than the frame moving. */
+.about-who-photo img,
+.about-step-photo img {
+  transition: transform 0.35s ease;
+}
+
+.about-lift:hover .about-who-photo img,
+.about-step:hover .about-step-photo img {
+  transform: scale(1.04);
+}
+
+.about-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.about-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Anyone who has asked for less movement gets none of it, and nothing is
+   hidden if the observer never fires. */
+@media (prefers-reduced-motion: reduce) {
+  .about-lift,
+  .about-cta,
+  .about-reveal,
+  .about-who-photo img,
+  .about-step-photo img {
+    transition: none;
+  }
+
+  .about-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .about-lift:hover {
+    transform: none;
+  }
+}
+
+/* The hero's eyebrow is the page's name; the h1 is its statement. Give it a
+   little more air than a section eyebrow. */
+.about-band--canvas .about-eyebrow {
+  margin-bottom: 8px;
+}
+
+
+.about-art-mobile {
+  margin-top: 24px;
+}
+
+@media (min-width: 1024px) {
+  .about-art-mobile {
+    display: none;
+  }
+}
+
+
+/*
+ * HOW IT WORKS — a path, not three stranded rows.
+ *
+ * `margin-left: auto` pushed each photograph to the far right edge, so at
+ * 1080px a wide empty gutter sat between a step's words and its picture and
+ * the two stopped reading as one thing. The connector was also invisible —
+ * a 1px hairline the same colour as the page — so three dots floated with
+ * nothing joining them, which is the one relationship this section exists to
+ * show. These steps really are a sequence, so the rail should look like one.
+ *
+ * The photograph now sits beside the text it belongs to, the measure is capped
+ * so the two stay adjacent at any width, and the rail is a continuous 2px line
+ * running the height of the list.
+ */
+.about-steps {
+  position: relative;
+}
+
+.about-step {
+  align-items: stretch;
+  gap: 20px;
+}
+
+.about-step-rail {
+  flex: 0 0 44px;
+}
+
+.about-step-line {
+  width: 2px;
+  background: var(--border);
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+.about-step-text {
+  flex: 1 1 auto;
+  max-width: 56ch;
+  padding-bottom: 28px;
+}
+
+@media (min-width: 768px) {
+  .about-step-photo {
+    flex: 0 0 240px;
+    height: 150px;
+    align-self: center;
+    margin-left: 24px;
+    border-radius: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: 300px;
+    height: 180px;
+    border-radius: 24px;
+  }
+
+  /* The last step has no line below it, so its text needs no room for one. */
+  .about-step:last-child .about-step-text {
+    padding-bottom: 0;
+  }
+}
+
+/*
+ * HOW IT WORKS — a process strip, redesigned.
+ *
+ * WHAT WAS WRONG. A vertical timeline with a thumbnail hanging off the right
+ * is the generic answer to "three steps", and it wasted the one asset that
+ * could carry the section: at 300px the photographs were decoration beside the
+ * text rather than the thing you look at. The icons said nothing the titles did
+ * not already say — a clipboard beside "Take an Assessment" is a picture of the
+ * word.
+ *
+ * WHAT IT IS NOW. Three stations across the page, with a spine running through
+ * their numbers. The numbering is not ornament: these steps are a real sequence
+ * — you cannot connect with a professional about a result you have not got —
+ * so the order is information the reader needs, and numbering it is honest.
+ * The spine makes the three a single path rather than three loose cards, which
+ * is what distinguishes this from the Who-is-it-for row above it.
+ *
+ * No card chrome. Borders and shadows here would make this a third row of
+ * cards; it is a process, so the photographs sit on the band directly.
+ */
+.about-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  margin-top: 28px;
+  list-style: none;
+  padding: 0;
+  position: relative;
+}
+
+.about-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'marker title'
+    'photo  photo'
+    'tag    tag'
+    'body   body';
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 0;
+  position: relative;
+}
+
+.about-step-marker {
+  grid-area: marker;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.about-step-photo {
+  grid-area: photo;
+  display: block;
+  margin-top: 16px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.about-step-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-step-title {
+  grid-area: title;
+}
+
+.about-step-tagline {
+  grid-area: tag;
+  margin-top: 14px;
+}
+
+.about-step-body {
+  grid-area: body;
+  margin-top: 6px;
+}
+
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  /* The spine. Drawn behind the markers, inset by half a column at each end so
+     it starts and stops at the first and last station rather than running off
+     into the margins. */
+  .about-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: calc(16.666% + 20px);
+    right: calc(16.666% + 20px);
+    height: 2px;
+    background: var(--border);
+  }
+
+  .about-step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'marker'
+      'photo'
+      'title'
+      'tag'
+      'body';
+    align-items: start;
+    row-gap: 0;
+  }
+
+  .about-step-marker {
+    width: 40px;
+    height: 40px;
+  }
+
+  .about-step-title {
+    margin-top: 14px;
+  }
+
+  .about-step-tagline {
+    margin-top: 2px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-steps {
+    gap: 36px;
+  }
+
+  .about-step-photo {
+    border-radius: 28px;
+  }
+}
+
+
+/*
+ * HOW IT WORKS — align the three columns to shared baselines.
+ *
+ * "Connect with a Professional" wraps to two lines where the other two titles
+ * do not, so every row below it — tagline, body — sat a line lower than its
+ * neighbours and the strip lost its horizontal reading. `subgrid` hands the
+ * parent's rows to each step, so markers line up with markers, photos with
+ * photos and taglines with taglines however the text wraps.
+ *
+ * DOM order is marker, photo, title, tagline, body — five rows — so the named
+ * areas are dropped here and source order does the work.
+ */
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-rows: auto auto auto auto auto;
+  }
+
+  .about-step {
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    grid-template-areas: none;
+  }
+
+  .about-step > * {
+    grid-area: auto;
+  }
+}
+
+/*
+ * THREE ITEMS NEVER GO IN TWO COLUMNS.
+ *
+ * Both of these sections hold exactly three things, and both were being laid
+ * out two-up at tablet — which leaves one stranded on a second row beside an
+ * empty cell. It is the same fault the builders row had. Three items get three
+ * columns or one; never two.
+ */
+@media (min-width: 768px) {
+  .about-who {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+/*
+ * HOW IT WORKS — the one inverted band, and steps that hold together.
+ *
+ * THE PROBLEM. By this point the page is four pale grids in a row — values,
+ * these steps, who-is-it-for, the team — and this section had no reason to look
+ * different from any of them. Its spine also touched nothing: a hairline
+ * floating in the gap between markers, reading as a stray rule rather than a
+ * path. And a step was five loose pieces — marker, gap, photo, gap, text —
+ * with nothing binding them into one object.
+ *
+ * THE MOVE. This is the only section on the page about the READER's journey
+ * rather than about iKan, so it gets its own ground: the single inverted band.
+ * The dark Mission card already establishes near-black as part of the language,
+ * so this extends the page's vocabulary rather than importing a new one, and it
+ * gives a long pale page a place to breathe.
+ *
+ * The numeral now sits ON its photograph, anchored to the corner, and the
+ * thread runs behind the photos at the numeral's height — so it enters and
+ * leaves each step instead of hovering between them. One step, one object.
+ */
+.about-band--invert {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.about-band--invert .about-h2 {
+  color: var(--background);
+}
+
+.about-band--invert .about-step-title {
+  color: var(--background);
+}
+
+.about-band--invert .about-step-body {
+  color: oklch(0.995 0.002 240 / 0.66);
+}
+
+/* The accent has to carry on a dark ground, so the step taglines move from the
+   deep teal text colour to --calm, which is the light end of the same family. */
+.about-band--invert .about-step-tagline {
+  color: var(--calm);
+}
+
+.about-steps {
+  margin-top: 32px;
+}
+
+/* The thread, behind the photographs at the numerals' height. */
+@media (min-width: 768px) {
+  .about-steps::before {
+    top: 36px;
+    left: calc(16.666% + 28px);
+    right: calc(16.666% + 28px);
+    background: oklch(0.995 0.002 240 / 0.22);
+  }
+}
+
+.about-step-photo {
+  position: relative;
+  margin-top: 0;
+  order: -1;
+}
+
+.about-step-marker {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  background: var(--background);
+  color: var(--foreground);
+  z-index: 2;
+  box-shadow: 0 2px 10px oklch(0.16 0.012 255 / 0.3);
+}
+
+/* The marker is positioned against the photo, so the photo has to be the
+   positioned ancestor and the marker must not also occupy a grid row. */
+.about-step {
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .about-step {
+    grid-row: span 4;
+  }
+}
+
+.about-band--invert .about-cta {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.about-band--invert .about-cta:hover {
+  opacity: 0.88;
+}
+
+/*
+ * HOW IT WORKS — alignment corrections.
+ *
+ * Measured, not eyeballed. Section headings and step titles all sit on 151px;
+ * the photographs were starting at 175 and the numerals at 165, so a step's
+ * picture was inset from its own words and the numeral floated ten pixels off
+ * the corner it was supposed to be pinned to.
+ *
+ * The cause was `margin-left: 24px` and a fixed `flex-basis`, left over from
+ * the earlier layout where the photo sat to the RIGHT of the text. In a column
+ * the photo should simply fill its column.
+ *
+ * The thread now spans the full grid and passes BEHIND the photographs, which
+ * are opaque, so it shows only in the two gaps. That removes the percentage
+ * arithmetic that was trying to guess where the first and last markers were,
+ * and it stays correct at any column count.
+ */
+@media (min-width: 768px) {
+  .about-step-photo {
+    flex: initial;
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .about-steps::before {
+    top: 31px;
+    left: 0;
+    right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: auto;
+    height: auto;
+  }
+}
+
+/* The photo covers the thread; the numeral sits above both. */
+.about-step-photo {
+  z-index: 1;
+}
+
+.about-step-marker {
+  z-index: 2;
+}
+
+/*
+ * The numeral is absolutely positioned on the photograph now, so the step no
+ * longer needs a column reserved for it. Below 768 that leftover column was
+ * still contributing its 14px gap, which pushed every title, tagline and body
+ * 14px to the right of the photograph above them. One column, four rows.
+ */
+.about-step {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'photo'
+    'title'
+    'tag'
+    'body';
+  column-gap: 0;
+}
+
+.about-step-photo {
+  grid-area: photo;
+}
+
+.about-step-title {
+  grid-area: title;
+  margin-top: 14px;
+}
+
+.about-step-tagline {
+  grid-area: tag;
+  margin-top: 2px;
+}
+
+.about-step-body {
+  grid-area: body;
+  margin-top: 8px;
+}
+
+/*
+ * Brand icons on their own tint.
+ *
+ * The four values each carry one of the old iKan accent hues — teal, amber,
+ * coral, slate — and were drawing as a bare glyph on the card. Giving each one
+ * a soft ground in its own colour is how the mark reads on the rest of the
+ * site, and it gives the four cards a rhythm that four identical grey icons
+ * did not.
+ *
+ * The tint is derived from the icon's own colour with `color-mix`, so there is
+ * one value to set per card rather than a hue and a wash that can drift apart.
+ */
+.about-value-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+@media (min-width: 768px) {
+  .about-value-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+}
+
+
+/*
+ * The About h1, set per route.
+ *
+ * DESIGN-SYSTEM.md records that iKAN 2 does not style h1 at all — it is "set
+ * per route, at 7 different sizes across 36 headings". So this page sets its
+ * own, using the Display roles, and steps at 1024 only, which is the single
+ * breakpoint the app's stylesheet recognises. 34px is the app's own About h1,
+ * so the phone rendering matches it exactly.
+ */
+.about-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 1024px) {
+  .about-title {
+    font-size: 52px;
+    line-height: 58px;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * OUR TEAM
+ *
+ * One block, two states. This replaced roughly fifty rules spread over
+ * `.about-founders`, `.about-founder*`, `.about-team-member*` and four
+ * superseded `.about-person-name` declarations — the residue of designing this
+ * section several times by appending overrides rather than editing in place.
+ * Most of them matched no markup at all after the two lists merged into one.
+ *
+ * The markup is a single list of six. The state is derived from the content,
+ * not from position: a person who has a bio gets `--lead` and the full width to
+ * put it in; a person who does not gets `--compact` and sits in the row of
+ * three. `:nth-child` would have said the same thing by accident.
+ *
+ * Card colour is `--card`, not `--secondary`: this band is the canvas, and in
+ * iKAN 2's ramp `--secondary` and `--canvas` are the same value, so a filled
+ * card there is invisible. The app only gets away with it because its sheet is
+ * white.
+ *
+ * Type comes from the ported roles — the names carry `type-title-lg`, so
+ * nothing here declares a font size.
+ * ─────────────────────────────────────────────────────────────── */
+
+.about-team-intro {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+}
+
+.about-team {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 28px;
+  list-style: none;
+  padding: 0;
+}
+
+.about-person {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--card);
+}
+
+.about-person-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 260px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.about-person-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.about-person-name {
+  margin-top: 16px;
+  margin-bottom: 0;
+  color: var(--foreground);
+}
+
+.about-person-role {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-person-bio {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 24px;
+  color: oklch(0.16 0.012 255 / 0.72);
+}
+
+/* ── state: carries a bio, so it takes the full width and turns horizontal ── */
+.about-person--lead {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 20px;
+  align-items: start;
+}
+
+.about-person--lead .about-person-portrait {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 112px;
+  max-height: none;
+}
+
+.about-person--lead .about-person-name {
+  grid-column: 2;
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.about-person--lead .about-person-role {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.about-person--lead .about-person-bio {
+  grid-column: 2;
+  grid-row: 3;
+  max-width: 70ch;
+}
+
+@media (min-width: 640px) {
+  .about-team {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-person--lead {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 768px) {
+  .about-team {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .about-person {
+    padding: 24px;
+  }
+
+  .about-person-portrait {
+    border-radius: 20px;
+    max-height: 300px;
+  }
+
+  .about-person--lead {
+    grid-template-columns: 140px minmax(0, 1fr);
+    column-gap: 28px;
+  }
+
+  .about-person--lead .about-person-portrait {
+    width: 140px;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * INFO PAGES — legal, FAQ, contact
+ *
+ * The same shell as /about: the ported theme on `.ikan2-theme`, a band on the
+ * canvas, one measure. These pages were a full-bleed `PageHero` over a single
+ * bordered card, which looked nothing like the app and nothing like /about.
+ *
+ * `info-page__inner` is narrower than the About bands (720 against 1080),
+ * because these are read rather than scanned and the policy text is one long
+ * column — 1080px of 16/26 runs past a comfortable measure.
+ * ─────────────────────────────────────────────────────────────── */
+
+.info-page {
+  background: var(--canvas);
+  padding-bottom: 64px;
+}
+
+.info-band {
+  padding: 40px 0;
+}
+
+.info-band--white {
+  background: var(--card);
+}
+
+/* The reading measure, from iKAN 2's `max-w-read`: 38rem (~76 characters) at
+   laptop size, tracking the app column below 1024. These pages are long-form,
+   so they get the reading surface rather than the app's 30rem phone column. */
+.info-band__inner {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 640px) {
+  .info-band__inner {
+    max-width: 36rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .info-band__inner {
+    max-width: 38rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .info-band {
+    padding: 56px 0;
+  }
+
+  .info-band__inner {
+    padding: 0 40px;
+  }
+}
+
+.info-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.info-subtitle {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+/*
+ * The policy switcher. Four legal pages existed with no way to get from one to
+ * another — a reader who wanted the refund terms from the privacy page had to
+ * go via the footer. iKAN 2's /legal/$slug route solves it with a row of pills,
+ * which is the one device worth taking wholesale.
+ */
+.info-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.info-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.info-tab:hover {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.info-tab[aria-current='page'] {
+  border-color: transparent;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.info-prose {
+  margin-top: 28px;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────── */
+
+.faq-search {
+  position: relative;
+  margin-top: 20px;
+}
+
+.faq-search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.faq-search input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.faq-search input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.faq-search input:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.faq-topics {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.faq-group {
+  margin-top: 28px;
+}
+
+.faq-group__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-list {
+  margin-top: 4px;
+}
+
+/*
+ * A question is a native `<details>`. The app uses its own Disclosure
+ * component; at this size the element does the same job — keyboard operable
+ * and announced correctly — with nothing behind it.
+ */
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The marker is drawn rather than typed, so it can rotate when the row opens. */
+.faq-item > summary::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted-foreground);
+  border-bottom: 2px solid var(--muted-foreground);
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.faq-item[open] > summary::after {
+  transform: rotate(-135deg);
+  margin-top: 2px;
+}
+
+.faq-item > summary:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.faq-item > p {
+  padding: 0 0 18px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+.faq-empty {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--muted-foreground);
+}
+
+.faq-cta {
+  margin-top: 40px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--secondary);
+}
+
+.faq-cta__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-cta__body {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+/* The primary control, shared by FAQ and Contact. */
+.info-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--foreground);
+  color: var(--background);
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.info-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.info-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+/* ── CONTACT ──────────────────────────────────────────────────── */
+
+/*
+ * The crisis card leads the page. Someone in trouble should not have to scroll
+ * past a subject field to find a helpline, which is what the old order asked
+ * of them. It uses the error-container pair from iKAN 2's ramp — urgent
+ * without being alarming, and contrast-checked as a pair.
+ */
+.contact-crisis {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+}
+
+.contact-crisis__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.contact-crisis__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.contact-crisis__body {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.contact-crisis__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.contact-crisis__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--on-error-container);
+  color: var(--error-container);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-crisis__button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contact-methods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.contact-method {
+  display: block;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--secondary);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.contact-method:hover {
+  transform: translateY(-2px);
+}
+
+.contact-method svg {
+  width: 20px;
+  height: 20px;
+  color: var(--brand-teal-ink);
+}
+
+.contact-method__title {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-method__desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+}
+
+.contact-method__value {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+  color: var(--foreground);
+}
+
+.contact-form-section {
+  margin-top: 36px;
+}
+
+.contact-form__title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-form__subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.contact-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.contact-field {
+  display: block;
+}
+
+.contact-field--wide {
+  grid-column: 1 / -1;
+}
+
+.contact-field > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.contact-field input:focus-visible,
+.contact-field textarea:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.contact-form .info-button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0;
+}
+
+.contact-sent {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: var(--secondary);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--foreground);
+}
+
+.contact-faq {
+  margin-top: 40px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--secondary);
+}
+
+.contact-faq__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-faq__body {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 599px) {
+  .contact-methods,
+  .contact-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* ───────────────────────────────────────────────────────────────
+ * SERVICES
+ *
+ * A port of iKAN 2's own `/services` page — `ikan2/src/routes/services.tsx`
+ * and the `.services-*` block at the end of `ikan2/src/styles.css`. The page
+ * already existed there, so the earlier `svc-*` system this replaces was an
+ * invented second answer to a question that had one. Rules below are iKAN 2's
+ * verbatim; this repo's deliberate differences are the four blocks at the end,
+ * each with its reason. Do not restyle these in place — change iKAN 2 and
+ * re-port, or the two drift.
+ *
+ * Every token used here (--calm-soft, --canvas, --mind-soft, --calm-strong,
+ * --shadow-dock, --dur-base …) already exists in the ported `ikan2.css`;
+ * nothing new is introduced.
+ * ─────────────────────────────────────────────────────────────── */
+
+.services-page { background: var(--background); color: var(--foreground); overflow: clip; }
+.services-container { width: min(100% - 56px, 1320px); margin-inline: auto; }
+.services-page a:focus-visible, .services-page button:focus-visible, .services-page input:focus-visible { outline: 2px solid var(--brand-teal-ink); outline-offset: 3px; }
+.services-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .13em; color: var(--brand-teal-ink); }
+.services-hero { padding-block: 129px 142px; }
+.services-hero h1 { max-width: 1050px; margin-top: 28px; font: 600 clamp(48px, 5vw, 78px)/1.12 var(--font-display); letter-spacing: 0; }
+.services-hero h1 em { color: var(--brand-teal-ink); font-style: normal; }
+.services-hero > p:last-child { margin-top: 33px; color: var(--muted-foreground); font-size: 21px; line-height: 1.65; }
+.services-section { padding-block: 135px; }
+.services-split { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1.13fr); align-items: center; gap: clamp(48px, 7vw, 126px); }
+.services-copy { min-width: 0; }
+.services-copy h2 { margin-top: 14px; font: 600 clamp(42px, 4.2vw, 64px)/1.1 var(--font-display); }
+.services-copy h3 { max-width: 600px; margin-top: 35px; font: 600 clamp(26px, 2.5vw, 37px)/1.28 var(--font-display); }
+.services-copy > p:not(.services-eyebrow) { max-width: 540px; margin-top: 22px; color: var(--muted-foreground); font-size: 17px; line-height: 1.9; }
+.services-copy .services-action { margin-top: 37px; }
+.services-action { transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-action:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
+.services-action:active { transform: translateY(0); }
+.services-fact { display: flex; align-items: center; gap: 17px; max-width: 340px; margin-top: 30px; padding-block: 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.services-fact strong { font: 600 42px/1 var(--font-display); color: var(--brand-teal-ink); }
+.services-fact span { max-width: 170px; color: var(--muted-foreground); font-size: 13px; line-height: 1.5; }
+.services-heading-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.services-badge { margin-top: 16px; border: 1px solid var(--brand-teal); border-radius: 999px; padding: 5px 10px; color: var(--brand-teal-ink); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.services-visual { min-width: 0; }
+.services-assessment { border-top: 1px solid var(--border); }
+.services-phone-scene { position: relative; display: grid; place-items: center; min-height: 730px; border-radius: 32px; background: var(--calm-soft); overflow: hidden; }
+.services-phone { position: relative; width: min(320px, 76%); min-height: 637px; border: 9px solid var(--foreground); border-radius: 43px; background: var(--background); box-shadow: 0 26px 55px color-mix(in oklab, var(--foreground) 17%, transparent); overflow: hidden; }
+.services-phone-notch { position: absolute; top: 0; left: 50%; width: 90px; height: 19px; transform: translateX(-50%); border-radius: 0 0 15px 15px; background: var(--foreground); }
+.services-phone-top { display: flex; align-items: center; justify-content: space-between; padding: 33px 19px 18px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; }
+.services-phone-top svg { color: var(--brand-teal-ink); }
+.services-phone-body { padding: 24px 22px; }
+.services-phone-kicker, .services-phone-progress > span, .services-phone-result > span { color: var(--brand-teal-ink); font-size: 9px; font-weight: 800; letter-spacing: .09em; }
+.services-phone-body h3 { margin-top: 11px; font: 600 25px/1.25 var(--font-display); }
+.services-phone-intro { margin-top: 9px; color: var(--muted-foreground); font-size: 11px; line-height: 1.65; }
+.services-phone-meta { display: flex; gap: 14px; margin-top: 20px; font-size: 11px; font-weight: 700; }
+.services-phone-meta span { display: inline-flex; align-items: center; gap: 3px; }
+.services-phone-progress { margin-top: 30px; }
+.services-phone-progress strong { display: block; margin-top: 8px; font-size: 12px; }
+.services-track { height: 6px; margin-top: 10px; border-radius: 9px; background: var(--secondary); }
+.services-track span { display: block; width: 62.5%; height: 100%; border-radius: inherit; background: var(--brand-teal-ink); }
+.services-phone-result { position: relative; margin-top: 29px; padding: 19px 14px; border: 1px solid var(--border); border-radius: 15px; background: var(--card); }
+.services-phone-result strong { display: block; margin-top: 8px; font: 600 15px/1.4 var(--font-display); }
+.services-phone-result p { max-width: 180px; margin-top: 9px; color: var(--muted-foreground); font-size: 10px; line-height: 1.4; }
+.services-phone-result svg { position: absolute; right: 15px; bottom: 16px; }
+.services-phone-privacy { display: block; margin-top: 18px; color: var(--muted-foreground); font-size: 10px; text-align: center; }
+.services-phone-home { position: absolute; bottom: 10px; left: 50%; width: 92px; height: 4px; transform: translateX(-50%); border-radius: 9px; background: var(--foreground); }
+.services-phone-note { position: absolute; bottom: 49px; right: 22px; display: flex; align-items: center; gap: 9px; max-width: 200px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--card); box-shadow: var(--shadow-card); font-size: 11px; font-weight: 700; }
+.services-note-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--brand-teal); }
+.services-equip { background: var(--canvas); }
+.services-equip .services-split { grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); }
+.services-equip-preview { position: relative; padding-bottom: 45px; }
+.services-programme-card { position: relative; display: block; min-height: 580px; border-radius: 28px; overflow: hidden; color: var(--primary-foreground); box-shadow: var(--shadow-card); transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-programme-card:hover, .services-resource-card:hover, .services-consultant-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-dock); }
+.services-programme-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.services-programme-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 18px; padding: 35px; background: linear-gradient(0deg, color-mix(in oklab, var(--foreground) 88%, transparent), transparent 72%); }
+.services-programme-tag { font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+.services-programme-overlay strong { max-width: 400px; font: 600 clamp(28px, 3vw, 43px)/1.2 var(--font-display); }
+.services-programme-overlay > span:last-child { display: flex; align-items: center; gap: 13px; font-size: 13px; font-weight: 700; }
+.services-day-strip { position: absolute; right: -25px; bottom: 0; left: 45px; display: flex; align-items: center; gap: 20px; padding: 22px 25px; border: 1px solid var(--border); border-radius: 17px; background: var(--card); box-shadow: var(--shadow-card); }
+.services-day-number { font: 600 31px var(--font-display); }
+.services-day-number small { color: var(--muted-foreground); font-size: 12px; }
+.services-day-strip > div { display: grid; gap: 6px; min-width: 0; }
+.services-day-strip > div strong { font-size: 13px; }
+.services-day-strip > div span { color: var(--muted-foreground); font-size: 11px; }
+.services-day-strip i { display: inline-block; width: 3px; height: 3px; margin: 0 5px 2px; border-radius: 50%; background: var(--muted-foreground); }
+.services-day-check { display: grid; place-items: center; width: 38px; height: 38px; flex: none; margin-left: auto; border-radius: 50%; background: var(--calm-soft); color: var(--calm-strong); }
+.services-mood { background: var(--mind-soft); }
+.services-mood-preview { padding: 28px; border: 1px solid var(--border); border-radius: 28px; background: var(--card); box-shadow: var(--shadow-card); }
+.services-ui-top { display: flex; justify-content: space-between; gap: 12px; color: var(--brand-teal-ink); font-size: 10px; font-weight: 800; letter-spacing: .07em; }
+.services-mood-scale h3 { margin-top: 27px; font: 600 27px/1.2 var(--font-display); }
+.services-mood-scale > p { margin-top: 7px; color: var(--muted-foreground); font-size: 13px; }
+.services-mood-options { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin-top: 25px; }
+.services-mood-option { display: flex; flex-direction: column; gap: 8px; min-width: 0; height: 89px; padding: 8px 2px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); }
+.services-mood-option.is-selected { border-color: var(--brand-teal-ink); background: var(--calm-soft); box-shadow: 0 0 0 1px var(--brand-teal-ink); }
+.services-mood-option > span { font-size: 26px; }
+.services-mood-option small { font-size: 10px; }
+.services-entry-preview { margin: 27px -5px -5px 20px; padding: 21px; border: 1px solid var(--border); border-radius: 19px; background: var(--background); box-shadow: var(--shadow-card); }
+.services-entry-preview > article { margin-top: 15px; background: var(--card); }
+.services-journal-detail { display: flex; gap: 25px; padding: 15px 4px 0; color: var(--muted-foreground); font-size: 12px; }
+.services-journal-detail b { color: var(--foreground); }
+.services-resources { background: var(--background); }
+.services-categories { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.services-categories span { border: 1px solid var(--border); border-radius: 999px; padding: 8px 13px; color: var(--muted-foreground); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.services-resource-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.services-resource-card { min-width: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--card); box-shadow: var(--shadow-card); color: var(--foreground); overflow: hidden; transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-resource-card.is-prominent { grid-row: span 2; }
+.services-resource-image { position: relative; height: 135px; overflow: hidden; }
+.services-resource-card.is-prominent .services-resource-image { height: 335px; }
+.services-resource-image img, .services-resource-image svg { width: 100%; height: 100%; object-fit: cover; }
+.services-resource-image > span { position: absolute; top: 13px; left: 13px; padding: 7px 11px; border-radius: 999px; background: var(--card); font-size: 11px; font-weight: 800; }
+.services-resource-copy { position: relative; min-height: 125px; padding: 18px 40px 19px 18px; }
+.services-resource-copy p { color: var(--brand-teal-ink); font-size: 11px; font-weight: 700; }
+.services-resource-copy p span { margin-inline: 4px; }
+.services-resource-copy h3 { margin-top: 9px; font: 600 15px/1.4 var(--font-display); }
+.services-resource-card.is-prominent h3 { font-size: 22px; }
+.services-resource-copy svg { position: absolute; right: 17px; bottom: 18px; }
+.services-consultation { border-top: 1px solid var(--border); }
+.services-consultant-card { display: block; overflow: hidden; border: 1px solid var(--border); border-radius: 24px; background: var(--card); box-shadow: var(--shadow-card); color: var(--foreground); transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-consultant-photo { position: relative; height: 360px; background: var(--secondary); }
+.services-consultant-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
+.services-consultant-photo span { position: absolute; bottom: 17px; left: 18px; max-width: calc(100% - 36px); border-radius: 999px; padding: 9px 12px; background: var(--card); font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.services-consultant-details { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 25px; }
+.services-consultant-details p { color: var(--muted-foreground); font-size: 12px; }
+.services-consultant-details h3 { margin-top: 5px; font: 600 24px var(--font-display); }
+.services-consultant-facts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 25px 25px; }
+.services-consultant-facts span { border-radius: 999px; padding: 8px 12px; background: var(--secondary); font-size: 11px; font-weight: 700; }
+@media (max-width: 1020px) {
+  .services-container { width: min(100% - 44px, 1320px); }
+  .services-split, .services-equip .services-split { gap: 35px; }
+  .services-section { padding-block: 90px; }
+  .services-phone-note { right: 8px; }
+  .services-resource-grid { gap: 9px; }
+  .services-resource-card.is-prominent .services-resource-image { height: 290px; }
+}
+@media (max-width: 740px) {
+  .services-container { width: min(100% - 36px, 620px); }
+  .services-hero { padding-block: 95px 92px; }
+  .services-hero h1 { margin-top: 22px; font-size: clamp(38px, 10vw, 55px); }
+  .services-hero > p:last-child { margin-top: 24px; font-size: 16px; }
+  .services-desktop-break { display: none; }
+  .services-section { padding-block: 80px; }
+  .services-split, .services-equip .services-split { grid-template-columns: minmax(0,1fr); gap: 44px; }
+  .services-equip .services-copy { grid-row: 1; }
+  .services-copy h2 { font-size: 42px; }
+  .services-copy h3 { margin-top: 23px; font-size: 26px; }
+  .services-copy > p:not(.services-eyebrow) { font-size: 15px; line-height: 1.8; }
+  .services-phone-scene { min-height: 670px; }
+  .services-phone { width: min(320px, 78%); }
+  .services-programme-card { min-height: 450px; }
+  .services-day-strip { right: 5px; left: 20px; }
+  .services-categories { flex-wrap: nowrap; overflow-x: auto; margin-right: -18px; padding-bottom: 8px; scrollbar-width: none; }
+  .services-resource-card.is-prominent .services-resource-image { height: 230px; }
+}
+@media (max-width: 460px) {
+  .services-phone-note { right: 4px; bottom: 22px; max-width: 130px; padding: 8px; font-size: 9px; }
+  .services-phone-scene { min-height: 650px; }
+  .services-mood-preview { padding: 17px; }
+  .services-mood-options { gap: 3px; }
+  .services-mood-option { height: 78px; }
+  .services-mood-option > span { font-size: 22px; }
+  .services-mood-option small { font-size: 9px; }
+  .services-entry-preview { margin-left: 6px; padding: 10px; }
+  .services-resource-grid { grid-template-columns: 1fr 1fr; }
+  .services-resource-card.is-prominent { grid-column: span 2; grid-row: auto; }
+  .services-resource-card:not(.is-prominent) .services-resource-image { height: 95px; }
+  .services-resource-card:not(.is-prominent) .services-resource-copy { min-height: 160px; padding: 12px 12px 32px; }
+  .services-resource-card:not(.is-prominent) h3 { font-size: 12px; }
+  .services-resource-card:not(.is-prominent) .services-resource-copy svg { width: 14px; height: 14px; }
+  .services-consultant-photo { height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .services-page *, .services-page *::before, .services-page *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ── This repo's four differences ───────────────────────────────
+ *
+ * 1. THE TITLE SITS ON NO WHITE CONTAINER. iKAN 2's `.services-page` paints
+ *    `--background` across the whole page because it owns its own shell. Here
+ *    the app shell is already a light grey ground, so painting white made the
+ *    hero a white slab floating on it. The page root is transparent and each
+ *    SECTION carries its own ground instead.
+ */
+.services-page {
+  background: transparent;
+}
+
+.services-hero {
+  background: transparent;
+}
+
+/*
+ * 2. EVERY SECTION IS THE SAME HEIGHT. iKAN 2 sizes each one by its content,
+ *    so the five ran to visibly different lengths. They are now equal and the
+ *    content is centred inside, which is also what makes the scroll read as
+ *    five deliberate stops rather than a long ribbon.
+ *
+ *    `svh`, not `vh`: on a phone `vh` is the viewport WITHOUT the browser
+ *    chrome, so a 100vh section is taller than the screen and the first thing
+ *    a visitor does is scroll past a cropped heading. Applied from 1021px up
+ *    only — forcing a fixed height on a phone, where the previews stack, would
+ *    leave either a crushed section or acres of dead space.
+ */
+@media (min-width: 741px) {
+  /*
+   * The five sections are ONE grid, not five blocks with a shared min-height.
+   * A floor is not equality: Assessment carries a 730px phone scene and Equip
+   * a 580px programme card, so with `min-height` alone those two overshot the
+   * floor by 170px and 60px while the other three sat exactly on it — five
+   * sections, three of them the same height.
+   *
+   * `minmax(88svh, 1fr)` on auto-rows does both jobs at once. The `1fr` makes
+   * every row resolve to the TALLEST row's content, so the five are genuinely
+   * equal whatever is inside them; the `88svh` floor keeps a short section
+   * from collapsing when the tallest happens to be short.
+   *
+   * `svh`, not `vh`: on a phone `vh` excludes the browser chrome, so a section
+   * sized in `vh` is taller than the screen it is meant to fill.
+   */
+  .services-sections {
+    display: grid;
+    grid-auto-rows: minmax(88svh, 1fr);
+  }
+
+  .services-section {
+    display: grid;
+    align-content: center;
+    padding-block: 110px;
+  }
+}
+
+/*
+ * 3. THE SCROLL REVEAL IS LIVE. iKAN 2 switches it off on this page
+ *    (`.services-page .reveal { opacity: 1 }`) so public content is readable
+ *    before hydration. Here it was asked for, so it stays on — the `reveal`
+ *    and `reveal-in` bodies are iKAN 2's own, ported in `ikan2.css`, and the
+ *    reduced-motion guard there means it degrades to plain content rather than
+ *    to a blank page.
+ */
+
+/*
+ * 4. iKAN 2's `.services-newsletter` rules ARE ported, at the end of this
+ *    file, but onto this site's shared `NewsletterBlock` rather than a
+ *    services-only copy — so a visitor meets one newsletter across the site.
+ */
+
+/*
+ * 5. Four small rules iKAN 2 does not need. Its page composes shadcn `Button`
+ *    and `EntryCard` components, which carry their own styling; this site has
+ *    neither, so the same appearance is declared here rather than pulling two
+ *    component libraries across for one page.
+ */
+.services-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding-inline: 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.services-action.is-light {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.services-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The journal entry card, standing in for iKAN 2's `EntryCard`. */
+.services-entry-preview > article {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 15px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.services-entry-face {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.services-entry-preview > article strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+/* The mood options are previews here, not buttons, so they need the layout the
+   shadcn ghost button was supplying. */
+.services-mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ── Newsletter block ─────────────────────────────────────────── */
+
+/*
+ * iKAN 2's `.services-newsletter`, copied from the block of the same name in
+ * `ikan2/src/styles.css`. It replaces a dark card this site had invented; the
+ * reasons are on the component in `ui/blocks/NewsletterBlock.tsx`.
+ *
+ * `.services-container`, `.services-eyebrow` and `.services-action` are the
+ * same ported rules the Services page uses, so the block needs no type or
+ * button styling of its own.
+ */
+.services-newsletter { padding-block: 100px; background: var(--calm-soft); }
+.services-newsletter-inner { display: grid; grid-template-columns: 1fr .85fr; align-items: end; gap: 70px; }
+.services-newsletter h2 { max-width: 600px; margin-top: 18px; font: 600 clamp(38px,4vw,57px)/1.2 var(--font-display); }
+.services-newsletter-inner > div:first-child > p:last-child { max-width: 480px; margin-top: 18px; color: var(--muted-foreground); font-size: 16px; line-height: 1.7; }
+.services-newsletter form { display: flex; gap: 8px; padding: 7px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); }
+.services-newsletter input { width: 100%; min-width: 0; padding-inline: 17px; background: transparent; font-size: 14px; outline: none; }
+.services-newsletter form button { flex: none; }
+.services-newsletter-fine { margin: 13px 14px 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 1020px) {
+  .services-newsletter { padding-block: 75px; }
+  .services-newsletter-inner { grid-template-columns: 1fr; gap: 30px; }
+}
+
+@media (max-width: 460px) {
+  .services-newsletter form { flex-wrap: wrap; border-radius: 18px; }
+  .services-newsletter input { height: 46px; }
+  .services-newsletter form button { width: 100%; }
+}
+
+/*
+ * This repo's two additions. iKAN 2 opens a `mailto:` and so has no success or
+ * error state to show; this site posts to a real endpoint and must say what
+ * happened.
+ */
+.services-newsletter-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.services-newsletter-done svg {
+  width: 18px;
+  height: 18px;
+  color: var(--calm-strong);
+}
+
+/* ── Services header, matched to the About page ───────────────────
+ *
+ * iKAN 2's hero is a 78px display headline over a 129px top pad with a bold
+ * uppercase tracked eyebrow — right for a page that owns its whole viewport.
+ * On this site it sat next to About's header and the two read as two different
+ * products: About opens at 52px, flush under the nav, with a sentence-case
+ * teal eyebrow and a 19px subtitle.
+ *
+ * These rules bring the Services header onto About's measurements exactly —
+ * taken from the live page rather than from the CSS, since `.about-page` is
+ * declared five times across this file and the computed values are what a
+ * visitor actually compares. The SECTION eyebrows below the header stay as
+ * iKAN 2 authored them ("01 / ASSESSMENT"); only the page header changes.
+ *
+ * No ground of its own: it inherits the shell's, which is what "no white
+ * container" means here. `--background` is near-white and would have put a
+ * pale slab behind the title again.
+ * ───────────────────────────────────────────────────────────────── */
+
+/*
+ * The page keeps iKAN 2's near-white ground so its section rhythm survives:
+ * white, --canvas, --mind-soft, white, white. Painting About's grey across the
+ * whole page flattened three of those five into one colour.
+ */
+.services-page {
+  background: var(--background);
+}
+
+/*
+ * The header gets a ground of its OWN — About's grey — so it is visibly a
+ * different band from the Assessment section that follows it rather than the
+ * top of it. This is also what keeps the title off a white container: the
+ * title sits on grey, the sections below are white.
+ *
+ * Full-bleed, so the band spans the viewport while the text inside keeps the
+ * page's measure.
+ */
+.services-hero-band {
+  background: oklch(0.955 0.006 250);
+  border-bottom: 1px solid var(--border);
+}
+
+.services-hero {
+  /* About's h1 sits directly under the nav clearance that
+     `.site-page-below-nav` already applies, so the hero adds none of its own. */
+  padding-block: 0 72px;
+}
+
+/*
+ * The hero keeps iKAN 2's `.services-container` measure rather than taking
+ * About's narrower one. Matching About's gutter here made the page title start
+ * 80px to the right of the "01 / ASSESSMENT" below it — a misalignment inside
+ * one page is more visible than a difference between two pages.
+ */
+
+/* About's eyebrow: sentence case, 13px, no tracking. */
+.services-hero .services-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.services-hero h1 {
+  max-width: none;
+  margin-top: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 600;
+  line-height: 1.115;
+  letter-spacing: -0.02em;
+}
+
+.services-hero > p:last-child {
+  margin-top: 12px;
+  font-size: 19px;
+  line-height: 30px;
+  color: var(--muted-foreground);
+}
+
+/* ── Section markers ──────────────────────────────────────────────
+ *
+ * "01 / ASSESSMENT" and its four siblings. iKAN 2 gives these the same
+ * `.services-eyebrow` as the page header, so on this site they came out in the
+ * identical teal as the header's "Services" and every section read as a second
+ * announcement of the page.
+ *
+ * They do a different job — the header names the page, these count position
+ * within it — so they get a different object: the numeral in the display face
+ * and the brand teal, a hairline, then the label in muted at eyebrow scale.
+ * Teal now appears once per section rather than twice.
+ * ───────────────────────────────────────────────────────────────── */
+
+.services-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.services-mark b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--brand-teal-ink);
+}
+
+/* A rule, not a slash. The "/" in iKAN 2's string is punctuation being asked
+   to do a divider's job, and it reads as part of the label to a screen
+   reader. */
+.services-mark i {
+  width: 22px;
+  height: 1px;
+  flex: none;
+  background: var(--border);
+}
+
+/*
+ * No two CONSECUTIVE bands share a ground. iKAN 2 leaves Consultation on the
+ * page's own white and separates it from Resources — also white — with a 1px
+ * border alone, so the two read as one long band with a line drawn in it.
+ *
+ * The run top to bottom is now: header grey · white · --canvas · --mind-soft ·
+ * white · --canvas · --calm-soft. `--canvas` repeats at 02 and 05, which is
+ * fine: they are four sections apart and never seen together.
+ */
+.services-consultation {
+  background: var(--canvas);
+}
+
+/* ── Site footer ──────────────────────────────────────────────────
+ *
+ * This site's own design on this site's own tokens. iKAN 2 is the mobile app
+ * and has no site footer to borrow: the `.services-footer` rules in its
+ * stylesheet belong to its single public `/services` route, not to a system.
+ *
+ * TYPE HIERARCHY. The version this replaces used 11px, 12px, 13px, 14px and
+ * 11px again for five different roles. Five sizes inside a 3px range is not a
+ * hierarchy, it is mush: nothing leads and nothing recedes. There are now four
+ * roles with real separation, and every size below belongs to exactly one:
+ *
+ *   Brand      the wordmark, display face, the only large thing here
+ *   Label      11px / 600 / 0.08em caps, muted — column headings only
+ *   Content    15px — links and contact details, the things people click
+ *   Fine       12px muted — legal, copyright, the crisis explainer
+ *
+ * The content tier went UP from 13px, not down. A footer link is a tap target
+ * on a phone, and 13px was below this site's own body minimum.
+ *
+ * MOTION. Colour and underline on hover, nothing else. This is a mental-health
+ * service and the footer carries two crisis numbers; movement down here buys
+ * nothing and costs attention.
+ * ───────────────────────────────────────────────────────────────── */
+
+/*
+ * `.site-footer.ikan2-theme`, not `.site-footer`. The footer opts into the
+ * ported theme, and `ikan2.css` sets `color: var(--foreground)` on
+ * `.ikan2-theme` UNLAYERED — that file loads after this one, so at equal
+ * specificity it won and every word rendered in the same near black as the
+ * ground behind it. Two classes outrank one. Anything that sets a colour or a
+ * face on an element carrying `ikan2-theme` needs the extra class.
+ */
+.site-footer.ikan2-theme {
+  width: 100%;
+  flex: none;
+  padding-block: 72px 28px;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* Its own measure. The footer runs under every page and must not depend on a
+   container class belonging to one of them. */
+.site-footer__inner {
+  width: min(100% - 48px, 1320px);
+  margin-inline: auto;
+}
+
+/* ── Columns ── */
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 640px) {
+  .site-footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px 28px;
+  }
+
+  .site-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-footer__grid {
+    /* The brand column is widest; the contact column is wider than the two nav
+       columns because it holds the support address, which is one unbreakable
+       token and wrapped mid-word to "support@ikanhealth.i / n" in equal
+       columns. */
+    grid-template-columns: 1.9fr 1fr 1fr 1.3fr;
+    gap: 56px;
+  }
+
+  .site-footer__brand {
+    grid-column: auto;
+  }
+}
+
+.site-footer__brand {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  align-content: start;
+}
+
+/* BRAND — the one large thing in the footer, and the only use of the display
+   face. Everything else is the sans. */
+.site-footer__logo {
+  color: var(--background);
+}
+
+.site-footer__blurb {
+  max-width: 32ch;
+  margin: 0;
+  /* `color-mix` against the footer's own text colour rather than
+     `rgba(255,255,255,…)`: the ground is a token and may not be black. */
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.site-footer__col {
+  min-width: 0;
+}
+
+/*
+ * Block plus margin, not a grid with a gap. As a grid the rows came out at
+ * 21.75px, 28.1px, 28.1px for three identical single-line links: the track
+ * sizing was picking up leading the items did not fill, so the pitch stayed at
+ * 33px however far the gap came down. A block list with one margin is exactly
+ * the line height plus that margin, and it is one number to reason about.
+ */
+.site-footer__col ul {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__col ul li {
+  display: block;
+}
+
+.site-footer__col ul li + li {
+  margin-top: 5px;
+}
+
+/* LABEL — column headings. The only tracked, uppercase thing in the footer, so
+   it reads as a heading at 11px without needing to be bigger. */
+.site-footer__label {
+  margin: 0 0 12px;
+  color: color-mix(in oklab, currentcolor 55%, transparent);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* CONTENT — links and contact details. 15px, high contrast: these are the
+   things people came down here to click. */
+.site-footer__col a {
+  /*
+   * `flex`, not `inline-flex`. An inline-level box sits inside the `li`'s own
+   * line box and inherits its strut, so each row measured 33px against a
+   * 21.75px line and the list stayed loose however far the gap came down.
+   * Block-level, the row is exactly the content height.
+   */
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  gap: 9px;
+  color: color-mix(in oklab, currentcolor 82%, transparent);
+  font-size: 15px;
+  /* The row pitch is the line box plus the grid gap, so both have to come down
+     together. 1.45 x 15px plus a 4px gap is a ~26px pitch: tight enough to read
+     as one list, still a usable tap target on a phone. */
+  line-height: 1.45;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__col a:hover {
+  color: var(--background);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer__col a svg {
+  flex: none;
+  color: color-mix(in oklab, currentcolor 60%, transparent);
+}
+
+/* ── Social ── */
+
+.site-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__social a {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in oklab, currentcolor 18%, transparent);
+  border-radius: 999px;
+  color: color-mix(in oklab, currentcolor 78%, transparent);
+  transition:
+    background-color var(--dur-fast, 150ms) ease,
+    color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__social a:hover {
+  background: color-mix(in oklab, currentcolor 14%, transparent);
+  color: var(--background);
+}
+
+/* ── Crisis block ─────────────────────────────────────────────────
+ *
+ * Promoted out of the disclaimer paragraph. It used to be 11px prose below the
+ * copyright with the two numbers as inline links inside a sentence — the least
+ * scannable place on the page, for the content most likely to be needed
+ * urgently. Each number is now its own tap target with the service named under
+ * it, and the block is bordered so it reads as a distinct offer of help rather
+ * than legal small print.
+ * ───────────────────────────────────────────────────────────────── */
+
+.site-footer__crisis {
+  display: grid;
+  gap: 14px;
+  margin-top: 44px;
+  /*
+   * ALIGNED. The panel bleeds sideways by exactly its own horizontal padding,
+   * so "In an emergency" starts on the same vertical as the brand text and the
+   * column headings above it. Padding alone pushed its content 20px right of
+   * everything else, which is the kind of near-miss that reads as sloppy
+   * without being obviously wrong.
+   */
+  margin-inline: -18px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  /* ELEVATED, not outlined. A border alone on a near-black ground reads as a
+     box drawn around small print; lifting the panel off the ground and adding
+     a top highlight makes it a raised surface, which is what the most
+     important content in the footer should sit on. */
+  background: color-mix(in oklab, var(--background) 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--background) 14%, transparent),
+    0 1px 2px color-mix(in oklab, var(--foreground) 40%, transparent);
+}
+
+@media (min-width: 860px) {
+  .site-footer__crisis {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 14px 18px;
+  }
+}
+
+/* FINE — the explainer, legal row and copyright all share this one size. */
+.site-footer__crisis p {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.site-footer__crisis ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 520px) {
+  .site-footer__crisis ul {
+    grid-auto-flow: column;
+    gap: 9px;
+  }
+}
+
+.site-footer__crisis a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  /* Reads against the raised panel, not the page ground, so it needs more
+     contrast than the 12% that worked on the flat version. */
+  background: color-mix(in oklab, currentcolor 16%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__crisis a:hover {
+  background: color-mix(in oklab, currentcolor 26%, transparent);
+}
+
+.site-footer__crisis a svg {
+  flex: none;
+  color: var(--brand-teal);
+}
+
+.site-footer__crisis strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.site-footer__crisis small {
+  display: block;
+  margin-top: 1px;
+  color: color-mix(in oklab, currentcolor 62%, transparent);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ── Bottom bar ── */
+
+.site-footer__bottom {
+  display: grid;
+  gap: 18px;
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid color-mix(in oklab, var(--background) 16%, transparent);
+}
+
+@media (min-width: 860px) {
+  .site-footer__bottom {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 32px;
+  }
+}
+
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.site-footer__legal a {
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__legal a:hover {
+  color: var(--background);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  color: color-mix(in oklab, currentcolor 55%, transparent);
+  font-size: 12px;
+}
+
+.site-footer__by {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__by:hover {
+  color: var(--background);
+}
+
+.site-footer__by span {
+  font-weight: 600;
+}
+
+
+/* ── Nav brand lockup ─────────────────────────────────────────────
+ * Mirrors app.ikanhealth.in/login: 28px squircle mark at 9px radius plus the
+ * wordmark in `type-subhead`. The radius is deliberate — the mark is neither a
+ * circle nor a square in either product.
+ * ───────────────────────────────────────────────────────────────── */
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+/* The mark outsizes the wordmark: 40px against 18px text. A mark matched to
+   the text height reads as a bullet point in front of a word. */
+.nav-brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.nav-brand .type-subhead {
+  /* iKAN 2's `type-subhead`: Sora 18px / 26px / 600. */
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+/* ── Public mobile nav ────────────────────────────────────────────
+ *
+ * Every value here is an iKAN 2 token. The bar previously carried its own
+ * inline styles on the earlier token set, so it was the one piece of chrome
+ * not on the same system as the page beneath it.
+ *
+ * Type is left entirely to the `type-*` roles in the markup; nothing in this
+ * block sets a font-size, which is the point of having roles at all.
+ * ───────────────────────────────────────────────────────────────── */
+
+.mnav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 9999;
+  padding: 10px 12px 0;
+}
+
+.mnav__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card);
+}
+
+.mnav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+/* The mark outsizes the wordmark, as it does in the desktop capsule. */
+.mnav__brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.mnav__toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background var(--dur-fast, 150ms) ease;
+}
+
+.mnav__toggle:hover {
+  background: color-mix(in oklab, var(--foreground) 10%, var(--secondary));
+}
+
+.mnav__toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mnav__menu {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.mnav__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Roomier than the 11px it replaced: with the group headings gone the list
+     is four rows in a sheet of its own, and it should feel like a set of tap
+     targets rather than a dense index. */
+  padding: 14px 12px;
+  border-radius: 14px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.mnav__item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+.mnav__item:hover {
+  background: var(--secondary);
+}
+
+/* Active is a neutral resting state, not a filled block. The menu had the
+   current page in a solid near-black bar that read as the primary action. */
+.mnav__item.is-active {
+  background: var(--secondary);
+  font-weight: 600;
+}
+
+.mnav__item.is-active svg {
+  color: var(--brand-teal-ink);
+}
+
+/* 14px like every item above it; the weight, the fill and the full width are
+   what make it the action. A 15px label here was the only string in the menu
+   at a different size. */
+.mnav__signin {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  cursor: pointer;
+}
+
+.mnav__signin svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Both bar actions, side by side at the foot of the menu. */
+.mnav__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  /* A rule, so the two actions read as the foot of the sheet rather than as
+     two more rows in the list. */
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mnav__talk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 999px;
+  background: var(--color-accent-default);
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mnav__talk svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Landing page CTA ─────────────────────────────────────────────
+ *
+ * One class for the page's calls to action. Each was hand-styled inline with
+ * its own font-size (`15px`, `var(--text-base)`), its own padding, its own
+ * shadow and, in one case, a raw `#F97066` that belonged to no palette. They
+ * are iKAN 2's `type-action` on iKAN 2's tokens now.
+ *
+ * `.site-cta` carries `ikan2-theme`'s roles because the homepage root opts in;
+ * the two-class selectors below are deliberate — `ikan2-theme` sets `color` on
+ * itself unlayered in `ikan2.css`, and a single class loses to it.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .site-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--dur-base, 220ms) var(--ease-out, ease),
+    box-shadow var(--dur-base, 220ms) var(--ease-out, ease);
+}
+
+.ikan2-theme .site-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .site-cta:active {
+  transform: translateY(0);
+}
+
+/* The one secondary CTA on the page. It was a raw coral hex; the brand has a
+   coral, and this is it. */
+.ikan2-theme .site-cta--coral {
+  background: var(--brand-coral);
+  color: var(--brand-coral-ink);
+}
+
+@media (max-width: 767px) {
+  .ikan2-theme .site-cta {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* ── Homepage: Services ───────────────────────────────────────────
+ * Replaces the Assessment Programs and Equip strips. iKAN 2 tokens only.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .home-services {
+  padding-block: 88px;
+  background: var(--card);
+}
+
+.ikan2-theme .home-services__inner {
+  width: min(100% - 48px, 1200px);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.ikan2-theme .home-services__eyebrow {
+  margin: 0;
+  color: var(--brand-teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ikan2-theme .home-services h2 {
+  max-width: 18ch;
+  margin: 10px auto 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.ikan2-theme .home-services__lede {
+  max-width: 48ch;
+  margin: 14px auto 0;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.ikan2-theme .home-services__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 40px 0 36px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .ikan2-theme .home-services__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  /*
+   * Five cards in a three-column grid would leave a hole, so the first two
+   * span wider and the last three sit beneath. Six equal cells with one empty
+   * is the thing that reads as a missing item.
+   */
+  .ikan2-theme .home-services__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .ikan2-theme .home-service:nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+
+  .ikan2-theme .home-service:nth-child(n + 3) {
+    grid-column: span 2;
+  }
+}
+
+.ikan2-theme .home-service {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--background);
+}
+
+.ikan2-theme .home-service__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-lg);
+}
+
+.ikan2-theme .home-service__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ikan2-theme .home-service__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ikan2-theme .home-service__badge {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ikan2-theme .home-service__line {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+/* ── Homepage: the app screen inside the phone ────────────────────
+ * Layout only. Every card in here is an iKAN 2 primitive — `program-band`,
+ * `metric-pill`, `mini-score`, `semantic-chip` — so this preview follows the
+ * system instead of imitating it.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .app-screen {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  width: 100%;
+  height: calc(100% - 28px);
+  padding: 16px 14px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.ikan2-theme .app-screen__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ikan2-theme .app-screen__top small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.ikan2-theme .app-screen__top strong {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ikan2-theme .app-screen__chip {
+  background: color-mix(in oklab, var(--brand-teal) 22%, transparent);
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .app-screen__mood {
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  background: var(--background);
+}
+
+.ikan2-theme .app-screen__mood p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ikan2-theme .app-screen__mood div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ikan2-theme .app-screen__mood span {
+  display: grid;
+  place-items: center;
+  padding: 5px 0;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  opacity: 0.5;
+}
+
+.ikan2-theme .app-screen__mood span.is-on {
+  background: color-mix(in oklab, var(--brand-coral) 18%, transparent);
+  opacity: 1;
+}
+
+.ikan2-theme .app-screen__band {
+  border-radius: var(--radius-xl);
+}
+
+/* The ring is iKAN 2's `mini-score` at the scale this frame allows. */
+.ikan2-theme .app-screen__ring {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.ikan2-theme .app-screen__ring span {
+  width: 34px;
+  height: 34px;
+  font-size: 13px;
+}
+
+.ikan2-theme .app-screen__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ikan2-theme .app-screen__metrics .metric-pill {
+  background: var(--background);
+  text-align: center;
+}
+
+.ikan2-theme .app-screen__metrics strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}

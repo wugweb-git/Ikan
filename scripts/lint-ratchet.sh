@@ -5,7 +5,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-BASELINE_FILE=".lint-baseline"
+BASELINE_FILE="scripts/baselines/lint"
 BASELINE=$(cat "$BASELINE_FILE" 2>/dev/null || echo 999999)
 
 REPORT=$(mktemp)

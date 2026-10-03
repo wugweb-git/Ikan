@@ -88,4 +88,32 @@ export default tseslint.config(
       'no-empty': ['warn', { allowEmptyCatch: true }],
     },
   },
+  // Surface boundary (restructure Stage 4). src/ is split into admin/ (staff),
+  // product/app/ (member product), product/site/ (marketing + policy) and shared/ (non-UI
+  // contract). A surface imports itself, shared/, and — until the UI split
+  // lands — the legacy components/ lib/ contexts/ hooks/ utils/. Never another
+  // surface. App.tsx at src/ is the composition root and is exempt.
+  // Ratcheted separately by scripts/boundary-ratchet.mjs, so a new crossing
+  // cannot hide inside the general lint count.
+  //
+  // The two `allow` entries are deliberate: admin previews member rendering, and
+  // a copy of the renderer/player would let the preview drift from what members
+  // actually see. Nothing else crosses.
+  ...[
+    { dir: 'admin', blocked: ['app', 'site'],
+      allow: ['app/programs/BlockRenderer', 'app/programs/ProgramPlayer'] },
+    { dir: 'app', blocked: ['admin', 'site'] },
+    { dir: 'site', blocked: ['admin', 'app'] },
+    { dir: 'shared', blocked: ['admin', 'app', 'site', 'components'] },
+  ].map(({ dir, blocked, allow = [] }) => ({
+    files: [`src/${dir === 'app' || dir === 'site' ? `product/${dir}` : dir}/**/*.{ts,tsx}`],
+    rules: {
+      'no-restricted-imports': ['warn', {
+        patterns: [{
+          regex: `(^|/)(?!${allow.map(a => `${a}$`).join('|') || '$^'})(${blocked.join('|')})/`,
+          message: `${dir}/ may not import ${blocked.join('/, ')}/ — move the shared piece to shared/ (non-UI) or give ${dir}/ its own copy.`,
+        }],
+      }],
+    },
+  })),
 );

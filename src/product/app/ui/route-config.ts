@@ -1,0 +1,603 @@
+// Route Configuration for iKan PWA
+// Defines public vs private routes and navigation behavior
+
+export interface RouteConfig {
+  path: string;
+  label: string;
+  isPublic: boolean;
+  requiresAuth: boolean;
+  showInNavigation: boolean;
+  showInPublicNav: boolean;
+  showInPrivateNav: boolean;
+  icon?: string;
+  description?: string;
+}
+
+export const routes: RouteConfig[] = [
+  // Public Marketing Routes
+  {
+    path: '/',
+    label: 'Home',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    icon: 'home',
+    description: 'Welcome to iKan mental health platform'
+  },
+  {
+    path: '/assessment',
+    label: 'Assessments',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: true,
+    icon: 'assignment',
+    description: 'Browse all mental health assessments'
+  },
+  {
+    path: '/equip',
+    label: 'Equip',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: true,
+    icon: 'tools',
+    description: 'Browse all mental health programs'
+  },
+  {
+    path: '/resource',
+    label: 'Resource',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    icon: 'library',
+    description: 'Mental health resources and articles'
+  },
+  {
+    path: '/consultation',
+    label: "Let's Talk",
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: true,
+    icon: 'chat',
+    description: 'Book professional consultations'
+  },
+  {
+    path: '/consultation-detail',
+    label: 'Consultant Detail',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Individual consultant profile and booking'
+  },
+  {
+    path: '/services',
+    label: 'Services',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Assessments, Equip programmes, the mood journal and consultation'
+  },
+  {
+    path: '/about',
+    label: 'About Us',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Learn about our mission'
+  },
+  {
+    path: '/faq',
+    label: 'FAQs',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Frequently asked questions'
+  },
+  {
+    path: '/contact',
+    label: "Let's Talk",
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Get in touch with us'
+  },
+  {
+    path: '/terms',
+    label: 'Terms of Use',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Terms and conditions'
+  },
+  {
+    path: '/privacy',
+    label: 'Privacy Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Privacy policy'
+  },
+  {
+    path: '/privacy-policy',
+    label: 'Privacy Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Privacy policy (alternate path)'
+  },
+  {
+    path: '/return-policy',
+    label: 'Return Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Return and refund policy'
+  },
+  {
+    path: '/cancellation-policy',
+    label: 'Cancellation Policy',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Cancellation policy'
+  },
+  {
+    path: '/sitemap',
+    label: 'Sitemap',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Site map and page index'
+  },
+  {
+    path: '/assessment-landing',
+    label: 'Assessment Details (alias)',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,  
+    showInPrivateNav: false,
+    description: 'Individual assessment landing page'
+  },
+  {
+    path: '/assessment-detail',
+    label: 'Assessment Detail',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Individual assessment detail page'
+  },
+  {
+    path: '/equip-detail',
+    label: 'Program Detail',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Individual program detail page'
+  },
+  {
+    path: '/equip-programs-landing',
+    label: 'Program Landing',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Individual program landing page'
+  },
+  {
+    path: '/route-test',
+    label: 'Route Test',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Route testing dashboard for development'
+  },
+  {
+    path: '/login',
+    label: 'Sign In',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'User login and authentication'
+  },
+  {
+    path: '/welcome',
+    label: 'Welcome',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Splash — entry to the onboarding flow'
+  },
+  {
+    path: '/onboarding',
+    label: 'Onboarding',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'First-visit onboarding panels'
+  },
+  {
+    path: '/verify-email',
+    label: 'Verify email',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Post-signup email verification'
+  },
+  {
+    path: '/get-started',
+    label: 'Getting started',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'First-run setup after first sign-in'
+  },
+  {
+    path: '/reset-password',
+    label: 'Reset Password',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Set a new password from a recovery link'
+  },
+  {
+    path: '/admin/login',
+    label: 'Admin Sign In',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Admin login and authentication'
+  },
+
+  // Private App Routes
+  {
+    path: '/dashboard',
+    label: 'Home',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: true,
+    showInPublicNav: false,
+    showInPrivateNav: true,
+    icon: 'home',
+    description: 'Your personal dashboard'
+  },
+  {
+    path: '/mood-journal',
+    label: 'Mood Journal',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: true,
+    showInPublicNav: false,
+    showInPrivateNav: true,
+    icon: 'heart',
+    description: 'Track your daily mood and thoughts'
+  },
+
+
+  // Private Flow Routes (with navigation enabled)
+  {
+    path: '/assessment-flow',
+    label: 'Assessment Flow',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: true,
+    showInPublicNav: false,
+    showInPrivateNav: true,
+    description: 'Assessment in progress'
+  },
+  {
+    path: '/assessment-results',
+    label: 'Assessment Results',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: true,
+    showInPublicNav: false,
+    showInPrivateNav: true,
+    description: 'Assessment results and recommendations'
+  },
+  {
+    path: '/equip-program-onboarding',
+    label: 'Program Onboarding',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Program onboarding flow'
+  },
+  {
+    path: '/equip-program-flow',
+    label: 'Program Flow',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Program activities'
+  },
+  {
+    path: '/equip-program-completion',
+    label: 'Program Completion',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Program completion celebration'
+  },
+  {
+    path: '/resource-detail',
+    label: 'Resource Detail',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Detailed resource view'
+  },
+  {
+    path: '/account',
+    label: 'Account',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: true,
+    showInPublicNav: false,
+    showInPrivateNav: true,
+    description: 'Account settings and preferences'
+  },
+  {
+    path: '/learning-diary',
+    label: 'Learning Diary',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Your program learning diary and worksheet'
+  },
+
+  // Admin Routes
+  {
+    path: '/admin',
+    label: 'Admin Dashboard',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Administrative dashboard'
+  },
+  {
+    path: '/admin/resources',
+    label: 'Resource Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage library resources'
+  },
+  {
+    path: '/admin/equip',
+    label: 'Equip Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage Equip programs'
+  },
+  {
+    path: '/admin/users',
+    label: 'User Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage users'
+  },
+  {
+    path: '/admin/consultants',
+    label: 'Consultant Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage consultants'
+  },
+  {
+    path: '/admin/assessments',
+    label: 'Assessment Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage assessments'
+  },
+  {
+    path: '/admin/analytics',
+    label: 'Analytics',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'System analytics'
+  },
+  {
+    path: '/admin/settings',
+    label: 'Settings',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'System settings'
+  },
+  {
+    path: '/admin/media',
+    label: 'Media Manager',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Manage media assets'
+  },
+  {
+    path: '/admin/crud',
+    label: 'CRUD Testing',
+    isPublic: false,
+    requiresAuth: true,
+    showInNavigation: false,
+    showInPublicNav: false,
+    showInPrivateNav: false,
+    description: 'Database testing tool'
+  }
+];
+
+// Helper functions
+export const getPublicRoutes = (): RouteConfig[] => {
+  return routes.filter(route => route.isPublic);
+};
+
+export const getPrivateRoutes = (): RouteConfig[] => {
+  return routes.filter(route => !route.isPublic);
+};
+
+export const getPublicNavigationRoutes = (): RouteConfig[] => {
+  return routes.filter(route => route.showInPublicNav);
+};
+
+export const getPrivateNavigationRoutes = (): RouteConfig[] => {
+  return routes.filter(route => route.showInPrivateNav);
+};
+
+export const isPublicRoute = (path: string): boolean => {
+  // Handle dynamic routes like /consultation/:id
+  if (path.startsWith('/consultation/')) {
+    return true; // Consultant detail pages are public
+  }
+  
+  // Universal public links
+  if (path.startsWith('/join/')) {
+    return true;
+  }
+
+  // CMS pages are always public
+  if (path.startsWith('/page/')) {
+    return true;
+  }
+  
+  const route = routes.find(r => r.path === path);
+  return route?.isPublic ?? false;
+};
+
+export const requiresAuth = (path: string): boolean => {
+  // Handle dynamic routes like /consultation/:id
+  if (path.startsWith('/consultation/')) {
+    return false; // Consultant detail pages don't require auth
+  }
+
+  // The slug forms of the public catalogue pages.
+  if (path.startsWith('/assessment/') || path.startsWith('/equip/')) {
+    return false;
+  }
+  
+  // Universal public links don't require auth
+  if (path.startsWith('/join/')) {
+    return false;
+  }
+
+  // CMS pages are always public
+  if (path.startsWith('/page/')) {
+    return false;
+  }
+  
+  const route = routes.find(r => r.path === path);
+  /*
+   * Unregistered routes are PUBLIC.
+   *
+   * This used to default to `true` "for safety", which on a marketing site is
+   * the unsafe direction: a page nobody remembered to register served a login
+   * screen instead of its content, silently, to everyone including crawlers.
+   * /services did exactly that on the day it was added, and nothing failed —
+   * no test, no build, no ratchet. It just quietly stopped being a page.
+   *
+   * ikanhealth.in is static marketing; the member app is iKAN 2. Anything that
+   * genuinely needs a session says so with `requiresAuth: true` on its own
+   * entry, which is explicit and greppable. An omission should cost a page its
+   * gate, not its content.
+   */
+  return route?.requiresAuth ?? false;
+};
+
+export const getRouteConfig = (path: string): RouteConfig | undefined => {
+  return routes.find(r => r.path === path);
+};
+
+// Default route configurations
+export const DEFAULT_PUBLIC_ROUTE = '/';
+export const DEFAULT_PRIVATE_ROUTE = '/dashboard';
+export const LOGIN_ROUTE = '/login';
+
+// Corporate/footer routes that don't need navigation but are public
+export const corporateRoutes = [
+  { path: '/privacy', label: 'Privacy Policy' },
+  { path: '/terms', label: 'Terms of Use' }
+];

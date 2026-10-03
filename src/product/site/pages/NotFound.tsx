@@ -1,0 +1,150 @@
+import { useMemo } from 'react';
+import { House, ArrowLeft, Search } from 'lucide-react';
+import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
+import { PageHero } from '../ui/PageHero';
+import { CONTENT_MAX } from '../ui/Container';
+
+interface NotFoundProps {
+  onNavigate?: (route: string) => void;
+}
+
+export function NotFound({ onNavigate }: NotFoundProps) {
+  const isMobile = useIsMobile();
+
+  const cmsContent = DEFAULT_CMS_CONTENT['page-not-found'];
+  const cms = useMemo(() => {
+    if (!cmsContent?.content) return null;
+    try { return JSON.parse(cmsContent.content); } catch { return null; }
+  }, [cmsContent]);
+
+  const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'Page Not Found';
+  const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || "We couldn't find the page you're looking for.";
+  const heading = cms?.heading || 'Lost your way?';
+  const description = cms?.description || 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.';
+  const homeButtonText = cms?.homeButtonText || 'Return Home';
+  const backButtonText = cms?.backButtonText || 'Go Back';
+
+  return (
+    <div
+      className="ikan2-theme min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--canvas)', fontFamily: 'var(--font-sans)' }}
+    >
+      <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
+
+      <div
+        className="flex-1 w-full mx-auto flex items-center justify-center"
+        style={{
+          maxWidth: CONTENT_MAX,
+          padding: isMobile ? '24px 16px' : '48px 24px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '420px',
+            textAlign: 'center',
+            backgroundColor: isMobile ? 'transparent' : 'var(--card)',
+            borderRadius: isMobile ? '0' : 'var(--radius-lg)',
+            border: isMobile ? 'none' : '1px solid var(--border)',
+            boxShadow: isMobile ? 'none' : 'var(--shadow-sm)',
+            padding: isMobile ? '24px 0' : '40px 32px',
+          }}
+        >
+          <div
+            style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 24px',
+            }}
+          >
+            <Search size={36} style={{ color: 'var(--muted-foreground)' }} />
+          </div>
+
+          <h2
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '24px',
+              fontWeight: '500',
+              color: 'var(--foreground)',
+              margin: '0 0 8px 0',
+            }}
+          >
+            {heading}
+          </h2>
+          <p
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '16px',
+              fontWeight: '400',
+              color: 'var(--muted-foreground)',
+              lineHeight: '1.6',
+              margin: '0 0 32px 0',
+            }}
+          >
+            {description}
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={() => onNavigate?.('/')}
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'var(--background)',
+                backgroundColor: 'var(--foreground)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px 24px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                transition: 'opacity 0.15s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+            >
+              <House size={18} />
+              {homeButtonText}
+            </button>
+
+            <button
+              onClick={() => window.history.back()}
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'var(--foreground)',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px 24px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                transition: 'background-color 0.15s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--secondary)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <ArrowLeft size={18} />
+              {backButtonText}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
