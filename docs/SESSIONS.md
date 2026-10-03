@@ -503,3 +503,66 @@ Pure `git mv` + relative-import rewrites, same rules.
 ### 2026-09-21 · Boundary fixes + UI split (branch `restructure/codebase-separation`, committed `6ceefe12`, `91c48f61`, `ce452cf4`)
 
 Recorded after the fact — should have been claimed first. Touched: everything that was under `src/components/` (now in `app/ui/`, `app/features/{widgets,assessment}/`, `app/shell/`, `admin/ui/`, `site/ui/`; only `CorporateProgramCard.tsx` remains), import-only edits across `src/`, `eslint.config.js`, `scripts/boundary-ratchet.mjs`, and the `.typecheck/.lint/.rawhex/.a11y/.boundary` baselines. **Crosses owned files:** ASSESSMENT `page-blocks/**` (now `app/ui/blocks/**`), moves only. Out of scope and untouched: corporate code, anything under `src/supabase/`.
+
+### 2026-10-03 · Resource types 9 → 3 (branch `restructure/codebase-separation`)
+
+Collapses the resource `filter_type` vocabulary to the three media formats — `article`, `video`,
+`audio`. The nine values mixed medium with editorial shape (`guide`, `workbook`, `course`,
+`exercise`, `tool` describe what a piece *is*, not how you consume it), and three separate lists
+had already drifted apart from each other and from the data.
+
+| file | change |
+|---|---|
+| `src/admin/catalog/metadata-catalog.ts` | `filter_type` seed list 9 → 3 |
+| `src/product/app/ui/lib/content.ts` | `LIBRARY_LABELS.CONTENT_TYPES` — drop `podcast`, `guide`, `infographic` |
+| `src/product/app/resources/Library.tsx` | `CONTENT_TYPES` — same three, + `all` |
+| `src/product/app/ui/blocks/ResourceCard.tsx` | `type` union `'article'|'video'|'tool'` → `'article'|'video'|'audio'` |
+| `src/product/app/ui/blocks/ResourceTypeLabel.tsx` | icon map: `tool`/Wrench → `audio`/Headphones |
+
+`infographic` was offered as a user-facing filter and existed in no catalogue, so it could never
+match anything. `podcast` and `audio` were two names for one medium.
+
+**Not touched:** `assessment_type` (`standard`/`clinical`) is a separate axis — assessments store
+`filter_type: "standard"` sourced from it, so the assessment wizard and manager are unaffected.
+`media_type` (image/video/audio/document/pdf) is the media-library axis and is left alone.
+
+**Still outstanding (needs Vedanshu — DB rule):** the nine `filter_type` values also exist as
+`category:` rows in KV. Until those are reduced, the admin dropdown still offers all nine, because
+`useMetadata` reads KV, not the seed constant. All 11 live resources are `filter_type: 'article'`,
+so no record needs remapping.
+
+### 2026-10-03 · About page — one source, three layouts (branch `restructure/codebase-separation`)
+
+Recorded alongside the work, not before it. `ikanhealth.in/about` and
+`app.ikanhealth.in/about` carried the same words from two hand copies, and looked like two
+products.
+
+| file | change |
+|---|---|
+| `src/product/site/content/about.ts` | **new** — the canonical About content, typed |
+| `src/product/site/content/cms-defaults.ts` | dead `page-about-us` entry removed (nothing read it) |
+| `src/product/site/pages/AboutUs.tsx` | rebuilt to iKAN 2's design, responsive |
+| `src/product/site/ui/styles/globals.css` | `ABOUT PAGE` block, `.site-page-below-nav`, iKAN 2 palette scoped to `.about-page` |
+| `index.html` | Sora added alongside Inter — iKAN 2's display face |
+| `scripts/sync-about.mjs` | **new** — emits iKAN 2's `pages.json#about` shape; `--check` reports drift |
+
+**Content.** iKAN 2's `src/lib/content/pages.json` says in its own header that it was copied from
+`cms-defaults.ts` by hand. `sync-about.mjs --check` now compares the two and currently reports
+"in step", so the extraction is faithful. It deliberately writes nothing into the other repo.
+`howItWorks` and `whoFor` were never in `cms-defaults.ts` — the site built them from the
+homepage's sections — so they are in `about.ts` now and both ends read the same words.
+
+**Layout.** iKAN 2 is Capacitor and its About has one ~420px phone layout with no breakpoints.
+Copied verbatim that gave a 640px ribbon in a 1440px viewport, so: mobile one column, tablet
+(>=768) a 760px sheet with Mission beside Vision, desktop (>=1024) a 1080px sheet with the story
+beside its picture and values 4-up.
+
+**Colour.** iKAN 2's oklch tokens and the three greens from its `about.tsx` are redeclared inside
+`.about-page`; custom properties inherit, so nothing outside this page changes. `lint-raw-hex.mjs`
+only walks `.tsx`, so literals in `globals.css` do not move the ratchet.
+
+**Newsletter block dropped** from this page — the app's About ends at the team. One import and one
+element to restore.
+
+Checks: typecheck 111 -> 109, lint 752 -> 751, raw-hex 554 -> 549 (all three baselines lowered),
+a11y 51, boundary 0, tests 241/241, build clean. Verified in-browser at 375 / 834 / 1440.
