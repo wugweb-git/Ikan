@@ -207,7 +207,7 @@ function MaintenanceScreen({ siteName }: { siteName?: string }) {
             margin: 0,
           }}
         >
-          {siteName || 'iKan'} is down for maintenance
+          {siteName || 'iKAN'} is down for maintenance
         </h1>
         <p
           style={{

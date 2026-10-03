@@ -46,7 +46,7 @@ export interface PublicSettings {
 }
 
 const DEFAULTS: PublicSettings = {
-  siteName: 'iKan',
+  siteName: 'iKAN',
   siteDescription: '',
   companyDescription: '',
   logoUrl: '',

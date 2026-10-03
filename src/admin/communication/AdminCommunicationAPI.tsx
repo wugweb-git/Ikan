@@ -57,7 +57,7 @@ export function AdminCommunicationAPI() {
               label="Sender Name"
               value={config.email.senderName}
               onChange={(v) => setConfig({ ...config, email: { ...config.email, senderName: v } })}
-              placeholder="iKan Health"
+              placeholder="iKAN Health"
             />
             <BrevoField
               label="Sender Email"
@@ -87,7 +87,7 @@ export function AdminCommunicationAPI() {
               label="Sender Name"
               value={config.sms.senderName}
               onChange={(v) => setConfig({ ...config, sms: { ...config.sms, senderName: v } })}
-              placeholder="iKan"
+              placeholder="iKAN"
               hint="Max 11 alphanumeric characters. Some countries require a registered sender ID."
             />
           }

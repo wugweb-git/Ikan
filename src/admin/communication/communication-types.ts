@@ -46,7 +46,7 @@ export interface BroadcastInput {
 export const AVAILABLE_VARS: { key: string; label: string; example: string }[] = [
   { key: 'user_name', label: 'User Name', example: 'Jane Doe' },
   { key: 'user_email', label: 'User Email', example: 'jane@example.com' },
-  { key: 'app_name', label: 'App Name', example: 'iKan Health' },
+  { key: 'app_name', label: 'App Name', example: 'iKAN Health' },
   { key: 'date', label: 'Date', example: new Date().toLocaleDateString() },
   { key: 'assessment_name', label: 'Assessment Name', example: 'GAD-7' },
   { key: 'program_name', label: 'Program Name', example: 'Stress Mastery' },

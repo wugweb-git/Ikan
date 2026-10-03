@@ -40,8 +40,8 @@ export interface LogEntry {
 }
 
 const DEFAULT_CONFIG: BrevoConfig = {
-  email: { enabled: false, senderName: 'iKan Health', senderEmail: 'noreply@ikanhealth.in' },
-  sms: { enabled: false, senderName: 'iKan' },
+  email: { enabled: false, senderName: 'iKAN Health', senderEmail: 'noreply@ikanhealth.in' },
+  sms: { enabled: false, senderName: 'iKAN' },
   whatsapp: { enabled: false, senderNumber: '', testTemplateName: '' },
 };
 
