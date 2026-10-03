@@ -21,9 +21,19 @@ This file is read by AI coding assistants. It documents the conventions, archite
 
 ---
 
-## Critical: production branch is NOT main
+## Production branch is `main`
 
-**The live site deploys from branch `equip-carry-forward`.** `main` has diverged and is not used for production. Never tell the user to push to `main` expecting a production deploy.
+**The live site deploys from `main`**, which is also the GitHub default.
+
+This changed on 2026-10-03. Production used to live on `equip-carry-forward`
+while `main` held a divergent, four-month-old snapshot that was never deployed —
+so the rule here used to be the opposite one, "production is NOT main". The
+restructure was merged into `equip-carry-forward`, that branch was renamed to
+`main` via GitHub's rename API (so old links redirect), and the stale `main`
+was deleted. `equip-carry-forward` no longer exists.
+
+If you are reading an older doc, a commit message or a changelog entry that
+names `equip-carry-forward`, it means what is now `main`.
 
 ### Deploy method — the guarded scripts
 
@@ -35,7 +45,7 @@ bash scripts/deploy-prod.sh    # frontend (Vercel)
 bash scripts/deploy-edge.sh    # edge function — run whenever a merge touches src/supabase/functions/server/
 ```
 
-Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `equip-carry-forward`,
+Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `main`,
 level with origin, with no uncommitted changes in what ships, and CI is green on that exact commit.
 
 **Why this is not optional.** `vercel deploy --prod` ships whatever branch is checked out, and a
@@ -468,7 +478,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 
 ## Don'ts
 
-- **Don't push to `main` expecting a production deploy.** Deploy with `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — never the Vercel or Supabase CLI directly.
+- **Don't expect a push to `main` to deploy by itself.** Pushing updates the branch; it does not ship. Deploy with `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — never the Vercel or Supabase CLI directly.
 - **Don't blindly bump major dependency versions.** React 18→19, Vite 6→8, Tailwind 4→next, etc. are breaking changes that need a dedicated session with full test coverage.
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.

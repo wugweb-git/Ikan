@@ -2,7 +2,7 @@
 
 Everything under `docs/` in one place, so nothing from the audits and module surveys gets lost or
 re-derived from scratch. This file is the shortcut — bookmark `docs/README.md` (or the GitHub path
-[`docs/`](https://github.com/wugweb-git/Ikan/tree/equip-carry-forward/docs)) rather than individual doc links,
+[`docs/`](https://github.com/wugweb-git/Ikan/tree/main/docs)) rather than individual doc links,
 since new sections keep getting added here.
 
 Most of what's here is a dated reading of the live database and the code at the time. Each doc says

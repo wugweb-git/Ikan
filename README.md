@@ -3,8 +3,11 @@
 [ikanhealth.in](https://ikanhealth.in) — an India-based mental wellness platform: self-guided
 assessments, structured "Equip" programs, mood journaling, and professional consultations.
 
-> **Production branch is `equip-carry-forward`, not `main`.** `main` has diverged and is not
-> deployed anywhere. See [Deploying](#deploying) before pushing anything you expect to go live.
+> **Production branch is `main`.** It is also the GitHub default. Pushing to it does not
+> deploy — see [Deploying](#deploying) before expecting anything to go live.
+>
+> Until 2026-10-03 production was `equip-carry-forward` and `main` was a stale snapshot;
+> that branch was renamed to `main` and the old one deleted.
 
 ## Stack
 
@@ -60,10 +63,10 @@ bash scripts/deploy-prod.sh    # frontend (Vercel)
 bash scripts/deploy-edge.sh    # edge function — whenever a change touches src/supabase/functions/server/
 ```
 
-Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `equip-carry-forward`,
+Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `main`,
 level with origin, with a clean tree, and CI is green on that exact commit. CI
 (`.github/workflows/ci.yml`) runs the tests, the typecheck/lint/contrast/raw-hex/a11y/boundary
-ratchets and a build on every pull request and on pushes to `equip-carry-forward` / `main`. After an edge deploy, smoke-test `/health`, `/assessments`,
+ratchets and a build on every pull request and on pushes to `main` / `main`. After an edge deploy, smoke-test `/health`, `/assessments`,
 `/equip/programs`, `/scales/moods`. Full steps: [`docs/BUILD.md`](docs/BUILD.md).
 
 ## Documentation

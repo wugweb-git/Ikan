@@ -20,7 +20,7 @@
 # Override (loud, for a genuine emergency only): DEPLOY_GUARD_SKIP_CI=1 skips
 # the CI check. There is no override for being on the wrong branch or behind.
 
-PROD_BRANCH="equip-carry-forward"
+PROD_BRANCH="main"
 
 deploy_guard() {
   local scope_paths=("$@")   # paths whose uncommitted changes would ship

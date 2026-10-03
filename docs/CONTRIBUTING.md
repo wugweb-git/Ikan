@@ -68,23 +68,22 @@ See `docs/PROJECT-STRUCTURE.md` for a full directory map (`src/{admin,app,site,s
 ## Branch model
 
 ```
-equip-carry-forward   ← PRODUCTION (deploys to ikanhealth.in)
-main                  ← diverged; not used for production deploys
-feature/<name>        ← branch from equip-carry-forward
+main                  ← PRODUCTION (deploys to ikanhealth.in), and the GitHub default
+feature/<name>        ← branch from main
 fix/<name>            ← bug fixes
 ```
 
-**The live production site deploys from `equip-carry-forward`**, not `main`. **Never deploy from `main`.** See `docs/BUILD.md` for the deploy scripts.
+**The live production site deploys from `main`.** Pushing to it does not deploy; use the guarded scripts. See `docs/BUILD.md`.
 
 ---
 
 ## Workflow
 
-1. Branch from `equip-carry-forward`
+1. Branch from `main`
 2. Make changes following the conventions below
 3. Run the gates locally: `npm test`, `npm run typecheck`, `npm run lint:ratchet`, `npm run lint:design`, `npm run lint:boundary`, `npm run build`. `npm run build` is `vite build` only — it does not typecheck
-4. Open a PR targeting `equip-carry-forward`; CI (`.github/workflows/ci.yml`) runs the same tests, ratchets and build and must be green
-5. After merge, deploy with `bash scripts/deploy-prod.sh` (frontend) and, if the merge touched `src/supabase/functions/server/`, `bash scripts/deploy-edge.sh` (edge function). Both refuse to run unless you're on `equip-carry-forward`, level with `origin`, clean, and CI is green
+4. Open a PR targeting `main`; CI (`.github/workflows/ci.yml`) runs the same tests, ratchets and build and must be green
+5. After merge, deploy with `bash scripts/deploy-prod.sh` (frontend) and, if the merge touched `src/supabase/functions/server/`, `bash scripts/deploy-edge.sh` (edge function). Both refuse to run unless you're on `main`, level with `origin`, clean, and CI is green
 
 ---
 

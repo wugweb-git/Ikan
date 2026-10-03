@@ -6,7 +6,7 @@
 
 | Component | Host | Branch / source |
 |-----------|------|----------------|
-| Frontend SPA | Vercel | `equip-carry-forward` |
+| Frontend SPA | Vercel | `main` |
 | Edge function API | Supabase (ap-south-1 Mumbai) | `make-server-cc205da9` |
 | Database | Supabase Postgres | `kv_store_cc205da9` |
 | Auth | Supabase Auth | project `jpfvoevxegnknxoqmwye` |
@@ -50,7 +50,7 @@ proves nothing about types — CI is the gate. The deploy scripts refuse to run 
 ## Deploy guard
 
 Both deploy scripts source `scripts/deploy-guard.sh`, which refuses to deploy unless you are on
-`equip-carry-forward`, level with `origin`, with a clean tree, and CI is green for that commit.
+`main`, level with `origin`, with a clean tree, and CI is green for that commit.
 
 ---
 
@@ -65,7 +65,7 @@ Authentication is stored in `~/.vercel/auth.json`; the `.vercel/` project link i
 
 - Team: `wugweb` (`team_8QvHezSgBzUD4STdma9lk5UF`)
 - Project: `ikan`
-- Production branch: `equip-carry-forward` (NOT `main`)
+- Production branch: `main` (NOT `main`)
 - Build output: `dist/`
 
 After deploy, visit https://ikanhealth.in and smoke-test: homepage, dashboard login, one assessment,

@@ -466,7 +466,7 @@ content/copy; corporate code and routes and any Supabase change are out of scope
 - **Push the branch; Vercel preview last** — blocked by the project's verified-commits requirement
   (commits are unsigned).
 - **Staging:** Vedanshu binds `staging.ikanhealth.in` → this branch in the Vercel dashboard;
-  `sandbox.ikanhealth.in` stays on `equip-carry-forward` as the prod-mirror. Verify each slice on
+  `sandbox.ikanhealth.in` stays on `main` as the prod-mirror. Verify each slice on
   staging before merging to ecf; prod goes through `scripts/deploy-prod.sh`, staging through
   Vercel's git integration, never the scripts.
 - **After merge, remove the branch from `vercel.json` → `git.deploymentEnabled`** (it is there now).

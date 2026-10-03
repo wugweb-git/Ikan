@@ -89,8 +89,7 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "equip-carry-forward": true,
-      "restructure/codebase-separation": true
+      "main": true
     }
   },
   "github": {
