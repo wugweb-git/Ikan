@@ -85,6 +85,7 @@
     "lint:rawhex": "node scripts/lint-raw-hex.mjs",
     "lint:a11y": "node scripts/lint-a11y-static.mjs",
     "lint:boundary": "node scripts/boundary-ratchet.mjs",
-    "lint:design": "npm run contrast:ratchet && npm run lint:rawhex && npm run lint:a11y"
+    "lint:design": "npm run contrast:ratchet && npm run lint:rawhex && npm run lint:a11y",
+    "lint:scriptpaths": "node scripts/check-script-paths.mjs"
   }
 }

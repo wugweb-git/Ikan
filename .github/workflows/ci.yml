@@ -38,6 +38,10 @@ jobs:
       - name: Lint (ratchet)
         run: npm run lint:ratchet
 
+      # A script naming a file that moved fails quietly; this makes it loud.
+      - name: Script paths exist
+        run: npm run lint:scriptpaths
+
       # A colour pair that fails AA is unreadable for some of the people using
       # it, and looks fine to whoever changed the token. Ratcheted like the rest.
       - name: Contrast (ratchet)

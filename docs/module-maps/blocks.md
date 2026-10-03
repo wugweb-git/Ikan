@@ -1,5 +1,14 @@
 # One primitive, six vocabularies, and nine blocks that render wrong
 
+> **Paths in this file predate the codebase separation (merged 2026-10-03).**
+> Findings are dated and quoted as they were written, so the paths are left as
+> they were rather than rewritten — a dated finding that names a path the
+> author never saw is not a record of anything. Current locations:
+> `src/components/…` is now `src/product/app/…`, `src/product/site/…`,
+> `src/admin/…` or `src/shared/…`; `src/components/wizard/types.ts` is
+> `src/admin/system/kv-audit/types.ts`; `src/components/admin/day-presets.test.ts`
+> no longer exists.
+
 *Module 4 of 5 · single source of truth · read-only survey · live database 2026-09-02*
 
 Everything a user reads, answers, rates or writes in this app is the same object — an `Activity`, called a Block in the admin. This is what that object is, who authors it, what draws it, the six competing vocabularies that describe it, the reconciliation of every term against 498 live blocks, and the nine blocks that are rendering as free-text boxes today because of a subtype nobody declared.
