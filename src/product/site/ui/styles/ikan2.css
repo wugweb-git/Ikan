@@ -80,6 +80,33 @@
   --alert-strong: oklch(0.52 0.17 25);
   --alert-foreground: oklch(0.99 0 0);
 
+  /* ── Error family ────────────────────────────────────────── */
+  --error: oklch(0.501 0.178 28.7);
+  --on-error: oklch(1 0 0);
+  --error-container: oklch(0.922 0.03 22.8);
+  --on-error-container: oklch(0.42 0.147 28.1);
+
+  /* ── Brand accents ───────────────────────────────────────────
+   * The four hues this site has always used, now carried upstream in oklch
+   * with an accessible `-ink` variant for text on a light ground. Added to
+   * iKAN 2 after the audit; these are the same colours as this repo's
+   * --ikan-brand-* and the aliases below keep both vocabularies working. */
+  --brand-teal: oklch(0.729 0.106 181.8);
+  --brand-teal-ink: oklch(0.485 0.064 170.8);
+  --brand-amber: oklch(0.782 0.151 74.7);
+  --brand-amber-ink: oklch(0.508 0.108 73.3);
+  --brand-coral: oklch(0.705 0.135 21.1);
+  --brand-coral-ink: oklch(0.511 0.141 26.5);
+  --brand-slate: oklch(0.674 0.111 269.3);
+  --brand-slate-ink: oklch(0.487 0.111 268.4);
+
+  /* ── Motion ──────────────────────────────────────────────── */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.26, 0.64, 1);
+
   /* ── Elevation ───────────────────────────────────────────── */
   --shadow-app: 0 0 45px oklch(0.2 0.01 255 / 0.08);
   --shadow-card: 0 10px 30px oklch(0.2 0.01 255 / 0.06);
@@ -96,6 +123,71 @@
   --color-border-default: var(--border);
   --color-primary-default: var(--foreground);
   --color-primary-on: var(--background);
+
+  /* Components across this site set `font-family: var(--font-family-base)`
+     inline. Aliasing it means anything opted into the theme picks up Manrope
+     without every one of those call sites being hunted down. */
+  --font-family-base: var(--font-sans);
+
+  /* this repo's brand names, resolved to the upstream hues */
+  --ikan-brand-teal: var(--brand-teal);
+  --ikan-brand-amber: var(--brand-amber);
+  --ikan-brand-coral: var(--brand-coral);
+  --ikan-brand-slate: var(--brand-slate);
+  --ikan-brand-teal-text: var(--brand-teal-ink);
+
+  /* ── The earlier vocabulary, still aliased ───────────────────
+   *
+   * The site's OWN components no longer need these: all 755 references across
+   * 36 files were rewritten to iKAN 2's token names directly, so `--card`,
+   * `--foreground` and `--muted-foreground` are what the markup says now.
+   *
+   * The block stays because shared components under `app/ui` — `PageHero`,
+   * `Pagination`, `progress` and others — render INSIDE themed site pages and
+   * still write the old names. They are used by the app surface too, where
+   * these names resolve from `globals.css` at `:root`, so renaming them there
+   * is a separate migration with a different blast radius.
+   *
+   * These are translations, not new values. Anything that cannot be said in
+   * iKAN 2's vocabulary is left to `globals.css` rather than invented here —
+   * the spacing scale and `--marquee-duration` are not redefined.
+   */
+  --color-accent-default: var(--secondary);
+  --color-accent-on: var(--foreground);
+  --color-chart-1: var(--brand-teal);
+  --color-chart-2: var(--brand-amber);
+  --color-chart-3: var(--brand-coral);
+
+  /* The grey ramp collapses onto three roles. It only ever held white, a
+     near-white wash and near-black. */
+  --grey-0: var(--background);
+  --grey-1: var(--secondary);
+  --grey-9: var(--foreground);
+
+  --ikan-brand-teal-bg: var(--calm-soft);
+  --ikan-brand-teal-dark: var(--brand-teal-ink);
+
+  /* Weights, as iKAN 2's roles use them. */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  /*
+   * The size scale, snapped onto iKAN 2's roles. Six of the nine already
+   * agreed to the pixel; the three that did not are the large end, where the
+   * old scale jumped 32 -> 48 and iKAN 2 steps 32 -> 34 -> 42. The jump is
+   * what made the old headings shout.
+   */
+  --text-xs: 12px;      /* label-md */
+  --text-sm: 14px;      /* label-lg, body-md */
+  --text-base: 16px;    /* body-lg */
+  --text-lg: 18px;      /* subhead */
+  --text-xl: 20px;      /* title-lg */
+  --text-2xl: 24px;     /* headline-sm */
+  --text-3xl: 32px;     /* headline-lg */
+  --text-4xl: 42px;     /* display-md, was 48px */
+
+  --line-height-sm: 1.4;
+  --line-height-md: 1.5;
 
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -258,11 +350,25 @@
  * a control. Naming it stops every button re-deciding its own size.
  */
 @utility type-action {
-  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 22px;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Body XL and Body S — the 17px and 13px orphans, named upstream after the
+   audit that flagged them. 17 is a page standfirst, 13 a dense card body. */
+@utility type-body-xl {
+  font-size: 17px;
+  line-height: 28px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+@utility type-body-sm {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: normal;
 }
 
 /*
@@ -418,4 +524,558 @@
       letter-spacing: -0.01em;
     }
   }
+}
+
+/*
+ * PROSE — article and legal text rendered as plain HTML.
+ *
+ * Transcribed from iKAN 2's `.prose-ikan`, including its own layering: these
+ * sit in `@layer base` so an explicit `type-*` class on a prose child still
+ * wins. Upstream learned that the hard way — before the fix, `.prose-ikan h2`
+ * beat `.type-headline-lg` and a heading that asked for 32px silently rendered
+ * at 24.
+ *
+ * Each level is one of the roles, so the scale is set in one place: h2 is
+ * headline-sm, h3 is title-md, everything else is body-lg.
+ */
+@layer base {
+  .prose-ikan {
+    font-size: 16px;
+    line-height: 26px;
+    color: color-mix(in oklab, var(--foreground) 88%, transparent);
+  }
+  .prose-ikan > * + * {
+    margin-top: 1em;
+  }
+  .prose-ikan > :first-child {
+    margin-top: 0;
+  }
+  .prose-ikan h2 {
+    margin-top: 1.9em;
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .prose-ikan h3 {
+    margin-top: 1.6em;
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--foreground);
+  }
+  .prose-ikan strong {
+    font-weight: 650;
+    color: var(--foreground);
+  }
+  .prose-ikan ul,
+  .prose-ikan ol {
+    padding-left: 1.3em;
+  }
+  .prose-ikan ul {
+    list-style: disc;
+  }
+  .prose-ikan ol {
+    list-style: decimal;
+  }
+  .prose-ikan li + li {
+    margin-top: 0.4em;
+  }
+  .prose-ikan li::marker {
+    color: var(--muted-foreground);
+  }
+  .prose-ikan a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* The legal HTML in this repo was authored for a Tailwind-classed container
+     and carries utility classes the site no longer loads on these pages. The
+     divs it wraps sections in must not inherit card chrome from them. */
+  .prose-ikan div {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/*
+ * PROSE — the two levels upstream does not define.
+ *
+ * `.prose-ikan` styles h2 and h3 and stops, so an h4 inside an article falls
+ * through to the element default, which is `title-lg` at 22px — LARGER than the
+ * h3 above it. The privacy policy has exactly this shape ("Information We
+ * Collect" as h3, "Personal Information" as h4) and rendered inverted.
+ *
+ * h4 is set in the body face at body-lg with the strong weight: smaller than
+ * h3, and told apart from body copy by weight rather than size, which is the
+ * same trick h3 uses against the body. h5/h6 follow it down.
+ *
+ * This is latent upstream too — iKAN 2's own prose has no h4 rule.
+ */
+@layer base {
+  .prose-ikan h4 {
+    margin-top: 1.4em;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 650;
+    letter-spacing: normal;
+    color: var(--foreground);
+  }
+
+  .prose-ikan h5,
+  .prose-ikan h6 {
+    margin-top: 1.2em;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 650;
+    letter-spacing: normal;
+    color: var(--foreground);
+  }
+
+  /* The emoji in these headings sat in a span with a margin utility, which went
+     when the authoring classes were stripped. Restore the gap structurally. */
+  .prose-ikan :is(h2, h3, h4) > span:first-child {
+    margin-right: 0.4em;
+  }
+
+  /* The policy markup nests sections in bare divs; without this the blocks run
+     together, because `> * + *` only reaches direct children. */
+  .prose-ikan div > * + * {
+    margin-top: 0.9em;
+  }
+}
+
+/*
+ * CONTAINERS — the app column and the reading measure.
+ *
+ * Transcribed from iKAN 2, including the fix it made after the breakpoint
+ * audit: between 640 and 1023 the column used to stay at 100%, so a 1023px
+ * window ran 16/26 body at roughly 125 characters a line against a 45-75
+ * ideal. There is now a 36rem step at 640.
+ *
+ * Two measures, because they are two jobs. `max-w-app` is 30rem above 1024 —
+ * the app presenting as a phone on a canvas, which is the product's own idea of
+ * itself. `max-w-read` is 38rem (~76 characters) for anything long-form:
+ * articles, legal, About, FAQ. Below 1024 they are identical.
+ *
+ * The `display-mode` exceptions matter on this site too: the Android build
+ * loads these same pages in a WebView, and an installed app should fill the
+ * device like a native one rather than sit in a 36rem column.
+ */
+@utility max-w-app {
+  max-width: 100%;
+  @media (min-width: 640px) {
+    max-width: 36rem;
+  }
+  @media (min-width: 1024px) {
+    max-width: 30rem;
+  }
+  @media (display-mode: standalone) and (max-width: 1023px) {
+    max-width: 100%;
+  }
+  @media (display-mode: fullscreen) and (max-width: 1023px) {
+    max-width: 100%;
+  }
+}
+
+@utility max-w-read {
+  max-width: 100%;
+  @media (min-width: 640px) {
+    max-width: 36rem;
+  }
+  @media (min-width: 1024px) {
+    max-width: 38rem;
+  }
+  @media (display-mode: standalone) and (max-width: 1023px) {
+    max-width: 100%;
+  }
+  @media (display-mode: fullscreen) and (max-width: 1023px) {
+    max-width: 100%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+ * iKAN 2 component utilities
+ *
+ * Copied from `ikan2/src/styles.css`, where they are declared with Tailwind's
+ * `@utility`. They are written here as ordinary class rules scoped to
+ * `.ikan2-theme` rather than as `@utility`, for the reason the rest of this
+ * file is scoped that way: `@utility` compiles into the UTILITIES LAYER, which
+ * loses to every unlayered rule in this repo's `globals.css`. A plain scoped
+ * class has the specificity to win and does not restyle admin or the app.
+ *
+ * Bodies are byte-for-byte iKAN 2's apart from the `.ikan2-theme ` prefix and
+ * the `&`-nesting being written out. Do not "improve" them here — they are a
+ * copy, and a copy that drifts is worse than no copy.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .surface {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .surface-wash {
+  background: radial-gradient(
+    60% 70% at 50% 58%,
+    color-mix(in oklab, currentColor 14%, transparent),
+    transparent 72%
+  );
+}
+
+.ikan2-theme .tile {
+  transition:
+    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.25s ease;
+}
+
+.ikan2-theme .tile:active {
+  transform: scale(0.97);
+}
+
+.ikan2-theme .eyebrow {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .insight-card {
+  width: 155px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  padding: 15px;
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .insight-card svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ikan2-theme .insight-card p {
+  margin-top: 18px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .insight-card strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+
+.ikan2-theme .insight-card span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .semantic-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ikan2-theme .metric-pill {
+  border-radius: 12px;
+  background: var(--secondary);
+  padding: 8px 10px;
+}
+
+.ikan2-theme .metric-pill span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .program-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  background: linear-gradient(120deg, var(--foreground), oklch(0.29 0.018 255));
+  color: var(--background);
+}
+
+.ikan2-theme .program-band span {
+  display: block;
+  font-size: 10px;
+  color: oklch(0.83 0.01 250);
+}
+
+.ikan2-theme .program-band strong {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.ikan2-theme .read-card {
+  position: relative;
+  display: block;
+  width: 210px;
+  height: 152px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .read-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ikan2-theme .read-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 14px;
+  color: var(--background);
+}
+
+.ikan2-theme .read-body strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.ikan2-theme .read-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 0.18);
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  backdrop-filter: blur(6px);
+}
+
+.ikan2-theme .read-meta {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+/*
+ * The scroll reveal. `reveal` is the resting state and `reveal-in` is added by
+ * the `Reveal` component once an IntersectionObserver sees the element, which
+ * is exactly how iKAN 2 drives it.
+ */
+.ikan2-theme .reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  transition:
+    opacity 0.6s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.6s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.ikan2-theme .reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+ * Someone who has asked their system not to animate gets the content, not a
+ * blank screen: the resting state is the revealed one and nothing transitions.
+ * iKAN 2 does not carry this guard; it is the one deliberate addition.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ikan2-theme .reveal,
+  .ikan2-theme .reveal-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+ * TYPE ROLES AS REAL CLASSES
+ *
+ * These are the same roles declared above with `@utility`, repeated here as
+ * ordinary classes scoped to `.ikan2-theme`.
+ *
+ * WHY BOTH. `@utility` compiles into Tailwind's UTILITIES LAYER, and an
+ * unlayered rule beats any layer. Every `type-*` class in this repo was
+ * therefore silently doing nothing wherever an unlayered rule in `globals.css`
+ * set a font-size on the same element — the nav wordmark carrying
+ * `className="type-subhead"` rendered at the inherited 16px/400 instead of
+ * 18px/600, and nothing in the markup said why.
+ *
+ * Scoped to `.ikan2-theme` these are specificity 0,2,0 and win. A component
+ * that wants a role must carry `ikan2-theme` on itself or an ancestor.
+ * Generated from iKAN 2's own declarations; do not hand-edit the values.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .type-display-lg {
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 58px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ikan2-theme .type-display-md {
+  font-family: var(--font-display);
+  font-size: 42px;
+  line-height: 48px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.ikan2-theme .type-display-sm {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ikan2-theme .type-headline-lg {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ikan2-theme .type-headline-md {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ikan2-theme .type-headline-sm {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  /* declared, not omitted: letter-spacing inherits, so a role that
+  leaves it out picks up whatever an ancestor set. */
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-subhead {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-title-lg {
+  font-family: var(--font-display);
+  /* 22, which is M3's own Title Large and the size the screens settled on. It was briefly 20
+  * to put distance between this and Headline S (24) — but 20 and 22 were both already in
+  * use, 2px apart, doing the same job, so that created a third near-duplicate instead of
+  * removing one. They are now one role at 22.
+  *
+  * 600, not M3's 400/500: of the 18 call sites, 17 overrode the weight to semibold. When
+  * every use fights the role, the role is wrong. The one exception — the article standfirst
+  * — now carries font-medium instead, so the override is on the rare case, not the common
+  * one. */
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-title-md {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ikan2-theme .type-body {
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-body-lg {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+  /* declared, not omitted: letter-spacing inherits, so a role that
+  leaves it out picks up whatever an ancestor set. */
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-body-md {
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+  /* declared, not omitted: letter-spacing inherits, so a role that
+  leaves it out picks up whatever an ancestor set. */
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-body-xl {
+  font-size: 17px;
+  line-height: 28px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-body-sm {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-action {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ikan2-theme .type-label-lg {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  /* declared, not omitted: letter-spacing inherits, so a role that
+  leaves it out picks up whatever an ancestor set. */
+  letter-spacing: normal;
+}
+
+.ikan2-theme .type-label-md {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
