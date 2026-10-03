@@ -1358,6 +1358,22 @@ html {
   }
 }
 
+/*
+ * Clear the fixed band for a page that starts with its own content rather than
+ * a full-bleed hero. A hero can sit under the band because its top is image;
+ * a heading cannot, and the About page's h1 was landing behind it. Same two
+ * heights as the `scroll-padding-top` rules above — one band, one measurement.
+ */
+.site-page-below-nav {
+  padding-top: 112px;
+}
+
+@media (max-width: 768px) {
+  .site-page-below-nav {
+    padding-top: 84px;
+  }
+}
+
 .ikan-capsule-nav {
   display: flex;
   align-items: center;
@@ -1546,4 +1562,1473 @@ input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
   font-size: max(16px, 1em);
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * ABOUT PAGE
+ *
+ * One page, three layouts. The design comes from app.ikanhealth.in/about,
+ * which is a Capacitor app and therefore has ONLY a phone layout — a ~420px
+ * column with no breakpoints at all. Lifting that verbatim gave a website a
+ * 640px ribbon of content floating in an empty 1440px viewport, which is the
+ * bug this block fixes.
+ *
+ * So the app's rhythm — soft cards, stacked sections, the dark Mission card
+ * against the teal Vision one — is kept, and the GRID is allowed to breathe:
+ *
+ *   mobile   < 768    one column, edge to edge
+ *   tablet   >= 768   760px sheet, pairs where pairs read better
+ *   desktop  >= 1024  1080px sheet, the story beside its picture, 4-up values
+ *
+ * Colours are tokens throughout; `lint:rawhex` counts literals in here too.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* Longhand on purpose: the `padding` shorthand would reset the padding-top
+   that `.site-page-below-nav` sets to clear the fixed navigation band, and the
+   h1 would render underneath it. */
+.about-page {
+  background: var(--color-bg-page);
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 56px;
+}
+
+.about-sheet {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: 28px;
+  padding: 36px 0 44px;
+}
+
+.about-section {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.about-title {
+
+
+  color: var(--color-text-primary);
+}
+
+.about-subtitle {
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 28px;
+  color: var(--color-text-muted);
+}
+
+.about-art {
+  margin: 24px 24px 0;
+  height: 176px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+}
+
+.about-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-h2 {
+
+  color: var(--color-text-primary);
+}
+
+.about-story-heading {
+  margin-top: 4px;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-prose {
+  margin-top: 12px;
+  display: grid;
+  gap: 16px;
+}
+
+.about-prose p {
+  font-size: 16px;
+  line-height: 28px;
+  color: var(--color-text-primary);
+}
+
+/* Mission / Vision */
+.about-mv {
+  margin-top: 32px;
+  display: grid;
+  gap: 12px;
+}
+
+.about-mv-card {
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.about-mv-card--dark {
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+}
+
+.about-mv-card--calm {
+  background: var(--ikan-brand-teal-bg);
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-mv-label {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.about-mv-title {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.about-mv-body {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 24px;
+  opacity: 0.85;
+}
+
+/* Values */
+.about-values {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.about-value {
+  border-radius: 20px;
+  padding: 16px;
+  background: var(--color-bg-muted);
+}
+
+.about-value-title {
+  margin-top: 12px;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-value-body {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-muted);
+}
+
+/* How it works */
+.about-steps {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.about-step {
+  display: flex;
+  gap: 16px;
+}
+
+.about-step-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-step-dot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+  flex-shrink: 0;
+}
+
+.about-step-line {
+  margin-top: 4px;
+  width: 1px;
+  flex: 1;
+  background: var(--color-border-light);
+}
+
+.about-step-title {
+  display: block;
+
+
+  color: var(--color-text-primary);
+}
+
+.about-step-tagline {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-step-body {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--color-text-muted);
+}
+
+.about-cta {
+  margin-top: 16px;
+  display: flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--color-primary-default);
+  color: var(--color-primary-on);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Who is it for */
+.about-who {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.about-who-card {
+  border-radius: 24px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-card);
+  padding: 16px;
+}
+
+.about-who-title {
+
+  color: var(--color-text-primary);
+}
+
+.about-who-tagline {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-who-body {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--color-text-muted);
+}
+
+
+.about-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-bg-muted);
+}
+
+/* ── Tablet ───────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .about-page {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 72px;
+  }
+
+  .about-sheet {
+    max-width: 760px;
+    padding: 48px 0 56px;
+    border-radius: 32px;
+  }
+
+  .about-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .about-art {
+    margin: 32px 40px 0;
+    height: 260px;
+  }
+
+  .about-title {}
+
+  .about-subtitle {
+    font-size: 18px;
+  }
+
+
+  /* Two statements side by side — they are a pair, and at this width they
+     finally fit as one. */
+  .about-mv {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-who {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  
+}
+
+/* ── Desktop ──────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .about-sheet {
+    max-width: 1080px;
+    padding: 64px 0 72px;
+    border-radius: 36px;
+  }
+
+  .about-section {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+
+  .about-title {}
+
+  .about-subtitle {
+    font-size: 19px;
+    line-height: 30px;
+  }
+
+  /* The story and its picture stop stacking: at this width the paragraph
+     measure would otherwise run past a comfortable line length. */
+  .about-story-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .about-art {
+    margin: 0;
+    height: 100%;
+    min-height: 320px;
+    border-radius: 24px;
+  }
+
+  .about-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-who {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .about-steps {
+    gap: 20px;
+  }
+
+  /* A full-width pill across 1080px is a very long target; keep it to the
+     width of the thing it follows. */
+  .about-cta {
+    width: auto;
+    min-width: 240px;
+    padding: 0 32px;
+  }
+}
+
+/*
+ * ABOUT PAGE — iKAN 2's own palette and display face, scoped.
+ *
+ * The two pages are the same page, so they should not look like two brands.
+ * iKAN 2 is Tailwind v4 + shadcn on an oklch ramp with Sora for display type;
+ * this site is on a hex ramp with Inter. Rather than restyle the whole site to
+ * match (which would touch every page), the app's tokens are REDECLARED INSIDE
+ * `.about-page`. Custom properties inherit, so every `.about-*` rule above
+ * resolves against these without any of them changing, and nothing outside
+ * this page is affected.
+ *
+ * Values are copied from iKAN 2's `src/styles.css` verbatim — the oklch ones
+ * from its `:root`, the three greens from `src/routes/about.tsx`, which
+ * hard-codes them. If that file's palette moves, these move with it.
+ *
+ * Light only, deliberately: the marketing site has no dark mode, so iKAN 2's
+ * `.dark` block is not carried over.
+ */
+.about-page {
+  --color-text-primary: oklch(0.16 0.012 255);   /* --foreground */
+  --color-text-muted: oklch(0.5 0.018 255);      /* --muted-foreground */
+  --color-bg-card: oklch(0.995 0.002 240);       /* --background */
+  --color-bg-muted: oklch(0.955 0.006 250);      /* --secondary */
+  --color-border-light: oklch(0.9 0.009 250);    /* --border */
+  --color-primary-default: oklch(0.16 0.012 255);
+  --color-primary-on: oklch(0.995 0.002 240);
+
+  /* about.tsx literals: the eyebrow/tagline green, and the Vision card pair. */
+  --ikan-brand-teal-text: #2B634D;
+  --about-calm-bg: #DFF0E8;
+  --about-calm-fg: #173D2F;
+
+  /* The sheet needs to read as a sheet, so the backdrop goes one step down. */
+  background: oklch(0.96 0.005 250);
+  font-family: var(--font-sans, 'Inter', ui-sans-serif, system-ui, sans-serif);
+}
+
+.about-mv-card--calm {
+  background: var(--about-calm-bg);
+  color: var(--about-calm-fg);
+}
+
+/* Sora on the two display items that carry no type-* role of their own.
+   Everything else takes its face from the ported Material 3 scale. */
+.about-title,
+.about-mv-title {
+  font-family: var(--font-display);
+}
+
+/*
+ * The story picture appears once. Below 1024 it is a band under the hero;
+ * from 1024 it becomes the story's second column. Both nodes are rendered and
+ * one is hidden, because the image is the same asset either way and moving it
+ * in the DOM would cost a second fetch.
+ */
+.about-art-desktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .about-art-mobile {
+    display: none;
+  }
+
+  .about-art-desktop {
+    display: block;
+    height: 100%;
+  }
+}
+
+/*
+ * Step photographs. iKAN 2's steps are icon-only because a phone column has no
+ * width to spare; the site keeps the pictures the old HowItWorksSection used,
+ * from 768px up where there is room for them beside the text. Below that the
+ * step is icon + text exactly as in the app.
+ */
+.about-step-text {
+  padding-bottom: 8px;
+  min-width: 0;
+}
+
+.about-step-photo {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .about-step {
+    align-items: flex-start;
+  }
+
+  .about-step-photo {
+    display: block;
+    flex: 0 0 132px;
+    height: 96px;
+    margin-left: auto;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--color-bg-muted);
+  }
+
+  .about-step-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: 200px;
+    height: 124px;
+    border-radius: 20px;
+  }
+}
+
+/*
+ * Section breakers. The app separates sections with whitespace alone, which
+ * works in a 420px column where only one section is ever in view. On a 1080px
+ * sheet the page ran together, so each major block is introduced by a hairline
+ * inset to the same gutter as the text.
+ */
+.about-divider {
+  height: 1px;
+  margin: 40px 24px 0;
+  background: var(--color-border-light);
+}
+
+@media (min-width: 768px) {
+  .about-divider {
+    margin: 48px 40px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-divider {
+    margin: 56px 64px 0;
+  }
+}
+
+/* A section that opens straight after a breaker does not also need its own
+   top margin — the rule already carries the space. */
+.about-divider + .about-section {
+  margin-top: 32px !important;
+}
+
+/*
+ * ABOUT PAGE — values read off the live app, not guessed.
+ *
+ * Taken from `getComputedStyle` on app.ikanhealth.in/about (3 Oct 2026). Three
+ * of these corrected a hand-mapping that looked right and was not:
+ *
+ *  - the body face is MANROPE, not Inter. Sora is display only.
+ *  - story paragraphs are the foreground at 85% alpha, not solid.
+ *  - the backdrop is oklch(0.955 0.006 250) — the app's `--secondary`, one
+ *    step darker than the sheet rather than the site's grey.
+ *
+ * h1 metrics confirmed exactly: 34px / 600 / 39.1px / -0.34px tracking.
+ */
+/* Set the body face once and let it inherit. Naming the child elements here
+   beat the ported `type-*` roles, because @utility compiles into Tailwind's
+   utilities layer and unlayered rules outrank it — so `type-title-md` asked
+   for Sora and silently got Manrope. An inherited value loses to any direct
+   rule, which is what the roles need. */
+.about-page {
+  font-family: var(--font-sans);
+}
+
+.about-page {
+  background: oklch(0.955 0.006 250);
+}
+
+.about-eyebrow,
+.about-who-tagline,
+.about-step-tagline {
+  line-height: 1.5;
+}
+
+
+/*
+ * Who-is-it-for keeps its photographs. The app gives each card an illustration
+ * header from its own `Art` set, which this repo does not have; the site's own
+ * BenefitsSection images fill the same slot and are already the brand's.
+ */
+.about-who-photo {
+  display: block;
+  height: 120px;
+  margin: -16px -16px 12px;
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+  background: var(--color-bg-muted);
+}
+
+.about-who-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-who-card {
+  overflow: hidden;
+}
+
+/*
+ * iKAN 2's design tokens, copied verbatim from its `src/styles.css` :root.
+ *
+ * Declared under their OWN names so this block is a straight transcription you
+ * can diff against the source, then mapped onto the site's names underneath.
+ * Two corrections to the earlier hand-mapping, both from reading the source
+ * rather than sampling the rendered page:
+ *
+ *  - `--card` is pure white (oklch(1 0 0)), not `--background` (0.995). The
+ *    sheet was very slightly grey against its own backdrop.
+ *  - the app's surfaces carry `--shadow-card`, not a 1px border. That soft
+ *    lift is most of why the app reads calmer than a bordered box.
+ *
+ * `--canvas` is the app's name for the backdrop behind a sheet, which is the
+ * same value as `--secondary`.
+ */
+.about-page {
+  --radius: 0.75rem;
+  --background: oklch(0.995 0.002 240);
+  --foreground: oklch(0.16 0.012 255);
+  --canvas: oklch(0.955 0.006 250);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.18 0.012 255);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.955 0.006 250);
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.5 0.018 255);
+  --border: oklch(0.9 0.009 250);
+  --calm: oklch(0.76 0.095 165);
+  --calm-soft: oklch(0.95 0.035 165);
+  --calm-strong: oklch(0.47 0.095 165);
+  --shadow-card: 0 10px 30px oklch(0.2 0.01 255 / 0.06);
+  --shadow-app: 0 0 45px oklch(0.2 0.01 255 / 0.08);
+
+  /* the site's names, pointed at the app's values */
+  --color-text-primary: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-bg-card: var(--card);
+  --color-bg-muted: var(--secondary);
+  --color-border-light: var(--border);
+  --color-primary-default: var(--foreground);
+  --color-primary-on: var(--background);
+
+  background: var(--canvas);
+}
+
+/* Lifted, not outlined — as in the app. */
+.about-sheet {
+  background: var(--card);
+  border: none;
+  box-shadow: var(--shadow-card);
+}
+
+.about-who-card {
+  border: none;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+
+/*
+ * BANDS — the page is no longer one white container.
+ *
+ * Stacking every section inside a single sheet made a 3000px white box, with
+ * nothing to tell a reader where one idea ended and the next began. The page
+ * now alternates full-width bands, white against the canvas, so the breaks are
+ * structural rather than a hairline drawn across a continuous surface.
+ *
+ * Each band is full-bleed; an inner container holds the measure.
+ */
+.about-sheet {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.about-page {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.about-band {
+  padding: 48px 0;
+}
+
+.about-band--white {
+  background: var(--card);
+}
+
+.about-band--canvas {
+  background: var(--canvas);
+}
+
+.about-band__inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .about-band {
+    padding: 64px 0;
+  }
+
+  .about-band__inner {
+    max-width: 760px;
+    padding: 0 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-band {
+    padding: 80px 0;
+  }
+
+  .about-band__inner {
+    max-width: 1080px;
+    padding: 0 64px;
+  }
+}
+
+/* Sections inside a band no longer carry their own gutters or top margins —
+   the band provides both. */
+.about-band .about-section {
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 0 !important;
+}
+
+.about-band .about-art {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.about-divider {
+  display: none;
+}
+
+/*
+ * MOTION — carried over from the sections this page replaced.
+ *
+ * The original's one gesture was a hover lift: translateY(-6px) over 0.35s
+ * ease, on cards and on the primary button. Scroll reveal is new, and is kept
+ * to the same small vocabulary — 12px and a fade, nothing that moves the
+ * layout or draws attention to itself on a page about mental health.
+ */
+.about-lift {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.about-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-app);
+}
+
+.about-cta {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.about-cta:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* The photograph eases in its frame rather than the frame moving. */
+.about-who-photo img,
+.about-step-photo img {
+  transition: transform 0.35s ease;
+}
+
+.about-lift:hover .about-who-photo img,
+.about-step:hover .about-step-photo img {
+  transform: scale(1.04);
+}
+
+.about-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.about-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Anyone who has asked for less movement gets none of it, and nothing is
+   hidden if the observer never fires. */
+@media (prefers-reduced-motion: reduce) {
+  .about-lift,
+  .about-cta,
+  .about-reveal,
+  .about-who-photo img,
+  .about-step-photo img {
+    transition: none;
+  }
+
+  .about-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  .about-lift:hover {
+    transform: none;
+  }
+}
+
+/* The hero's eyebrow is the page's name; the h1 is its statement. Give it a
+   little more air than a section eyebrow. */
+.about-band--canvas .about-eyebrow {
+  margin-bottom: 8px;
+}
+
+
+.about-art-mobile {
+  margin-top: 24px;
+}
+
+@media (min-width: 1024px) {
+  .about-art-mobile {
+    display: none;
+  }
+}
+
+
+/*
+ * HOW IT WORKS — a path, not three stranded rows.
+ *
+ * `margin-left: auto` pushed each photograph to the far right edge, so at
+ * 1080px a wide empty gutter sat between a step's words and its picture and
+ * the two stopped reading as one thing. The connector was also invisible —
+ * a 1px hairline the same colour as the page — so three dots floated with
+ * nothing joining them, which is the one relationship this section exists to
+ * show. These steps really are a sequence, so the rail should look like one.
+ *
+ * The photograph now sits beside the text it belongs to, the measure is capped
+ * so the two stay adjacent at any width, and the rail is a continuous 2px line
+ * running the height of the list.
+ */
+.about-steps {
+  position: relative;
+}
+
+.about-step {
+  align-items: stretch;
+  gap: 20px;
+}
+
+.about-step-rail {
+  flex: 0 0 44px;
+}
+
+.about-step-line {
+  width: 2px;
+  background: var(--border);
+  margin-top: 8px;
+  border-radius: 2px;
+}
+
+.about-step-text {
+  flex: 1 1 auto;
+  max-width: 56ch;
+  padding-bottom: 28px;
+}
+
+@media (min-width: 768px) {
+  .about-step-photo {
+    flex: 0 0 240px;
+    height: 150px;
+    align-self: center;
+    margin-left: 24px;
+    border-radius: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: 300px;
+    height: 180px;
+    border-radius: 24px;
+  }
+
+  /* The last step has no line below it, so its text needs no room for one. */
+  .about-step:last-child .about-step-text {
+    padding-bottom: 0;
+  }
+}
+
+/*
+ * HOW IT WORKS — a process strip, redesigned.
+ *
+ * WHAT WAS WRONG. A vertical timeline with a thumbnail hanging off the right
+ * is the generic answer to "three steps", and it wasted the one asset that
+ * could carry the section: at 300px the photographs were decoration beside the
+ * text rather than the thing you look at. The icons said nothing the titles did
+ * not already say — a clipboard beside "Take an Assessment" is a picture of the
+ * word.
+ *
+ * WHAT IT IS NOW. Three stations across the page, with a spine running through
+ * their numbers. The numbering is not ornament: these steps are a real sequence
+ * — you cannot connect with a professional about a result you have not got —
+ * so the order is information the reader needs, and numbering it is honest.
+ * The spine makes the three a single path rather than three loose cards, which
+ * is what distinguishes this from the Who-is-it-for row above it.
+ *
+ * No card chrome. Borders and shadows here would make this a third row of
+ * cards; it is a process, so the photographs sit on the band directly.
+ */
+.about-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  margin-top: 28px;
+  list-style: none;
+  padding: 0;
+  position: relative;
+}
+
+.about-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'marker title'
+    'photo  photo'
+    'tag    tag'
+    'body   body';
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 0;
+  position: relative;
+}
+
+.about-step-marker {
+  grid-area: marker;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.about-step-photo {
+  grid-area: photo;
+  display: block;
+  margin-top: 16px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.about-step-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-step-title {
+  grid-area: title;
+}
+
+.about-step-tagline {
+  grid-area: tag;
+  margin-top: 14px;
+}
+
+.about-step-body {
+  grid-area: body;
+  margin-top: 6px;
+}
+
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  /* The spine. Drawn behind the markers, inset by half a column at each end so
+     it starts and stops at the first and last station rather than running off
+     into the margins. */
+  .about-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: calc(16.666% + 20px);
+    right: calc(16.666% + 20px);
+    height: 2px;
+    background: var(--border);
+  }
+
+  .about-step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'marker'
+      'photo'
+      'title'
+      'tag'
+      'body';
+    align-items: start;
+    row-gap: 0;
+  }
+
+  .about-step-marker {
+    width: 40px;
+    height: 40px;
+  }
+
+  .about-step-title {
+    margin-top: 14px;
+  }
+
+  .about-step-tagline {
+    margin-top: 2px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-steps {
+    gap: 36px;
+  }
+
+  .about-step-photo {
+    border-radius: 28px;
+  }
+}
+
+
+/*
+ * HOW IT WORKS — align the three columns to shared baselines.
+ *
+ * "Connect with a Professional" wraps to two lines where the other two titles
+ * do not, so every row below it — tagline, body — sat a line lower than its
+ * neighbours and the strip lost its horizontal reading. `subgrid` hands the
+ * parent's rows to each step, so markers line up with markers, photos with
+ * photos and taglines with taglines however the text wraps.
+ *
+ * DOM order is marker, photo, title, tagline, body — five rows — so the named
+ * areas are dropped here and source order does the work.
+ */
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-rows: auto auto auto auto auto;
+  }
+
+  .about-step {
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    grid-template-areas: none;
+  }
+
+  .about-step > * {
+    grid-area: auto;
+  }
+}
+
+/*
+ * THREE ITEMS NEVER GO IN TWO COLUMNS.
+ *
+ * Both of these sections hold exactly three things, and both were being laid
+ * out two-up at tablet — which leaves one stranded on a second row beside an
+ * empty cell. It is the same fault the builders row had. Three items get three
+ * columns or one; never two.
+ */
+@media (min-width: 768px) {
+  .about-who {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+/*
+ * HOW IT WORKS — the one inverted band, and steps that hold together.
+ *
+ * THE PROBLEM. By this point the page is four pale grids in a row — values,
+ * these steps, who-is-it-for, the team — and this section had no reason to look
+ * different from any of them. Its spine also touched nothing: a hairline
+ * floating in the gap between markers, reading as a stray rule rather than a
+ * path. And a step was five loose pieces — marker, gap, photo, gap, text —
+ * with nothing binding them into one object.
+ *
+ * THE MOVE. This is the only section on the page about the READER's journey
+ * rather than about iKan, so it gets its own ground: the single inverted band.
+ * The dark Mission card already establishes near-black as part of the language,
+ * so this extends the page's vocabulary rather than importing a new one, and it
+ * gives a long pale page a place to breathe.
+ *
+ * The numeral now sits ON its photograph, anchored to the corner, and the
+ * thread runs behind the photos at the numeral's height — so it enters and
+ * leaves each step instead of hovering between them. One step, one object.
+ */
+.about-band--invert {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.about-band--invert .about-h2 {
+  color: var(--background);
+}
+
+.about-band--invert .about-step-title {
+  color: var(--background);
+}
+
+.about-band--invert .about-step-body {
+  color: oklch(0.995 0.002 240 / 0.66);
+}
+
+/* The accent has to carry on a dark ground, so the step taglines move from the
+   deep teal text colour to --calm, which is the light end of the same family. */
+.about-band--invert .about-step-tagline {
+  color: var(--calm);
+}
+
+.about-steps {
+  margin-top: 32px;
+}
+
+/* The thread, behind the photographs at the numerals' height. */
+@media (min-width: 768px) {
+  .about-steps::before {
+    top: 36px;
+    left: calc(16.666% + 28px);
+    right: calc(16.666% + 28px);
+    background: oklch(0.995 0.002 240 / 0.22);
+  }
+}
+
+.about-step-photo {
+  position: relative;
+  margin-top: 0;
+  order: -1;
+}
+
+.about-step-marker {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  background: var(--background);
+  color: var(--foreground);
+  z-index: 2;
+  box-shadow: 0 2px 10px oklch(0.16 0.012 255 / 0.3);
+}
+
+/* The marker is positioned against the photo, so the photo has to be the
+   positioned ancestor and the marker must not also occupy a grid row. */
+.about-step {
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .about-steps {
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .about-step {
+    grid-row: span 4;
+  }
+}
+
+.about-band--invert .about-cta {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.about-band--invert .about-cta:hover {
+  opacity: 0.88;
+}
+
+/*
+ * HOW IT WORKS — alignment corrections.
+ *
+ * Measured, not eyeballed. Section headings and step titles all sit on 151px;
+ * the photographs were starting at 175 and the numerals at 165, so a step's
+ * picture was inset from its own words and the numeral floated ten pixels off
+ * the corner it was supposed to be pinned to.
+ *
+ * The cause was `margin-left: 24px` and a fixed `flex-basis`, left over from
+ * the earlier layout where the photo sat to the RIGHT of the text. In a column
+ * the photo should simply fill its column.
+ *
+ * The thread now spans the full grid and passes BEHIND the photographs, which
+ * are opaque, so it shows only in the two gaps. That removes the percentage
+ * arithmetic that was trying to guess where the first and last markers were,
+ * and it stays correct at any column count.
+ */
+@media (min-width: 768px) {
+  .about-step-photo {
+    flex: initial;
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .about-steps::before {
+    top: 31px;
+    left: 0;
+    right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .about-step-photo {
+    flex-basis: auto;
+    height: auto;
+  }
+}
+
+/* The photo covers the thread; the numeral sits above both. */
+.about-step-photo {
+  z-index: 1;
+}
+
+.about-step-marker {
+  z-index: 2;
+}
+
+/*
+ * The numeral is absolutely positioned on the photograph now, so the step no
+ * longer needs a column reserved for it. Below 768 that leftover column was
+ * still contributing its 14px gap, which pushed every title, tagline and body
+ * 14px to the right of the photograph above them. One column, four rows.
+ */
+.about-step {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'photo'
+    'title'
+    'tag'
+    'body';
+  column-gap: 0;
+}
+
+.about-step-photo {
+  grid-area: photo;
+}
+
+.about-step-title {
+  grid-area: title;
+  margin-top: 14px;
+}
+
+.about-step-tagline {
+  grid-area: tag;
+  margin-top: 2px;
+}
+
+.about-step-body {
+  grid-area: body;
+  margin-top: 8px;
+}
+
+/*
+ * Brand icons on their own tint.
+ *
+ * The four values each carry one of the old iKan accent hues — teal, amber,
+ * coral, slate — and were drawing as a bare glyph on the card. Giving each one
+ * a soft ground in its own colour is how the mark reads on the rest of the
+ * site, and it gives the four cards a rhythm that four identical grey icons
+ * did not.
+ *
+ * The tint is derived from the icon's own colour with `color-mix`, so there is
+ * one value to set per card rather than a hue and a wash that can drift apart.
+ */
+.about-value-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+@media (min-width: 768px) {
+  .about-value-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+}
+
+
+/*
+ * The About h1, set per route.
+ *
+ * DESIGN-SYSTEM.md records that iKAN 2 does not style h1 at all — it is "set
+ * per route, at 7 different sizes across 36 headings". So this page sets its
+ * own, using the Display roles, and steps at 1024 only, which is the single
+ * breakpoint the app's stylesheet recognises. 34px is the app's own About h1,
+ * so the phone rendering matches it exactly.
+ */
+.about-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 1024px) {
+  .about-title {
+    font-size: 52px;
+    line-height: 58px;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * OUR TEAM
+ *
+ * One block, two states. This replaced roughly fifty rules spread over
+ * `.about-founders`, `.about-founder*`, `.about-team-member*` and four
+ * superseded `.about-person-name` declarations — the residue of designing this
+ * section several times by appending overrides rather than editing in place.
+ * Most of them matched no markup at all after the two lists merged into one.
+ *
+ * The markup is a single list of six. The state is derived from the content,
+ * not from position: a person who has a bio gets `--lead` and the full width to
+ * put it in; a person who does not gets `--compact` and sits in the row of
+ * three. `:nth-child` would have said the same thing by accident.
+ *
+ * Card colour is `--card`, not `--secondary`: this band is the canvas, and in
+ * iKAN 2's ramp `--secondary` and `--canvas` are the same value, so a filled
+ * card there is invisible. The app only gets away with it because its sheet is
+ * white.
+ *
+ * Type comes from the ported roles — the names carry `type-title-lg`, so
+ * nothing here declares a font size.
+ * ─────────────────────────────────────────────────────────────── */
+
+.about-team-intro {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+}
+
+.about-team {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 28px;
+  list-style: none;
+  padding: 0;
+}
+
+.about-person {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--card);
+}
+
+.about-person-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 260px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--secondary);
+}
+
+.about-person-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.about-person-name {
+  margin-top: 16px;
+  margin-bottom: 0;
+  color: var(--foreground);
+}
+
+.about-person-role {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ikan-brand-teal-text);
+}
+
+.about-person-bio {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 24px;
+  color: oklch(0.16 0.012 255 / 0.72);
+}
+
+/* ── state: carries a bio, so it takes the full width and turns horizontal ── */
+.about-person--lead {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 20px;
+  align-items: start;
+}
+
+.about-person--lead .about-person-portrait {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  width: 112px;
+  max-height: none;
+}
+
+.about-person--lead .about-person-name {
+  grid-column: 2;
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.about-person--lead .about-person-role {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.about-person--lead .about-person-bio {
+  grid-column: 2;
+  grid-row: 3;
+  max-width: 70ch;
+}
+
+@media (min-width: 640px) {
+  .about-team {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-person--lead {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 768px) {
+  .about-team {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .about-person {
+    padding: 24px;
+  }
+
+  .about-person-portrait {
+    border-radius: 20px;
+    max-height: 300px;
+  }
+
+  .about-person--lead {
+    grid-template-columns: 140px minmax(0, 1fr);
+    column-gap: 28px;
+  }
+
+  .about-person--lead .about-person-portrait {
+    width: 140px;
+  }
 }

@@ -322,7 +322,10 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
 
           <ul className="about-team">
             {PEOPLE.map((m) => (
-              <li key={m.name} className="about-person">
+              <li
+                key={m.name}
+                className={`about-person ${m.bio ? 'about-person--lead' : 'about-person--compact'}`}
+              >
                 <span className="about-person-portrait">
                   <ContentImage src={m.image} alt={m.name} />
                 </span>

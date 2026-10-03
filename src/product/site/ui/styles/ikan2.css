@@ -1,0 +1,421 @@
+/*
+ * iKAN 2's design system, ported.
+ *
+ * Transcribed from `ikan2/src/styles.css` so the two surfaces stop looking
+ * like two products. This file is a PORT, not an invention — the token values,
+ * the type scale and the surface utilities are byte-copies of that file, and
+ * the comments on the type scale are its own. Diff against the source when it
+ * moves.
+ *
+ * WHAT IS HERE, AND WHAT IS NOT
+ *
+ * Here: the fonts, the colour ramp, the radius scale, the shadows, the
+ * Material 3 type roles, and the three generic utilities (`surface`,
+ * `eyebrow`, `shadow-app`/`shadow-dock`).
+ *
+ * Not here: the forty-odd app-specific utilities — `nav-item`, `score-ring`,
+ * `program-band`, `activity-dial`, `hero-*`, `metric-*`. They describe the
+ * app's own components, nothing on this site renders them, and copying them
+ * would be 900 lines of dead CSS that still has to be kept in step.
+ *
+ * SCOPED, NOT GLOBAL. The tokens live on `.ikan2-theme` rather than `:root`.
+ * Dropping them on `:root` would restyle admin, the member app and every
+ * marketing page at once — a change nobody could review, and one that would
+ * move the contrast ratchet in ways this repo measures carefully. A page opts
+ * in by adding the class; /about does today. Roll it page by page.
+ *
+ * Light only: this site has no dark mode, so iKAN 2's `.dark` block is not
+ * carried over.
+ */
+
+.ikan2-theme {
+  /* ── Faces ───────────────────────────────────────────────── */
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  /* ── Radius ──────────────────────────────────────────────── */
+  --radius: 0.75rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* ── Colour, all oklch as the source requires ────────────── */
+  --background: oklch(0.995 0.002 240);
+  --foreground: oklch(0.16 0.012 255);
+  --canvas: oklch(0.955 0.006 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.18 0.012 255);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.955 0.006 250);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.5 0.018 255);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.9 0.009 250);
+  --input: oklch(0.9 0.009 250);
+  --ring: oklch(0.704 0.04 256.788);
+
+  /* the four accent families the app tints groups with */
+  --calm: oklch(0.76 0.095 165);
+  --calm-soft: oklch(0.95 0.035 165);
+  --calm-strong: oklch(0.47 0.095 165);
+  --mind: oklch(0.78 0.08 245);
+  --mind-soft: oklch(0.95 0.03 245);
+  --mind-strong: oklch(0.48 0.1 245);
+  --rest: oklch(0.82 0.12 83);
+  --rest-soft: oklch(0.96 0.045 83);
+  --rest-strong: oklch(0.52 0.11 75);
+  --alert: oklch(0.7 0.15 25);
+  --alert-soft: oklch(0.96 0.035 25);
+  --alert-strong: oklch(0.52 0.17 25);
+  --alert-foreground: oklch(0.99 0 0);
+
+  /* ── Elevation ───────────────────────────────────────────── */
+  --shadow-app: 0 0 45px oklch(0.2 0.01 255 / 0.08);
+  --shadow-card: 0 10px 30px oklch(0.2 0.01 255 / 0.06);
+  --shadow-dock: 0 12px 35px oklch(0.18 0.01 255 / 0.14);
+
+  /* ── This repo's token names, pointed at the values above, so existing
+   *    site components keep resolving inside an opted-in page. ─────── */
+  --color-text-primary: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-bg-page: var(--canvas);
+  --color-bg-card: var(--card);
+  --color-bg-muted: var(--secondary);
+  --color-border-light: var(--border);
+  --color-border-default: var(--border);
+  --color-primary-default: var(--foreground);
+  --color-primary-on: var(--background);
+
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Type scale, on Material 3's roles and sizes (Display / Headline / Title / Body / Label),
+ * set in the app's own faces: Sora for Headline and Title, the body face for Body and Label.
+ * Each role fixes size, line height, weight and tracking together, so a heading is picked by
+ * what it is rather than by a pixel value. One deviation from M3, marked below: article body
+ * text gets a taller line for long-form reading.
+ *
+ *   role            size / line-height / weight   used for
+ *   headline-lg     32 / 40 / 600                 page titles: Resources, Programs, Journal
+ *   headline-md     28 / 36 / 600                 an article's title
+ *   headline-sm     24 / 32 / 600                 an article's section (h2)
+ *   title-lg        22 / 28 / 500                 an article's standfirst
+ *   title-md        16 / 24 / 600                 an article's sub-section (h3), score band
+ *   body-lg         16 / 26 / 400                 article body and lists (M3 says 24)
+ *   body-md         14 / 21 / 400                 the detail line of a score block
+ *   label-lg        14 / 20 / 500                 author, date, read time
+ *   label-md        12 / 16 / 500                 chips and captions
+ */
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility type-headline-lg {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility type-headline-md {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility type-headline-sm {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+@utility type-title-lg {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 28px;
+  /* M3 says 400; Sora is only loaded from 500 up, so 500 is the lightest real weight */
+  font-weight: 500;
+  letter-spacing: normal;
+}
+@utility type-title-md {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+@utility type-body-lg {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+@utility type-body-md {
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+@utility type-label-lg {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+@utility type-label-md {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+@utility ikan2-shadow-app {
+  box-shadow: var(--shadow-app);
+}
+@utility ikan2-shadow-dock {
+  box-shadow: var(--shadow-dock);
+}
+@utility ikan2-surface {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+@utility ikan2-eyebrow {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+}
+
+/*
+ * DISPLAY — the tier iKAN 2's scale is missing.
+ *
+ * iKAN 2 implements Material 3's Headline, Title, Body and Label roles and
+ * stops there, because a 420px phone column never needs anything larger than
+ * Headline Large. A website does, which is why the About h1 was a bespoke
+ * `text-[34px]` on both surfaces instead of a role.
+ *
+ * Rather than invent three sizes, this continues the same M3 ladder upward.
+ * M3's Display tier is 57/45/36; those are tuned for Roboto, so they are set
+ * here in Sora's terms with the tracking tightening as the size grows, which
+ * is the convention the Headline roles already follow.
+ *
+ *   display-lg   52 / 58 / 600   -0.02em    page title, desktop
+ *   display-md   42 / 48 / 600   -0.015em   page title, tablet
+ *   display-sm   34 / 40 / 600   -0.01em    page title, phone — iKAN 2's 34
+ *
+ * display-sm is deliberately the 34px the app already uses, so the phone
+ * rendering of a page is identical across the two surfaces and only the larger
+ * breakpoints are new.
+ */
+@utility type-display-lg {
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 58px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+@utility type-display-md {
+  font-family: var(--font-display);
+  font-size: 42px;
+  line-height: 48px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+@utility type-display-sm {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * ACTION — the one role iKAN 2 uses but never named.
+ *
+ * Its primary button is `text-[15px] font-semibold` in the body face, which is
+ * neither label-lg (14/20/500) nor body-lg. It is a distinct role: the label on
+ * a control. Naming it stops every button re-deciding its own size.
+ */
+@utility type-action {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/*
+ * ELEMENT MAPPING — against iKAN 2's DESIGN-SYSTEM.md, not my reading of it.
+ *
+ * Three corrections to the first attempt, all from that document:
+ *
+ * 1. h3 IS title-md (16/24/600, +0.01em), not title-lg. I had promoted it to
+ *    22/28 to fix a card-title hierarchy, which quietly redefined a role the
+ *    app already owns. The element default now matches the app; a card title
+ *    that genuinely needs the larger step asks for `type-title-lg` by name, so
+ *    the deviation is visible at the call site instead of hidden in a tag.
+ *
+ * 2. ONE BREAKPOINT, NOT TWO. The app has no responsive type at all — the type
+ *    scale is identical at 640/768/1024, and the only width rules in the whole
+ *    stylesheet are at 1024 (layout) and 768 (splash screen). I had stepped h1
+ *    at 768 as well, inventing a tier the system does not recognise. The step
+ *    is now at 1024 only, and only Headline L/M move, which is what
+ *    DESIGN-SYSTEM.md names as the natural extension.
+ *
+ * 3. THE ELEMENT RULES I HAD MISSED: body at 88% foreground, strong at 650,
+ *    links underlined with a 3px offset, list items 0.4em apart. These are the
+ *    app's own element styles and they were simply absent here.
+ *
+ * h4/h5/h6 stay defined. DESIGN-SYSTEM.md records them as undefined in the app
+ * and flags that as a gap, not a decision — an unstyled h4 renders as a browser
+ * default, which is nobody's intent. They are mapped to the roles that continue
+ * the ladder.
+ */
+@layer base {
+  .ikan2-theme {
+    color: color-mix(in oklab, var(--foreground) 88%, transparent);
+  }
+
+  .ikan2-theme h1 {
+    font-family: var(--font-display);
+    font-size: 34px;
+    line-height: 40px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+
+  /* Headline S — tracking 0, per the table. */
+  .ikan2-theme h2 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: normal;
+    color: var(--foreground);
+  }
+
+  /* Title M — the app's h3, +0.01em. */
+  .ikan2-theme h3 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--foreground);
+  }
+
+  /* Title L for h4, then the two Label roles — continuing the ladder into the
+     levels the app leaves undefined. */
+  .ikan2-theme h4 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  .ikan2-theme h5 {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+
+  .ikan2-theme h6 {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--foreground);
+  }
+
+  /* Body L */
+  .ikan2-theme p,
+  .ikan2-theme li {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 26px;
+    font-weight: 400;
+  }
+
+  .ikan2-theme li + li {
+    margin-top: 0.4em;
+  }
+
+  .ikan2-theme li::marker {
+    color: var(--muted-foreground);
+  }
+
+  /* Body M */
+  .ikan2-theme small,
+  .ikan2-theme figcaption {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 21px;
+    font-weight: 400;
+  }
+
+  /* Label L */
+  .ikan2-theme label {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+
+  .ikan2-theme strong {
+    font-weight: 650;
+  }
+
+  .ikan2-theme a {
+    text-underline-offset: 3px;
+  }
+
+  .ikan2-theme button,
+  .ikan2-theme input,
+  .ikan2-theme select,
+  .ikan2-theme textarea {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: 600;
+  }
+
+  /* The app's only breakpoint. Headline L/M step up; nothing else moves. */
+  @media (min-width: 1024px) {
+    .ikan2-theme h1 {
+      font-size: 32px;
+      line-height: 40px;
+    }
+
+    .ikan2-theme h2 {
+      font-size: 28px;
+      line-height: 36px;
+      letter-spacing: -0.01em;
+    }
+  }
+}
