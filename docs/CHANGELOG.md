@@ -9,6 +9,48 @@ undated under their original session number.
 
 ---
 
+## 2026-10-03 — the marketing site moves onto iKAN 2's design system, and production moves to `main`
+
+**Branches.** `equip-carry-forward` was renamed to `main` via GitHub's rename API (so old links
+redirect) and the stale `main` — a four-month-old snapshot that never deployed — was deleted, along
+with `restructure/codebase-separation` and two duplicate legacy branches. One branch remains.
+`scripts/deploy-guard.sh` and `vercel.json` named the old branch and would have refused the next
+deploy; CLAUDE.md and GOVERNANCE.md said "production is NOT main", which is now the one thing a
+reader must not believe.
+
+**The codebase separation shipped** — 715 files, `src/product/{site,app}`, `src/admin`,
+`src/shared`. The merge deleted the file a live `ResourceDetail` fix was sitting in and replaced it
+with one that still had the bug, so the fix was carried forward first. The merged branch also did
+not build: `dompurify` was a new dependency the production checkout's `node_modules` predated, and
+the deploy guard does not catch that.
+
+**Design system.** iKAN 2's type roles were declared with `@utility` only, which compiles into the
+utilities layer and loses to unlayered CSS — every `type-*` class was silently inert wherever
+`globals.css` set a size on the same element. All 17 are now scoped classes too, plus the component
+primitives (`surface`, `program-band`, `metric-pill`, `mini-score`, `semantic-chip`, `reveal`).
+755 token references across 36 files moved to iKAN 2's names.
+
+**One page measure.** Five containers (1320/56, 1320/48, 1200/48, and two bespoke ladders) became
+`--page-max: 1200px`, `--page-gutter`, `--read-max: 38rem`. The nav was capped at 1360px of its own,
+so above ~1300px it overhung every page. Page headers now land at the same x and y everywhere.
+
+**`/service`** ported from iKAN 2's own page, replacing an invented `svc-*` system. The homepage's
+two catalogue strips became one Services section. `/assessment`, `/equip`, `/resource` and
+`/consultation` now 301 to `app.ikanhealth.in`; the sitemap went from 25 URLs to 10.
+
+**Two guards were found proving nothing.** `deploy-edge.sh` read the anon key from a path the
+restructure had moved: the grep failed silently, every smoke call went out unauthenticated, all four
+endpoints answered 401 before *and* after, and it printed "smoke unchanged" — a broken deploy would
+have passed identically. `scripts/check-script-paths.mjs` now asserts every `src/…` path named in a
+script exists, and runs in CI.
+
+**Also:** every public page sets its own title (six did not); one `<h1>` per page (the homepage had
+two); 55+ user-visible "iKan" → "iKAN", including the email sender name and four JSON-LD blocks;
+`scrollPageToTop` replaces two `window.scrollTo` calls that were no-ops because the app scrolls in
+an inner container.
+
+---
+
 ## History moved from PENDING.md (2026-09-21)
 
 On 2026-09-21 `docs/PENDING.md` was cut down to open work only. Everything below was moved here

@@ -3,8 +3,8 @@
 [ikanhealth.in](https://ikanhealth.in) — an India-based mental wellness platform: self-guided
 assessments, structured "Equip" programs, mood journaling, and professional consultations.
 
-> **Production branch is `main`.** It is also the GitHub default. Pushing to it does not
-> deploy — see [Deploying](#deploying) before expecting anything to go live.
+> **Production branch is `main`.** It is also the GitHub default, and **pushing to it deploys** —
+> see [Deploying](#deploying) before pushing anything you do not want live.
 >
 > Until 2026-10-03 production was `equip-carry-forward` and `main` was a stale snapshot;
 > that branch was renamed to `main` and the old one deleted.
@@ -55,8 +55,13 @@ purge tooling), and configuration (scales, scoring profiles, settings).
 
 ## Deploying
 
-Git-pushed builds auto-cancel at the Vercel project level — pushing to GitHub does **not** deploy
-the frontend. Deploy with the guarded scripts, never the Vercel or Supabase CLI directly:
+**A push to `main` DOES deploy.** `vercel.json` enables git deployments for `main` and
+`autoJobCancelation` was turned off in `82f08723`; a production build was observed appearing within
+three minutes of a push. This section used to claim the opposite — true before that commit.
+
+So the push is the step that ships. Still use the guarded scripts: they run the guard (right
+branch, level with origin, CI green) and check the served bundle against the local build. Never the
+Vercel or Supabase CLI directly:
 
 ```bash
 bash scripts/deploy-prod.sh    # frontend (Vercel)

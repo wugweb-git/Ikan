@@ -72,8 +72,8 @@ Some equip bento sub-blocks (right-column items, "how it works" subtitle/footer)
 
 ### SEO
 
-- `useSeo` (`src/product/app/ui/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD per page. Used on assessment & equip detail; extend to other pages as needed.
-- `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` are static; update the sitemap when assessment/equip slugs change.
+- `useSeo` (`src/product/site/ui/hooks/useSeo.ts`) sets title/description/canonical/OpenGraph/Twitter + JSON-LD per page. **Every public page calls it** as of 2026-10-03 — six did not, so their tab kept whatever title the previous route had set.
+- `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` are static. The sitemap lists **10 URLs**: the marketing pages only. Assessment and equip slug URLs were removed on 2026-10-03 when `/assessment`, `/equip`, `/resource` and `/consultation` began 301-ing to `app.ikanhealth.in`, so there are no slugs here to keep in step any more.
 - Google Analytics gtag lives in the root `index.html` (the measurement id is hardcoded there).
 - Limitation: this is a client-rendered SPA. Googlebot renders JS, but non-JS social scrapers see only the static `index.html` tags. Prerendering/SSR is a future improvement for richer link previews.
 
