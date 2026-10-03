@@ -2,6 +2,48 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/assessment/:slug*",
+      "destination": "https://app.ikanhealth.in/assessments",
+      "permanent": true
+    },
+    {
+      "source": "/assessment",
+      "destination": "https://app.ikanhealth.in/assessments",
+      "permanent": true
+    },
+    {
+      "source": "/equip/:slug*",
+      "destination": "https://app.ikanhealth.in/program",
+      "permanent": true
+    },
+    {
+      "source": "/equip",
+      "destination": "https://app.ikanhealth.in/program",
+      "permanent": true
+    },
+    {
+      "source": "/resource/:slug*",
+      "destination": "https://app.ikanhealth.in/resources",
+      "permanent": true
+    },
+    {
+      "source": "/resource",
+      "destination": "https://app.ikanhealth.in/resources",
+      "permanent": true
+    },
+    {
+      "source": "/consultation/:slug*",
+      "destination": "https://app.ikanhealth.in/consult",
+      "permanent": true
+    },
+    {
+      "source": "/consultation",
+      "destination": "https://app.ikanhealth.in/consult",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!assets/).*)",

@@ -75,8 +75,17 @@ export function LegalPage({ cmsKey, title, subtitle, onNavigate, className }: Le
 
   return (
     <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', className].filter(Boolean).join(' ')}>
-      <section className="info-band info-band--white">
+      <section className="info-band">
         <div className="info-band__inner">
+          <p className="info-eyebrow">Legal</p>
+          <h1 className="info-title">{page?.title || title}</h1>
+          {page?.subtitle || subtitle ? (
+            <p className="info-subtitle">{page?.subtitle || subtitle}</p>
+          ) : null}
+
+          {/* The switcher sits BELOW the header, not above it. Above, it
+              pushed the title 60px down the page, so the policies were the one
+              set of pages whose heading did not line up with every other. */}
           <nav className="info-tabs" aria-label="Policies">
             {LEGAL_ORDER.map((s) => (
               <button
@@ -90,11 +99,6 @@ export function LegalPage({ cmsKey, title, subtitle, onNavigate, className }: Le
               </button>
             ))}
           </nav>
-
-          <h1 className="info-title">{page?.title || title}</h1>
-          {page?.subtitle || subtitle ? (
-            <p className="info-subtitle">{page?.subtitle || subtitle}</p>
-          ) : null}
 
           <div
             className="prose-ikan info-prose"

@@ -12,18 +12,15 @@ const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Home',
   '/mood-journal': 'Mood Journal',
   '/assessment': 'Assessments',
-  '/assessment-landing': 'Assessment Details',
   '/assessment-detail': 'Assessment Details',
   '/assessment-flow': 'Assessment',
   '/assessment-results': 'Results',
   '/equip': 'Programs',
-  '/equip-programs-landing': 'Programs',
   '/equip-detail': 'Program Details',
   '/equip-program-onboarding': 'Get Started',
   '/equip-program-flow': 'Today\'s Session',
   '/equip-program-completion': 'Congratulations',
   '/consultation': 'Consultation',
-  '/consultation-detail': 'Consultant',
   '/resource': 'Library',
   '/resource-detail': 'Article',
   '/account': 'Account',
@@ -47,7 +44,6 @@ const TOP_LEVEL_ROUTES = new Set(['/dashboard']);
 const TRANSPARENT_ROUTES = new Set([
   '/assessment-detail',
   '/equip-detail',
-  '/consultation-detail',
   '/resource-detail',
 ]);
 

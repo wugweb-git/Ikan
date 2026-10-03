@@ -71,16 +71,6 @@ export const routes: RouteConfig[] = [
     description: 'Book professional consultations'
   },
   {
-    path: '/consultation-detail',
-    label: 'Consultant Detail',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Individual consultant profile and booking'
-  },
-  {
     path: '/services',
     label: 'Services',
     isPublic: true,
@@ -171,26 +161,6 @@ export const routes: RouteConfig[] = [
     description: 'Cancellation policy'
   },
   {
-    path: '/sitemap',
-    label: 'Sitemap',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Site map and page index'
-  },
-  {
-    path: '/assessment-landing',
-    label: 'Assessment Details (alias)',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,  
-    showInPrivateNav: false,
-    description: 'Individual assessment landing page'
-  },
-  {
     path: '/assessment-detail',
     label: 'Assessment Detail',
     isPublic: true,
@@ -211,26 +181,6 @@ export const routes: RouteConfig[] = [
     description: 'Individual program detail page'
   },
   {
-    path: '/equip-programs-landing',
-    label: 'Program Landing',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Individual program landing page'
-  },
-  {
-    path: '/route-test',
-    label: 'Route Test',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Route testing dashboard for development'
-  },
-  {
     path: '/login',
     label: 'Sign In',
     isPublic: true,
@@ -239,16 +189,6 @@ export const routes: RouteConfig[] = [
     showInPublicNav: false,
     showInPrivateNav: false,
     description: 'User login and authentication'
-  },
-  {
-    path: '/welcome',
-    label: 'Welcome',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Splash — entry to the onboarding flow'
   },
   {
     path: '/onboarding',

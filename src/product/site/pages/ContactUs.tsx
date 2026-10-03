@@ -91,8 +91,9 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
 
   return (
     <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', className].filter(Boolean).join(' ')}>
-      <section className="info-band info-band--white">
+      <section className="info-band">
         <div className="info-band__inner">
+          <p className="info-eyebrow">Contact</p>
           <h1 className="info-title">{cms?.heroTitle || 'Contact us'}</h1>
           {cms?.heroSubtitle ? <p className="info-subtitle">{cms.heroSubtitle}</p> : null}
 

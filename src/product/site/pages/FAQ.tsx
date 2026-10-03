@@ -65,8 +65,9 @@ export function FAQ({ className, onNavigate }: FAQProps) {
 
   return (
     <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', className].filter(Boolean).join(' ')}>
-      <section className="info-band info-band--white">
+      <section className="info-band">
         <div className="info-band__inner">
+          <p className="info-eyebrow">Help</p>
           <h1 className="info-title">{f?.heroTitle}</h1>
           {f?.heroSubtitle ? <p className="info-subtitle">{f.heroSubtitle}</p> : null}
 

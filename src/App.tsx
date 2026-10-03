@@ -121,7 +121,6 @@ const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./product/app/
 
 // User screens
 const Consultation = lazy(() => lazyRetry(() => import('./product/site/pages/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
-const ConsultantDetail = lazy(() => lazyRetry(() => import('./product/app/consultations/ConsultantDetail').then(m => ({ default: m.ConsultantDetail })), 'ConsultantDetail'));
 const Library = lazy(() => lazyRetry(() => import('./product/app/resources/Library').then(m => ({ default: m.Library })), 'Library'));
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
@@ -139,7 +138,6 @@ const TermsOfUse = lazy(() => lazyRetry(() => import('./product/site/pages/Terms
 const ContactUs = lazy(() => lazyRetry(() => import('./product/site/pages/ContactUs').then(m => ({ default: m.ContactUs })), 'ContactUs'));
 const ReturnPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
 const CancellationPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
-const Sitemap = lazy(() => lazyRetry(() => import('./product/site/pages/Sitemap').then(m => ({ default: m.Sitemap })), 'Sitemap'));
 
 // Admin screens
 const AdminDashboard = lazy(() => lazyRetry(() => import('./admin/shell/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
@@ -167,10 +165,10 @@ import { hasCompletedFirstRun } from './product/app/shell/first-run';
 
 /** Marketing-site routes (the pages under product/site/pages). */
 const SITE_FOOTER_ROUTES = new Set([
-  '/', '/about', '/service', '/services', '/faq', '/contact', '/sitemap',
+  '/', '/about', '/service', '/services', '/faq', '/contact',
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
-  '/assessment', '/assessment-landing', '/assessment-detail',
-  '/equip', '/equip-programs-landing', '/equip-detail',
+  '/assessment', '/assessment-detail',
+  '/equip', '/equip-detail',
   '/consultation', '/join/professional',
 ]);
 
@@ -275,10 +273,6 @@ function AppContent() {
     // Read the initial route from the URL so direct navigation (e.g. /join/professional) works
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      // Handle /consultation/:id pattern — extract to /consultation-detail
-      if (path.startsWith('/consultation/') && path !== '/consultation/') {
-        return '/consultation-detail';
-      }
       // Slug detail routes map to the existing detail screens
       if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
       /* A programme's own pages live under it — /equip/<slug>/result and
@@ -295,15 +289,6 @@ function AppContent() {
     return DEFAULT_PUBLIC_ROUTE;
   });
   const [resourceDetailId, setResourceDetailId] = useState<string | null>(null);
-  const [consultantId, setConsultantId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      if (path.startsWith('/consultation/') && path !== '/consultation/') {
-        return path.split('/consultation/')[1];
-      }
-    }
-    return null;
-  });
   // Slug captured from /assessment/<slug> and /equip/<slug> URLs (back-compat: ?id= still works)
   const [assessmentSlug, setAssessmentSlug] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -342,8 +327,9 @@ function AppContent() {
       
       if (isMobile) {
         triggerHapticFeedback('light');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+      // Every navigation starts at the top, on every surface.
+      scrollPageToTop();
       
       const [path, search] = route.split('?');
 
@@ -359,10 +345,10 @@ function AppContent() {
       }
       
       const validRoutes = [
-        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
-        '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
-        '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
+        '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
+        '/equip', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
+        '/consultation', '/resource', '/resource-detail', '/account', 
+        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
         '/join/professional',
         '/timeline',
@@ -370,17 +356,6 @@ function AppContent() {
         '/onboarding', '/verify-email', '/get-started'
       ];
       
-      // Handle consultant detail route pattern
-      if (path.startsWith('/consultation/')) {
-        const id = path.split('/consultation/')[1];
-        setConsultantId(id);
-        startTransition(() => setCurrentRoute('/consultation-detail'));
-        if (typeof window !== 'undefined') {
-          window.history.pushState({}, '', route);
-        }
-        return;
-      }
-
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
       if (path.startsWith('/assessment/') && path !== '/assessment/') {
         const slug = path.split('/assessment/')[1];
@@ -519,12 +494,7 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      // Handle /consultation/:id pattern on back/forward
-      if (path.startsWith('/consultation/') && path !== '/consultation/') {
-        const id = path.split('/consultation/')[1];
-        setConsultantId(id);
-        startTransition(() => setCurrentRoute('/consultation-detail'));
-      } else if (path.startsWith('/assessment/') && path !== '/assessment/') {
+      if (path.startsWith('/assessment/') && path !== '/assessment/') {
         setAssessmentSlug(path.split('/assessment/')[1]);
         startTransition(() => setCurrentRoute('/assessment-detail'));
       } else if (equipSubPage(path)) {
@@ -535,7 +505,7 @@ function AppContent() {
         setEquipSlug(null);
         startTransition(() => setCurrentRoute(path || DEFAULT_PUBLIC_ROUTE));
       }
-      window.scrollTo({ top: 0 });
+      scrollPageToTop();
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -661,19 +631,6 @@ function AppContent() {
           return withSuspense(<Dashboard onNavigate={handleNavigate} />);
         case '/assessment':
           return withSuspense(<Assessments onNavigate={handleNavigate} />);
-        case '/assessment-landing':
-          /**
-           * Same screen as `/assessment-detail`, same params.
-           *
-           * `AssessmentLandingNew` used to render here: a static object with
-           * a hardcoded anxiety title, `'5 minutes'`, `'10 questions'` and an
-           * instruction promising "You can pause and resume the assessment
-           * later" at a time when no draft could be saved at all. It took no
-           * id, so it could never show any assessment but the one typed into
-           * it. Nothing in the app linked to this route; it stays mapped only
-           * so an existing bookmark still lands somewhere real.
-           */
-          return withSuspense(<AssessmentDetail assessmentId={assessmentSlug || queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-detail':
           return withSuspense(<AssessmentDetail assessmentId={assessmentSlug || queryParams.id || queryParams.type} onNavigate={handleNavigate} />);
         case '/assessment-flow':
@@ -683,7 +640,6 @@ function AppContent() {
         case '/assessment-history-detail':
           return withSuspense(<AssessmentHistoryDetail onNavigate={handleNavigate} />);
         case '/equip':
-        case '/equip-programs-landing':
           return withSuspense(<EquipPrograms onNavigate={handleNavigate} />);
         case '/equip-detail':
           return withSuspense(<EquipDetail equipId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
@@ -695,8 +651,6 @@ function AppContent() {
           return withSuspense(<EquipProgramCompletion programId={equipSlug || queryParams.id} onNavigate={handleNavigate} />);
         case '/consultation':
           return withSuspense(<Consultation onNavigate={handleNavigate} />);
-        case '/consultation-detail':
-          return withSuspense(<ConsultantDetail onNavigate={handleNavigate} consultantId={consultantId || queryParams.id} />);
         case '/resource':
           return withSuspense(<Library onNavigate={handleNavigate} />);
         case '/resource-detail':
@@ -723,8 +677,6 @@ function AppContent() {
           return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':
           return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
-        case '/sitemap':
-          return withSuspense(<Sitemap onNavigate={handleNavigate} />);
         case '/onboarding':
           return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
         case '/verify-email':
@@ -942,6 +894,30 @@ function AppContent() {
 // matches no preset and so skips ALL validation — went to console.warn and
 // nowhere else, visible only to a developer with devtools open on that exact tab.
 installBlocksFallbackReporter();
+
+
+/**
+ * Put the next page at its top.
+ *
+ * `window.scrollTo` alone does nothing here: the app scrolls in an INNER
+ * container, not the document, so every existing call was a no-op and a
+ * visitor clicking a footer link landed halfway down the next page. This
+ * resets the document AND whichever ancestor is actually doing the scrolling.
+ */
+function scrollPageToTop() {
+  if (typeof window === 'undefined') return;
+  window.scrollTo({ top: 0 });
+  const main = document.getElementById('main-content');
+  let el: HTMLElement | null = main;
+  while (el) {
+    const overflow = getComputedStyle(el).overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && el.scrollHeight > el.clientHeight) {
+      el.scrollTop = 0;
+      return;
+    }
+    el = el.parentElement;
+  }
+}
 
 export default function App() {
   useTokens();

@@ -55,7 +55,6 @@ const LINKS = {
   terms: { label: 'Terms of Service', to: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKAN' },
   returns: { label: 'Return Policy', to: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
   cancellation: { label: 'Cancellation Policy', to: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
-  sitemap: { label: 'Sitemap', to: '/sitemap', icon: 'file-text', description: 'Every page on this site' },
   app: MENU_APP,
   login: { label: 'Log in', to: APP_LOGIN_URL, icon: 'user-circle', description: 'Your dashboard, account and mood journal, in the iKAN app' },
 } satisfies Record<string, NavLink>;
@@ -81,7 +80,7 @@ export const PRIMARY_NAV: NavLink[] = MENU_PRIMARY;
 export const SUPPORT_NAV: NavLink[] = MENU_SUPPORT;
 
 /** The footer's bottom bar. */
-export const LEGAL_NAV: NavLink[] = [LINKS.privacy, LINKS.terms, LINKS.returns, LINKS.sitemap, LINKS.cancellation];
+export const LEGAL_NAV: NavLink[] = [LINKS.privacy, LINKS.terms, LINKS.returns, LINKS.cancellation];
 
 export const FOOTER_GROUPS: NavGroup[] = [
   { title: 'Quick Links', links: PRIMARY_NAV },

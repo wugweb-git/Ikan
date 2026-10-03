@@ -4973,3 +4973,237 @@ select {
   font-size: 15px;
   font-weight: 600;
 }
+
+/* ── THE PAGE MEASURE ─────────────────────────────────────────────
+ *
+ * One definition, used by every page built on the iKAN 2 system. Before this
+ * there were FIVE, which is why no two pages shared a left edge:
+ *
+ *   .services-container   min(100% - 56px, 1320px)
+ *   .site-footer__inner   min(100% - 48px, 1320px)   ← different gutter
+ *   .home-services__inner min(100% - 48px, 1200px)   ← different max
+ *   .about-band__inner    640 → 760 → 1080px         ← own ladder
+ *   .info-band__inner     100% → 36rem → 38rem       ← own ladder
+ *
+ * TWO widths, and only two:
+ *
+ *   --page-max    1200px — the page container. Everything sits inside it:
+ *                 headings, grids, cards, media. iKAN 2's own container is
+ *                 1320px; 1200 is this site's.
+ *
+ *                 A carousel, marquee or full-bleed media band opts out with
+ *                 `.bleed` — those are meant to run past the measure.
+ *
+ *   --read-max    38rem (608px) — RUNNING TEXT inside that container. iKAN 2's
+ *                 `max-w-read`. A paragraph wider than this is unreadable; the
+ *                 About page had one at 952px before it was capped.
+ *
+ * The gutter narrows on small screens so the text does not get squeezed.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme {
+  --page-max: 1200px;
+  --page-gutter: 24px;
+  --read-max: 38rem;
+}
+
+@media (min-width: 768px) {
+  .ikan2-theme {
+    --page-gutter: 44px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .ikan2-theme {
+    --page-gutter: 56px;
+  }
+}
+
+/*
+ * Every container resolves to the same measure. These selectors stay because
+ * the markup uses them; what they MEAN is now defined in one place.
+ */
+.ikan2-theme .services-container,
+.ikan2-theme .site-footer__inner,
+.ikan2-theme .home-services__inner,
+.ikan2-theme .about-band__inner,
+.ikan2-theme .info-band__inner {
+  width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+  max-width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+  margin-inline: auto;
+  padding-inline: 0;
+}
+
+/*
+ * Running text caps at the reading measure wherever it appears.
+ *
+ * The container is 1320px because grids, cards and media need the room. Body
+ * copy does not: at 915px an FAQ answer ran about 130 characters a line. These
+ * are every place long-form prose is rendered.
+ */
+.ikan2-theme .info-band__inner > p,
+.ikan2-theme .info-subtitle,
+.ikan2-theme .about-subtitle,
+.ikan2-theme .about-team-intro,
+.ikan2-theme .services-copy > p:not(.services-eyebrow),
+.ikan2-theme .home-services__lede,
+.ikan2-theme .faq-item p,
+.ikan2-theme .faq-cta__body,
+.ikan2-theme .contact-form__subtitle,
+.ikan2-theme .contact-crisis__body,
+.ikan2-theme .prose-ikan p,
+.ikan2-theme .prose-ikan li,
+.ikan2-theme .legal-body p,
+.ikan2-theme .legal-body li {
+  max-width: var(--read-max);
+}
+
+/* The FAQ question row stays full width — it is a control, not prose, and a
+   narrow summary with a far-right chevron reads as broken. */
+.ikan2-theme .faq-item summary {
+  max-width: none;
+}
+
+/* Full-bleed: carousels, marquees and media bands that are meant to run past
+   the page measure. Nothing else should use it. */
+.ikan2-theme .bleed {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+
+/*
+ * The page eyebrow. Every page except the homepage names itself above its
+ * title — Services and About already did; FAQ, Contact and the policies did
+ * not, so three pages opened with a bare headline and no sense of place.
+ *
+ * Same treatment as the About page's, which is the one a reader meets first:
+ * 13px, sentence case, brand teal. Not the tracked uppercase of the SECTION
+ * eyebrows further down a page — those count position, this names the page.
+ */
+.ikan2-theme .info-eyebrow {
+  margin: 0 0 6px;
+  color: var(--brand-teal-ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ── THE PAGE HEADER POSITION ─────────────────────────────────────
+ *
+ * Eyebrow and title land at the same x AND y on every page except the
+ * homepage, which is a hero and sets its own rules.
+ *
+ * x came free once every container resolved to `--page-max`. y did not: each
+ * page's first band carried its own top padding on top of the nav clearance,
+ * so the eyebrow sat at 112 on Services, 168 on FAQ and 192 on About — three
+ * pages, three starting lines, visible the moment you click between them.
+ *
+ * `.site-page-below-nav` already supplies the clearance the fixed nav needs.
+ * The first band adds nothing; later bands keep their rhythm.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .info-band:first-of-type,
+.ikan2-theme .about-band:first-of-type {
+  padding-top: 0;
+}
+
+.ikan2-theme .services-hero {
+  padding-top: 0;
+}
+
+/* One space between the header block and the first band of content, so the
+   pages breathe the same way below the title as well as above it. */
+.ikan2-theme .info-band:first-of-type,
+.ikan2-theme .about-band:first-of-type,
+.ikan2-theme .services-hero {
+  padding-bottom: 72px;
+}
+
+/*
+ * The policy switcher is MOBILE ONLY. On desktop the footer's legal row lists
+ * the same four policies on every page, so the tabs were a second copy of a
+ * navigation already on screen. On a phone the footer is a long scroll away,
+ * which is where they earn their place.
+ */
+@media (min-width: 768px) {
+  .ikan2-theme .info-tabs {
+    display: none;
+  }
+}
+
+/*
+ * The cards on Contact and FAQ invert now the page ground has.
+ *
+ * They were `--secondary` — a soft grey panel reading as raised against a
+ * white page. With the white band gone the page itself is that grey, so grey
+ * cards on a grey ground disappeared: the crisis card, the contact methods and
+ * every FAQ row lost their edges at once.
+ *
+ * Card goes white, ground stays grey. That is the same relationship as before,
+ * with the two values swapped, which is what keeps the page balanced rather
+ * than flat.
+ */
+.ikan2-theme .contact-method,
+.ikan2-theme .contact-faq,
+.ikan2-theme .faq-cta {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+/*
+ * NOT cards, on purpose:
+ *
+ *   .contact-form-section — the form is the page's main act, not an aside. A
+ *     panel around it makes it look like one more block among several.
+ *   .faq-search / .faq-item — a list of questions is a list. Boxing every row
+ *     turns forty answers into forty cards, which is forty edges to read past.
+ *     The search keeps its own pill; the rows keep their hairline rule.
+ */
+.ikan2-theme .contact-form-section,
+.ikan2-theme .faq-item {
+  background: transparent;
+  border: 0;
+}
+
+.ikan2-theme .faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+/* One box, not two. The field already draws a pill; a square border around it
+   produced a rectangle with a rounded rectangle inside. */
+.ikan2-theme .faq-search {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.ikan2-theme .faq-search input {
+  background: transparent;
+}
+
+/* The topic pills were white-on-white; on the grey ground they read as cards
+   of their own, so they take the same treatment. */
+.ikan2-theme .info-tab {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.ikan2-theme .info-tab[aria-current='page'],
+.ikan2-theme .info-tab[aria-selected='true'] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+
+/*
+ * The nav sits on the page measure too. It was capped at 1360px of its own
+ * while the content and footer resolved to `--page-max`, so above ~1300px the
+ * bar overhung everything beneath it — the logo sat left of every page title
+ * and the Sign in button right of the footer's last column.
+ */
+.ikan2-theme.ikan-capsule-nav,
+.ikan2-theme .ikan-capsule-nav {
+  max-width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+}
