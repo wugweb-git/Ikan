@@ -49,3 +49,35 @@ export function useIsMobile() {
 }
 
 export default useIsMobile;
+
+/**
+ * True below 1024px, where the public capsule cannot hold the whole menu.
+ *
+ * Separate from `useIsMobile` on purpose. `useIsMobile` is the layout
+ * breakpoint the rest of the app reasons on and must stay at `--breakpoint-md`;
+ * this one answers a narrower question — can the bar fit six links and two
+ * buttons on one line — and the honest answer there is 1024, not 768. They are
+ * two different questions that happened to share a hook, which is why the band
+ * from 768 to 1023 ended up with a nav that had room for neither layout.
+ */
+const COMPACT_NAV_BREAKPOINT = 1024;
+
+function compactNavQuery(): MediaQueryList | null {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return null;
+  return window.matchMedia(`(max-width: ${COMPACT_NAV_BREAKPOINT - 0.02}px)`);
+}
+
+export function useIsCompactNav() {
+  const [isCompact, setIsCompact] = useState<boolean>(() => compactNavQuery()?.matches ?? false);
+
+  useEffect(() => {
+    const mq = compactNavQuery();
+    if (!mq) return;
+    setIsCompact(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsCompact(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  return isCompact;
+}

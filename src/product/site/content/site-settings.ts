@@ -22,17 +22,27 @@ export interface SiteSettings {
 }
 
 export const SITE_SETTINGS: SiteSettings = {
-  siteName: 'iKan',
+  siteName: 'iKAN',
   companyDescription:
-    'Ikan is your trusted partner in mental health and wellness. We provide evidence-based tools, professional assessments, and expert support to help you on your journey to better mental health.',
+    'iKAN is your trusted partner in mental health and wellness. We provide evidence-based tools, professional assessments, and expert support to help you on your journey to better mental health.',
 
   contactEmail: 'support@ikanhealth.in',
-  contactPhone: '',
-  contactWhatsapp: '',
+  /*
+   * Stored with spacing for display. The footer strips it for the `tel:` and
+   * `wa.me/` hrefs, so the readable form and the dialable form stay in step
+   * from one value.
+   */
+  contactPhone: '+91 85275 45503',
+  contactWhatsapp: '+91 98998 43330',
 
-  facebookUrl: '',
-  instagramUrl: '',
-  linkedinUrl: '',
+  /*
+   * The footer renders an icon for each of these that is non-empty, in the
+   * order the footer lists them, so adding YouTube later needs a value here
+   * and no code change.
+   */
+  facebookUrl: 'https://facebook.com/ikanhealth',
+  instagramUrl: 'https://instagram.com/ikanhealth',
+  linkedinUrl: 'https://linkedin.com/company/ikanhealth',
   youtubeUrl: '',
-  xUrl: '',
+  xUrl: 'https://x.com/ikanhealth',
 };

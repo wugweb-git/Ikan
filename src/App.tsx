@@ -3,7 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useTokens } from './product/app/shell/react-tokens';
-import { crossHostSignInUrl, isMarketingHost } from './product/app/shell/app-host';
+import { crossHostSignInUrl } from './product/app/shell/app-host';
 import { useIsMobile } from './admin/ui/hooks/useIsMobile';
 import { useMobileOptimizations, useMobileViewport, useMobileKeyboard } from './product/app/shell/useMobileOptimizations';
 import { AuthProvider, useAuth } from './shared/state/AuthContext';
@@ -13,10 +13,9 @@ import { JourneyProvider } from './product/app/shell/JourneyContext';
 import { Navigation } from './product/app/shell/navigation/Navigation';
 import { BottomNavBarMobile } from './product/app/shell/navigation/BottomNavBarMobile';
 import { PublicBottomNavMobile } from './product/site/ui/PublicBottomNavMobile';
+import { useIsCompactNav } from './product/site/ui/hooks/useIsMobile';
 import { RouteGuard } from './product/app/shell/RouteGuard';
 import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './product/app/ui/route-config';
-import { hasSeenOnboarding, hasCompletedFirstRun } from './product/app/shell/first-run';
-import { WelcomeSplash } from './product/app/onboarding/WelcomeSplash';
 import { MobileOnboarding } from './product/app/onboarding/MobileOnboarding';
 import { VerifyEmail } from './product/app/onboarding/VerifyEmail';
 import { GetStarted } from './product/app/onboarding/GetStarted';
@@ -133,6 +132,7 @@ const LearningDiary = lazy(() => lazyRetry(() => import('./product/app/journal/L
 
 // Static/legal pages
 const AboutUs = lazy(() => lazyRetry(() => import('./product/site/pages/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
+const Services = lazy(() => lazyRetry(() => import('./product/site/pages/Services').then(m => ({ default: m.Services })), 'Services'));
 const FAQ = lazy(() => lazyRetry(() => import('./product/site/pages/FAQ').then(m => ({ default: m.FAQ })), 'FAQ'));
 const PrivacyPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })), 'PrivacyPolicy'));
 const TermsOfUse = lazy(() => lazyRetry(() => import('./product/site/pages/TermsOfUse').then(m => ({ default: m.TermsOfUse })), 'TermsOfUse'));
@@ -163,10 +163,11 @@ import { OfflineBanner } from './product/app/shell/OfflineBanner';
 import { useOfflineSync } from './shared/api/useOfflineSync';
 import { installBlocksFallbackReporter } from './product/app/shell/block-fallback-reporter';
 import { usePullToRefresh } from './product/app/shell/usePullToRefresh';
+import { hasCompletedFirstRun } from './product/app/shell/first-run';
 
 /** Marketing-site routes (the pages under product/site/pages). */
 const SITE_FOOTER_ROUTES = new Set([
-  '/', '/about', '/faq', '/contact', '/sitemap',
+  '/', '/about', '/service', '/services', '/faq', '/contact', '/sitemap',
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-landing', '/assessment-detail',
   '/equip', '/equip-programs-landing', '/equip-detail',
@@ -247,6 +248,9 @@ function AppContent() {
   const { shouldShowPrompt } = usePushPermissionPrompt();
   const { isVisible: isCrisisVisible, triggerReason, hideCrisisSupport } = useCrisisSupport();
   const isMobile = useIsMobile();
+  /* The public bar swaps to its compact form at 1024, not 768: the menu is six
+     links and the capsule cannot hold them below that. See useIsCompactNav. */
+  const isCompactNav = useIsCompactNav();
   const { triggerHapticFeedback } = useMobileOptimizations();
   useMobileKeyboard();
   useMobileViewport();
@@ -358,12 +362,12 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-landing', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-programs-landing', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/consultation-detail', '/resource', '/resource-detail', '/account', 
-        '/about', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
+        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/sitemap', '/login', '/reset-password',
         ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
         '/join/professional',
         '/timeline',
         '/learning-diary',
-        '/welcome', '/onboarding', '/verify-email', '/get-started'
+        '/onboarding', '/verify-email', '/get-started'
       ];
       
       // Handle consultant detail route pattern
@@ -455,14 +459,11 @@ function AppContent() {
       const target = hasCompletedFirstRun() ? DEFAULT_PRIVATE_ROUTE : '/get-started';
       startTransition(() => setCurrentRoute(target));
       if (typeof window !== 'undefined') window.history.replaceState({}, '', target);
-    } else if (!user && isMobile && currentRoute === '/' && !hasSeenOnboarding()
-      && !(typeof window !== 'undefined' && isMarketingHost(window.location.hostname))) {
-      // A signed-out first-time visitor on mobile enters through the splash — but not on
-      // the static marketing site (ikanhealth.in), where visitors see the homepage and
-      // sign in on app.ikanhealth.in.
-      startTransition(() => setCurrentRoute('/welcome'));
-      if (typeof window !== 'undefined') window.history.replaceState({}, '', '/welcome');
     }
+    /* The mobile splash that used to live at /welcome is gone. It was the member
+       app's first-run screen, and the member app is iKAN 2 now — on a static
+       marketing site it sent a first-time visitor to an onboarding dead end
+       instead of the homepage. */
   }, [user, isInitialized, currentRoute, isMobile]);
 
   // Mobile viewport optimization effect
@@ -706,23 +707,24 @@ function AppContent() {
           return withSuspense(<MoodJournal onNavigate={handleNavigate} />, 'Mood Journal');
         case '/about':
           return withSuspense(<AboutUs onNavigate={handleNavigate} />);
+        case '/service':
+        case '/services':
+          return withSuspense(<Services onNavigate={handleNavigate} />);
         case '/faq':
           return withSuspense(<FAQ onNavigate={handleNavigate} />);
         case '/privacy':
         case '/privacy-policy':
-          return withSuspense(<PrivacyPolicy />);
+          return withSuspense(<PrivacyPolicy onNavigate={handleNavigate} />);
         case '/terms':
-          return withSuspense(<TermsOfUse />);
+          return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
         case '/contact':
           return withSuspense(<ContactUs onNavigate={handleNavigate} />);
         case '/return-policy':
-          return withSuspense(<ReturnPolicy />);
+          return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':
-          return withSuspense(<CancellationPolicy />);
+          return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
         case '/sitemap':
           return withSuspense(<Sitemap onNavigate={handleNavigate} />);
-        case '/welcome':
-          return withSuspense(<WelcomeSplash onNavigate={handleNavigate} />);
         case '/onboarding':
           return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
         case '/verify-email':
@@ -748,7 +750,7 @@ function AppContent() {
     }
   };
 
-  const isOnboardingFlow = currentRoute === '/welcome' || currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
+  const isOnboardingFlow = currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
   const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && !isOnboardingFlow;
   const showPrivateNav = !!user &&
     currentRoute !== '/' &&
@@ -816,11 +818,10 @@ function AppContent() {
       />
 
       {/* Top Navigation - Floating Capsule (Desktop only) */}
-      {!isMobile && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
+      {!isCompactNav && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
         <Navigation 
           user={user} 
           onNavigate={handleNavigate} 
-          onGetStarted={handleSignIn}
           currentRoute={currentRoute}
         />
       )}
@@ -868,11 +869,10 @@ function AppContent() {
       )}
 
       {/* Mobile Navigation - Public Top, Private Bottom */}
-      {isMobile && showPublicNav && (
+      {isCompactNav && showPublicNav && (
         <PublicBottomNavMobile 
           currentRoute={currentRoute}
           onNavigate={handleNavigate}
-          onSignIn={handleSignIn}
           className=""
         />
       )}

@@ -3,7 +3,6 @@ import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-reac
 import { LogoFull } from './Logo';
 import { NavBadge } from './NavBadge';
 import { SiteLink } from './SiteLink';
-import { CONTENT_MAX } from './Container';
 import { SITE_SETTINGS as settings } from '../content/site-settings';
 import { FOOTER_GROUPS, LEGAL_NAV } from '../content/nav';
 
@@ -66,189 +65,192 @@ interface FooterProps {
 }
 
 export function Footer({ onNavigate, className }: FooterProps) {
-  // Social links — only those with a URL (see content/site-settings.ts).
+  /*
+   * Contact methods and socials are DATA-DRIVEN, not hardcoded. Each renders
+   * only when `site-settings.ts` carries a value, so a column never shows an
+   * empty heading and a dead icon row. Today only `contactEmail` is filled in;
+   * the moment a phone, a WhatsApp number or a social URL is added there, it
+   * appears here with no code change.
+   */
+  const contactMethods = [
+    settings.contactEmail && {
+      key: 'email',
+      icon: Mail,
+      label: settings.contactEmail,
+      href: `mailto:${settings.contactEmail}`,
+      external: false,
+    },
+    settings.contactPhone && {
+      key: 'phone',
+      icon: Phone,
+      label: settings.contactPhone,
+      href: `tel:${settings.contactPhone.replace(/\s/g, '')}`,
+      external: false,
+    },
+    settings.contactWhatsapp && {
+      key: 'whatsapp',
+      icon: WhatsAppIcon,
+      label: settings.contactWhatsapp,
+      href: `https://wa.me/${settings.contactWhatsapp.replace(/[^0-9]/g, '')}`,
+      external: true,
+    },
+  ].filter(Boolean) as Array<{
+    key: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    label: string;
+    href: string;
+    external: boolean;
+  }>;
+
+  /* Order as the brand lists them. YouTube stays last so it appears if that
+     channel is ever filled in, without needing a code change. */
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
+    { name: 'X', icon: XIcon, url: settings.xUrl },
     { name: 'Instagram', icon: Instagram, url: settings.instagramUrl },
+    { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
     { name: 'LinkedIn', icon: Linkedin, url: settings.linkedinUrl },
     { name: 'YouTube', icon: Youtube, url: settings.youtubeUrl },
-    { name: 'X', icon: XIcon, url: settings.xUrl },
-  ].filter(link => link.url) as Array<{ name: string; icon: React.ComponentType<{ size?: number }>; url: string }>;
+  ].filter((link) => link.url) as Array<{
+    name: string;
+    icon: React.ComponentType<{ size?: number }>;
+    url: string;
+  }>;
 
-  const { contactEmail, contactPhone, contactWhatsapp } = settings;
+  /*
+   * The two crisis lines are the single most important thing in this footer.
+   * They used to sit inside a paragraph of disclaimer prose below the
+   * copyright, which is past the point most people stop reading, and on a
+   * phone they were a wall of 11px text. They are now their own labelled
+   * block with each number as a separate tap target.
+   */
+  const helplines = [
+    { name: 'National Helpline', number: '1800-599-0019', tel: '18005990019' },
+    { name: 'iCALL Suicide Prevention', number: '9152987821', tel: '9152987821' },
+  ];
 
   return (
-    <footer 
-      className={cn("w-full flex-none", className)}
-      style={{
-        backgroundColor: 'var(--color-primary-default)',
-        color: 'var(--color-primary-on)',
-        paddingTop: 'var(--spacing-8)',
-        paddingBottom: 'var(--spacing-8)'
-      }}
-    >
-      <div className="mx-auto w-full px-6" style={{ maxWidth: CONTENT_MAX }}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
-          {/* Brand & Description Column (Span 4) */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="space-y-4">
-              <LogoFull height={32} className="text-white" style={{ color: 'white' }} />
-              <p 
-                className="max-w-xs"
-                style={{
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--color-primary-on)',
-                  lineHeight: '1.6',
-                  fontFamily: 'var(--font-family-base)',
-                  opacity: 0.8
-                }}
-              >
-                {settings.companyDescription}
-              </p>
-            </div>
-          </div>
+    <footer className={cn('ikan2-theme', 'site-footer', className)}>
+      <div className="site-footer__inner">
+        <div className="site-footer__grid">
+          {/* Brand */}
+          <div className="site-footer__brand">
+            <LogoFull
+              height={40}
+              className="site-footer__logo"
+              style={{ color: 'var(--background)' }}
+            />
+            <p className="site-footer__blurb">{settings.companyDescription}</p>
 
-          {/* Spacer (Span 1) */}
-          <div className="hidden lg:block lg:col-span-1"></div>
-
-          {/* Links Columns (Span 7) */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {FOOTER_GROUPS.map((group) => (
-              <div key={group.title}>
-                <h3 className="mb-6 text-sm font-medium text-white/50 uppercase tracking-wide">
-                  {group.title}
-                </h3>
-                <ul className="space-y-4">
-                  {group.links.map((link) => (
-                    <li key={link.to}>
-                      <SiteLink
-                        to={link.to}
-                        onNavigate={onNavigate}
-                        className="text-sm font-medium hover:text-white text-white/80 transition-colors text-left no-underline"
-                      >
-                        {link.label}
-                        <NavBadge label={link.badge} />
-                      </SiteLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-
-            {/* Contact Us */}
-            <div>
-              <h3 
-                className="mb-6 text-sm font-medium text-white/50 uppercase tracking-wide"
-              >
-                Contact Us
-              </h3>
-              <div className="space-y-3 mb-8">
-                {contactEmail && (
-                  <div className="flex items-center gap-3 group cursor-pointer">
-                    <Mail className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                    <a 
-                      href={`mailto:${contactEmail}`} 
-                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
-                    >
-                      {contactEmail}
-                    </a>
-                  </div>
-                )}
-                {contactPhone && (
-                  <div className="flex items-center gap-3 group cursor-pointer">
-                    <Phone className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                    <a 
-                      href={`tel:${contactPhone.replace(/\s/g, '')}`} 
-                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
-                    >
-                      {contactPhone}
-                    </a>
-                  </div>
-                )}
-                {contactWhatsapp && (
-                  <div className="flex items-center gap-3 group cursor-pointer">
-                    <WhatsAppIcon className="w-4 h-4 text-white opacity-60 group-hover:opacity-100 transition-opacity" />
-                    <a 
-                      href={`https://wa.me/${contactWhatsapp.replace(/[^0-9]/g, '')}`} 
-                      className="text-sm font-medium hover:text-white text-white/90 transition-colors"
+            {socialLinks.length > 0 && (
+              <ul className="site-footer__social" aria-label={`${settings.siteName} on social media`}>
+                {socialLinks.map((social) => (
+                  <li key={social.name}>
+                    <a
+                      href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={social.name}
                     >
-                      {contactWhatsapp}
+                      <social.icon size={17} />
                     </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Follow Us - Nested under Contact Us column */}
-              {socialLinks.length > 0 && (
-                <>
-                  <h3 
-                    className="mb-4 text-sm font-medium text-white/50 uppercase tracking-wide"
-                  >
-                    Follow Us
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {socialLinks.map((social) => (
-                      <a
-                        key={social.name}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 text-white transition-all"
-                        aria-label={social.name}
-                      >
-                        <social.icon size={16} />
-                      </a>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+
+          {FOOTER_GROUPS.map((group) => (
+            <nav key={group.title} className="site-footer__col" aria-label={group.title}>
+              <h2 className="site-footer__label">{group.title}</h2>
+              <ul>
+                {group.links.map((link) => (
+                  <li key={link.to}>
+                    <SiteLink to={link.to} onNavigate={onNavigate}>
+                      {link.label}
+                      <NavBadge label={link.badge} />
+                    </SiteLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+
+          {contactMethods.length > 0 && (
+            <div className="site-footer__col">
+              <h2 className="site-footer__label">Contact us</h2>
+              <ul>
+                {contactMethods.map((m) => (
+                  <li key={m.key}>
+                    <a
+                      href={m.href}
+                      {...(m.external
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                    >
+                      <m.icon size={16} />
+                      {m.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
-        {/* Bottom Bar */}
-        <div 
-          className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6"
-        >
-          <div className="flex flex-col md:flex-row items-center gap-6 order-2 md:order-1">
-            <div 
-              className="text-xs text-white/50"
-            >
-              © {new Date().getFullYear()} {settings.siteName}. All rights reserved.
-            </div>
-            <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
-                <span className="text-[10px] text-white/70 font-medium">Designed by</span>
-                <WugwebLogo />
-            </div>
+        {/* Crisis block */}
+        <aside className="site-footer__crisis" aria-labelledby="footer-crisis">
+          <div>
+            <h2 className="site-footer__label" id="footer-crisis">
+              In an emergency
+            </h2>
+            <p>
+              {settings.siteName} does not provide emergency support. If you or someone you know
+              needs immediate help, please reach one of these lines.
+            </p>
           </div>
-          
-          <div className="flex flex-wrap justify-center gap-8 order-1 md:order-2">
+          <ul>
+            {helplines.map((h) => (
+              <li key={h.tel}>
+                <a href={`tel:${h.tel}`}>
+                  <Phone size={16} aria-hidden="true" />
+                  <span>
+                    <strong>{h.number}</strong>
+                    <small>{h.name}</small>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        <div className="site-footer__bottom">
+          <nav className="site-footer__legal" aria-label="Legal">
             {LEGAL_NAV.map((link) => (
-              <SiteLink
-                key={link.to}
-                to={link.to}
-                onNavigate={onNavigate}
-                className="text-[10px] font-medium text-white/60 hover:text-white transition-colors no-underline"
-              >
+              <SiteLink key={link.to} to={link.to} onNavigate={onNavigate}>
                 {link.label}
               </SiteLink>
             ))}
+          </nav>
+
+          <div className="site-footer__meta">
+            <span>
+              © {new Date().getFullYear()} {settings.siteName}. All rights reserved.
+            </span>
+            {/* Credit links out to the studio. It carried the mark and the words
+                "Designed by" but no link and no studio name, so it read as
+                decoration rather than an attribution. */}
+            <a
+              className="site-footer__by"
+              href="https://wugweb.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Designed by
+              <WugwebLogo />
+              <span>Wugweb</span>
+            </a>
           </div>
         </div>
-      </div>
-
-      {/* Disclaimer — crisis helplines (ported from main; iKan does not provide emergency support) */}
-      <div className="border-t border-white/10 px-6 py-5">
-        <p className="mx-auto text-[11px] leading-[18px] text-white/55" style={{ maxWidth: CONTENT_MAX }}>
-          <strong className="text-white/75 font-medium">Disclaimer:</strong>{' '}
-          We at iKan deeply care about your mental health but we do not provide emergency
-          support. If you or someone you know needs immediate assistance, please reach out to the{' '}
-          <a href="tel:18005990019" className="text-white/75 underline">National Helpline: 1800-599-0019</a>{' '}
-          or the{' '}
-          <a href="tel:9152987821" className="text-white/75 underline">iCALL Suicide Prevention Helpline: 9152987821</a>.
-        </p>
       </div>
     </footer>
   );

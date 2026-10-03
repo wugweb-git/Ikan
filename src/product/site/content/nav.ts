@@ -13,6 +13,17 @@
  * through one "Log in" link to the app's sign-in page.
  */
 import { APP_LOGIN_URL } from './app-origin';
+import {
+  MENU,
+  MENU_PRIMARY,
+  MENU_SUPPORT,
+  MENU_HOME,
+  MENU_SERVICES,
+  MENU_ABOUT,
+  MENU_FAQ,
+  MENU_CONTACT,
+  MENU_APP,
+} from '../../../shared/navigation/menu';
 
 export interface NavLink {
   label: string;
@@ -31,27 +42,43 @@ export interface NavGroup {
 }
 
 const LINKS = {
-  home: { label: 'Home', to: '/', icon: 'house', description: 'Landing page with assessments and programs' },
+  home: MENU_HOME,
+  services: MENU_SERVICES,
   assessments: { label: 'Assessments', to: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
   equip: { label: 'Equip Programs', to: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs', badge: 'beta' },
   consultation: { label: 'Consultation', to: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals', badge: 'coming soon' },
-  joinProfessional: { label: 'Join as a Professional', to: '/join/professional', icon: 'stethoscope', description: 'Apply to join iKan as a consultant' },
-  about: { label: 'About Us', to: '/about', icon: 'info', description: 'Our mission, values, and what iKan offers' },
-  faq: { label: 'FAQ', to: '/faq', icon: 'circle-help', description: 'Frequently asked questions and help center' },
-  contact: { label: 'Contact Us', to: '/contact', icon: 'mail', description: 'Get in touch with the iKan team' },
+  joinProfessional: { label: 'Join as a Professional', to: '/join/professional', icon: 'stethoscope', description: 'Apply to join iKAN as a consultant' },
+  about: MENU_ABOUT,
+  faq: MENU_FAQ,
+  contact: MENU_CONTACT,
   privacy: { label: 'Privacy Policy', to: '/privacy', icon: 'shield', description: 'How we handle and protect your data' },
-  terms: { label: 'Terms of Service', to: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKan' },
+  terms: { label: 'Terms of Service', to: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKAN' },
   returns: { label: 'Return Policy', to: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
   cancellation: { label: 'Cancellation Policy', to: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
   sitemap: { label: 'Sitemap', to: '/sitemap', icon: 'file-text', description: 'Every page on this site' },
-  login: { label: 'Log in', to: APP_LOGIN_URL, icon: 'user-circle', description: 'Your dashboard, account and mood journal, in the iKan app' },
+  app: MENU_APP,
+  login: { label: 'Log in', to: APP_LOGIN_URL, icon: 'user-circle', description: 'Your dashboard, account and mood journal, in the iKAN app' },
 } satisfies Record<string, NavLink>;
 
-/** The main product pages: footer "Quick Links", mobile "Main Menu". */
-export const PRIMARY_NAV: NavLink[] = [LINKS.home, LINKS.assessments, LINKS.equip, LINKS.consultation];
+/**
+ * The main product pages: footer "Quick Links", mobile "Main Menu".
+ *
+ * One `Services` link rather than Assessments / Equip / Consultation side by
+ * side. The header made that merge when `/service` was created, and a footer
+ * still offering the three separately contradicts it on every page — a visitor
+ * who follows the footer lands somewhere the nav says does not exist.
+ * The three detail routes still work and are still listed on the sitemap.
+ */
+export const PRIMARY_NAV: NavLink[] = MENU_PRIMARY;
 
-/** Company and help pages: footer "Support", mobile "More". */
-export const SUPPORT_NAV: NavLink[] = [LINKS.about, LINKS.faq, LINKS.contact];
+/**
+ * Help pages: footer "Support", mobile "More".
+ *
+ * About Us sits in PRIMARY_NAV above, not here. It is a page about the company,
+ * not a place to get help, and grouping it with FAQ and Contact implied the
+ * reader had a problem to solve.
+ */
+export const SUPPORT_NAV: NavLink[] = MENU_SUPPORT;
 
 /** The footer's bottom bar. */
 export const LEGAL_NAV: NavLink[] = [LINKS.privacy, LINKS.terms, LINKS.returns, LINKS.sitemap, LINKS.cancellation];
@@ -61,12 +88,30 @@ export const FOOTER_GROUPS: NavGroup[] = [
   { title: 'Support', links: SUPPORT_NAV },
 ];
 
-/** Mobile menu, "More" section. */
-export const MOBILE_MORE_NAV: NavLink[] = [...SUPPORT_NAV, LINKS.privacy, LINKS.terms];
+/**
+ * Mobile menu, "More" section.
+ *
+ * The same three as the footer's Support column, and nothing else. Privacy
+ * Policy and Terms of Service used to be appended here, which put legal pages
+ * in a main menu between "Open the app" and "Sign in": they belong in the
+ * footer's legal row, where they already are.
+ */
+export const MOBILE_MORE_NAV: NavLink[] = [...SUPPORT_NAV];
+
+/**
+ * THE MENU. One list, rendered by both the desktop capsule and the mobile
+ * drawer, so the two cannot say different things.
+ *
+ * They had drifted: the capsule carried Home / Services / About Us hardcoded
+ * in its own JSX while the drawer read these arrays, so FAQ, Contact Us and
+ * Open the app existed on a phone and nowhere else. Neither bar builds its own
+ * list any more — if an entry belongs in the menu it goes here and both get it.
+ */
+export const MENU_NAV: NavLink[] = MENU;
 
 export const SITEMAP_SECTIONS: NavGroup[] = [
   { title: 'Main Pages', links: [LINKS.home, LINKS.about, LINKS.contact] },
-  { title: 'Mental Health Services', links: [LINKS.assessments, LINKS.equip, LINKS.consultation, LINKS.joinProfessional] },
+  { title: 'Mental Health Services', links: [LINKS.services, LINKS.assessments, LINKS.equip, LINKS.consultation, LINKS.joinProfessional] },
   { title: 'Your Account', links: [LINKS.login] },
   { title: 'Legal & Help', links: [LINKS.faq, LINKS.privacy, LINKS.terms, LINKS.cancellation, LINKS.returns] },
 ];
