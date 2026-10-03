@@ -81,6 +81,16 @@ export const routes: RouteConfig[] = [
     description: 'Individual consultant profile and booking'
   },
   {
+    path: '/services',
+    label: 'Services',
+    isPublic: true,
+    requiresAuth: false,
+    showInNavigation: true,
+    showInPublicNav: true,
+    showInPrivateNav: false,
+    description: 'Assessments, Equip programmes, the mood journal and consultation'
+  },
+  {
     path: '/about',
     label: 'About Us',
     isPublic: true,
@@ -543,6 +553,11 @@ export const requiresAuth = (path: string): boolean => {
   if (path.startsWith('/consultation/')) {
     return false; // Consultant detail pages don't require auth
   }
+
+  // The slug forms of the public catalogue pages.
+  if (path.startsWith('/assessment/') || path.startsWith('/equip/')) {
+    return false;
+  }
   
   // Universal public links don't require auth
   if (path.startsWith('/join/')) {
@@ -555,7 +570,21 @@ export const requiresAuth = (path: string): boolean => {
   }
   
   const route = routes.find(r => r.path === path);
-  return route?.requiresAuth ?? true; // Default to requiring auth for safety
+  /*
+   * Unregistered routes are PUBLIC.
+   *
+   * This used to default to `true` "for safety", which on a marketing site is
+   * the unsafe direction: a page nobody remembered to register served a login
+   * screen instead of its content, silently, to everyone including crawlers.
+   * /services did exactly that on the day it was added, and nothing failed —
+   * no test, no build, no ratchet. It just quietly stopped being a page.
+   *
+   * ikanhealth.in is static marketing; the member app is iKAN 2. Anything that
+   * genuinely needs a session says so with `requiresAuth: true` on its own
+   * entry, which is explicit and greppable. An omission should cost a page its
+   * gate, not its content.
+   */
+  return route?.requiresAuth ?? false;
 };
 
 export const getRouteConfig = (path: string): RouteConfig | undefined => {

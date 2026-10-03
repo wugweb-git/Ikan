@@ -1,12 +1,51 @@
 import { useState } from 'react';
+import { ArrowUpRight, Check } from 'lucide-react';
 import { cn } from '../utils';
-import { useIsMobile } from '../hooks/useIsMobile';
-import { LayoutGrid } from 'lucide-react';
 import { apiClient } from '../../../../shared/api/api';
+
+/**
+ * NEWSLETTER BLOCK
+ *
+ * A port of iKAN 2's `.services-newsletter` — the block at the foot of
+ * `ikan2/src/routes/services.tsx`, styled by the rules of the same name in
+ * `ikan2/src/styles.css`. Class names are kept so the two can be diffed.
+ *
+ * It replaces a dark rounded card whose problems were all structural:
+ *
+ *   The form sat in a `1fr` grid column but the input had no `min-width: 0`,
+ *   so it collapsed to its intrinsic size and clipped the placeholder to
+ *   "your@email.c" while the column around it stayed empty.
+ *   iKAN 2 puts the input and the button in ONE pill with `width: 100%;
+ *   min-width: 0` on the input and `flex: none` on the button, which is why
+ *   its field fills the space it is given.
+ *
+ *   The two columns were vertically centred against a fixed card height, so a
+ *   three-line heading left a large dead band under the form. iKAN 2 aligns
+ *   the two columns to `end`, so the form always sits on the baseline of the
+ *   copy beside it however many lines the heading runs to.
+ *
+ *   The heading had no `max-width`, so it broke wherever the column happened
+ *   to end ("Stay Informed / About Mental / Health"). iKAN 2 caps it at 600px.
+ *
+ *   The dark ground was this site's invention. iKAN 2's is `--calm-soft`,
+ *   which is why the section reads as part of the page rather than a banner
+ *   dropped onto it.
+ *
+ * Carried over from the version this replaces: it keeps `ikan2-theme` on its
+ * own root, because three of its four callers — the homepage, Assessment
+ * detail and Equip detail — are not themed pages, and a visitor should meet
+ * one newsletter across this site rather than a styled one on `/service` and
+ * an unstyled one everywhere else.
+ *
+ * The submit path is unchanged: `apiClient.subscribeNewsletter` against this
+ * repo's backend. iKAN 2 has no mailing-list service and opens a `mailto:`
+ * instead; this site does have one, so it posts.
+ */
 
 interface NewsletterBlockProps {
   title?: string;
   benefits?: string[];
+  /** Accepted and unused: the block has had no image since the redesign. */
   imageAlt?: string;
   ctaText?: string;
   privacyText?: string;
@@ -17,13 +56,11 @@ interface NewsletterBlockProps {
 export function NewsletterBlock({
   title,
   benefits,
-  imageAlt,
   ctaText,
   privacyText,
   onSubscribe,
   className,
 }: NewsletterBlockProps) {
-  const isMobile = useIsMobile();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,234 +89,65 @@ export function NewsletterBlock({
     }
   };
 
+  /* The lead line carries the section; the rest become the fine print under
+     the form, which is where iKAN 2 puts its one qualifying sentence. */
+  const [lead, ...rest] = benefits ?? [];
+
   return (
     <section
-      className={cn('w-full', className)}
-      style={{ padding: isMobile ? '40px 16px' : '64px 24px' }}
+      className={cn('ikan2-theme', 'services-newsletter', className)}
+      aria-labelledby="newsletter-heading"
     >
-      <div
-        style={{
-          maxWidth: '980px',
-          margin: '0 auto',
-        }}
-      >
-        {/* Dark newsletter card */}
-        <div
-          style={{
-            backgroundColor: 'var(--grey-10)',
-            borderRadius: isMobile ? '24px' : '28px',
-            padding: isMobile ? '36px 24px' : '48px 48px',
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: isMobile ? '28px' : '40px',
-          }}
-        >
-          {/* Left — heading + description */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              flex: '1 1 0',
-              maxWidth: isMobile ? '100%' : '420px',
-            }}
-          >
-            <h2
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontSize: isMobile ? '28px' : '36px',
-                lineHeight: '1.2',
-                color: 'var(--color-text-inverse)',
-                margin: 0,
-              }}
-            >
-              {title || (
-                <>
-                  Sign up for
-                  <br />
-                  our newsletter
-                </>
-              )}
-            </h2>
-            <p
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontWeight: 'var(--font-weight-regular)',
-                fontSize: isMobile ? '14px' : '15px',
-                lineHeight: '1.65',
-                color: 'rgba(255,255,255,0.7)',
-                margin: 0,
-                maxWidth: '380px',
-              }}
-            >
-              {(benefits && benefits[0]) ||
-                'Stay informed about mental health tips, new programs, and community updates.'}
+      <div className="services-container services-newsletter-inner">
+        <div>
+          <p className="services-eyebrow">STAY IN TOUCH</p>
+          <h2 id="newsletter-heading">{title || 'A little help, when it is useful.'}</h2>
+          <p>
+            {lead ||
+              'Thoughtful notes on feeling better, sent only when we have something worth sharing.'}
+          </p>
+        </div>
+
+        <div>
+          {submitted ? (
+            <p className="services-newsletter-done" role="status">
+              <Check aria-hidden="true" />
+              Thank you for subscribing.
             </p>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <label className="sr-only" htmlFor="newsletter-email">
+                Email address
+              </label>
+              <input
+                id="newsletter-email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="Your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button type="submit" className="services-action" disabled={isSubmitting}>
+                {isSubmitting ? 'Subscribing…' : ctaText || 'Request updates'}
+                <ArrowUpRight aria-hidden="true" />
+              </button>
+            </form>
+          )}
 
-            {/* THE OTHER TWO BENEFITS. Three are authored in
-                `NEWSLETTER_CONTENT.BENEFITS` and passed in by both detail
-                screens; `benefits[0]` rendered one and dropped the rest. */}
-            {Array.isArray(benefits) && benefits.length > 1 && (
-              <ul style={{ listStyle: 'none', margin: '14px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {benefits.slice(1).map((benefit, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      fontSize: isMobile ? '13px' : '14px',
-                      lineHeight: '1.6',
-                      color: 'rgba(255,255,255,0.7)',
-                      display: 'flex', alignItems: 'flex-start', gap: '8px',
-                    }}
-                  >
-                    <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.45)', lineHeight: '1.6' }}>—</span>
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
-            )}
+          {error && (
+            <p className="services-newsletter-fine" role="alert">
+              {error}
+            </p>
+          )}
 
-            {/* The privacy line. Authored as `PRIVACY_TEXT`, passed in, and
-                rendered nowhere — on a form that collects an email address. */}
-            {privacyText && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  fontSize: '12px',
-                  lineHeight: '1.6',
-                  color: 'rgba(255,255,255,0.55)',
-                  margin: '14px 0 0',
-                  maxWidth: '380px',
-                }}
-              >
-                {privacyText}
-              </p>
-            )}
-          </div>
-
-          {/* Right — form */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              flex: isMobile ? undefined : '1 1 0',
-              maxWidth: isMobile ? '100%' : '420px',
-              justifyContent: 'center',
-              alignSelf: 'center',
-              width: isMobile ? '100%' : undefined,
-            }}
-          >
-            {submitted ? (
-              <div
-                style={{
-                  backgroundColor: 'rgba(78,205,196,0.15)',
-                  borderRadius: '12px',
-                  padding: '20px 24px',
-                  textAlign: 'center',
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: 'var(--font-family-base)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: '16px',
-                    color: 'var(--color-status-success)',
-                    margin: 0,
-                  }}
-                >
-                  Thank you for subscribing!
-                </p>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                style={{
-                  display: 'flex',
-                  flexDirection: isMobile ? 'column' : 'row',
-                  gap: '10px',
-                  width: '100%',
-                }}
-              >
-                <div
-                  style={{
-                    backgroundColor: 'var(--color-bg-input)',
-                    borderRadius: '10px',
-                    flex: 1,
-                    height: 'var(--ikan-component-button-height)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 16px',
-                  }}
-                >
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      width: '100%',
-                      fontFamily: 'var(--font-family-base)',
-                      fontSize: '14px',
-                      color: 'var(--grey-8)',
-                    }}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  style={{
-                    backgroundColor: isSubmitting ? 'var(--color-status-warning)' : 'var(--color-status-warning-light)',
-                    borderRadius: '10px',
-                    border: 'none',
-                    height: 'var(--ikan-component-button-height)',
-                    padding: '0 24px',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-family-base)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: '14px',
-                    color: 'var(--color-primary-default)',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'filter 0.15s',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.filter = 'brightness(1.05)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.filter = 'none')
-                  }
-                >
-                  <LayoutGrid size={15} strokeWidth={2.5} />
-                  {isSubmitting ? 'Subscribing...' : (ctaText || 'Subscribe')}
-                </button>
-              </form>
-            )}
-            {error && (
-              <p style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: '13px',
-                color: 'var(--color-status-danger)',
-                margin: '4px 0 0',
-                textAlign: 'center'
-              }}>
-                {error}
-              </p>
-            )}
-          </div>
+          {/* `privacyText` is authored as `PRIVACY_TEXT` and was, before this
+              rewrite, rendered nowhere — on a form that collects an email. The
+              remaining benefits share this slot rather than becoming a list of
+              rules-and-dashes, which is what they looked like before. */}
+          {(privacyText || rest.length > 0) && (
+            <p className="services-newsletter-fine">{privacyText || rest.join(' · ')}</p>
+          )}
         </div>
       </div>
     </section>

@@ -17,9 +17,9 @@ interface FAQSectionProps {
 
 const DEFAULT_FAQ_ITEMS = [
   {
-    question: 'What is iKan and how does it support mental health?',
+    question: 'What is iKAN and how does it support mental health?',
     answer:
-      'iKan is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
+      'iKAN is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
   },
   {
     question: 'How do I book a consultation with a therapist?',
@@ -32,7 +32,7 @@ const DEFAULT_FAQ_ITEMS = [
       'Yes. Equip programs are structured into daily modules you can complete at your own pace. Each program includes exercises, reflections, and progress tracking to help you build lasting habits.',
   },
   {
-    question: 'Is my data private and secure on iKan?',
+    question: 'Is my data private and secure on iKAN?',
     answer:
       'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we follow strict privacy guidelines. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
   },
@@ -75,7 +75,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
     <ErrorBoundary>
       <section
         style={{
-          backgroundColor: 'var(--color-bg-card)',
+          backgroundColor: 'var(--card)',
           padding: '80px 0',
         }}
       >
@@ -89,10 +89,10 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
           {/* Section Title */}
           <h2
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: isMobile ? 'var(--text-3xl)' : '40px',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-display)',
+              fontSize: isMobile ? '24px' : '32px',
+              fontWeight: '500',
+              color: 'var(--foreground)',
               lineHeight: '1.15',
               margin: '0 0 48px 0',
             }}
@@ -121,15 +121,15 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                     key={index}
                     value={`item-${index}`}
                     className="border-b last:border-b-0"
-                    style={{ borderColor: 'var(--color-border-default)' }}
+                    style={{ borderColor: 'var(--border)' }}
                   >
                     <AccordionTrigger
                       className="py-5 hover:no-underline"
                       style={{
-                        fontFamily: 'var(--font-family-base)',
-                        fontSize: 'var(--text-base)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        color: 'var(--foreground)',
                         lineHeight: '1.5',
                         textDecoration: 'none',
                       }}
@@ -139,10 +139,10 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                     <AccordionContent>
                       <p
                         style={{
-                          fontFamily: 'var(--font-family-base)',
-                          fontSize: 'var(--text-sm)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          color: 'var(--color-text-muted)',
+                          fontFamily: 'var(--font-sans)',
+                          fontSize: '14px',
+                          fontWeight: '400',
+                          color: 'var(--muted-foreground)',
                           lineHeight: '1.7',
                           margin: 0,
                         }}
@@ -157,10 +157,10 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
               <button
                 onClick={handleNavigateToFAQ}
                 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-muted)',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'var(--muted-foreground)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -178,7 +178,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
             <div
               style={{
                 border: '1px solid #EBEBEB',
-                borderRadius: '16px',
+                borderRadius: 'var(--radius-xl)',
                 padding: '40px 32px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -191,8 +191,8 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
                 style={{
                   width: '56px',
                   height: '56px',
-                  backgroundColor: 'var(--color-text-primary)',
-                  borderRadius: '14px',
+                  backgroundColor: 'var(--foreground)',
+                  borderRadius: 'var(--radius-xl)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -207,10 +207,10 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
 
               <h3
                 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '18px',
+                  fontWeight: '500',
+                  color: 'var(--foreground)',
                   lineHeight: '1.35',
                   margin: '0 0 12px 0',
                 }}
@@ -220,10 +220,10 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
 
               <p
                 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-muted)',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '14px',
+                  fontWeight: '400',
+                  color: 'var(--muted-foreground)',
                   lineHeight: '1.6',
                   margin: '0 0 28px 0',
                   maxWidth: '260px',
@@ -234,19 +234,7 @@ export function FAQSection({ onNavigate }: FAQSectionProps) {
 
               <button
                 onClick={handleNavigateToContact}
-                style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: '15px',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'white',
-                  backgroundColor: '#F97066',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '14px 32px',
-                  cursor: 'pointer',
-                  width: '100%',
-                  transition: 'opacity 0.2s ease',
-                }}
+                className="site-cta site-cta--coral"
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
               >

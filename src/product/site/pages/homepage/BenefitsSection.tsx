@@ -71,7 +71,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
     <ErrorBoundary>
       <section
         style={{
-          backgroundColor: 'var(--color-bg-card)',
+          backgroundColor: 'var(--card)',
           paddingTop: '80px',
           paddingBottom: '80px',
           overflow: 'hidden',
@@ -88,10 +88,10 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
             <h2
               style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: isMobile ? '28px' : '36px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-display)',
+                fontSize: isMobile ? '24px' : '32px',
+                fontWeight: '500',
+                color: 'var(--foreground)',
                 lineHeight: '1.2',
                 margin: '0',
               }}
@@ -115,7 +115,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-text-primary)',
+                backgroundColor: 'var(--foreground)',
               }}
             />
             <div
@@ -123,7 +123,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-text-primary)',
+                backgroundColor: 'var(--foreground)',
               }}
             />
           </div>
@@ -139,27 +139,7 @@ export function BenefitsSection({ onNavigate, ctaText = 'Learn more', ctaRoute =
           <div style={{ textAlign: 'center', marginTop: isMobile ? '32px' : '48px' }}>
             <button
               onClick={handleCTA}
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: '15px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'white',
-                backgroundColor: 'var(--color-primary-default)',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '16px 40px',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s ease, transform 0.2s ease',
-                boxShadow: '0 4px 16px rgba(42, 42, 42, 0.12)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.9';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '1';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+              className="site-cta"
             >
               {resolvedCtaText}
             </button>
@@ -236,11 +216,11 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
     <div
       style={{
         width: '340px',
-        borderRadius: '28px',
+        borderRadius: 'var(--radius-4xl)',
         overflow: 'hidden',
         background: isCenter
-          ? 'linear-gradient(170deg, var(--ikan-brand-teal-bg) 0%, #B8E0D2 50%, #7CC5B0 100%)'
-          : 'var(--color-bg-card)',
+          ? 'linear-gradient(170deg, var(--calm-soft) 0%, #B8E0D2 50%, #7CC5B0 100%)'
+          : 'var(--card)',
         border: isCenter ? 'none' : '1px solid #EFE8DE',
         boxShadow: isCenter
           ? '0 10px 28px 4px rgba(17, 17, 17, 0.08)'
@@ -255,10 +235,10 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
       {/* Title */}
       <h3
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-2xl)',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-display)',
+          fontSize: '24px',
+          fontWeight: '500',
+          color: 'var(--foreground)',
           lineHeight: '1.25',
           margin: 0,
           letterSpacing: '-0.3px',
@@ -270,10 +250,10 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
       {/* Subtitle */}
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '15px',
-          fontWeight: 'var(--font-weight-medium)',
-          color: isCenter ? 'var(--ikan-brand-teal-dark)' : 'var(--color-text-muted)',
+          fontWeight: '500',
+          color: isCenter ? 'var(--brand-teal-ink)' : 'var(--muted-foreground)',
           lineHeight: '1.4',
           margin: 0,
         }}
@@ -284,10 +264,10 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
       {/* Description */}
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '15px',
-          fontWeight: 'var(--font-weight-regular)',
-          color: 'var(--color-text-primary)',
+          fontWeight: '400',
+          color: 'var(--foreground)',
           lineHeight: '1.7',
           margin: 0,
         }}
@@ -299,7 +279,7 @@ function FanCard({ card, isCenter }: { card: AudienceCard; isCenter?: boolean })
       <div
         style={{
           marginTop: 'auto',
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden',
           height: '140px',
           flexShrink: 0,
@@ -335,11 +315,11 @@ function MobileCard({ card }: { card: AudienceCard }) {
   return (
     <div
       style={{
-        borderRadius: '20px',
+        borderRadius: 'var(--radius-2xl)',
         overflow: 'hidden',
-        background: 'var(--color-bg-card)',
+        background: 'var(--card)',
         border: '1px solid #EFE8DE',
-        boxShadow: '0 4px 16px rgba(17, 17, 17, 0.05)',
+        boxShadow: 'var(--shadow-card)',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
@@ -349,10 +329,10 @@ function MobileCard({ card }: { card: AudienceCard }) {
       {/* Title */}
       <h3
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-xl)',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-display)',
+          fontSize: '20px',
+          fontWeight: '500',
+          color: 'var(--foreground)',
           lineHeight: '1.25',
           margin: 0,
           letterSpacing: '-0.2px',
@@ -364,10 +344,10 @@ function MobileCard({ card }: { card: AudienceCard }) {
       {/* Subtitle */}
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-muted)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: 'var(--muted-foreground)',
           lineHeight: '1.4',
           margin: 0,
         }}
@@ -378,10 +358,10 @@ function MobileCard({ card }: { card: AudienceCard }) {
       {/* Description */}
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-weight-regular)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '14px',
+          fontWeight: '400',
+          color: 'var(--foreground)',
           lineHeight: '1.65',
           margin: 0,
         }}
@@ -392,7 +372,7 @@ function MobileCard({ card }: { card: AudienceCard }) {
       {/* Image */}
       <div
         style={{
-          borderRadius: '14px',
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden',
           height: '140px',
           marginTop: '4px',

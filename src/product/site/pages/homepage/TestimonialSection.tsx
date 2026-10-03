@@ -19,7 +19,7 @@ const DEFAULT_STATS: StatItem[] = [
   },
   {
     value: '2M+',
-    label: 'iKan members',
+    label: 'iKAN members',
     icon: 'assessments',
   },
   {
@@ -32,9 +32,9 @@ const DEFAULT_STATS: StatItem[] = [
 /* ─── Avatar Stack (3 overlapping circles with emoji) ─── */
 function AvatarStack() {
   const avatars = [
-    { bg: '#E8A0D4', emoji: '😊' },
-    { bg: '#F5C842', emoji: '😌' },
-    { bg: '#7ED4C8', emoji: '🤗' },
+    { bg: 'var(--brand-coral)', emoji: '😊' },
+    { bg: 'var(--brand-amber)', emoji: '😌' },
+    { bg: 'var(--brand-teal)', emoji: '🤗' },
   ];
 
   return (
@@ -50,7 +50,7 @@ function AvatarStack() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '22px',
+            fontSize: '20px',
             border: '3px solid white',
             marginLeft: i > 0 ? '-14px' : '0',
             position: 'relative',
@@ -81,7 +81,7 @@ function StatIcon({ type }: { type: StatItem['icon'] }) {
 
   if (type === 'assessments') {
     return (
-      <div style={{ ...iconStyle, backgroundColor: '#FF7A2F' }}>
+      <div style={{ ...iconStyle, backgroundColor: 'var(--brand-amber)' }}>
         <ClipboardCheck style={{ width: '26px', height: '26px', color: 'white' }} />
       </div>
     );
@@ -89,7 +89,7 @@ function StatIcon({ type }: { type: StatItem['icon'] }) {
 
   // sessions
   return (
-    <div style={{ ...iconStyle, backgroundColor: '#E84FAF' }}>
+    <div style={{ ...iconStyle, backgroundColor: 'var(--brand-coral)' }}>
       <Heart style={{ width: '26px', height: '26px', color: 'white', fill: 'white' }} />
     </div>
   );
@@ -110,7 +110,7 @@ export function TestimonialSection() {
     <ErrorBoundary>
       <section
         style={{
-          backgroundColor: 'var(--color-bg-page)',
+          backgroundColor: 'var(--canvas)',
           paddingTop: '64px',
           paddingBottom: '64px',
         }}
@@ -125,8 +125,8 @@ export function TestimonialSection() {
           {/* Card wrapper */}
           <div
             style={{
-              backgroundColor: 'var(--color-bg-card)',
-              borderRadius: '40px',
+              backgroundColor: 'var(--card)',
+              borderRadius: 'var(--radius-4xl)',
               border: '2px solid #EFE8DE',
               padding: isMobile ? '40px 24px' : '48px 80px',
               minHeight: isMobile ? 'auto' : '280px',
@@ -163,10 +163,10 @@ export function TestimonialSection() {
                   {/* Value */}
                   <span
                     style={{
-                      fontFamily: 'var(--font-family-base)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: isMobile ? '30px' : '34px',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)',
+                      fontWeight: '500',
+                      color: 'var(--foreground)',
                       lineHeight: '1.3',
                       letterSpacing: '-0.8px',
                       textAlign: 'center',
@@ -178,10 +178,10 @@ export function TestimonialSection() {
                   {/* Label */}
                   <span
                     style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontSize: '17px',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: '#666362',
+                      fontFamily: 'var(--font-sans)',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      color: 'var(--muted-foreground)',
                       letterSpacing: '-0.18px',
                       textAlign: 'center',
                     }}

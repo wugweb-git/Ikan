@@ -38,11 +38,11 @@ export function MissionSection() {
   }, [cmsContent]);
 
   const label = cms?.label || 'Our Mission';
-  const description = cms?.description || 'We believe everyone deserves support on their mental health journey. iKan combines clinical expertise with thoughtful technology to meet you where you are.';
+  const description = cms?.description || 'We believe everyone deserves support on their mental health journey. iKAN combines clinical expertise with thoughtful technology to meet you where you are.';
   const trustedByLabel = cms?.trustedByLabel || 'Trusted by leading organizations';
 
   // Parse heading with <highlighted> markers
-  const highlightColors = cms?.highlightColors || { accessible: '#7ED4C8', affordable: '#F5A623', 'stigma-free': '#E84FAF' };
+  const highlightColors = cms?.highlightColors || { accessible: 'var(--brand-teal)', affordable: 'var(--brand-amber)', 'stigma-free': 'var(--brand-coral)' };
 
   // Inject keyframes once
   useEffect(() => {
@@ -64,7 +64,7 @@ export function MissionSection() {
     <ErrorBoundary>
       <section
         style={{
-          backgroundColor: 'var(--color-bg-card)',
+          backgroundColor: 'var(--card)',
           paddingTop: isMobile ? '56px' : '80px',
           paddingBottom: isMobile ? '48px' : '64px',
         }}
@@ -81,10 +81,10 @@ export function MissionSection() {
         >
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: isMobile ? '13px' : 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-muted)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: '500',
+              color: 'var(--muted-foreground)',
               letterSpacing: '1.5px',
               textTransform: 'uppercase',
               margin: '0 0 20px 0',
@@ -95,10 +95,10 @@ export function MissionSection() {
 
           <h2
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: isMobile ? '26px' : '40px',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-display)',
+              fontSize: isMobile ? '24px' : '32px',
+              fontWeight: '500',
+              color: 'var(--foreground)',
               lineHeight: '1.35',
               margin: '0 auto',
               maxWidth: '820px',
@@ -108,7 +108,7 @@ export function MissionSection() {
             Making mental healthcare{' '}
             <span
               style={{
-                color: highlightColors['accessible'] || '#7ED4C8',
+                color: highlightColors['accessible'] || 'var(--brand-teal)',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -118,7 +118,7 @@ export function MissionSection() {
             ,{' '}
             <span
               style={{
-                color: highlightColors['affordable'] || '#F5A623',
+                color: highlightColors['affordable'] || 'var(--brand-amber)',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -128,7 +128,7 @@ export function MissionSection() {
             , and{' '}
             <span
               style={{
-                color: highlightColors['stigma-free'] || '#E84FAF',
+                color: highlightColors['stigma-free'] || 'var(--brand-coral)',
                 position: 'relative',
                 display: 'inline',
               }}
@@ -140,10 +140,10 @@ export function MissionSection() {
 
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontSize: isMobile ? '15px' : '17px',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-muted)',
+              fontWeight: '400',
+              color: 'var(--muted-foreground)',
               lineHeight: '1.7',
               margin: '24px auto 0',
               maxWidth: '640px',
@@ -157,10 +157,10 @@ export function MissionSection() {
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '13px',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-muted)',
+              fontWeight: '500',
+              color: 'var(--muted-foreground)',
               letterSpacing: '1px',
               textTransform: 'uppercase',
               margin: 0,
@@ -189,7 +189,7 @@ export function MissionSection() {
               bottom: 0,
               width: '120px',
               background:
-                'linear-gradient(to right, var(--color-bg-card), transparent)',
+                'linear-gradient(to right, var(--card), transparent)',
               zIndex: 2,
               pointerEvents: 'none',
             }}
@@ -202,7 +202,7 @@ export function MissionSection() {
               bottom: 0,
               width: '120px',
               background:
-                'linear-gradient(to left, var(--color-bg-card), transparent)',
+                'linear-gradient(to left, var(--card), transparent)',
               zIndex: 2,
               pointerEvents: 'none',
             }}

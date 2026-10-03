@@ -16,23 +16,23 @@ interface Review {
 const DEFAULT_REVIEWS: Review[] = [
   {
     quote:
-      'iKan helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
+      'iKAN helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
     name: 'Priya M.',
-    avatarBg: '#7ED4C8',
+    avatarBg: 'var(--brand-teal)',
     avatarEmoji: '😊',
   },
   {
     quote:
       'I was hesitant at first, but the guided programs made it so easy to start. The Equip programs fit right into my schedule, and I genuinely look forward to each session now.',
     name: 'Arjun K.',
-    avatarBg: '#F5C842',
+    avatarBg: 'var(--brand-amber)',
     avatarEmoji: '😌',
   },
   {
     quote:
-      "Finding affordable mental health support felt impossible until I found iKan. The resources are thoughtful and the consultations are judgment-free. It's changed how I take care of myself.",
+      "Finding affordable mental health support felt impossible until I found iKAN. The resources are thoughtful and the consultations are judgment-free. It's changed how I take care of myself.",
     name: 'Sneha R.',
-    avatarBg: '#E8A0D4',
+    avatarBg: 'var(--brand-coral)',
     avatarEmoji: '🤗',
   },
 ];
@@ -57,8 +57,8 @@ function ReviewCard({ review }: { review: Review }) {
     <div
       className="flex flex-col justify-between"
       style={{
-        backgroundColor: 'var(--color-bg-card)',
-        borderRadius: '24px',
+        backgroundColor: 'var(--card)',
+        borderRadius: 'var(--radius-3xl)',
         border: '2px solid #EFE8DE',
         padding: '28px',
         minHeight: '300px',
@@ -70,11 +70,11 @@ function ReviewCard({ review }: { review: Review }) {
         <Stars />
         <p
           style={{
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-regular)',
-            fontSize: 'var(--text-base)',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: '400',
+            fontSize: '16px',
             lineHeight: 'var(--line-height-md)',
-            color: 'var(--color-text-primary)',
+            color: 'var(--foreground)',
             margin: 0,
           }}
         >
@@ -92,7 +92,7 @@ function ReviewCard({ review }: { review: Review }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 'var(--text-lg)',
+            fontSize: '18px',
             flexShrink: 0,
           }}
         >
@@ -100,10 +100,10 @@ function ReviewCard({ review }: { review: Review }) {
         </div>
         <span
           style={{
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-medium)',
-            fontSize: 'var(--text-base)',
-            color: '#666362',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: '500',
+            fontSize: '16px',
+            color: 'var(--muted-foreground)',
           }}
         >
           {review.name}
@@ -119,8 +119,8 @@ function MobileReviewCard({ review }: { review: Review }) {
     <div
       className="flex flex-col justify-between w-full"
       style={{
-        backgroundColor: 'var(--color-bg-card)',
-        borderRadius: '20px',
+        backgroundColor: 'var(--card)',
+        borderRadius: 'var(--radius-2xl)',
         border: '2px solid #EFE8DE',
         padding: '24px',
       }}
@@ -129,11 +129,11 @@ function MobileReviewCard({ review }: { review: Review }) {
         <Stars />
         <p
           style={{
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-regular)',
-            fontSize: 'var(--text-sm)',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: '400',
+            fontSize: '14px',
             lineHeight: 'var(--line-height-md)',
-            color: 'var(--color-text-primary)',
+            color: 'var(--foreground)',
             margin: 0,
           }}
         >
@@ -151,7 +151,7 @@ function MobileReviewCard({ review }: { review: Review }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 'var(--text-base)',
+            fontSize: '16px',
             flexShrink: 0,
           }}
         >
@@ -159,10 +159,10 @@ function MobileReviewCard({ review }: { review: Review }) {
         </div>
         <span
           style={{
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-medium)',
-            fontSize: 'var(--text-sm)',
-            color: '#666362',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: '500',
+            fontSize: '14px',
+            color: 'var(--muted-foreground)',
           }}
         >
           {review.name}
@@ -189,7 +189,7 @@ export function ReviewsSection() {
   return (
     <section
       style={{
-        backgroundColor: 'var(--color-bg-page)',
+        backgroundColor: 'var(--canvas)',
         paddingTop: '64px',
         paddingBottom: isMobile ? '40px' : '64px',
       }}
@@ -211,10 +211,10 @@ export function ReviewsSection() {
         >
           <h2
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontWeight: 'var(--font-weight-medium)',
-              fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
-              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-display)',
+              fontWeight: '500',
+              fontSize: isMobile ? '24px' : '32px',
+              color: 'var(--foreground)',
               lineHeight: '1.3',
               letterSpacing: '-0.5px',
               margin: 0,
@@ -229,7 +229,7 @@ export function ReviewsSection() {
                 width: isMobile ? '18px' : '22px',
                 height: isMobile ? '18px' : '22px',
                 borderRadius: '50%',
-                backgroundColor: '#7ED4C8',
+                backgroundColor: 'var(--brand-teal)',
               }}
             />
             <div
@@ -237,7 +237,7 @@ export function ReviewsSection() {
                 width: isMobile ? '18px' : '22px',
                 height: isMobile ? '18px' : '22px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-primary-default)',
+                backgroundColor: 'var(--foreground)',
               }}
             />
           </div>
@@ -249,7 +249,7 @@ export function ReviewsSection() {
             <div
               style={{
                 width: '100%',
-                borderRadius: '28px',
+                borderRadius: 'var(--radius-4xl)',
                 overflow: 'hidden',
                 height: '400px',
               }}
@@ -285,7 +285,7 @@ export function ReviewsSection() {
             <div
               style={{
                 width: '100%',
-                borderRadius: '20px',
+                borderRadius: 'var(--radius-2xl)',
                 overflow: 'hidden',
                 height: '200px',
               }}

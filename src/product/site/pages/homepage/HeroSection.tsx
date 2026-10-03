@@ -21,14 +21,14 @@ const EXTRA_PORTRAITS = [
 
 // Distinct colors for each label card
 const LABEL_COLORS: Record<string, { bg: string; text: string }> = {
-  acceptance: { bg: 'var(--ikan-brand-teal)', text: 'var(--grey-0)' },       // Teal
-  understanding: { bg: 'var(--ikan-brand-amber)', text: 'var(--grey-0)' },    // Warm amber
-  compassion: { bg: 'var(--ikan-brand-coral)', text: 'var(--grey-0)' },       // Soft rose
+  acceptance: { bg: 'var(--brand-teal)', text: 'var(--background)' },       // Teal
+  understanding: { bg: 'var(--brand-amber)', text: 'var(--background)' },    // Warm amber
+  compassion: { bg: 'var(--brand-coral)', text: 'var(--background)' },       // Soft rose
 };
 
 function getLabelColor(title: string): { bg: string; text: string } {
   const key = title?.toLowerCase?.().trim() || '';
-  return LABEL_COLORS[key] || { bg: 'var(--color-primary-default)', text: 'var(--color-primary-on)' };
+  return LABEL_COLORS[key] || { bg: 'var(--foreground)', text: 'var(--background)' };
 }
 
 const CAROUSEL_INTERVAL = 4000;
@@ -120,9 +120,9 @@ function StatisticCard({ stat, index }: { stat: any; index: number }) {
           >
             <span
               style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontFamily: 'var(--font-family-base)',
+                fontSize: '14px',
+                fontWeight: '500',
+                fontFamily: 'var(--font-sans)',
                 textAlign: 'center',
               }}
             >
@@ -155,17 +155,17 @@ function StatisticCard({ stat, index }: { stat: any; index: number }) {
           <div
             className="flex flex-col justify-center p-4 lg:p-5"
             style={{
-              backgroundColor: 'var(--color-accent-default)',
-              color: 'var(--color-accent-on)',
+              backgroundColor: 'var(--secondary)',
+              color: 'var(--foreground)',
               borderRadius: 'var(--radius-lg)',
               gap: 'var(--spacing-3)',
             }}
           >
             <div
               style={{
-                fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontFamily: 'var(--font-family-base)',
+                fontSize: '24px',
+                fontWeight: '500',
+                fontFamily: 'var(--font-sans)',
                 lineHeight: 'var(--line-height-sm)',
               }}
             >
@@ -173,9 +173,9 @@ function StatisticCard({ stat, index }: { stat: any; index: number }) {
             </div>
             <div
               style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-regular)',
-                fontFamily: 'var(--font-family-base)',
+                fontSize: '14px',
+                fontWeight: '400',
+                fontFamily: 'var(--font-sans)',
                 lineHeight: 'var(--line-height-md)',
               }}
             >
@@ -232,11 +232,11 @@ function MarqueeRow({ statistics, speed = 30 }: { statistics: any[]; speed?: num
         }
         .ikan-marquee-container::before {
           left: 0;
-          background: linear-gradient(to right, var(--color-bg-page), transparent);
+          background: linear-gradient(to right, var(--canvas), transparent);
         }
         .ikan-marquee-container::after {
           right: 0;
-          background: linear-gradient(to left, var(--color-bg-page), transparent);
+          background: linear-gradient(to left, var(--canvas), transparent);
         }
       `;
       document.head.appendChild(style);
@@ -290,7 +290,7 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
   if (!heroData) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: 'var(--secondary)', borderTopColor: 'var(--foreground)' }}></div>
       </div>
     );
   }
@@ -314,23 +314,32 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
           >
             {/* Hero Content */}
             <div className="space-y-4 max-w-md">
-              <h1
+              {/*
+                A <p>, not a second <h1>. The desktop block below carries the
+                page's only h1; this is the same words shown at a different
+                breakpoint, and two h1 elements with identical text is two h1s
+                to a crawler and a screen reader however the CSS hides one.
+                `aria-hidden` keeps it out of the accessibility tree entirely.
+              */}
+              <p
+                aria-hidden="true"
                 style={{
-                  fontSize: 'var(--text-2xl)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  color: 'var(--foreground)',
                   lineHeight: 'var(--line-height-sm)',
-                  fontFamily: 'var(--font-family-base)',
+                  fontFamily: 'var(--font-display)',
+                  letterSpacing: '-0.02em',
                 }}
               >
                 {title}
-              </h1>
+              </p>
               <p
                 style={{
-                  fontSize: 'var(--text-base)',
-                  color: 'var(--color-text-muted)',
+                  fontSize: '16px',
+                  color: 'var(--muted-foreground)',
                   lineHeight: 'var(--line-height-md)',
-                  fontFamily: 'var(--font-family-base)',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {description}
@@ -339,8 +348,8 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 onClick={onGetStarted}
                 className="ikan-button w-full mobile-button touch-target"
                 style={{
-                  backgroundColor: 'var(--color-primary-default)',
-                  color: 'var(--color-primary-on)',
+                  backgroundColor: 'var(--foreground)',
+                  color: 'var(--background)',
                   height: 'var(--ikan-component-button-height)',
                 }}
               >
@@ -376,11 +385,12 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 <h1
                   className="max-w-4xl"
                   style={{
-                    fontSize: 'var(--text-4xl)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
+                    fontSize: '42px',
+                    fontWeight: 600,
+                    color: 'var(--foreground)',
                     lineHeight: 'var(--line-height-sm)',
-                    fontFamily: 'var(--font-family-base)',
+                    fontFamily: 'var(--font-display)',
+                    letterSpacing: '-0.02em',
                     margin: 0,
                   }}
                 >
@@ -389,10 +399,10 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                 <p
                   className="max-w-2xl"
                   style={{
-                    fontSize: 'var(--text-lg)',
-                    color: 'var(--color-text-muted)',
+                    fontSize: '18px',
+                    color: 'var(--muted-foreground)',
                     lineHeight: 'var(--line-height-md)',
-                    fontFamily: 'var(--font-family-base)',
+                    fontFamily: 'var(--font-sans)',
                     margin: 0,
                   }}
                 >
@@ -402,8 +412,8 @@ export function HeroSection({ onGetStarted }: HeroSectionProps) {
                   onClick={onGetStarted}
                   className="ikan-button"
                   style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-primary-on)',
+                    backgroundColor: 'var(--foreground)',
+                    color: 'var(--background)',
                     height: 'var(--ikan-component-button-height)',
                   }}
                 >

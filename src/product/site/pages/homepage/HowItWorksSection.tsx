@@ -97,7 +97,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
     <ErrorBoundary>
       <section
         style={{
-          backgroundColor: 'var(--color-bg-page)',
+          backgroundColor: 'var(--canvas)',
           paddingTop: '80px',
           paddingBottom: '80px',
           overflow: 'hidden',
@@ -114,10 +114,10 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <h2
               style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: isMobile ? '28px' : '36px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-display)',
+                fontSize: isMobile ? '24px' : '32px',
+                fontWeight: '500',
+                color: 'var(--foreground)',
                 lineHeight: '1.2',
                 margin: '0 0 12px 0',
               }}
@@ -140,7 +140,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                   width: '10px',
                   height: '10px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--color-text-primary)',
+                  backgroundColor: 'var(--foreground)',
                 }}
               />
               <div
@@ -148,7 +148,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
                   width: '10px',
                   height: '10px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--color-text-primary)',
+                  backgroundColor: 'var(--foreground)',
                 }}
               />
             </div>
@@ -211,27 +211,7 @@ export function HowItWorksSection({ onNavigate }: HowItWorksSectionProps) {
           <div style={{ textAlign: 'center', marginTop: isMobile ? '32px' : '40px' }}>
             <button
               onClick={handleCTA}
-              style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: '15px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'white',
-                backgroundColor: 'var(--color-primary-default)',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '16px 40px',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s ease, transform 0.2s ease',
-                boxShadow: '0 4px 16px rgba(42, 42, 42, 0.15)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.9';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '1';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+              className="site-cta"
             >
               {ctaText}
             </button>
@@ -254,11 +234,11 @@ function DesktopCard({
     <div
       style={{
         width: '340px',
-        borderRadius: '24px',
+        borderRadius: 'var(--radius-3xl)',
         overflow: 'hidden',
         background: isCenter
           ? 'linear-gradient(180deg, #D4E8E0 0%, #A8D8C8 100%)'
-          : 'var(--color-bg-card)',
+          : 'var(--card)',
         border: isCenter ? 'none' : '1px solid #EBEBEB',
         boxShadow: isCenter
           ? '0 12px 32px rgba(0, 0, 0, 0.1)'
@@ -272,10 +252,10 @@ function DesktopCard({
     >
       <h3
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: '22px',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-display)',
+          fontSize: '20px',
+          fontWeight: '500',
+          color: 'var(--foreground)',
           lineHeight: '1.25',
           margin: 0,
         }}
@@ -285,10 +265,10 @@ function DesktopCard({
 
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-weight-medium)',
-          color: isCenter ? '#4A7A6A' : 'var(--color-text-muted)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: isCenter ? 'var(--brand-teal-ink)' : 'var(--muted-foreground)',
           lineHeight: '1.4',
           margin: 0,
         }}
@@ -301,14 +281,14 @@ function DesktopCard({
           style={{
             width: '40px',
             height: '40px',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-lg)',
             backgroundColor: isCenter
               ? 'rgba(255, 255, 255, 0.6)'
-              : 'var(--grey-1)',
+              : 'var(--secondary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--color-text-primary)',
+            color: 'var(--foreground)',
           }}
         >
           {resolveIcon(card)}
@@ -317,10 +297,10 @@ function DesktopCard({
 
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-weight-regular)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '14px',
+          fontWeight: '400',
+          color: 'var(--foreground)',
           lineHeight: '1.65',
           margin: 0,
         }}
@@ -331,7 +311,7 @@ function DesktopCard({
       <div
         style={{
           marginTop: 'auto',
-          borderRadius: '14px',
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden',
           height: '130px',
           flexShrink: 0,
@@ -356,11 +336,11 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
   return (
     <div
       style={{
-        borderRadius: '20px',
+        borderRadius: 'var(--radius-2xl)',
         overflow: 'hidden',
-        background: 'var(--color-bg-card)',
+        background: 'var(--card)',
         border: '1px solid #EBEBEB',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)',
+        boxShadow: 'var(--shadow-card)',
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
@@ -378,12 +358,12 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
           style={{
             width: '36px',
             height: '36px',
-            borderRadius: '10px',
-            backgroundColor: 'var(--grey-1)',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--secondary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--color-text-primary)',
+            color: 'var(--foreground)',
             flexShrink: 0,
           }}
         >
@@ -391,10 +371,10 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
         </div>
         <h3
           style={{
-            fontFamily: 'var(--font-family-base)',
-            fontSize: 'var(--text-lg)',
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
+            fontFamily: 'var(--font-display)',
+            fontSize: '18px',
+            fontWeight: '500',
+            color: 'var(--foreground)',
             lineHeight: '1.3',
             margin: 0,
           }}
@@ -405,10 +385,10 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
 
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '13px',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-muted)',
+          fontWeight: '500',
+          color: 'var(--muted-foreground)',
           margin: 0,
         }}
       >
@@ -417,10 +397,10 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
 
       <p
         style={{
-          fontFamily: 'var(--font-family-base)',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-weight-regular)',
-          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '14px',
+          fontWeight: '400',
+          color: 'var(--foreground)',
           lineHeight: '1.6',
           margin: 0,
         }}
@@ -430,7 +410,7 @@ function MobileCard({ card }: { card: HowItWorksCard }) {
 
       <div
         style={{
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           height: '140px',
           marginTop: '4px',

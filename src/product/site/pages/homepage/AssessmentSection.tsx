@@ -13,12 +13,12 @@ interface AssessmentSectionProps {
  * Keyword highlight colors matching the hero section palette
  */
 const HIGHLIGHT_WORDS: Record<string, string> = {
-  'well-being': 'var(--color-chart-1)',
-  'wellbeing': 'var(--color-chart-1)',
-  'assessments': 'var(--color-chart-2)',
-  'programs': 'var(--color-chart-3)',
-  'journey': 'var(--color-chart-1)',
-  'support': 'var(--color-chart-2)',
+  'well-being': 'var(--brand-teal)',
+  'wellbeing': 'var(--brand-teal)',
+  'assessments': 'var(--brand-amber)',
+  'programs': 'var(--brand-coral)',
+  'journey': 'var(--brand-teal)',
+  'support': 'var(--brand-amber)',
 };
 
 function highlightKeywords(text: string): React.ReactNode[] {
@@ -57,7 +57,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
   if (!assessmentData) {
     return (
       <div className="w-full h-96 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-[3px]" style={{ borderColor: 'var(--color-accent-default)', borderTopColor: 'var(--color-primary-default)' }}></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-[3px]" style={{ borderColor: 'var(--secondary)', borderTopColor: 'var(--foreground)' }}></div>
       </div>
     );
   }
@@ -75,7 +75,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
       <section
         className="w-full"
         style={{
-          backgroundColor: 'var(--color-bg-page)',
+          backgroundColor: 'var(--canvas)',
           padding: isMobile ? '56px 0' : '80px 0',
           overflow: 'hidden',
         }}
@@ -108,10 +108,10 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
             >
               <h2
                 style={{
-                  fontFamily: 'var(--font-family-base)',
+                  fontFamily: 'var(--font-display)',
                   fontSize: isMobile ? '28px' : '38px',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  fontWeight: '500',
+                  color: 'var(--foreground)',
                   lineHeight: '1.25',
                   margin: 0,
                   maxWidth: '520px',
@@ -126,10 +126,10 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
 
               <p
                 style={{
-                  fontFamily: 'var(--font-family-base)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: isMobile ? '15px' : '17px',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-muted)',
+                  fontWeight: '400',
+                  color: 'var(--muted-foreground)',
                   lineHeight: '1.7',
                   margin: 0,
                   maxWidth: '460px',
@@ -144,30 +144,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
 
               <button
                 onClick={onGetStarted}
-                style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'white',
-                  backgroundColor: 'var(--color-primary-default)',
-                  border: 'none',
-                  borderRadius: '999px',
-                  padding: '16px 40px',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.2s ease, transform 0.2s ease',
-                  boxShadow: '0 4px 16px rgba(42, 42, 42, 0.12)',
-                  marginTop: '8px',
-                  width: isMobile ? '100%' : 'auto',
-                  maxWidth: isMobile ? '300px' : undefined,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.9';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                className="site-cta"
               >
                 {ctaText || 'Get Started'}
               </button>
@@ -213,18 +190,18 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     position: 'relative',
                     width: '100%',
                     height: '100%',
-                    borderRadius: '32px',
+                    borderRadius: 'var(--radius-4xl)',
                     overflow: 'hidden',
-                    backgroundColor: 'var(--grey-9)',
-                    border: '6px solid var(--color-primary-default)',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.08)',
+                    backgroundColor: 'var(--foreground)',
+                    border: '6px solid var(--foreground)',
+                    boxShadow: 'var(--shadow-dock)',
                   }}
                 >
                   {/* Status bar */}
                   <div
                     style={{
                       height: '28px',
-                      backgroundColor: 'var(--grey-1)',
+                      backgroundColor: 'var(--secondary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -236,7 +213,7 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                       style={{
                         width: '80px',
                         height: '18px',
-                        backgroundColor: 'var(--color-primary-default)',
+                        backgroundColor: 'var(--foreground)',
                         borderRadius: '0 0 14px 14px',
                         position: 'absolute',
                         top: 0,
@@ -244,159 +221,56 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     />
                   </div>
 
-                  {/* App screen content */}
-                  <div
-                    style={{
-                      width: '100%',
-                      height: 'calc(100% - 28px)',
-                      backgroundColor: 'var(--grey-1)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      padding: '16px 14px',
-                      gap: '10px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Greeting */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', color: '#717182', margin: 0, fontWeight: 400 }}>Good morning</p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', margin: '2px 0 0', fontWeight: 500 }}>Sarah ☀️</p>
-                      </div>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--color-accent-default)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 'var(--text-sm)' }}>👤</span>
-                      </div>
+                  {/*
+                    THE APP SCREEN, built from iKAN 2's own primitives rather
+                    than drawn by hand. The version this replaces was a
+                    miniature of the home screen typeset at 8-12px: it had its
+                    own greeting, its own card shapes and its own stat tiles,
+                    none of which existed in the product, and it could not be
+                    read on a phone.
+
+                    `program-band`, `metric-pill`, `mini-score` and
+                    `semantic-chip` are iKAN 2's, ported in `ikan2.css`. Using
+                    them means this preview changes when the system does.
+                  */}
+                  <div className="app-screen">
+                    <div className="app-screen__top">
+                      <span>
+                        <small>Good morning</small>
+                        <strong>Today</strong>
+                      </span>
+                      <span className="semantic-chip app-screen__chip">Day 3</span>
                     </div>
 
-                    {/* Mood card */}
-                    <div
-                      style={{
-                        backgroundColor: 'var(--grey-0)',
-                        borderRadius: '14px',
-                        padding: '14px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                      }}
-                    >
-                      <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>How are you feeling?</p>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
-                        {['😊', '😌', '😐', '😔', '😢'].map((emoji, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
-                              backgroundColor: i === 0 ? '#4ABDAC20' : 'var(--grey-1)',
-                              border: i === 0 ? '2px solid var(--ikan-brand-teal)' : '1px solid #EBEBEB',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 'var(--text-base)',
-                            }}
-                          >
-                            {emoji}
-                          </div>
+                    <div className="app-screen__mood">
+                      <p>How are you feeling?</p>
+                      <div>
+                        {['\u{1F62B}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F604}'].map((e, i) => (
+                          <span key={e} className={i === 3 ? 'is-on' : undefined} aria-hidden="true">
+                            {e}
+                          </span>
                         ))}
                       </div>
                     </div>
 
-                    {/* Quick actions */}
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {[
-                        { label: 'Journal', color: '#4ABDAC', icon: '📝' },
-                        { label: 'Assess', color: '#F0A830', icon: '📋' },
-                        { label: 'Equip', color: '#E87B7B', icon: '🎯' },
-                      ].map((action) => (
-                        <div
-                          key={action.label}
-                          style={{
-                            flex: 1,
-                            backgroundColor: 'var(--grey-0)',
-                            borderRadius: '12px',
-                            padding: '10px 6px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '8px',
-                              backgroundColor: `${action.color}15`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '13px',
-                            }}
-                          >
-                            {action.icon}
-                          </div>
-                          <span style={{ fontFamily: 'var(--font-family-base)', fontSize: '9px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                            {action.label}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="program-band app-screen__band">
+                      <span>
+                        <span>PROGRAMME</span>
+                        <strong>A day at a time</strong>
+                      </span>
+                      <span className="mini-score app-screen__ring" aria-hidden="true">
+                        <span>3</span>
+                      </span>
                     </div>
 
-                    {/* Program card */}
-                    <div
-                      style={{
-                        backgroundColor: 'var(--grey-0)',
-                        borderRadius: '14px',
-                        padding: '12px',
-                        display: 'flex',
-                        gap: '10px',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '10px',
-                          background: 'linear-gradient(135deg, var(--ikan-brand-teal), #2A8A7E)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span style={{ fontSize: 'var(--text-base)' }}>🧘</span>
+                    <div className="app-screen__metrics">
+                      <div className="metric-pill">
+                        <span>Day streak</span>
+                        <strong>7</strong>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '11px', fontWeight: 500, color: 'var(--color-text-primary)', margin: 0 }}>Continue Program</p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '9px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Day 3 of 14 • Mindfulness</p>
-                      </div>
-                      <div
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--grey-1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                        }}
-                      >
-                        ▶
-                      </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ikan-brand-teal)', margin: 0 }}>7</p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Day Streak</p>
-                      </div>
-                      <div style={{ flex: 1, backgroundColor: 'var(--grey-0)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--ikan-brand-amber)', margin: 0 }}>85%</p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontSize: '8px', color: '#717182', margin: '2px 0 0', fontWeight: 400 }}>Well-being</p>
+                      <div className="metric-pill">
+                        <span>Well-being</span>
+                        <strong>85%</strong>
                       </div>
                     </div>
                   </div>
@@ -412,18 +286,18 @@ export function AssessmentSection({ onGetStarted }: AssessmentSectionProps) {
                     top: '30px',
                     width: '220px',
                     height: '380px',
-                    borderRadius: '28px',
+                    borderRadius: 'var(--radius-4xl)',
                     overflow: 'hidden',
-                    backgroundColor: 'var(--grey-9)',
-                    border: '5px solid var(--color-primary-default)',
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.12)',
+                    backgroundColor: 'var(--foreground)',
+                    border: '5px solid var(--foreground)',
+                    boxShadow: 'var(--shadow-dock)',
                     zIndex: -1,
                     transform: 'rotate(4deg)',
                   }}
                 >
                   <img
                     src={imgPhoneMockup}
-                    alt="iKan app screen"
+                    alt="iKAN app screen"
                     style={{
                       width: '100%',
                       height: '100%',

@@ -2,6 +2,7 @@ import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 import { HeroSection } from './homepage/HeroSection';
 import { AssessmentSection } from './homepage/AssessmentSection';
+import { ServicesSection } from './homepage/ServicesSection';
 import { MissionSection } from './homepage/MissionSection';
 import { BenefitsSection } from './homepage/BenefitsSection';
 import { TestimonialSection } from './homepage/TestimonialSection';
@@ -9,13 +10,11 @@ import { FAQSection } from './homepage/FAQSection';
 import { HowItWorksSection } from './homepage/HowItWorksSection';
 import { ReviewsSection } from './homepage/ReviewsSection';
 
-import { AssessmentBlock } from '../ui/blocks/AssessmentBlock';
-import { EquipBlock } from '../ui/blocks/EquipBlock';
 import { NewsletterBlock } from '../ui/blocks/NewsletterBlock';
 
-import { getListedAssessments, getPrograms } from '../content/catalog';
-import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { NEWSLETTER_CONTENT } from '../content/content';
+import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
+import { useSeo } from '../ui/hooks/useSeo';
 
 /**
  * ikanhealth.in's landing page — static.
@@ -34,15 +33,47 @@ interface HomepageProps {
   onGetStarted: () => void;
 }
 
-const equipIntro = DEFAULT_CMS_CONTENT['homepage-equip-intro'].content;
+
+/*
+ * The hero's own copy, read once here and once by HeroSection. The page had NO
+ * `useSeo` call at all, so the document title was whatever the previously
+ * visited route had set — land on `/` from `/contact` and the tab still read
+ * "We're Here to Help". On a cold load it fell back to the static string in
+ * index.html.
+ *
+ * Title and description come from `homepage-hero`, the same record the <h1>
+ * and the standfirst render, so the tab and the page cannot drift apart.
+ */
+const hero = (() => {
+  try {
+    return JSON.parse(DEFAULT_CMS_CONTENT['homepage-hero'].content) as {
+      title?: string;
+      description?: string;
+    };
+  } catch {
+    return {};
+  }
+})();
 
 export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
-  const assessments = getListedAssessments().slice(0, 3);
-  const programs = getPrograms().slice(0, 3);
+  useSeo({
+    title: hero.title,
+    description: hero.description,
+    canonicalPath: '/',
+    type: 'website',
+  });
 
   return (
     <ErrorBoundary>
-      <div className="w-full" style={{ backgroundColor: 'var(--color-bg-page)', fontFamily: 'var(--font-family-base)' }}>
+      {/*
+        `ikan2-theme` puts the whole landing page on the ported design system.
+        The sections below still write the earlier token names inline; those
+        names are aliased to iKAN 2's in `ikan2.css`, so the page picks up
+        Manrope and Sora, the oklch ramp and the radius scale without ten
+        component rewrites. The `@layer base` element mapping also takes over
+        h1-h6, so headings get the display face.
+      */}
+      <div className="ikan2-theme w-full" style={{ backgroundColor: 'var(--canvas)', fontFamily: 'var(--font-sans)' }}>
         <HeroSection onGetStarted={onGetStarted} />
 
         <div id="assessment">
@@ -53,24 +84,16 @@ export function Homepage({ onNavigate, onGetStarted }: HomepageProps) {
 
         <HowItWorksSection onNavigate={onNavigate} />
 
+        {/*
+          One Services section in place of the Assessment Programs strip and
+          the Equip intro. Those two listed three assessments and three
+          programmes BY NAME, so the landing page carried a copy of two
+          catalogues that change without it knowing, and still said nothing
+          about Mood, Resources or Consultation.
+        */}
         <div id="programs">
-          <AssessmentBlock
-            title="Assessment Programs"
-            subtitle="PROGRAM"
-            seeMoreText="SEE MORE"
-            assessments={assessments}
-            onNavigate={onNavigate}
-          />
+          <ServicesSection onNavigate={onNavigate} />
         </div>
-
-        <EquipBlock
-          title={equipIntro.title}
-          programLabel={equipIntro.subtitle}
-          buttonText={equipIntro.ctaText}
-          footerText={equipIntro.footerText}
-          programs={programs}
-          onNavigate={onNavigate}
-        />
 
         <BenefitsSection onNavigate={onNavigate} />
 
