@@ -80,7 +80,7 @@ export function marked(s: string): { text: string; mark: boolean }[] {
 export const ABOUT_PAGE: AboutPageContent = {
   hero: {
     title: 'To us, mental health matters.',
-    subtitle: 'At iKan, we believe mental health is for everyone.',
+    subtitle: 'At iKAN, we believe mental health is for everyone.',
   },
   story: {
     label: 'Our Story',
@@ -88,11 +88,11 @@ export const ABOUT_PAGE: AboutPageContent = {
     headingHighlightColor: 'var(--ikan-brand-teal)',
     paragraphs: [
       'At some point everyone has struggled. Decades old friends Sachin, Vedanshu and Kartik have also faced their share of struggles, each one of us embarking on a personal journey to understand what we were going through. All of us witnessed first hand the barriers and gaps in mental healthcare in India and realised that the system is broken.',
-      'Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created <iKan>.',
+      'Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created <iKAN>.',
     ],
     image:
       'https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    imageAlt: 'Founders collaborating on iKan',
+    imageAlt: 'Founders collaborating on iKAN',
   },
   mission: {
     label: 'Mission',
@@ -107,13 +107,13 @@ export const ABOUT_PAGE: AboutPageContent = {
     description:
       'We envision a future where mental wellness is normalised, people have the tools they need at their fingertips, and no one suffers in silence.',
   },
-  valuesHeading: "Why you'll love iKan",
+  valuesHeading: "Why you'll love iKAN",
   values: [
     {
       iconName: 'heart',
       title: 'People Centric',
       description:
-        'At iKan we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.',
+        'At iKAN we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.',
       color: 'var(--ikan-brand-teal)',
     },
     {
@@ -186,24 +186,24 @@ export const ABOUT_PAGE: AboutPageContent = {
   },
   teamHeading: 'Our Team',
   teamDescription:
-    'The people behind iKan, driven by personal experience and a shared belief that mental health care should be better.',
+    'The people behind iKAN, driven by personal experience and a shared belief that mental health care should be better.',
   founders: [
     {
       name: 'Kartik Chandra',
       role: 'Co-Founder and CEO',
-      bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
+      bio: 'Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKAN for growth and long term success.',
       image: '/team/kartik.jpg',
     },
     {
       name: 'Vedanshu Srivastava',
       role: 'Co-Founder and Product Head',
-      bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.',
+      bio: 'Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKAN for growth and long term success.',
       image: '/team/vedanshu.jpg',
     },
     {
       name: 'Sachin Vaishampayan',
       role: 'Co-Founder and CTO',
-      bio: 'Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKan.',
+      bio: 'Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKAN.',
       image: '/team/sachin.jpg',
     },
   ],

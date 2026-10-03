@@ -1,503 +1,182 @@
-import React, { useState, useMemo } from 'react';
-import { useIsMobile } from '../ui/hooks/useIsMobile';
-import { Icon } from '../ui/Icon';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Card, CardContent } from '../ui/card';
+import React, { useMemo, useState } from 'react';
+import { Mail, Phone, ShieldAlert } from 'lucide-react';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
-import { PageHero } from '../ui/PageHero';
-import { Container, PageShell } from '../ui/Container';
 import { apiClient } from '../../../shared/api/api';
 import { useNotifications } from '../../../shared/state/NotificationContext';
+import { useSeo } from '../ui/hooks/useSeo';
+
+/**
+ * Contact, rebuilt as iKAN 2's `/contact`.
+ *
+ * Replaced rather than adapted. The order is the app's and it is deliberate:
+ * the crisis card comes FIRST, before the contact methods and well before the
+ * form. Someone in trouble should not have to scroll past a subject field to
+ * find a helpline number. The old page put the form first and the crisis
+ * information at the bottom.
+ *
+ * The submit path is this site's, unchanged — `apiClient.submitContactForm`
+ * against this repo's backend. Only the markup around it is new. The app posts
+ * to a different endpoint with its own auth, so that part could not be carried
+ * across even if it were wise to.
+ *
+ * Content is `page-contact` from cms-defaults, which matches iKAN 2's `contact`
+ * block on every field except `heroNote`, which exists only here.
+ */
 
 interface ContactUsProps {
   className?: string;
   onNavigate?: (route: string) => void;
-  onBack?: () => void;
 }
 
-export function ContactUs({ className, onNavigate, onBack }: ContactUsProps) {
-  const isMobile = useIsMobile();
+const METHOD_ICON: Record<string, typeof Mail> = { mail: Mail, phone: Phone };
+
+export function ContactUs({ className, onNavigate }: ContactUsProps) {
   const { showToast } = useNotifications();
 
-  // ── CMS structured content ──
-  const cmsFull = DEFAULT_CMS_CONTENT['page-contact'];
   const cms = useMemo(() => {
-    if (!cmsFull?.content) return null;
-    try { return JSON.parse(cmsFull.content); } catch { return null; }
-  }, [cmsFull]);
+    const raw = DEFAULT_CMS_CONTENT['page-contact'];
+    try {
+      return raw?.content ? JSON.parse(raw.content) : null;
+    } catch {
+      return null;
+    }
+  }, []);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+  useSeo({
+    title: cms?.heroTitle || 'Contact us',
+    description: cms?.heroSubtitle,
+    canonicalPath: '/contact',
+    type: 'website',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.message) {
+
+    if (!form.name || !form.email || !form.message) {
       showToast('error', 'Missing Fields', 'Please fill in your name, email, and message.');
       return;
     }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       showToast('error', 'Invalid Email', 'Please enter a valid email address.');
       return;
     }
 
-    setIsSubmitting(true);
+    setBusy(true);
     try {
-      const response = await apiClient.submitContactForm(formData);
+      const response = await apiClient.submitContactForm(form);
       if (response.success) {
         showToast('success', 'Message Sent', response.message || 'We will get back to you soon.');
-        setIsSubmitted(true);
-        setFormData({ name: '', email: '', subject: '', message: '' });
+        setSent(true);
+        setForm({ name: '', email: '', subject: '', message: '' });
       } else {
         showToast('error', 'Error', response.error || 'Failed to send message.');
       }
-    } catch (error) {
-      console.error('Contact form submission error:', error);
+    } catch {
       showToast('error', 'Error', 'Failed to send message. Please try again later.');
     } finally {
-      setIsSubmitting(false);
+      setBusy(false);
     }
   };
 
-  const supportEmail = cms?.supportEmail || 'support@ikanhealth.in';
-  const crisisPhone = cms?.crisisPhone || '9152987821';
-  const crisisLabel = cms?.crisisLabel || 'iCALL Suicide Prevention Helpline';
-
-  const contactMethods = cms?.contactMethods || [
-    {
-      icon: 'mail',
-      title: 'Email Support',
-      description: 'Get help with your account and services',
-      value: supportEmail,
-      action: `mailto:${supportEmail}`
-    },
-    {
-      icon: 'phone',
-      title: 'Crisis Support',
-      description: crisisLabel,
-      value: crisisPhone,
-      action: `tel:${crisisPhone}`
-    }
-  ];
-
-  const formTitle = cms?.formTitle || 'Send us a Message';
-  const formSubtitle = cms?.formSubtitle || 'We typically respond within 24 hours during business days.';
-  const crisisCard = cms?.crisisCard || { title: 'Need Immediate Help?', description: "If you're having thoughts of self-harm or suicide, please reach out for immediate support.", buttons: [{ label: 'Call iCALL - 9152987821', action: 'tel:9152987821' }] };
-  const faqCard = cms?.faqCard || { title: 'Looking for Quick Answers?', description: 'Check our FAQ section for instant answers to common questions about assessments, programs, and your account.', buttonText: 'Visit FAQ Section', buttonRoute: '/faq' };
-
-  const heroTitle = cms?.heroTitle || "We're Here to Help";
-  const heroSubtitle = cms?.heroSubtitle || 'Your mental health journey matters to us. Reach out for support, questions, or just to connect.';
-  const heroNote: string | undefined = cms?.heroNote;
+  const crisis = cms?.crisisCard;
+  const faq = cms?.faqCard;
+  const methods = cms?.contactMethods ?? [];
 
   return (
-    <PageShell className={className}>
-      {/* Hero Section */}
-      <PageHero title={heroTitle}>
-        {/* Subtitle and safety note — was an HTML string in a separate `contact`
-            entry, merged into `page-contact` and rendered as plain text. */}
-        <div className="prose prose-invert max-w-2xl mx-auto text-lg opacity-90 text-white font-normal" style={{ fontFamily: 'var(--font-family-base)' }}>
-          <p>{heroSubtitle}</p>
-          {heroNote && <p><span style={{ fontWeight: 500 }}>Note:</span> {heroNote}</p>}
-        </div>
-      </PageHero>
+    <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', className].filter(Boolean).join(' ')}>
+      <section className="info-band info-band--white">
+        <div className="info-band__inner">
+          <h1 className="info-title">{cms?.heroTitle || 'Contact us'}</h1>
+          {cms?.heroSubtitle ? <p className="info-subtitle">{cms.heroSubtitle}</p> : null}
 
-      {/* Main Content */}
-      <Container className="py-6 md:py-12">
-        {/* Contact Methods Grid */}
-        <div 
-          className="grid gap-6 mb-12"
-          style={{
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
-            marginBottom: 'var(--spacing-12)'
-          }}
-        >
-          {contactMethods.map((method, index) => (
-            <Card 
-              key={index}
-              className="hover:shadow-md transition-all duration-300 cursor-pointer group"
-              style={{
-                backgroundColor: 'var(--color-bg-card)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border-light)',
-                overflow: 'hidden'
-              }}
-              onClick={() => {
-                if (method.action.startsWith('#')) return;
-                window.open(method.action, '_blank');
-              }}
-            >
-              <CardContent 
-                style={{
-                  padding: 'var(--ikan-component-spacing-large)',
-                  textAlign: 'center'
-                }}
-              >
-                <div className="space-y-4">
-                  <div 
-                    className="inline-flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                    style={{
-                      backgroundColor: 'var(--color-primary-default)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: 'var(--ikan-component-spacing-small)',
-                      color: 'var(--color-text-inverse)'
-                    }}
-                  >
-                    <Icon name={method.icon as any} size={24} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 
-                      style={{
-                        fontSize: 'var(--text-lg)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        margin: '0'
-                      }}
-                    >
-                      {method.title}
-                    </h3>
-                    
-                    <p 
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        color: 'var(--color-text-muted)',
-                        margin: '0',
-                        lineHeight: 'var(--line-height-md)'
-                      }}
-                    >
-                      {method.description}
-                    </p>
-                    
-                    <p 
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-primary-default)',
-                        margin: '0'
-                      }}
-                    >
-                      {method.value}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Contact Form */}
-        <div 
-          className="grid gap-8"
-          style={{
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 400px',
-            alignItems: 'start'
-          }}
-        >
-          <Card
-            style={{
-              backgroundColor: 'var(--color-bg-card)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-border-light)',
-              overflow: 'hidden'
-            }}
-          >
-            <CardContent style={{ padding: 'var(--ikan-component-spacing-large)' }}>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <h2 
-                    style={{
-                      fontSize: 'var(--text-2xl)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      color: 'var(--color-text-primary)',
-                      margin: '0'
-                    }}
-                  >
-                    {formTitle}
-                  </h2>
-                  <p 
-                    style={{
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-regular)',
-                      color: 'var(--color-text-muted)',
-                      margin: '0',
-                      lineHeight: 'var(--line-height-md)'
-                    }}
-                  >
-                    {formSubtitle}
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid gap-4" style={{ gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
-                    <div className="space-y-2">
-                      <label 
-                        style={{
-                          fontSize: 'var(--text-sm)',
-                          fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)',
-                          fontFamily: 'var(--font-family-base)'
-                        }}
-                      >
-                        Full Name
-                      </label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Your name"
-                        className="ikan-input"
-                        startIcon={<Icon name="user" size={18} />}
-                        style={{
-                          height: 'var(--ikan-component-input-height)',
-                          borderRadius: 'var(--ikan-component-border-radius)',
-                          fontSize: 'var(--text-base)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontFamily: 'var(--font-family-base)'
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label 
-                        style={{
-                          fontSize: 'var(--text-sm)',
-                          fontWeight: 'var(--font-weight-medium)',
-                          color: 'var(--color-text-primary)',
-                          fontFamily: 'var(--font-family-base)'
-                        }}
-                      >
-                        Email Address
-                      </label>
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="your@email.com"
-                        className="ikan-input"
-                        startIcon={<Icon name="mail" size={18} />}
-                        style={{
-                          height: 'var(--ikan-component-input-height)',
-                          borderRadius: 'var(--ikan-component-border-radius)',
-                          fontSize: 'var(--text-base)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontFamily: 'var(--font-family-base)'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label 
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      Subject
-                    </label>
-                    <Input
-                      value={formData.subject}
-                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                      placeholder="What can we help you with?"
-                      className="ikan-input"
-                      startIcon={<Icon name="helpCircle" size={18} />}
-                      style={{
-                        height: 'var(--ikan-component-input-height)',
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-base)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label 
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-text-primary)',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    >
-                      Message
-                    </label>
-                    <Textarea
-                      value={formData.message}
-                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                      placeholder="Tell us more about your question or concern..."
-                      rows={6}
-                      style={{
-                        borderRadius: 'var(--ikan-component-border-radius)',
-                        fontSize: 'var(--text-base)',
-                        fontWeight: 'var(--font-weight-regular)',
-                        background: 'var(--semantic-input-bg)',
-                        border: 'var(--semantic-input-border)',
-                        color: 'var(--semantic-input-fg)',
-                        padding: 'var(--ikan-component-spacing-small)',
-                        resize: 'vertical',
-                        minHeight: '120px',
-                        fontFamily: 'var(--font-family-base)'
-                      }}
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || isSubmitted}
-                    className="w-full ikan-button"
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      backgroundColor: isSubmitted ? 'var(--color-status-success)' : 'var(--semantic-button-primary-bg)',
-                      color: 'var(--semantic-button-primary-fg)',
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-medium)',
-                      border: 'none'
-                    }}
-                  >
-                    {isSubmitted ? 'Message Sent' : isSubmitting ? 'Sending...' : 'Send Message'}
-                  </Button>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Crisis Support Sidebar */}
-          <Card
-            style={{
-              backgroundColor: 'var(--color-status-danger)',
-              borderRadius: 'var(--radius-lg)',
-              border: 'none',
-              color: 'var(--color-text-inverse)'
-            }}
-          >
-            <CardContent style={{ padding: 'var(--ikan-component-spacing-large)' }}>
-              <div className="space-y-4 text-center">
-                <div 
-                  className="inline-flex items-center justify-center"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: 'var(--ikan-component-spacing-small)'
-                  }}
-                >
-                  <Icon name="shield-alert" size={24} />
-                </div>
-                
-                <h3 
-                  style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    margin: '0'
-                  }}
-                >
-                  {crisisCard.title}
-                </h3>
-                
-                <p 
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-regular)',
-                    lineHeight: 'var(--line-height-md)',
-                    opacity: 0.9,
-                    margin: '0'
-                  }}
-                >
-                  {crisisCard.description}
-                </p>
-
-                <div className="space-y-3">
-                  {crisisCard.buttons.map((btn: any, i: number) => (
-                  <Button
-                    key={i}
-                    onClick={() => window.open(btn.action, '_blank')}
-                    variant="outline"
-                    className="w-full"
-                    style={{
-                      height: 'var(--ikan-component-button-height)',
-                      borderRadius: 'var(--ikan-component-border-radius)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      color: 'var(--color-text-inverse)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)',
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-weight-medium)'
-                    }}
-                  >
-                    {btn.label}
-                  </Button>
+          {/* First on the page, on purpose — see the note at the top. */}
+          {crisis ? (
+            <aside className="contact-crisis" aria-label="Urgent help">
+              <ShieldAlert className="contact-crisis__icon" aria-hidden="true" />
+              <div>
+                <p className="contact-crisis__title">{crisis.title}</p>
+                <p className="contact-crisis__body">{crisis.description}</p>
+                <div className="contact-crisis__actions">
+                  {(crisis.buttons ?? []).map((b: { label: string; action: string }) => (
+                    <a key={b.label} href={b.action} className="contact-crisis__button">
+                      <Phone aria-hidden="true" />
+                      {b.label}
+                    </a>
                   ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </aside>
+          ) : null}
 
-        {/* FAQ Quick Links */}
-        <Card 
-          className="mt-12"
-          style={{
-            backgroundColor: 'var(--color-bg-muted)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--color-border-light)',
-            marginTop: 'var(--spacing-12)'
-          }}
-        >
-          <CardContent style={{ padding: 'var(--ikan-component-spacing-large)' }}>
-            <div className="text-center space-y-4">
-              <h3 
-                style={{
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
-                  margin: '0'
-                }}
-              >
-                {faqCard.title}
-              </h3>
-              
-              <p 
-                style={{
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-muted)',
-                  margin: '0',
-                  lineHeight: 'var(--line-height-md)'
-                }}
-              >
-                {faqCard.description}
+          <div className="contact-methods">
+            {methods.map((m: { icon: string; title: string; description: string; value: string; action: string }) => {
+              const Icon = METHOD_ICON[m.icon] ?? Mail;
+              return (
+                <a key={m.title} href={m.action} className="contact-method">
+                  <Icon aria-hidden="true" />
+                  <p className="contact-method__title">{m.title}</p>
+                  <p className="contact-method__desc">{m.description}</p>
+                  <p className="contact-method__value">{m.value}</p>
+                </a>
+              );
+            })}
+          </div>
+
+          <section className="contact-form-section">
+            <h2 className="contact-form__title">{cms?.formTitle || 'Send us a message'}</h2>
+            {cms?.formSubtitle ? <p className="contact-form__subtitle">{cms.formSubtitle}</p> : null}
+
+            {sent ? (
+              <p className="contact-sent" role="status">
+                Thanks — your message is with us. We reply within 24 hours, to the address you gave.
               </p>
-              
-              <Button
-                variant="outline"
-                onClick={() => onNavigate ? onNavigate(faqCard.buttonRoute || '/faq') : window.location.href = '/faq'}
-                style={{
-                  height: 'var(--ikan-component-button-height)',
-                  borderRadius: 'var(--ikan-component-border-radius)',
-                  fontSize: 'var(--text-base)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  marginTop: 'var(--ikan-component-spacing-default)'
-                }}
+            ) : (
+              <form className="contact-form" onSubmit={submit} noValidate>
+                <label className="contact-field">
+                  <span>Your name</span>
+                  <input value={form.name} onChange={set('name')} autoComplete="name" required />
+                </label>
+                <label className="contact-field">
+                  <span>Email</span>
+                  <input type="email" value={form.email} onChange={set('email')} autoComplete="email" required />
+                </label>
+                <label className="contact-field contact-field--wide">
+                  <span>Subject</span>
+                  <input value={form.subject} onChange={set('subject')} placeholder="General enquiry" />
+                </label>
+                <label className="contact-field contact-field--wide">
+                  <span>Message</span>
+                  <textarea value={form.message} onChange={set('message')} rows={6} required />
+                </label>
+                <button type="submit" className="info-button" disabled={busy}>
+                  {busy ? 'Sending…' : 'Send message'}
+                </button>
+              </form>
+            )}
+          </section>
+
+          {faq ? (
+            <section className="contact-faq">
+              <p className="contact-faq__title">{faq.title}</p>
+              <p className="contact-faq__body">{faq.description}</p>
+              <button
+                type="button"
+                className="info-button"
+                onClick={() => onNavigate?.(faq.buttonRoute || '/faq')}
               >
-                {faqCard.buttonText}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </Container>
-    </PageShell>
+                {faq.buttonText}
+              </button>
+            </section>
+          ) : null}
+        </div>
+      </section>
+    </div>
   );
 }

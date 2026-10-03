@@ -6,7 +6,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
           <h2 class="text-xl font-medium text-gray-900 mb-3">🔒 Your Privacy Matters</h2>
-          <p class="text-gray-700 leading-relaxed">At iKan, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p>
+          <p class="text-gray-700 leading-relaxed">At iKAN, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p>
         </div>
 
         <div class="grid gap-6">
@@ -114,12 +114,12 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'terms': {
     title: 'Terms of Service',
-    subtitle: "Important legal terms governing your use of iKan's mental health platform and services.",
+    subtitle: "Important legal terms governing your use of iKAN's mental health platform and services.",
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
           <h2 class="text-xl font-medium text-gray-900 mb-3">📋 Terms of Service</h2>
-          <p class="text-gray-700 leading-relaxed">By accessing and using iKan's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: ${new Date().toLocaleDateString()}</p>
+          <p class="text-gray-700 leading-relaxed">By accessing and using iKAN's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: ${new Date().toLocaleDateString()}</p>
         </div>
 
         <div class="grid gap-6">
@@ -199,12 +199,12 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   },
   'return-policy': {
     title: 'Return Policy',
-    subtitle: 'Understanding our refund and return policy for iKan services.',
+    subtitle: 'Understanding our refund and return policy for iKAN services.',
     content: `
       <div class="space-y-8">
         <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
           <h2 class="text-xl font-medium text-gray-900 mb-3">💚 Our Satisfaction Guarantee</h2>
-          <p class="text-gray-700 leading-relaxed">At iKan, we're committed to your satisfaction. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
+          <p class="text-gray-700 leading-relaxed">At iKAN, we're committed to your satisfaction. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p>
         </div>
         <p>Please contact billing@ikanhealth.in for all refund requests.</p>
       </div>
@@ -216,7 +216,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     subtitle: 'We understand plans change. Cancel anytime with no penalties or hidden fees.',
     content: `
       <h2>Account Cancellation</h2>
-      <p>You may cancel your iKan account at any time.</p>
+      <p>You may cancel your iKAN account at any time.</p>
       <h2>Subscription Cancellation</h2>
       <p>For subscription services, cancel anytime before your next billing date.</p>
     `,
@@ -276,7 +276,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
   'homepage-assessment': {
     title: 'Homepage Assessment Intro',
     content: JSON.stringify({
-      title: "iKan is the mental health platform for the modern era.",
+      title: "iKAN is the mental health platform for the modern era.",
       description: "Get actionable and quantified insights about your mental health. Screen for issues prevent them from turning chronic with the help of our experts and evidence backed tools.",
       ctaText: "Get Started",
       image: "https://images.unsplash.com/photo-1724176636904-394580bfedf5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjB0ZWNobm9sb2d5JTIwYW5hbHl0aWNzJTIwaW5zaWdodHN8ZW58MXx8fHwxNzY1NDQ3NTMyfDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -325,7 +325,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         affordable: '#F5A623',
         'stigma-free': '#E84FAF',
       },
-      description: 'We believe everyone deserves support on their mental health journey. iKan combines clinical expertise with thoughtful technology to meet you where you are.',
+      description: 'We believe everyone deserves support on their mental health journey. iKAN combines clinical expertise with thoughtful technology to meet you where you are.',
       trustedByLabel: 'Trusted by leading organizations',
     }),
     lastUpdated: new Date().toISOString()
@@ -408,7 +408,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     content: JSON.stringify({
       stats: [
         { value: '50,000+', label: 'Assessments completed', icon: 'avatars' },
-        { value: '2M+', label: 'iKan members', icon: 'assessments' },
+        { value: '2M+', label: 'iKAN members', icon: 'assessments' },
         { value: '500+', label: 'Sessions a day', icon: 'sessions' },
       ],
     }),
@@ -428,8 +428,8 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       },
       items: [
         {
-          question: 'What is iKan and how does it support mental health?',
-          answer: 'iKan is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
+          question: 'What is iKAN and how does it support mental health?',
+          answer: 'iKAN is a mental health PWA that provides access to professional consultants, self-guided programs, mood journaling, and mental health assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.',
         },
         {
           question: 'How do I book a consultation with a therapist?',
@@ -440,7 +440,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           answer: 'Yes. Equip programs are structured into daily modules you can complete at your own pace. Each program includes exercises, reflections, and progress tracking to help you build lasting habits.',
         },
         {
-          question: 'Is my data private and secure on iKan?',
+          question: 'Is my data private and secure on iKAN?',
           answer: 'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we follow strict privacy guidelines. Our designs are intentionally subtle so you can use the app comfortably in any setting.',
         },
         {
@@ -459,7 +459,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       heroImage: 'https://images.unsplash.com/photo-1758275557348-23950a3ddeae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm91cCUyMGZyaWVuZHMlMjBoYXBweSUyMG91dGRvb3IlMjBnYXRoZXJpbmclMjBkaXZlcnNlfGVufDF8fHx8MTc3MTkwODY4M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
       reviews: [
         {
-          quote: 'iKan helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
+          quote: 'iKAN helped me understand my emotions better. I used to bottle everything up, but now I have tools to process what I feel. The assessments gave me clarity I never expected.',
           name: 'Priya M.',
           avatarBg: '#7ED4C8',
           avatarEmoji: '😊',
@@ -471,7 +471,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
           avatarEmoji: '😌',
         },
         {
-          quote: "Finding affordable mental health support felt impossible until I found iKan. The resources are thoughtful and the consultations are judgment-free. It's changed how I take care of myself.",
+          quote: "Finding affordable mental health support felt impossible until I found iKAN. The resources are thoughtful and the consultations are judgment-free. It's changed how I take care of myself.",
           name: 'Sneha R.',
           avatarBg: '#E8A0D4',
           avatarEmoji: '🤗',
@@ -494,7 +494,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     title: 'FAQs & Help Center',
     content: JSON.stringify({
       heroTitle: 'FAQs & Help Center',
-      heroSubtitle: 'Find answers to common questions about iKan, your account, programs, and more.',
+      heroSubtitle: 'Find answers to common questions about iKAN, your account, programs, and more.',
       searchPlaceholder: 'Search for answers...',
       noResultsText: 'No results found. Try a different search term.',
       ctaTitle: 'Still have questions?',
@@ -502,15 +502,15 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
       ctaButtonText: 'Contact Support',
       ctaButtonRoute: '/contact',
       categories: [
-        { id: 'about', title: 'About iKan', items: [
-          { question: 'What is iKan and how does it support mental health?', answer: 'iKan is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.' },
-          { question: 'Is iKan a replacement for therapy?', answer: 'No. iKan is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step.' },
-          { question: 'How is iKan different from other mental health apps?', answer: 'iKan combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow "Calm Tech" design principles.' },
+        { id: 'about', title: 'About iKAN', items: [
+          { question: 'What is iKAN and how does it support mental health?', answer: 'iKAN is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.' },
+          { question: 'Is iKAN a replacement for therapy?', answer: 'No. iKAN is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step.' },
+          { question: 'How is iKAN different from other mental health apps?', answer: 'iKAN combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow "Calm Tech" design principles.' },
         ]},
         { id: 'getting-started', title: 'Signing Up & Getting Started', items: [
           { question: 'How do I create an account?', answer: 'Tap "Get Started" on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically.' },
-          { question: 'Is iKan free to use?', answer: 'Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services.' },
-          { question: 'Can I use iKan without signing in?', answer: 'Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account.' },
+          { question: 'Is iKAN free to use?', answer: 'Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services.' },
+          { question: 'Can I use iKAN without signing in?', answer: 'Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account.' },
         ]},
         { id: 'account', title: 'Managing Your Account', items: [
           { question: 'How do I update my profile information?', answer: 'Navigate to your Account page. You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details.' },
@@ -531,7 +531,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         { id: 'trust-safety', title: 'Trust, Safety & Privacy', items: [
           { question: 'Is my data private and secure?', answer: 'Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we never share it with third parties.' },
           { question: 'What should I do in a mental health emergency?', answer: 'Call your local emergency services (112) or the iCALL Psychosocial Helpline at 9152987821.' },
-          { question: 'How are consultants verified?', answer: 'All consultants on iKan are licensed professionals. We verify their credentials and experience before they join.' },
+          { question: 'How are consultants verified?', answer: 'All consultants on iKAN are licensed professionals. We verify their credentials and experience before they join.' },
         ]},
       ],
     }),
@@ -564,7 +564,7 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
     // The link groups live in content/nav.ts (SITEMAP_SECTIONS), shared with the footer and mobile menu.
     content: JSON.stringify({
       heroTitle: 'Site Navigation',
-      heroSubtitle: 'Explore all pages and resources available on iKan.',
+      heroSubtitle: 'Explore all pages and resources available on iKAN.',
     }),
     lastUpdated: new Date().toISOString()
   },

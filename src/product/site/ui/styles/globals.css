@@ -1382,12 +1382,16 @@ html {
   max-width: 1360px;
   padding: 0 24px;
   height: var(--ikan-nav-height-desktop, 80px);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--grey-2);
+  /* Container taken from app.ikanhealth.in/login: `bg-background/85` over an
+     8px blur, not an opaque white over a 16px one. The app's bar lets the page
+     read through it; this one had been sitting on top of the page like a
+     separate sheet. */
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
   border-radius: var(--ikan-capsule-radius, 9999px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px color-mix(in oklab, var(--foreground) 6%, transparent);
   transition: box-shadow var(--transition-base), background var(--transition-base);
 }
 
@@ -1402,10 +1406,15 @@ html {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  font-family: var(--font-family-base);
+  /* iKAN 2's `type-label-lg`: 14px / 20px / 500. Every control in the bar is
+     14px — the links were 14 and the two buttons beside them 15, which is a
+     difference you see as a wobble rather than as hierarchy. Weight separates
+     them instead: 500 here, 600 on the buttons. */
+  padding: 9px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  font-family: var(--font-sans, var(--font-family-base));
   color: var(--color-text-muted);
   background: transparent;
   border: none;
@@ -1413,7 +1422,6 @@ html {
   cursor: pointer;
   white-space: nowrap;
   transition: color var(--transition-fast), background var(--transition-fast);
-  line-height: 1.4;
 }
 
 .nav-link:hover {
@@ -1441,14 +1449,52 @@ html {
 }
 
 /* Primary Nav Button (Sign In) */
+/*
+ * The secondary bar CTA ("Let's Talk"). It carried its own Tailwind utilities
+ * at 16px / 500 while the primary beside it sat at 14px / 500, so the two
+ * buttons in one pill were different sizes. Both now match the links at 14px.
+ */
+.btn-nav-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* IDENTICAL to `.nav-link`: 14px / 20px / 500. Not just the same size — the
+     same weight too. At 600 the buttons read as larger than the links beside
+     them even though both measured 14px, because weight is what the eye
+     reports as size at this scale. The fill and the pill separate them. */
+  padding: 10px 20px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: var(--font-sans, var(--font-family-base));
+  color: var(--color-text-primary);
+  background: var(--color-accent-default);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter var(--transition-fast);
+}
+
+.btn-nav-secondary:hover {
+  filter: brightness(0.95);
+}
+
 .btn-nav-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 20px;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  font-family: var(--font-family-base);
+  /* IDENTICAL to `.nav-link`: 14px / 20px / 500. Not just the same size — the
+     same weight too. At 600 the buttons read as larger than the links beside
+     them even though both measured 14px, because weight is what the eye
+     reports as size at this scale. The fill and the pill separate them. */
+  padding: 10px 20px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: var(--font-sans, var(--font-family-base));
   color: var(--color-primary-on);
   background: var(--color-primary-default);
   border: none;
@@ -1456,7 +1502,6 @@ html {
   cursor: pointer;
   white-space: nowrap;
   transition: opacity var(--transition-fast);
-  line-height: 1.4;
 }
 
 .btn-nav-primary:hover {
@@ -3031,4 +3076,1891 @@ select {
   .about-person--lead .about-person-portrait {
     width: 140px;
   }
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * INFO PAGES — legal, FAQ, contact
+ *
+ * The same shell as /about: the ported theme on `.ikan2-theme`, a band on the
+ * canvas, one measure. These pages were a full-bleed `PageHero` over a single
+ * bordered card, which looked nothing like the app and nothing like /about.
+ *
+ * `info-page__inner` is narrower than the About bands (720 against 1080),
+ * because these are read rather than scanned and the policy text is one long
+ * column — 1080px of 16/26 runs past a comfortable measure.
+ * ─────────────────────────────────────────────────────────────── */
+
+.info-page {
+  background: var(--canvas);
+  padding-bottom: 64px;
+}
+
+.info-band {
+  padding: 40px 0;
+}
+
+.info-band--white {
+  background: var(--card);
+}
+
+/* The reading measure, from iKAN 2's `max-w-read`: 38rem (~76 characters) at
+   laptop size, tracking the app column below 1024. These pages are long-form,
+   so they get the reading surface rather than the app's 30rem phone column. */
+.info-band__inner {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 640px) {
+  .info-band__inner {
+    max-width: 36rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .info-band__inner {
+    max-width: 38rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .info-band {
+    padding: 56px 0;
+  }
+
+  .info-band__inner {
+    padding: 0 40px;
+  }
+}
+
+.info-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.info-subtitle {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+/*
+ * The policy switcher. Four legal pages existed with no way to get from one to
+ * another — a reader who wanted the refund terms from the privacy page had to
+ * go via the footer. iKAN 2's /legal/$slug route solves it with a row of pills,
+ * which is the one device worth taking wholesale.
+ */
+.info-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.info-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.info-tab:hover {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.info-tab[aria-current='page'] {
+  border-color: transparent;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.info-prose {
+  margin-top: 28px;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────── */
+
+.faq-search {
+  position: relative;
+  margin-top: 20px;
+}
+
+.faq-search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.faq-search input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.faq-search input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.faq-search input:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.faq-topics {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.faq-group {
+  margin-top: 28px;
+}
+
+.faq-group__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-list {
+  margin-top: 4px;
+}
+
+/*
+ * A question is a native `<details>`. The app uses its own Disclosure
+ * component; at this size the element does the same job — keyboard operable
+ * and announced correctly — with nothing behind it.
+ */
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The marker is drawn rather than typed, so it can rotate when the row opens. */
+.faq-item > summary::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted-foreground);
+  border-bottom: 2px solid var(--muted-foreground);
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.faq-item[open] > summary::after {
+  transform: rotate(-135deg);
+  margin-top: 2px;
+}
+
+.faq-item > summary:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.faq-item > p {
+  padding: 0 0 18px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+.faq-empty {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--muted-foreground);
+}
+
+.faq-cta {
+  margin-top: 40px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--secondary);
+}
+
+.faq-cta__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.faq-cta__body {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+/* The primary control, shared by FAQ and Contact. */
+.info-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--foreground);
+  color: var(--background);
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.info-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.info-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+/* ── CONTACT ──────────────────────────────────────────────────── */
+
+/*
+ * The crisis card leads the page. Someone in trouble should not have to scroll
+ * past a subject field to find a helpline, which is what the old order asked
+ * of them. It uses the error-container pair from iKAN 2's ramp — urgent
+ * without being alarming, and contrast-checked as a pair.
+ */
+.contact-crisis {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+}
+
+.contact-crisis__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.contact-crisis__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.contact-crisis__body {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.contact-crisis__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.contact-crisis__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--on-error-container);
+  color: var(--error-container);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-crisis__button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contact-methods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.contact-method {
+  display: block;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--secondary);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.contact-method:hover {
+  transform: translateY(-2px);
+}
+
+.contact-method svg {
+  width: 20px;
+  height: 20px;
+  color: var(--brand-teal-ink);
+}
+
+.contact-method__title {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-method__desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+}
+
+.contact-method__value {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+  color: var(--foreground);
+}
+
+.contact-form-section {
+  margin-top: 36px;
+}
+
+.contact-form__title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-form__subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.contact-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.contact-field {
+  display: block;
+}
+
+.contact-field--wide {
+  grid-column: 1 / -1;
+}
+
+.contact-field > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.contact-field input:focus-visible,
+.contact-field textarea:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.contact-form .info-button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0;
+}
+
+.contact-sent {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: var(--secondary);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--foreground);
+}
+
+.contact-faq {
+  margin-top: 40px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--secondary);
+}
+
+.contact-faq__title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.contact-faq__body {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 599px) {
+  .contact-methods,
+  .contact-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* ───────────────────────────────────────────────────────────────
+ * SERVICES
+ *
+ * A port of iKAN 2's own `/services` page — `ikan2/src/routes/services.tsx`
+ * and the `.services-*` block at the end of `ikan2/src/styles.css`. The page
+ * already existed there, so the earlier `svc-*` system this replaces was an
+ * invented second answer to a question that had one. Rules below are iKAN 2's
+ * verbatim; this repo's deliberate differences are the four blocks at the end,
+ * each with its reason. Do not restyle these in place — change iKAN 2 and
+ * re-port, or the two drift.
+ *
+ * Every token used here (--calm-soft, --canvas, --mind-soft, --calm-strong,
+ * --shadow-dock, --dur-base …) already exists in the ported `ikan2.css`;
+ * nothing new is introduced.
+ * ─────────────────────────────────────────────────────────────── */
+
+.services-page { background: var(--background); color: var(--foreground); overflow: clip; }
+.services-container { width: min(100% - 56px, 1320px); margin-inline: auto; }
+.services-page a:focus-visible, .services-page button:focus-visible, .services-page input:focus-visible { outline: 2px solid var(--brand-teal-ink); outline-offset: 3px; }
+.services-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .13em; color: var(--brand-teal-ink); }
+.services-hero { padding-block: 129px 142px; }
+.services-hero h1 { max-width: 1050px; margin-top: 28px; font: 600 clamp(48px, 5vw, 78px)/1.12 var(--font-display); letter-spacing: 0; }
+.services-hero h1 em { color: var(--brand-teal-ink); font-style: normal; }
+.services-hero > p:last-child { margin-top: 33px; color: var(--muted-foreground); font-size: 21px; line-height: 1.65; }
+.services-section { padding-block: 135px; }
+.services-split { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1.13fr); align-items: center; gap: clamp(48px, 7vw, 126px); }
+.services-copy { min-width: 0; }
+.services-copy h2 { margin-top: 14px; font: 600 clamp(42px, 4.2vw, 64px)/1.1 var(--font-display); }
+.services-copy h3 { max-width: 600px; margin-top: 35px; font: 600 clamp(26px, 2.5vw, 37px)/1.28 var(--font-display); }
+.services-copy > p:not(.services-eyebrow) { max-width: 540px; margin-top: 22px; color: var(--muted-foreground); font-size: 17px; line-height: 1.9; }
+.services-copy .services-action { margin-top: 37px; }
+.services-action { transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-action:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
+.services-action:active { transform: translateY(0); }
+.services-fact { display: flex; align-items: center; gap: 17px; max-width: 340px; margin-top: 30px; padding-block: 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.services-fact strong { font: 600 42px/1 var(--font-display); color: var(--brand-teal-ink); }
+.services-fact span { max-width: 170px; color: var(--muted-foreground); font-size: 13px; line-height: 1.5; }
+.services-heading-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.services-badge { margin-top: 16px; border: 1px solid var(--brand-teal); border-radius: 999px; padding: 5px 10px; color: var(--brand-teal-ink); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.services-visual { min-width: 0; }
+.services-assessment { border-top: 1px solid var(--border); }
+.services-phone-scene { position: relative; display: grid; place-items: center; min-height: 730px; border-radius: 32px; background: var(--calm-soft); overflow: hidden; }
+.services-phone { position: relative; width: min(320px, 76%); min-height: 637px; border: 9px solid var(--foreground); border-radius: 43px; background: var(--background); box-shadow: 0 26px 55px color-mix(in oklab, var(--foreground) 17%, transparent); overflow: hidden; }
+.services-phone-notch { position: absolute; top: 0; left: 50%; width: 90px; height: 19px; transform: translateX(-50%); border-radius: 0 0 15px 15px; background: var(--foreground); }
+.services-phone-top { display: flex; align-items: center; justify-content: space-between; padding: 33px 19px 18px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; }
+.services-phone-top svg { color: var(--brand-teal-ink); }
+.services-phone-body { padding: 24px 22px; }
+.services-phone-kicker, .services-phone-progress > span, .services-phone-result > span { color: var(--brand-teal-ink); font-size: 9px; font-weight: 800; letter-spacing: .09em; }
+.services-phone-body h3 { margin-top: 11px; font: 600 25px/1.25 var(--font-display); }
+.services-phone-intro { margin-top: 9px; color: var(--muted-foreground); font-size: 11px; line-height: 1.65; }
+.services-phone-meta { display: flex; gap: 14px; margin-top: 20px; font-size: 11px; font-weight: 700; }
+.services-phone-meta span { display: inline-flex; align-items: center; gap: 3px; }
+.services-phone-progress { margin-top: 30px; }
+.services-phone-progress strong { display: block; margin-top: 8px; font-size: 12px; }
+.services-track { height: 6px; margin-top: 10px; border-radius: 9px; background: var(--secondary); }
+.services-track span { display: block; width: 62.5%; height: 100%; border-radius: inherit; background: var(--brand-teal-ink); }
+.services-phone-result { position: relative; margin-top: 29px; padding: 19px 14px; border: 1px solid var(--border); border-radius: 15px; background: var(--card); }
+.services-phone-result strong { display: block; margin-top: 8px; font: 600 15px/1.4 var(--font-display); }
+.services-phone-result p { max-width: 180px; margin-top: 9px; color: var(--muted-foreground); font-size: 10px; line-height: 1.4; }
+.services-phone-result svg { position: absolute; right: 15px; bottom: 16px; }
+.services-phone-privacy { display: block; margin-top: 18px; color: var(--muted-foreground); font-size: 10px; text-align: center; }
+.services-phone-home { position: absolute; bottom: 10px; left: 50%; width: 92px; height: 4px; transform: translateX(-50%); border-radius: 9px; background: var(--foreground); }
+.services-phone-note { position: absolute; bottom: 49px; right: 22px; display: flex; align-items: center; gap: 9px; max-width: 200px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--card); box-shadow: var(--shadow-card); font-size: 11px; font-weight: 700; }
+.services-note-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--brand-teal); }
+.services-equip { background: var(--canvas); }
+.services-equip .services-split { grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); }
+.services-equip-preview { position: relative; padding-bottom: 45px; }
+.services-programme-card { position: relative; display: block; min-height: 580px; border-radius: 28px; overflow: hidden; color: var(--primary-foreground); box-shadow: var(--shadow-card); transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-programme-card:hover, .services-resource-card:hover, .services-consultant-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-dock); }
+.services-programme-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.services-programme-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 18px; padding: 35px; background: linear-gradient(0deg, color-mix(in oklab, var(--foreground) 88%, transparent), transparent 72%); }
+.services-programme-tag { font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+.services-programme-overlay strong { max-width: 400px; font: 600 clamp(28px, 3vw, 43px)/1.2 var(--font-display); }
+.services-programme-overlay > span:last-child { display: flex; align-items: center; gap: 13px; font-size: 13px; font-weight: 700; }
+.services-day-strip { position: absolute; right: -25px; bottom: 0; left: 45px; display: flex; align-items: center; gap: 20px; padding: 22px 25px; border: 1px solid var(--border); border-radius: 17px; background: var(--card); box-shadow: var(--shadow-card); }
+.services-day-number { font: 600 31px var(--font-display); }
+.services-day-number small { color: var(--muted-foreground); font-size: 12px; }
+.services-day-strip > div { display: grid; gap: 6px; min-width: 0; }
+.services-day-strip > div strong { font-size: 13px; }
+.services-day-strip > div span { color: var(--muted-foreground); font-size: 11px; }
+.services-day-strip i { display: inline-block; width: 3px; height: 3px; margin: 0 5px 2px; border-radius: 50%; background: var(--muted-foreground); }
+.services-day-check { display: grid; place-items: center; width: 38px; height: 38px; flex: none; margin-left: auto; border-radius: 50%; background: var(--calm-soft); color: var(--calm-strong); }
+.services-mood { background: var(--mind-soft); }
+.services-mood-preview { padding: 28px; border: 1px solid var(--border); border-radius: 28px; background: var(--card); box-shadow: var(--shadow-card); }
+.services-ui-top { display: flex; justify-content: space-between; gap: 12px; color: var(--brand-teal-ink); font-size: 10px; font-weight: 800; letter-spacing: .07em; }
+.services-mood-scale h3 { margin-top: 27px; font: 600 27px/1.2 var(--font-display); }
+.services-mood-scale > p { margin-top: 7px; color: var(--muted-foreground); font-size: 13px; }
+.services-mood-options { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin-top: 25px; }
+.services-mood-option { display: flex; flex-direction: column; gap: 8px; min-width: 0; height: 89px; padding: 8px 2px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); }
+.services-mood-option.is-selected { border-color: var(--brand-teal-ink); background: var(--calm-soft); box-shadow: 0 0 0 1px var(--brand-teal-ink); }
+.services-mood-option > span { font-size: 26px; }
+.services-mood-option small { font-size: 10px; }
+.services-entry-preview { margin: 27px -5px -5px 20px; padding: 21px; border: 1px solid var(--border); border-radius: 19px; background: var(--background); box-shadow: var(--shadow-card); }
+.services-entry-preview > article { margin-top: 15px; background: var(--card); }
+.services-journal-detail { display: flex; gap: 25px; padding: 15px 4px 0; color: var(--muted-foreground); font-size: 12px; }
+.services-journal-detail b { color: var(--foreground); }
+.services-resources { background: var(--background); }
+.services-categories { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.services-categories span { border: 1px solid var(--border); border-radius: 999px; padding: 8px 13px; color: var(--muted-foreground); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.services-resource-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.services-resource-card { min-width: 0; border: 1px solid var(--border); border-radius: 20px; background: var(--card); box-shadow: var(--shadow-card); color: var(--foreground); overflow: hidden; transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-resource-card.is-prominent { grid-row: span 2; }
+.services-resource-image { position: relative; height: 135px; overflow: hidden; }
+.services-resource-card.is-prominent .services-resource-image { height: 335px; }
+.services-resource-image img, .services-resource-image svg { width: 100%; height: 100%; object-fit: cover; }
+.services-resource-image > span { position: absolute; top: 13px; left: 13px; padding: 7px 11px; border-radius: 999px; background: var(--card); font-size: 11px; font-weight: 800; }
+.services-resource-copy { position: relative; min-height: 125px; padding: 18px 40px 19px 18px; }
+.services-resource-copy p { color: var(--brand-teal-ink); font-size: 11px; font-weight: 700; }
+.services-resource-copy p span { margin-inline: 4px; }
+.services-resource-copy h3 { margin-top: 9px; font: 600 15px/1.4 var(--font-display); }
+.services-resource-card.is-prominent h3 { font-size: 22px; }
+.services-resource-copy svg { position: absolute; right: 17px; bottom: 18px; }
+.services-consultation { border-top: 1px solid var(--border); }
+.services-consultant-card { display: block; overflow: hidden; border: 1px solid var(--border); border-radius: 24px; background: var(--card); box-shadow: var(--shadow-card); color: var(--foreground); transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.services-consultant-photo { position: relative; height: 360px; background: var(--secondary); }
+.services-consultant-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
+.services-consultant-photo span { position: absolute; bottom: 17px; left: 18px; max-width: calc(100% - 36px); border-radius: 999px; padding: 9px 12px; background: var(--card); font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.services-consultant-details { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 25px; }
+.services-consultant-details p { color: var(--muted-foreground); font-size: 12px; }
+.services-consultant-details h3 { margin-top: 5px; font: 600 24px var(--font-display); }
+.services-consultant-facts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 25px 25px; }
+.services-consultant-facts span { border-radius: 999px; padding: 8px 12px; background: var(--secondary); font-size: 11px; font-weight: 700; }
+@media (max-width: 1020px) {
+  .services-container { width: min(100% - 44px, 1320px); }
+  .services-split, .services-equip .services-split { gap: 35px; }
+  .services-section { padding-block: 90px; }
+  .services-phone-note { right: 8px; }
+  .services-resource-grid { gap: 9px; }
+  .services-resource-card.is-prominent .services-resource-image { height: 290px; }
+}
+@media (max-width: 740px) {
+  .services-container { width: min(100% - 36px, 620px); }
+  .services-hero { padding-block: 95px 92px; }
+  .services-hero h1 { margin-top: 22px; font-size: clamp(38px, 10vw, 55px); }
+  .services-hero > p:last-child { margin-top: 24px; font-size: 16px; }
+  .services-desktop-break { display: none; }
+  .services-section { padding-block: 80px; }
+  .services-split, .services-equip .services-split { grid-template-columns: minmax(0,1fr); gap: 44px; }
+  .services-equip .services-copy { grid-row: 1; }
+  .services-copy h2 { font-size: 42px; }
+  .services-copy h3 { margin-top: 23px; font-size: 26px; }
+  .services-copy > p:not(.services-eyebrow) { font-size: 15px; line-height: 1.8; }
+  .services-phone-scene { min-height: 670px; }
+  .services-phone { width: min(320px, 78%); }
+  .services-programme-card { min-height: 450px; }
+  .services-day-strip { right: 5px; left: 20px; }
+  .services-categories { flex-wrap: nowrap; overflow-x: auto; margin-right: -18px; padding-bottom: 8px; scrollbar-width: none; }
+  .services-resource-card.is-prominent .services-resource-image { height: 230px; }
+}
+@media (max-width: 460px) {
+  .services-phone-note { right: 4px; bottom: 22px; max-width: 130px; padding: 8px; font-size: 9px; }
+  .services-phone-scene { min-height: 650px; }
+  .services-mood-preview { padding: 17px; }
+  .services-mood-options { gap: 3px; }
+  .services-mood-option { height: 78px; }
+  .services-mood-option > span { font-size: 22px; }
+  .services-mood-option small { font-size: 9px; }
+  .services-entry-preview { margin-left: 6px; padding: 10px; }
+  .services-resource-grid { grid-template-columns: 1fr 1fr; }
+  .services-resource-card.is-prominent { grid-column: span 2; grid-row: auto; }
+  .services-resource-card:not(.is-prominent) .services-resource-image { height: 95px; }
+  .services-resource-card:not(.is-prominent) .services-resource-copy { min-height: 160px; padding: 12px 12px 32px; }
+  .services-resource-card:not(.is-prominent) h3 { font-size: 12px; }
+  .services-resource-card:not(.is-prominent) .services-resource-copy svg { width: 14px; height: 14px; }
+  .services-consultant-photo { height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .services-page *, .services-page *::before, .services-page *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ── This repo's four differences ───────────────────────────────
+ *
+ * 1. THE TITLE SITS ON NO WHITE CONTAINER. iKAN 2's `.services-page` paints
+ *    `--background` across the whole page because it owns its own shell. Here
+ *    the app shell is already a light grey ground, so painting white made the
+ *    hero a white slab floating on it. The page root is transparent and each
+ *    SECTION carries its own ground instead.
+ */
+.services-page {
+  background: transparent;
+}
+
+.services-hero {
+  background: transparent;
+}
+
+/*
+ * 2. EVERY SECTION IS THE SAME HEIGHT. iKAN 2 sizes each one by its content,
+ *    so the five ran to visibly different lengths. They are now equal and the
+ *    content is centred inside, which is also what makes the scroll read as
+ *    five deliberate stops rather than a long ribbon.
+ *
+ *    `svh`, not `vh`: on a phone `vh` is the viewport WITHOUT the browser
+ *    chrome, so a 100vh section is taller than the screen and the first thing
+ *    a visitor does is scroll past a cropped heading. Applied from 1021px up
+ *    only — forcing a fixed height on a phone, where the previews stack, would
+ *    leave either a crushed section or acres of dead space.
+ */
+@media (min-width: 741px) {
+  /*
+   * The five sections are ONE grid, not five blocks with a shared min-height.
+   * A floor is not equality: Assessment carries a 730px phone scene and Equip
+   * a 580px programme card, so with `min-height` alone those two overshot the
+   * floor by 170px and 60px while the other three sat exactly on it — five
+   * sections, three of them the same height.
+   *
+   * `minmax(88svh, 1fr)` on auto-rows does both jobs at once. The `1fr` makes
+   * every row resolve to the TALLEST row's content, so the five are genuinely
+   * equal whatever is inside them; the `88svh` floor keeps a short section
+   * from collapsing when the tallest happens to be short.
+   *
+   * `svh`, not `vh`: on a phone `vh` excludes the browser chrome, so a section
+   * sized in `vh` is taller than the screen it is meant to fill.
+   */
+  .services-sections {
+    display: grid;
+    grid-auto-rows: minmax(88svh, 1fr);
+  }
+
+  .services-section {
+    display: grid;
+    align-content: center;
+    padding-block: 110px;
+  }
+}
+
+/*
+ * 3. THE SCROLL REVEAL IS LIVE. iKAN 2 switches it off on this page
+ *    (`.services-page .reveal { opacity: 1 }`) so public content is readable
+ *    before hydration. Here it was asked for, so it stays on — the `reveal`
+ *    and `reveal-in` bodies are iKAN 2's own, ported in `ikan2.css`, and the
+ *    reduced-motion guard there means it degrades to plain content rather than
+ *    to a blank page.
+ */
+
+/*
+ * 4. iKAN 2's `.services-newsletter` rules ARE ported, at the end of this
+ *    file, but onto this site's shared `NewsletterBlock` rather than a
+ *    services-only copy — so a visitor meets one newsletter across the site.
+ */
+
+/*
+ * 5. Four small rules iKAN 2 does not need. Its page composes shadcn `Button`
+ *    and `EntryCard` components, which carry their own styling; this site has
+ *    neither, so the same appearance is declared here rather than pulling two
+ *    component libraries across for one page.
+ */
+.services-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding-inline: 24px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.services-action.is-light {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.services-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The journal entry card, standing in for iKAN 2's `EntryCard`. */
+.services-entry-preview > article {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 15px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.services-entry-face {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.services-entry-preview > article strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+
+/* The mood options are previews here, not buttons, so they need the layout the
+   shadcn ghost button was supplying. */
+.services-mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ── Newsletter block ─────────────────────────────────────────── */
+
+/*
+ * iKAN 2's `.services-newsletter`, copied from the block of the same name in
+ * `ikan2/src/styles.css`. It replaces a dark card this site had invented; the
+ * reasons are on the component in `ui/blocks/NewsletterBlock.tsx`.
+ *
+ * `.services-container`, `.services-eyebrow` and `.services-action` are the
+ * same ported rules the Services page uses, so the block needs no type or
+ * button styling of its own.
+ */
+.services-newsletter { padding-block: 100px; background: var(--calm-soft); }
+.services-newsletter-inner { display: grid; grid-template-columns: 1fr .85fr; align-items: end; gap: 70px; }
+.services-newsletter h2 { max-width: 600px; margin-top: 18px; font: 600 clamp(38px,4vw,57px)/1.2 var(--font-display); }
+.services-newsletter-inner > div:first-child > p:last-child { max-width: 480px; margin-top: 18px; color: var(--muted-foreground); font-size: 16px; line-height: 1.7; }
+.services-newsletter form { display: flex; gap: 8px; padding: 7px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); }
+.services-newsletter input { width: 100%; min-width: 0; padding-inline: 17px; background: transparent; font-size: 14px; outline: none; }
+.services-newsletter form button { flex: none; }
+.services-newsletter-fine { margin: 13px 14px 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 1020px) {
+  .services-newsletter { padding-block: 75px; }
+  .services-newsletter-inner { grid-template-columns: 1fr; gap: 30px; }
+}
+
+@media (max-width: 460px) {
+  .services-newsletter form { flex-wrap: wrap; border-radius: 18px; }
+  .services-newsletter input { height: 46px; }
+  .services-newsletter form button { width: 100%; }
+}
+
+/*
+ * This repo's two additions. iKAN 2 opens a `mailto:` and so has no success or
+ * error state to show; this site posts to a real endpoint and must say what
+ * happened.
+ */
+.services-newsletter-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.services-newsletter-done svg {
+  width: 18px;
+  height: 18px;
+  color: var(--calm-strong);
+}
+
+/* ── Services header, matched to the About page ───────────────────
+ *
+ * iKAN 2's hero is a 78px display headline over a 129px top pad with a bold
+ * uppercase tracked eyebrow — right for a page that owns its whole viewport.
+ * On this site it sat next to About's header and the two read as two different
+ * products: About opens at 52px, flush under the nav, with a sentence-case
+ * teal eyebrow and a 19px subtitle.
+ *
+ * These rules bring the Services header onto About's measurements exactly —
+ * taken from the live page rather than from the CSS, since `.about-page` is
+ * declared five times across this file and the computed values are what a
+ * visitor actually compares. The SECTION eyebrows below the header stay as
+ * iKAN 2 authored them ("01 / ASSESSMENT"); only the page header changes.
+ *
+ * No ground of its own: it inherits the shell's, which is what "no white
+ * container" means here. `--background` is near-white and would have put a
+ * pale slab behind the title again.
+ * ───────────────────────────────────────────────────────────────── */
+
+/*
+ * The page keeps iKAN 2's near-white ground so its section rhythm survives:
+ * white, --canvas, --mind-soft, white, white. Painting About's grey across the
+ * whole page flattened three of those five into one colour.
+ */
+.services-page {
+  background: var(--background);
+}
+
+/*
+ * The header gets a ground of its OWN — About's grey — so it is visibly a
+ * different band from the Assessment section that follows it rather than the
+ * top of it. This is also what keeps the title off a white container: the
+ * title sits on grey, the sections below are white.
+ *
+ * Full-bleed, so the band spans the viewport while the text inside keeps the
+ * page's measure.
+ */
+.services-hero-band {
+  background: oklch(0.955 0.006 250);
+  border-bottom: 1px solid var(--border);
+}
+
+.services-hero {
+  /* About's h1 sits directly under the nav clearance that
+     `.site-page-below-nav` already applies, so the hero adds none of its own. */
+  padding-block: 0 72px;
+}
+
+/*
+ * The hero keeps iKAN 2's `.services-container` measure rather than taking
+ * About's narrower one. Matching About's gutter here made the page title start
+ * 80px to the right of the "01 / ASSESSMENT" below it — a misalignment inside
+ * one page is more visible than a difference between two pages.
+ */
+
+/* About's eyebrow: sentence case, 13px, no tracking. */
+.services-hero .services-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.services-hero h1 {
+  max-width: none;
+  margin-top: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 600;
+  line-height: 1.115;
+  letter-spacing: -0.02em;
+}
+
+.services-hero > p:last-child {
+  margin-top: 12px;
+  font-size: 19px;
+  line-height: 30px;
+  color: var(--muted-foreground);
+}
+
+/* ── Section markers ──────────────────────────────────────────────
+ *
+ * "01 / ASSESSMENT" and its four siblings. iKAN 2 gives these the same
+ * `.services-eyebrow` as the page header, so on this site they came out in the
+ * identical teal as the header's "Services" and every section read as a second
+ * announcement of the page.
+ *
+ * They do a different job — the header names the page, these count position
+ * within it — so they get a different object: the numeral in the display face
+ * and the brand teal, a hairline, then the label in muted at eyebrow scale.
+ * Teal now appears once per section rather than twice.
+ * ───────────────────────────────────────────────────────────────── */
+
+.services-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.services-mark b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--brand-teal-ink);
+}
+
+/* A rule, not a slash. The "/" in iKAN 2's string is punctuation being asked
+   to do a divider's job, and it reads as part of the label to a screen
+   reader. */
+.services-mark i {
+  width: 22px;
+  height: 1px;
+  flex: none;
+  background: var(--border);
+}
+
+/*
+ * No two CONSECUTIVE bands share a ground. iKAN 2 leaves Consultation on the
+ * page's own white and separates it from Resources — also white — with a 1px
+ * border alone, so the two read as one long band with a line drawn in it.
+ *
+ * The run top to bottom is now: header grey · white · --canvas · --mind-soft ·
+ * white · --canvas · --calm-soft. `--canvas` repeats at 02 and 05, which is
+ * fine: they are four sections apart and never seen together.
+ */
+.services-consultation {
+  background: var(--canvas);
+}
+
+/* ── Site footer ──────────────────────────────────────────────────
+ *
+ * This site's own design on this site's own tokens. iKAN 2 is the mobile app
+ * and has no site footer to borrow: the `.services-footer` rules in its
+ * stylesheet belong to its single public `/services` route, not to a system.
+ *
+ * TYPE HIERARCHY. The version this replaces used 11px, 12px, 13px, 14px and
+ * 11px again for five different roles. Five sizes inside a 3px range is not a
+ * hierarchy, it is mush: nothing leads and nothing recedes. There are now four
+ * roles with real separation, and every size below belongs to exactly one:
+ *
+ *   Brand      the wordmark, display face, the only large thing here
+ *   Label      11px / 600 / 0.08em caps, muted — column headings only
+ *   Content    15px — links and contact details, the things people click
+ *   Fine       12px muted — legal, copyright, the crisis explainer
+ *
+ * The content tier went UP from 13px, not down. A footer link is a tap target
+ * on a phone, and 13px was below this site's own body minimum.
+ *
+ * MOTION. Colour and underline on hover, nothing else. This is a mental-health
+ * service and the footer carries two crisis numbers; movement down here buys
+ * nothing and costs attention.
+ * ───────────────────────────────────────────────────────────────── */
+
+/*
+ * `.site-footer.ikan2-theme`, not `.site-footer`. The footer opts into the
+ * ported theme, and `ikan2.css` sets `color: var(--foreground)` on
+ * `.ikan2-theme` UNLAYERED — that file loads after this one, so at equal
+ * specificity it won and every word rendered in the same near black as the
+ * ground behind it. Two classes outrank one. Anything that sets a colour or a
+ * face on an element carrying `ikan2-theme` needs the extra class.
+ */
+.site-footer.ikan2-theme {
+  width: 100%;
+  flex: none;
+  padding-block: 72px 28px;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* Its own measure. The footer runs under every page and must not depend on a
+   container class belonging to one of them. */
+.site-footer__inner {
+  width: min(100% - 48px, 1320px);
+  margin-inline: auto;
+}
+
+/* ── Columns ── */
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 640px) {
+  .site-footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px 28px;
+  }
+
+  .site-footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-footer__grid {
+    /* The brand column is widest; the contact column is wider than the two nav
+       columns because it holds the support address, which is one unbreakable
+       token and wrapped mid-word to "support@ikanhealth.i / n" in equal
+       columns. */
+    grid-template-columns: 1.9fr 1fr 1fr 1.3fr;
+    gap: 56px;
+  }
+
+  .site-footer__brand {
+    grid-column: auto;
+  }
+}
+
+.site-footer__brand {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  align-content: start;
+}
+
+/* BRAND — the one large thing in the footer, and the only use of the display
+   face. Everything else is the sans. */
+.site-footer__logo {
+  color: var(--background);
+}
+
+.site-footer__blurb {
+  max-width: 32ch;
+  margin: 0;
+  /* `color-mix` against the footer's own text colour rather than
+     `rgba(255,255,255,…)`: the ground is a token and may not be black. */
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.site-footer__col {
+  min-width: 0;
+}
+
+/*
+ * Block plus margin, not a grid with a gap. As a grid the rows came out at
+ * 21.75px, 28.1px, 28.1px for three identical single-line links: the track
+ * sizing was picking up leading the items did not fill, so the pitch stayed at
+ * 33px however far the gap came down. A block list with one margin is exactly
+ * the line height plus that margin, and it is one number to reason about.
+ */
+.site-footer__col ul {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__col ul li {
+  display: block;
+}
+
+.site-footer__col ul li + li {
+  margin-top: 5px;
+}
+
+/* LABEL — column headings. The only tracked, uppercase thing in the footer, so
+   it reads as a heading at 11px without needing to be bigger. */
+.site-footer__label {
+  margin: 0 0 12px;
+  color: color-mix(in oklab, currentcolor 55%, transparent);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* CONTENT — links and contact details. 15px, high contrast: these are the
+   things people came down here to click. */
+.site-footer__col a {
+  /*
+   * `flex`, not `inline-flex`. An inline-level box sits inside the `li`'s own
+   * line box and inherits its strut, so each row measured 33px against a
+   * 21.75px line and the list stayed loose however far the gap came down.
+   * Block-level, the row is exactly the content height.
+   */
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  gap: 9px;
+  color: color-mix(in oklab, currentcolor 82%, transparent);
+  font-size: 15px;
+  /* The row pitch is the line box plus the grid gap, so both have to come down
+     together. 1.45 x 15px plus a 4px gap is a ~26px pitch: tight enough to read
+     as one list, still a usable tap target on a phone. */
+  line-height: 1.45;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__col a:hover {
+  color: var(--background);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer__col a svg {
+  flex: none;
+  color: color-mix(in oklab, currentcolor 60%, transparent);
+}
+
+/* ── Social ── */
+
+.site-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__social a {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in oklab, currentcolor 18%, transparent);
+  border-radius: 999px;
+  color: color-mix(in oklab, currentcolor 78%, transparent);
+  transition:
+    background-color var(--dur-fast, 150ms) ease,
+    color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__social a:hover {
+  background: color-mix(in oklab, currentcolor 14%, transparent);
+  color: var(--background);
+}
+
+/* ── Crisis block ─────────────────────────────────────────────────
+ *
+ * Promoted out of the disclaimer paragraph. It used to be 11px prose below the
+ * copyright with the two numbers as inline links inside a sentence — the least
+ * scannable place on the page, for the content most likely to be needed
+ * urgently. Each number is now its own tap target with the service named under
+ * it, and the block is bordered so it reads as a distinct offer of help rather
+ * than legal small print.
+ * ───────────────────────────────────────────────────────────────── */
+
+.site-footer__crisis {
+  display: grid;
+  gap: 14px;
+  margin-top: 44px;
+  /*
+   * ALIGNED. The panel bleeds sideways by exactly its own horizontal padding,
+   * so "In an emergency" starts on the same vertical as the brand text and the
+   * column headings above it. Padding alone pushed its content 20px right of
+   * everything else, which is the kind of near-miss that reads as sloppy
+   * without being obviously wrong.
+   */
+  margin-inline: -18px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  /* ELEVATED, not outlined. A border alone on a near-black ground reads as a
+     box drawn around small print; lifting the panel off the ground and adding
+     a top highlight makes it a raised surface, which is what the most
+     important content in the footer should sit on. */
+  background: color-mix(in oklab, var(--background) 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--background) 14%, transparent),
+    0 1px 2px color-mix(in oklab, var(--foreground) 40%, transparent);
+}
+
+@media (min-width: 860px) {
+  .site-footer__crisis {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 14px 18px;
+  }
+}
+
+/* FINE — the explainer, legal row and copyright all share this one size. */
+.site-footer__crisis p {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.site-footer__crisis ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 520px) {
+  .site-footer__crisis ul {
+    grid-auto-flow: column;
+    gap: 9px;
+  }
+}
+
+.site-footer__crisis a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  /* Reads against the raised panel, not the page ground, so it needs more
+     contrast than the 12% that worked on the flat version. */
+  background: color-mix(in oklab, currentcolor 16%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__crisis a:hover {
+  background: color-mix(in oklab, currentcolor 26%, transparent);
+}
+
+.site-footer__crisis a svg {
+  flex: none;
+  color: var(--brand-teal);
+}
+
+.site-footer__crisis strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.site-footer__crisis small {
+  display: block;
+  margin-top: 1px;
+  color: color-mix(in oklab, currentcolor 62%, transparent);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ── Bottom bar ── */
+
+.site-footer__bottom {
+  display: grid;
+  gap: 18px;
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid color-mix(in oklab, var(--background) 16%, transparent);
+}
+
+@media (min-width: 860px) {
+  .site-footer__bottom {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 32px;
+  }
+}
+
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.site-footer__legal a {
+  color: color-mix(in oklab, currentcolor 68%, transparent);
+  font-size: 12px;
+  text-decoration: none;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__legal a:hover {
+  color: var(--background);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  color: color-mix(in oklab, currentcolor 55%, transparent);
+  font-size: 12px;
+}
+
+.site-footer__by {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--dur-fast, 150ms) ease;
+}
+
+.site-footer__by:hover {
+  color: var(--background);
+}
+
+.site-footer__by span {
+  font-weight: 600;
+}
+
+
+/* ── Nav brand lockup ─────────────────────────────────────────────
+ * Mirrors app.ikanhealth.in/login: 28px squircle mark at 9px radius plus the
+ * wordmark in `type-subhead`. The radius is deliberate — the mark is neither a
+ * circle nor a square in either product.
+ * ───────────────────────────────────────────────────────────────── */
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+/* The mark outsizes the wordmark: 40px against 18px text. A mark matched to
+   the text height reads as a bullet point in front of a word. */
+.nav-brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.nav-brand .type-subhead {
+  /* iKAN 2's `type-subhead`: Sora 18px / 26px / 600. */
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+/* ── Public mobile nav ────────────────────────────────────────────
+ *
+ * Every value here is an iKAN 2 token. The bar previously carried its own
+ * inline styles on the earlier token set, so it was the one piece of chrome
+ * not on the same system as the page beneath it.
+ *
+ * Type is left entirely to the `type-*` roles in the markup; nothing in this
+ * block sets a font-size, which is the point of having roles at all.
+ * ───────────────────────────────────────────────────────────────── */
+
+.mnav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 9999;
+  padding: 10px 12px 0;
+}
+
+.mnav__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card);
+}
+
+.mnav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+/* The mark outsizes the wordmark, as it does in the desktop capsule. */
+.mnav__brand img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.mnav__toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background var(--dur-fast, 150ms) ease;
+}
+
+.mnav__toggle:hover {
+  background: color-mix(in oklab, var(--foreground) 10%, var(--secondary));
+}
+
+.mnav__toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mnav__menu {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.mnav__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Roomier than the 11px it replaced: with the group headings gone the list
+     is four rows in a sheet of its own, and it should feel like a set of tap
+     targets rather than a dense index. */
+  padding: 14px 12px;
+  border-radius: 14px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.mnav__item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--muted-foreground);
+}
+
+.mnav__item:hover {
+  background: var(--secondary);
+}
+
+/* Active is a neutral resting state, not a filled block. The menu had the
+   current page in a solid near-black bar that read as the primary action. */
+.mnav__item.is-active {
+  background: var(--secondary);
+  font-weight: 600;
+}
+
+.mnav__item.is-active svg {
+  color: var(--brand-teal-ink);
+}
+
+/* 14px like every item above it; the weight, the fill and the full width are
+   what make it the action. A 15px label here was the only string in the menu
+   at a different size. */
+.mnav__signin {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  cursor: pointer;
+}
+
+.mnav__signin svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Both bar actions, side by side at the foot of the menu. */
+.mnav__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  /* A rule, so the two actions read as the foot of the sheet rather than as
+     two more rows in the list. */
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mnav__talk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 999px;
+  background: var(--color-accent-default);
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mnav__talk svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Landing page CTA ─────────────────────────────────────────────
+ *
+ * One class for the page's calls to action. Each was hand-styled inline with
+ * its own font-size (`15px`, `var(--text-base)`), its own padding, its own
+ * shadow and, in one case, a raw `#F97066` that belonged to no palette. They
+ * are iKAN 2's `type-action` on iKAN 2's tokens now.
+ *
+ * `.site-cta` carries `ikan2-theme`'s roles because the homepage root opts in;
+ * the two-class selectors below are deliberate — `ikan2-theme` sets `color` on
+ * itself unlayered in `ikan2.css`, and a single class loses to it.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .site-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--dur-base, 220ms) var(--ease-out, ease),
+    box-shadow var(--dur-base, 220ms) var(--ease-out, ease);
+}
+
+.ikan2-theme .site-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .site-cta:active {
+  transform: translateY(0);
+}
+
+/* The one secondary CTA on the page. It was a raw coral hex; the brand has a
+   coral, and this is it. */
+.ikan2-theme .site-cta--coral {
+  background: var(--brand-coral);
+  color: var(--brand-coral-ink);
+}
+
+@media (max-width: 767px) {
+  .ikan2-theme .site-cta {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* ── Homepage: Services ───────────────────────────────────────────
+ * Replaces the Assessment Programs and Equip strips. iKAN 2 tokens only.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .home-services {
+  padding-block: 88px;
+  background: var(--card);
+}
+
+.ikan2-theme .home-services__inner {
+  width: min(100% - 48px, 1200px);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.ikan2-theme .home-services__eyebrow {
+  margin: 0;
+  color: var(--brand-teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ikan2-theme .home-services h2 {
+  max-width: 18ch;
+  margin: 10px auto 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.ikan2-theme .home-services__lede {
+  max-width: 48ch;
+  margin: 14px auto 0;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.ikan2-theme .home-services__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 40px 0 36px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .ikan2-theme .home-services__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  /*
+   * Five cards in a three-column grid would leave a hole, so the first two
+   * span wider and the last three sit beneath. Six equal cells with one empty
+   * is the thing that reads as a missing item.
+   */
+  .ikan2-theme .home-services__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .ikan2-theme .home-service:nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+
+  .ikan2-theme .home-service:nth-child(n + 3) {
+    grid-column: span 2;
+  }
+}
+
+.ikan2-theme .home-service {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--background);
+}
+
+.ikan2-theme .home-service__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-lg);
+}
+
+.ikan2-theme .home-service__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ikan2-theme .home-service__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ikan2-theme .home-service__badge {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ikan2-theme .home-service__line {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+/* ── Homepage: the app screen inside the phone ────────────────────
+ * Layout only. Every card in here is an iKAN 2 primitive — `program-band`,
+ * `metric-pill`, `mini-score`, `semantic-chip` — so this preview follows the
+ * system instead of imitating it.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .app-screen {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  width: 100%;
+  height: calc(100% - 28px);
+  padding: 16px 14px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.ikan2-theme .app-screen__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ikan2-theme .app-screen__top small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.ikan2-theme .app-screen__top strong {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ikan2-theme .app-screen__chip {
+  background: color-mix(in oklab, var(--brand-teal) 22%, transparent);
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .app-screen__mood {
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  background: var(--background);
+}
+
+.ikan2-theme .app-screen__mood p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ikan2-theme .app-screen__mood div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ikan2-theme .app-screen__mood span {
+  display: grid;
+  place-items: center;
+  padding: 5px 0;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  opacity: 0.5;
+}
+
+.ikan2-theme .app-screen__mood span.is-on {
+  background: color-mix(in oklab, var(--brand-coral) 18%, transparent);
+  opacity: 1;
+}
+
+.ikan2-theme .app-screen__band {
+  border-radius: var(--radius-xl);
+}
+
+/* The ring is iKAN 2's `mini-score` at the scale this frame allows. */
+.ikan2-theme .app-screen__ring {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.ikan2-theme .app-screen__ring span {
+  width: 34px;
+  height: 34px;
+  font-size: 13px;
+}
+
+.ikan2-theme .app-screen__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ikan2-theme .app-screen__metrics .metric-pill {
+  background: var(--background);
+  text-align: center;
+}
+
+.ikan2-theme .app-screen__metrics strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
 }
