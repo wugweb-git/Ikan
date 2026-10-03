@@ -31,7 +31,7 @@ export function Sitemap({ className, onNavigate }: SitemapProps) {
   }, [cmsContent]);
 
   const heroTitle = cms?.heroTitle || 'Site Navigation';
-  const heroSubtitle = cms?.heroSubtitle || 'Explore all pages and resources available on iKan.';
+  const heroSubtitle = cms?.heroSubtitle || 'Explore all pages and resources available on iKAN.';
 
 
   /* Without this the tab keeps whatever the previous route set: arrive here

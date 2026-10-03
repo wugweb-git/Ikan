@@ -54,8 +54,9 @@ Repeated in several places historically; stated here as the authority:
 - **Production branch is `main`**, which is also the GitHub default. It was
   `equip-carry-forward` until 2026-10-03, when that branch was renamed to `main`
   and the stale `main` deleted.
-- **Git-pushed builds auto-cancel at the Vercel project level.** Pushing to GitHub does not deploy
-  the frontend.
+- **Pushing to `main` deploys the frontend.** `autoJobCancelation` was turned off in `82f08723`
+  and `git.deploymentEnabled` lists `main`, so a push ships. This bullet used to claim the
+  opposite; it was true before that commit. Push deliberately.
 - **Deploy only through the guarded scripts** — `bash scripts/deploy-prod.sh` (frontend) and
   `bash scripts/deploy-edge.sh` (edge function). Never run the Vercel or Supabase CLI directly:
   both ship whatever is checked out. The scripts run `scripts/deploy-guard.sh` first, which refuses

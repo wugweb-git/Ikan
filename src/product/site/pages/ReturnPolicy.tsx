@@ -5,7 +5,7 @@ export const ReturnPolicy = ({ onNavigate }: { onNavigate?: (route: string) => v
   <LegalPage
     cmsKey="return-policy"
     title="Return & Refund Policy"
-    subtitle="Understanding our refund and return policy for iKan services."
+    subtitle="Understanding our refund and return policy for iKAN services."
     onNavigate={onNavigate}
   />
 );

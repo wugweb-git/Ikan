@@ -112,15 +112,15 @@ export const DEFAULT_CMS_CONTENT: { [key: string]: any } = {
         <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center"><span class="mr-2">📊</span> Analytics</h3>
           <div class="space-y-4 text-gray-700">
-            <p class="leading-relaxed">We use Google Analytics to understand which parts of iKan people use, so we can improve them. It records the type of screen you opened — for example an assessment screen or a programme day — never which assessment, which result, or which programme.</p>
-            <p class="leading-relaxed">Your answers, scores, journal entries and anything you write are never sent to Google. You can block analytics with your browser's or phone's tracking controls without affecting how iKan works.</p>
+            <p class="leading-relaxed">We use Google Analytics to understand which parts of iKAN people use, so we can improve them. It records the type of screen you opened — for example an assessment screen or a programme day — never which assessment, which result, or which programme.</p>
+            <p class="leading-relaxed">Your answers, scores, journal entries and anything you write are never sent to Google. You can block analytics with your browser's or phone's tracking controls without affecting how iKAN works.</p>
           </div>
         </section>
 
         <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center"><span class="mr-2">🗑️</span> Deleting your account</h3>
           <div class="space-y-4 text-gray-700">
-            <p class="leading-relaxed">You can delete your iKan account at any time, from inside the app or on the web at <a class="text-blue-600 underline" href="https://app.ikanhealth.in/delete-account">app.ikanhealth.in/delete-account</a>. Deleting your account permanently removes your journal, assessments, programme progress, any health data read from Health Connect, your profile and settings, your reminder registrations, and the account itself.</p>
+            <p class="leading-relaxed">You can delete your iKAN account at any time, from inside the app or on the web at <a class="text-blue-600 underline" href="https://app.ikanhealth.in/delete-account">app.ikanhealth.in/delete-account</a>. Deleting your account permanently removes your journal, assessments, programme progress, any health data read from Health Connect, your profile and settings, your reminder registrations, and the account itself.</p>
             <p class="leading-relaxed">It cannot be undone and nothing can be recovered afterwards. If you can no longer sign in, email <a class="text-blue-600 underline" href="mailto:hello@ikanhealth.in">hello@ikanhealth.in</a> from the address on the account and we will delete it within 30 days.</p>
           </div>
         </section>

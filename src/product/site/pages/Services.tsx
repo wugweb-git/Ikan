@@ -96,7 +96,7 @@ export function Services({ className }: ServicesProps) {
   useSeo({
     title: 'Services',
     description:
-      'Explore iKan assessments, guided programmes, a private mood journal, useful resources and upcoming consultations.',
+      'Explore iKAN assessments, guided programmes, a private mood journal, useful resources and upcoming consultations.',
     canonicalPath: '/service',
     type: 'website',
   });

@@ -93,7 +93,7 @@ export function AssessmentDetail({ assessmentId, onNavigate }: AssessmentDetailP
       name: assessmentData.title,
       description: assessmentData.description,
       url: `https://ikanhealth.in/assessment/${assessmentData.slug || assessmentId}`,
-      isPartOf: { '@type': 'WebSite', name: 'iKan Health', url: 'https://ikanhealth.in' },
+      isPartOf: { '@type': 'WebSite', name: 'iKAN Health', url: 'https://ikanhealth.in' },
     } : null,
   });
 

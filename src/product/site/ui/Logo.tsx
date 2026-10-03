@@ -26,7 +26,7 @@ export function LogoFull({ height = 32, className = "", style = {} }: {
         viewBox="0 0 100 50"
         style={{ color: 'currentColor' }}
         role="img"
-        aria-label="iKan"
+        aria-label="iKAN"
       >
         <g id="Logo">
           <g id="Vector">

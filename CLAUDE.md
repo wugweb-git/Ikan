@@ -37,8 +37,17 @@ names `equip-carry-forward`, it means what is now `main`.
 
 ### Deploy method — the guarded scripts
 
-Git-pushed builds auto-cancel at the project level, so production is deployed from the CLI — but
-**never by running the CLI directly**. Use the scripts:
+**A push to `main` DOES deploy production.** `vercel.json` sets
+`git.deploymentEnabled: { main: true }` with `github.enabled: true`, and commit `82f08723`
+turned `autoJobCancelation` off on purpose. Observed on 2026-10-03: a production build appeared
+within three minutes of a push, before the deploy script was run at all.
+
+This file used to say the opposite — "git-pushed builds auto-cancel at the project level" — which
+was true before that commit and has been wrong since.
+
+So the push is the risky step, not the deploy. Still use the scripts, because they are what runs
+the guard (right branch, level with origin, CI green) and what verifies the served bundle matches
+the local build. Never run the CLI directly:
 
 ```bash
 bash scripts/deploy-prod.sh    # frontend (Vercel)

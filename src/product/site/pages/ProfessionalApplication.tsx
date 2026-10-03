@@ -191,7 +191,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               Application Submitted!
             </h1>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: 'var(--muted-foreground)', marginBottom: 'var(--spacing-6)', lineHeight: 'var(--line-height-lg)' }}>
-              Thank you for your interest in joining the iKan platform. Our team will review your profile and get back to you within 3-5 business days.
+              Thank you for your interest in joining the iKAN platform. Our team will review your profile and get back to you within 3-5 business days.
             </p>
             {onNavigate && (
               <Button onClick={() => onNavigate('/')} style={{ borderRadius: 'var(--radius-md)' }}>
@@ -460,11 +460,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           {onNavigate && (
             <Button variant="ghost" onClick={() => onNavigate('/')} style={{ color: 'var(--background)', marginBottom: 'var(--spacing-4)', gap: 'var(--spacing-2)' }}>
-              <ArrowLeft className="w-4 h-4" /> Back to iKan
+              <ArrowLeft className="w-4 h-4" /> Back to iKAN
             </Button>
           )}
           <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? '24px' : '32px', fontWeight: 500, marginBottom: 'var(--spacing-2)' }}>
-            Join iKan as a Professional
+            Join iKAN as a Professional
           </h1>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', opacity: 0.85, lineHeight: 'var(--line-height-lg)' }}>
             Complete this form to apply. Your profile will be reviewed by our team and go live once approved.

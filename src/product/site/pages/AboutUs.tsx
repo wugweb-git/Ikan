@@ -184,10 +184,10 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
     jsonLd: {
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
-      name: 'About iKan',
+      name: 'About iKAN',
       description: a.hero.subtitle,
       url: 'https://ikanhealth.in/about',
-      isPartOf: { '@type': 'WebSite', name: 'iKan Health', url: 'https://ikanhealth.in' },
+      isPartOf: { '@type': 'WebSite', name: 'iKAN Health', url: 'https://ikanhealth.in' },
     },
   });
 

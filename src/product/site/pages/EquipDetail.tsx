@@ -49,7 +49,7 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
       '@type': 'Course',
       name: equipData.title,
       description: equipData.description,
-      provider: { '@type': 'Organization', name: 'iKan Health', url: 'https://ikanhealth.in' },
+      provider: { '@type': 'Organization', name: 'iKAN Health', url: 'https://ikanhealth.in' },
       url: `https://ikanhealth.in/equip/${equipData.slug || equipId}`,
     } : null,
   });
