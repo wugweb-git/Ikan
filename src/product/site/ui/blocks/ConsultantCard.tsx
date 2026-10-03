@@ -75,8 +75,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             <AvatarImage src={consultant.photo} alt={consultant.name} className="object-cover" />
             <AvatarFallback
               style={{
-                backgroundColor: 'var(--color-accent-default)',
-                color: 'var(--color-text-primary)',
+                backgroundColor: 'var(--secondary)',
+                color: 'var(--foreground)',
                 fontWeight: '500',
                 fontSize: '18px',
               }}
@@ -95,8 +95,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 className="truncate"
                 style={{
                   fontSize: '16px',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  fontWeight: '500',
+                  color: 'var(--foreground)',
                   lineHeight: '1.3',
                   margin: 0,
                 }}
@@ -107,8 +107,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 className="truncate"
                 style={{
                   fontSize: '13px',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--grey-6)',
+                  fontWeight: '400',
+                  color: 'var(--muted-foreground)',
                   margin: '2px 0 0 0',
                   lineHeight: '1.3',
                 }}
@@ -123,15 +123,15 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
               style={{
                 padding: '4px 8px',
                 borderRadius: '8px',
-                border: '1px solid var(--grey-2)',
+                border: '1px solid var(--border)',
                 background: 'white',
               }}
             >
-              <Star className="w-3 h-3" style={{ fill: 'var(--color-status-warning)', color: 'var(--color-status-warning)' }} />
-              <span style={{ fontSize: '12px', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)' }}>
+              <Star className="w-3 h-3" style={{ fill: 'var(--rest-strong)', color: 'var(--rest-strong)' }} />
+              <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--foreground)' }}>
                 {consultant.rating ? consultant.rating.toFixed(1) : '0.0'}
               </span>
-              <span style={{ fontSize: '11px', color: 'var(--grey-6)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--muted-foreground)' }}>
                 ({consultant.reviewCount || 0})
               </span>
             </div>
@@ -142,9 +142,9 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             <span
               style={{
                 fontSize: '11px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--grey-9)',
-                background: 'var(--grey-1)',
+                fontWeight: '500',
+                color: 'var(--foreground)',
+                background: 'var(--secondary)',
                 padding: '3px 8px',
                 borderRadius: '6px',
                 textTransform: 'capitalize',
@@ -152,7 +152,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             >
               {consultant.category ? consultant.category.replace('-', ' ') : 'General'}
             </span>
-            <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--grey-6)' }}>
+            <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--muted-foreground)' }}>
               <Clock className="w-3 h-3" />
               {consultant.yearsExperience || 0}+ yrs exp
             </span>
@@ -160,8 +160,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
 
           {/* Row 3: Location */}
           <div className="flex items-center gap-1" style={{ marginTop: '6px' }}>
-            <MapPin className="w-3 h-3" style={{ color: 'var(--grey-6)', flexShrink: 0 }} />
-            <span className="truncate" style={{ fontSize: '12px', color: 'var(--grey-6)' }}>
+            <MapPin className="w-3 h-3" style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+            <span className="truncate" style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>
               {consultant.location}
             </span>
           </div>
@@ -171,8 +171,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             <p
               style={{
                 fontSize: '10px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--grey-5)',
+                fontWeight: '500',
+                color: 'var(--muted-foreground)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 margin: '0 0 6px 0',
@@ -186,12 +186,12 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                   key={expertise}
                   style={{
                     fontSize: '11px',
-                    fontWeight: 'var(--font-weight-regular)',
-                    color: 'var(--grey-8)',
-                    background: 'var(--grey-1)',
+                    fontWeight: '400',
+                    color: 'var(--foreground)',
+                    background: 'var(--secondary)',
                     padding: '3px 10px',
                     borderRadius: '6px',
-                    border: '1px solid var(--color-border-default)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   {expertise}
@@ -201,8 +201,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                 <span
                   style={{
                     fontSize: '11px',
-                    color: 'var(--grey-6)',
-                    background: 'var(--grey-1)',
+                    color: 'var(--muted-foreground)',
+                    background: 'var(--secondary)',
                     padding: '3px 10px',
                     borderRadius: '6px',
                   }}
@@ -214,7 +214,7 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
           </div>
 
           {/* Divider */}
-          <div style={{ height: '1px', background: 'var(--color-border-default)', margin: '12px 0' }} />
+          <div style={{ height: '1px', background: 'var(--border)', margin: '12px 0' }} />
 
           {/* Row 5: Bottom bar */}
           <div className="flex items-center justify-between">
@@ -226,8 +226,8 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                   style={{
                     padding: '6px',
                     borderRadius: '8px',
-                    background: 'var(--grey-1)',
-                    color: 'var(--grey-6)',
+                    background: 'var(--secondary)',
+                    color: 'var(--muted-foreground)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -242,10 +242,10 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
             {/* Price + Availability + Book */}
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p style={{ fontSize: '10px', color: 'var(--grey-5)', textTransform: 'uppercase', margin: 0, letterSpacing: '0.03em' }}>
+                <p style={{ fontSize: '10px', color: 'var(--muted-foreground)', textTransform: 'uppercase', margin: 0, letterSpacing: '0.03em' }}>
                   Starting at
                 </p>
-                <p style={{ fontSize: '15px', fontWeight: 'var(--font-weight-medium)', color: 'var(--grey-9)', margin: 0 }}>
+                <p style={{ fontSize: '15px', fontWeight: '500', color: 'var(--foreground)', margin: 0 }}>
                   ₹{minPrice === Infinity ? '—' : minPrice}
                 </p>
               </div>
@@ -257,10 +257,10 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 10px',
-                    background: 'var(--color-status-success-light)',
-                    color: 'var(--grey-9)',
+                    background: 'var(--calm-soft)',
+                    color: 'var(--foreground)',
                     fontSize: '11px',
-                    fontWeight: 'var(--font-weight-medium)',
+                    fontWeight: '500',
                     borderRadius: '8px',
                     whiteSpace: 'nowrap',
                   }}
@@ -274,10 +274,10 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 10px',
-                    background: 'var(--grey-1)',
-                    color: 'var(--grey-6)',
+                    background: 'var(--secondary)',
+                    color: 'var(--muted-foreground)',
                     fontSize: '11px',
-                    fontWeight: 'var(--font-weight-medium)',
+                    fontWeight: '500',
                     borderRadius: '8px',
                   }}
                 >
@@ -292,10 +292,10 @@ export function ConsultantCard({ consultant, onClick, onBook, className }: Consu
                     height: '36px',
                     minWidth: '44px',
                     borderRadius: '10px',
-                    background: 'var(--color-primary-default)',
+                    background: 'var(--foreground)',
                     color: 'white',
                     fontSize: '12px',
-                    fontWeight: 'var(--font-weight-medium)',
+                    fontWeight: '500',
                     padding: '0 16px',
                   }}
                   onClick={(e) => {

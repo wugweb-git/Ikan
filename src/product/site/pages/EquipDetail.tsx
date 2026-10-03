@@ -57,7 +57,7 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
   // Error/Empty state
   if (!equipData) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-[var(--color-bg-page)] p-4">
+      <div className="ikan2-theme w-full min-h-screen flex items-center justify-center bg-[var(--canvas)] p-4">
         <EmptyState
           variant="search"
           title="Program Not Found"
@@ -113,10 +113,10 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
                 (#FFF7ED → #FEF3C7, border #FDE68A): the nearest surface tokens,
                 the same pair the assessment bento's warning tile uses. */}
             <div style={{
-              background: 'var(--color-status-warning-light)',
+              background: 'var(--rest-soft)',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--spacing-5) var(--spacing-6)',
-              border: '1px solid var(--color-border-default)',
+              border: '1px solid var(--border)',
               marginTop: 'var(--spacing-4)',
               display: 'flex',
               alignItems: 'center',
@@ -126,19 +126,19 @@ export function EquipDetail({ equipId, onNavigate }: EquipDetailProps) {
             }}>
               <div>
                 <p style={{
-                  fontSize: 'var(--text-sm)',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  fontFamily: 'var(--font-family-base)',
-                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--foreground)',
                   margin: 0,
                 }}>
                   Premium Program
                 </p>
                 <p style={{
-                  fontSize: 'var(--text-xs)',
+                  fontSize: '12px',
                   fontWeight: 400,
-                  fontFamily: 'var(--font-family-base)',
-                  color: 'var(--color-text-muted)',
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--muted-foreground)',
                   margin: '4px 0 0',
                 }}>
                   {`One-time payment of ${priceDisplay} for full access`}

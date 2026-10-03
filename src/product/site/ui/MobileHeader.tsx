@@ -30,7 +30,7 @@ export function MobileHeader({ title, onBack, className }: MobileHeaderProps) {
         backgroundColor: 'transparent',
         padding: 'var(--spacing-2) var(--spacing-3)',
         minHeight: '56px',
-        fontFamily: 'var(--font-family-base)',
+        fontFamily: 'var(--font-sans)',
       }}
       role="banner"
       aria-label={title ? `${title} page header` : 'Page header'}

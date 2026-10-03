@@ -29,9 +29,11 @@ export function Container({ children, className, style }: Props) {
 /** Page ground: full width, page background, base font. */
 export function PageShell({ children, className, style }: Props) {
   return (
+    /* Every page built on PageShell is on the iKAN 2 system. Five site pages
+       reach it through here, which is one opt-in rather than five. */
     <div
-      className={cn('w-full min-h-screen', className)}
-      style={{ backgroundColor: 'var(--color-bg-page)', fontFamily: 'var(--font-family-base)', ...style }}
+      className={cn('ikan2-theme w-full min-h-screen', className)}
+      style={{ backgroundColor: 'var(--canvas)', fontFamily: 'var(--font-sans)', ...style }}
     >
       {children}
     </div>

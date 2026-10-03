@@ -42,21 +42,21 @@ export function Sitemap({ className, onNavigate }: SitemapProps) {
             <div
               key={group.title}
               style={{
-                backgroundColor: 'var(--color-bg-card)',
+                backgroundColor: 'var(--card)',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border-light)',
+                border: '1px solid var(--border)',
                 padding: isMobile ? '20px' : '28px',
               }}
             >
               <h2
                 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '18px',
+                  fontWeight: '500',
+                  color: 'var(--foreground)',
                   margin: '0 0 16px 0',
                   paddingBottom: '12px',
-                  borderBottom: '1px solid var(--color-border-default)',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
                 {group.title}
@@ -68,19 +68,19 @@ export function Sitemap({ className, onNavigate }: SitemapProps) {
                     <SiteLink
                       to={link.to}
                       onNavigate={onNavigate}
-                      className="flex items-start gap-3 p-3 w-full text-left no-underline transition-colors hover:bg-[var(--color-bg-page)]"
-                      style={{ borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-family-base)' }}
+                      className="flex items-start gap-3 p-3 w-full text-left no-underline transition-colors hover:bg-[var(--canvas)]"
+                      style={{ borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)' }}
                     >
-                      <span style={{ color: 'var(--color-text-muted)', marginTop: '2px', flexShrink: 0 }}>
+                      <span style={{ color: 'var(--muted-foreground)', marginTop: '2px', flexShrink: 0 }}>
                         <NavIcon name={link.icon} />
                       </span>
                       <span>
                         <span
                           className="block"
                           style={{
-                            fontSize: 'var(--text-base)',
-                            fontWeight: 'var(--font-weight-medium)',
-                            color: 'var(--color-text-primary)',
+                            fontSize: '16px',
+                            fontWeight: '500',
+                            color: 'var(--foreground)',
                             margin: '0 0 2px 0',
                           }}
                         >
@@ -90,9 +90,9 @@ export function Sitemap({ className, onNavigate }: SitemapProps) {
                         <span
                           className="block"
                           style={{
-                            fontSize: 'var(--text-sm)',
-                            fontWeight: 'var(--font-weight-regular)',
-                            color: 'var(--color-text-muted)',
+                            fontSize: '14px',
+                            fontWeight: '400',
+                            color: 'var(--muted-foreground)',
                             lineHeight: '1.5',
                           }}
                         >

@@ -30,16 +30,16 @@ export function EquipBlock({
   if (programs.length === 0) return null;
 
   return (
-    <section style={{ backgroundColor: 'var(--color-bg-page)', paddingTop: '64px', paddingBottom: '64px' }}>
+    <section style={{ backgroundColor: 'var(--canvas)', paddingTop: '64px', paddingBottom: '64px' }}>
       <Container>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
           {title ? (
             <h2
               style={{
-                fontFamily: 'var(--font-family-base)',
+                fontFamily: 'var(--font-display)',
                 fontSize: '28px',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
+                fontWeight: '500',
+                color: 'var(--foreground)',
                 lineHeight: '1.3',
                 margin: 0,
               }}
@@ -52,10 +52,10 @@ export function EquipBlock({
             onNavigate={onNavigate}
             className="no-underline"
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-muted)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: 'var(--muted-foreground)',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
@@ -83,10 +83,10 @@ export function EquipBlock({
         {footerText && (
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-muted)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '14px',
+              fontWeight: '400',
+              color: 'var(--muted-foreground)',
               textAlign: 'center',
               margin: '32px 0 0 0',
             }}

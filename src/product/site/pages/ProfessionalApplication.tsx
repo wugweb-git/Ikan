@@ -38,18 +38,18 @@ const inputStyle = {
 };
 
 const sectionTitleStyle = {
-  fontFamily: 'var(--font-family-base)',
-  fontSize: 'var(--text-lg)',
+  fontFamily: 'var(--font-sans)',
+  fontSize: '18px',
   fontWeight: 500 as const,
-  color: 'var(--color-text-primary)',
+  color: 'var(--foreground)',
   marginBottom: 'var(--spacing-1)',
 };
 
 const sectionDescStyle = {
-  fontFamily: 'var(--font-family-base)',
-  fontSize: 'var(--text-sm)',
+  fontFamily: 'var(--font-sans)',
+  fontSize: '14px',
   fontWeight: 400 as const,
-  color: 'var(--color-text-muted)',
+  color: 'var(--muted-foreground)',
   marginBottom: 'var(--spacing-4)',
 };
 
@@ -181,16 +181,16 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   // ── Success Screen ──
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)', padding: 'var(--spacing-4)' }}>
+      <div className="ikan2-theme min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)', padding: 'var(--spacing-4)' }}>
         <Card style={{ maxWidth: 520, width: '100%', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
           <CardContent style={{ padding: 'var(--spacing-8)' }}>
-            <div style={{ width: 64, height: 64, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--color-status-success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--spacing-4)' }}>
-              <CircleCheck className="w-8 h-8" style={{ color: 'var(--color-status-success)' }} />
+            <div style={{ width: 64, height: 64, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--calm-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--spacing-4)' }}>
+              <CircleCheck className="w-8 h-8" style={{ color: 'var(--calm-strong)' }} />
             </div>
-            <h1 style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-2xl)', fontWeight: 500, marginBottom: 'var(--spacing-3)' }}>
+            <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '24px', fontWeight: 500, marginBottom: 'var(--spacing-3)' }}>
               Application Submitted!
             </h1>
-            <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-6)', lineHeight: 'var(--line-height-lg)' }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: 'var(--muted-foreground)', marginBottom: 'var(--spacing-6)', lineHeight: 'var(--line-height-lg)' }}>
               Thank you for your interest in joining the iKan platform. Our team will review your profile and get back to you within 3-5 business days.
             </p>
             {onNavigate && (
@@ -210,15 +210,15 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Full Name *</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Full Name *</Label>
               <Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Dr. Jane Doe" style={inputStyle} />
             </div>
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Credentials *</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Credentials *</Label>
               <Input value={formData.credentials} onChange={(e) => setFormData(prev => ({ ...prev, credentials: e.target.value }))} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
             </div>
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Category</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Category</Label>
               <Select value={formData.category} onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}>
                 <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -229,15 +229,15 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               </Select>
             </div>
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Years of Experience</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Years of Experience</Label>
               <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData(prev => ({ ...prev, yearsExperience: parseInt(e.target.value) || 0 }))} min="0" max="60" style={inputStyle} />
             </div>
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Location</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Location</Label>
               <Input value={formData.location} onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))} placeholder="Mumbai, India" style={inputStyle} />
             </div>
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Photo URL</Label>
+              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Photo URL</Label>
               <Input value={formData.photo} onChange={(e) => setFormData(prev => ({ ...prev, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
               <input type="file" accept="image/*" className="hidden" id="photo-upload" onChange={async (e) => {
                 const file = e.target.files?.[0];
@@ -252,16 +252,16 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             </div>
           </div>
           <div>
-            <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 4, display: 'block' }}>Brief Introduction *</Label>
+            <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Brief Introduction *</Label>
             <Textarea value={formData.bio} onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))} placeholder="Tell us about yourself, your background, and your approach to therapy..." className="min-h-[120px]" style={{ borderRadius: 'var(--radius-md)' }} />
           </div>
           <div>
-            <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: 8, display: 'block' }}>Languages Spoken</Label>
+            <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 8, display: 'block' }}>Languages Spoken</Label>
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
               {languageOptions.map(lang => (
-                <div key={lang} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--color-bg-muted)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('languages', lang)}>
+                <div key={lang} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('languages', lang)}>
                   <Checkbox checked={formData.languages.includes(lang)} onCheckedChange={() => toggleArray('languages', lang)} />
-                  <span style={{ fontSize: 'var(--text-sm)' }}>{lang}</span>
+                  <span style={{ fontSize: '14px' }}>{lang}</span>
                 </div>
               ))}
             </div>
@@ -276,9 +276,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <p style={sectionDescStyle}>Select all that apply. You can also add custom items.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {expertiseCategories.map(exp => (
-                <div key={exp} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--color-bg-muted)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('expertises', exp)}>
+                <div key={exp} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('expertises', exp)}>
                   <Checkbox checked={formData.expertises.includes(exp)} onCheckedChange={() => toggleArray('expertises', exp)} />
-                  <span style={{ fontSize: 'var(--text-sm)' }}>{exp}</span>
+                  <span style={{ fontSize: '14px' }}>{exp}</span>
                 </div>
               ))}
             </div>
@@ -288,9 +288,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <p style={sectionDescStyle}>Client groups you work with.</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {demographicSpecialtyOptions.map(d => (
-                <div key={d} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--color-bg-muted)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('demographicSpecialties', d)}>
+                <div key={d} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('demographicSpecialties', d)}>
                   <Checkbox checked={formData.demographicSpecialties.includes(d)} onCheckedChange={() => toggleArray('demographicSpecialties', d)} />
-                  <span style={{ fontSize: 'var(--text-sm)' }}>{d}</span>
+                  <span style={{ fontSize: '14px' }}>{d}</span>
                 </div>
               ))}
             </div>
@@ -301,7 +301,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             {formData.qualifications.map((q, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
                 <Input value={q} onChange={(e) => { const qs = [...formData.qualifications]; qs[i] = e.target.value; setFormData(prev => ({ ...prev, qualifications: qs })); }} placeholder="e.g., Ph.D. Clinical Psychology" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, qualifications: prev.qualifications.filter((_, j) => j !== i) }))} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, qualifications: prev.qualifications.filter((_, j) => j !== i) }))} style={{ color: 'var(--error)' }}><X className="w-4 h-4" /></Button>
               </div>
             ))}
             <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, qualifications: [...prev.qualifications, ''] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Qualification</Button>
@@ -316,9 +316,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <p style={sectionDescStyle}>Select the modalities you practice.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {therapeuticApproachOptions.map(a => (
-                <div key={a} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--color-bg-muted)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('therapeuticApproaches', a)}>
+                <div key={a} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('therapeuticApproaches', a)}>
                   <Checkbox checked={formData.therapeuticApproaches.includes(a)} onCheckedChange={() => toggleArray('therapeuticApproaches', a)} />
-                  <span style={{ fontSize: 'var(--text-sm)' }}>{a}</span>
+                  <span style={{ fontSize: '14px' }}>{a}</span>
                 </div>
               ))}
             </div>
@@ -332,9 +332,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <div className="flex flex-wrap gap-3">
               {[{ key: 'online', label: 'Video Call', icon: Video }, { key: 'call', label: 'Phone Call', icon: Phone }, { key: 'chat', label: 'Chat', icon: MessageSquare }].map(({ key, label, icon: Ic }) => (
                 <div key={key} className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer" onClick={() => toggleArray('sessionModes', key)}
-                  style={{ borderColor: formData.sessionModes.includes(key) ? 'var(--color-primary-default)' : 'var(--color-border-default)', backgroundColor: formData.sessionModes.includes(key) ? 'var(--color-primary-subtle)' : 'var(--color-bg-card)', borderRadius: 'var(--radius-md)' }}>
+                  style={{ borderColor: formData.sessionModes.includes(key) ? 'var(--foreground)' : 'var(--border)', backgroundColor: formData.sessionModes.includes(key) ? 'var(--secondary)' : 'var(--card)', borderRadius: 'var(--radius-md)' }}>
                   <Checkbox checked={formData.sessionModes.includes(key)} onCheckedChange={() => toggleArray('sessionModes', key)} />
-                  <Ic className="w-4 h-4" /><span style={{ fontSize: 'var(--text-sm)' }}>{label}</span>
+                  <Ic className="w-4 h-4" /><span style={{ fontSize: '14px' }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -361,7 +361,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
                         : [...prev.availabilityPreferences.daysAvailable, day];
                       return { ...prev, availabilityPreferences: { ...prev.availabilityPreferences, daysAvailable: days } };
                     });
-                  }} style={{ padding: 'var(--spacing-2) var(--spacing-4)', borderRadius: 'var(--radius-md)', border: '1px solid', borderColor: sel ? 'var(--color-primary-default)' : 'var(--color-border-default)', backgroundColor: sel ? 'var(--color-primary-default)' : 'var(--color-bg-card)', color: sel ? 'var(--color-primary-on)' : 'var(--color-text-primary)', fontSize: 'var(--text-sm)', fontWeight: 500, cursor: 'pointer' }}>
+                  }} style={{ padding: 'var(--spacing-2) var(--spacing-4)', borderRadius: 'var(--radius-md)', border: '1px solid', borderColor: sel ? 'var(--foreground)' : 'var(--border)', backgroundColor: sel ? 'var(--foreground)' : 'var(--card)', color: sel ? 'var(--background)' : 'var(--foreground)', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
                     {day.slice(0, 3)}
                   </button>
                 );
@@ -370,16 +370,16 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           </div>
           <div className="flex items-center gap-3">
             <Switch checked={formData.availabilityPreferences.weekendAvailability} onCheckedChange={(c) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...prev.availabilityPreferences, weekendAvailability: c } }))} />
-            <Label style={{ fontSize: 'var(--text-sm)' }}>Available on weekends</Label>
+            <Label style={{ fontSize: '14px' }}>Available on weekends</Label>
           </div>
           <div>
             <h3 style={sectionTitleStyle}>Common Client FAQs</h3>
             <p style={sectionDescStyle}>Help clients understand your practice better.</p>
             {formData.clientFAQs.map((faq, i) => (
-              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
+              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex justify-between mb-2">
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>FAQ #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: prev.clientFAQs.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
+                  <span style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>FAQ #{i + 1}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: prev.clientFAQs.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--error)' }}><X className="w-3 h-3" /></Button>
                 </div>
                 <Input value={faq.question} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], question: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Question..." className="mb-2" style={inputStyle} />
                 <Textarea value={faq.answer} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], answer: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Answer..." className="min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
@@ -407,7 +407,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             {formData.certificates.map((c, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
                 <Input value={c} onChange={(e) => { const certs = [...formData.certificates]; certs[i] = e.target.value; setFormData(prev => ({ ...prev, certificates: certs })); }} placeholder="Certificate URL or upload below" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, j) => j !== i) }))} style={{ color: 'var(--color-status-danger)' }}><X className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, j) => j !== i) }))} style={{ color: 'var(--error)' }}><X className="w-4 h-4" /></Button>
               </div>
             ))}
             <div className="flex gap-2">
@@ -428,10 +428,10 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <h3 style={sectionTitleStyle}>Testimonials</h3>
             <p style={sectionDescStyle}>Client testimonials you'd like displayed on your profile.</p>
             {formData.testimonials.map((t, i) => (
-              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--color-border-default)', borderRadius: 'var(--radius-md)' }}>
+              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius-md)' }}>
                 <div className="flex justify-between mb-2">
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Testimonial #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, testimonials: prev.testimonials.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--color-status-danger)' }}><X className="w-3 h-3" /></Button>
+                  <span style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>Testimonial #{i + 1}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, testimonials: prev.testimonials.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--error)' }}><X className="w-3 h-3" /></Button>
                 </div>
                 <Textarea value={t.text} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], text: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Testimonial text..." className="mb-2 min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
                 <Input value={t.clientName} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], clientName: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Client name (or anonymous)" style={inputStyle} />
@@ -439,11 +439,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             ))}
             <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, testimonials: [...prev.testimonials, { text: '', clientName: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Testimonial</Button>
           </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}>
+          <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: 'var(--secondary)', borderRadius: 'var(--radius-md)' }}>
             <Switch checked={formData.willingToShareArticles} onCheckedChange={(c) => setFormData(prev => ({ ...prev, willingToShareArticles: c }))} />
             <div>
-              <Label style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>Willing to contribute articles</Label>
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Share articles on our blog/resources section</p>
+              <Label style={{ fontWeight: 500, fontSize: '14px' }}>Willing to contribute articles</Label>
+              <p style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>Share articles on our blog/resources section</p>
             </div>
           </div>
         </div>
@@ -454,19 +454,19 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--canvas)' }}>
       {/* Header */}
-      <div style={{ backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', padding: isMobile ? 'var(--spacing-6) var(--spacing-4)' : 'var(--spacing-8) var(--spacing-6)' }}>
+      <div style={{ backgroundColor: 'var(--foreground)', color: 'var(--background)', padding: isMobile ? 'var(--spacing-6) var(--spacing-4)' : 'var(--spacing-8) var(--spacing-6)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
           {onNavigate && (
-            <Button variant="ghost" onClick={() => onNavigate('/')} style={{ color: 'var(--color-primary-on)', marginBottom: 'var(--spacing-4)', gap: 'var(--spacing-2)' }}>
+            <Button variant="ghost" onClick={() => onNavigate('/')} style={{ color: 'var(--background)', marginBottom: 'var(--spacing-4)', gap: 'var(--spacing-2)' }}>
               <ArrowLeft className="w-4 h-4" /> Back to iKan
             </Button>
           )}
-          <h1 style={{ fontFamily: 'var(--font-family-base)', fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)', fontWeight: 500, marginBottom: 'var(--spacing-2)' }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? '24px' : '32px', fontWeight: 500, marginBottom: 'var(--spacing-2)' }}>
             Join iKan as a Professional
           </h1>
-          <p style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', opacity: 0.85, lineHeight: 'var(--line-height-lg)' }}>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', opacity: 0.85, lineHeight: 'var(--line-height-lg)' }}>
             Complete this form to apply. Your profile will be reviewed by our team and go live once approved.
           </p>
         </div>
@@ -488,14 +488,14 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               >
                 <div style={{
                   width: 36, height: 36, borderRadius: 'var(--radius-pill)',
-                  backgroundColor: isActive ? 'var(--color-primary-default)' : isDone ? 'var(--color-status-success)' : 'var(--color-bg-muted)',
-                  color: isActive || isDone ? 'var(--color-text-inverse)' : 'var(--color-text-muted)',
+                  backgroundColor: isActive ? 'var(--foreground)' : isDone ? 'var(--calm-strong)' : 'var(--secondary)',
+                  color: isActive || isDone ? 'var(--background)' : 'var(--muted-foreground)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>
                   {isDone ? <CircleCheck className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                 </div>
-                <span style={{ fontSize: 'var(--text-xs)', fontWeight: isActive ? 500 : 400, color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+                <span style={{ fontSize: '12px', fontWeight: isActive ? 500 : 400, color: isActive ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
                   {step.label}
                 </span>
               </button>
@@ -512,9 +512,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 p-4 rounded-lg mb-4" style={{ backgroundColor: 'var(--color-status-danger-light)', border: '1px solid var(--color-status-danger)', borderRadius: 'var(--radius-md)' }}>
-            <X className="w-4 h-4" style={{ color: 'var(--color-status-danger)' }} />
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-status-danger)' }}>{error}</span>
+          <div className="flex items-center gap-3 p-4 rounded-lg mb-4" style={{ backgroundColor: 'var(--error-container)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)' }}>
+            <X className="w-4 h-4" style={{ color: 'var(--error)' }} />
+            <span style={{ fontSize: '14px', color: 'var(--error)' }}>{error}</span>
           </div>
         )}
 
@@ -532,7 +532,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           {currentStep < steps.length - 1 ? (
             <Button
               onClick={() => setCurrentStep(currentStep + 1)}
-              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)' }}
+              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--foreground)', color: 'var(--background)' }}
             >
               Next Step
             </Button>
@@ -540,7 +540,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-default)', color: 'var(--color-primary-on)', minWidth: 180 }}
+              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--foreground)', color: 'var(--background)', minWidth: 180 }}
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {submitting ? 'Submitting...' : 'Submit Application'}

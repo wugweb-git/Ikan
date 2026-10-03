@@ -54,8 +54,8 @@ interface AssessmentCardProps {
   className?: string;
 }
 
-const font = (size: string, weight = 400, color = 'var(--color-text-primary)') => ({
-  fontFamily: 'var(--font-family-base)',
+const font = (size: string, weight = 400, color = 'var(--foreground)') => ({
+  fontFamily: 'var(--font-sans)',
   fontSize: `var(--text-${size})`,
   fontWeight: weight,
   color,
@@ -65,9 +65,9 @@ function Chip({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-md px-2 py-1"
-      style={{ backgroundColor: 'var(--color-bg-muted)', ...font('xs', 500, 'var(--color-text-muted)') }}
+      style={{ backgroundColor: 'var(--secondary)', ...font('xs', 500, 'var(--muted-foreground)') }}
     >
-      <span style={{ color: 'var(--color-primary-default)', display: 'flex' }}>{icon}</span>
+      <span style={{ color: 'var(--foreground)', display: 'flex' }}>{icon}</span>
       {label}
     </span>
   );
@@ -100,17 +100,17 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
         !href && className,
       )}
       style={{
-        backgroundColor: 'var(--color-bg-card)',
+        backgroundColor: 'var(--card)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-border-default)',
+        border: '1px solid var(--border)',
       }}
     >
       {/* Image. A missing image is a muted plate — never a stock photo of
           someone else's condition standing in for this one. */}
       <div
         className={cn('relative w-full overflow-hidden', compact ? 'h-24' : 'h-40 sm:h-48')}
-        style={{ backgroundColor: 'var(--color-bg-muted)' }}
+        style={{ backgroundColor: 'var(--secondary)' }}
       >
         {item.image && (
           <img
@@ -129,8 +129,8 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
           <span
             className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-1"
             style={{
-              backgroundColor: 'var(--color-status-success)',
-              ...font('xs', 500, 'var(--color-text-inverse)'),
+              backgroundColor: 'var(--calm-strong)',
+              ...font('xs', 500, 'var(--background)'),
             }}
           >
             <Check size={12} /> Completed
@@ -145,12 +145,12 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
             {item.eyebrow && (
               <p
                 className="mb-1 uppercase"
-                style={{ ...font('xs', 500, item.image ? 'rgb(255 255 255 / 0.9)' : 'var(--color-text-muted)'), letterSpacing: '0.08em' }}
+                style={{ ...font('xs', 500, item.image ? 'rgb(255 255 255 / 0.9)' : 'var(--muted-foreground)'), letterSpacing: '0.08em' }}
               >
                 {item.eyebrow}
               </p>
             )}
-            <h3 style={{ ...font('xl', 500, item.image ? '#fff' : 'var(--color-text-primary)'), lineHeight: 1.2, margin: 0 }}>
+            <h3 style={{ ...font('xl', 500, item.image ? '#fff' : 'var(--foreground)'), lineHeight: 1.2, margin: 0 }}>
               {item.title}
             </h3>
           </div>
@@ -161,7 +161,7 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
         {compact && (
           <div>
             {item.eyebrow && (
-              <p className="mb-1 uppercase" style={{ ...font('xs', 500, 'var(--color-text-muted)'), letterSpacing: '0.08em' }}>
+              <p className="mb-1 uppercase" style={{ ...font('xs', 500, 'var(--muted-foreground)'), letterSpacing: '0.08em' }}>
                 {item.eyebrow}
               </p>
             )}
@@ -170,7 +170,7 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
         )}
 
         {!compact && item.description && (
-          <p className="line-clamp-3 flex-grow" style={font('sm', 400, 'var(--color-text-muted)')}>
+          <p className="line-clamp-3 flex-grow" style={font('sm', 400, 'var(--muted-foreground)')}>
             {item.description}
           </p>
         )}
@@ -181,8 +181,8 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
 
         {!compact && item.cta && (
           <span
-            className="mt-auto flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] px-4 py-3 transition-colors group-hover:bg-[var(--color-primary-default)] group-hover:text-[var(--color-text-inverse)]"
-            style={{ backgroundColor: 'var(--color-bg-muted)', ...font('base', 500) }}
+            className="mt-auto flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] px-4 py-3 transition-colors group-hover:bg-[var(--foreground)] group-hover:text-[var(--background)]"
+            style={{ backgroundColor: 'var(--secondary)', ...font('base', 500) }}
           >
             {item.cta}
             <ArrowRight size={16} />
@@ -199,7 +199,7 @@ export function AssessmentCard({ item, variant = 'full', index = 0, href, onNavi
       onNavigate={onNavigate}
       className={cn(
         'block h-full no-underline text-inherit rounded-[var(--radius-lg)]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-default)] focus-visible:ring-offset-2',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foreground)] focus-visible:ring-offset-2',
         className,
       )}
     >

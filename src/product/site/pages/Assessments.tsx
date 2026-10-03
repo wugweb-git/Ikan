@@ -61,32 +61,32 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
              title: "Clinical Screenings",
              desc: "Evidence-based tools for anxiety, depression, and more.",
              icon: Brain,
-             color: "var(--color-primary-default)",
-             bg: "var(--color-bg-muted)"
+             color: "var(--foreground)",
+             bg: "var(--secondary)"
            },
            {
              title: "Private & Secure",
              desc: "Your results are private to your account and never shared with third parties.",
              icon: Shield,
-             color: "var(--color-status-success)",
-             bg: "var(--color-status-success-light)"
+             color: "var(--calm-strong)",
+             bg: "var(--calm-soft)"
            },
            {
              title: "Instant Insights",
              desc: "Get immediate feedback and personalized recommendations.",
              icon: Activity,
-             color: "var(--color-status-warning)",
-             bg: "var(--color-status-warning-light)"
+             color: "var(--rest-strong)",
+             bg: "var(--rest-soft)"
            }
          ].map((item, i) => (
-           <Card key={i} className="border-none shadow-sm rounded-[var(--radius-lg)] h-full" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+           <Card key={i} className="border-none shadow-sm rounded-[var(--radius-lg)] h-full" style={{ backgroundColor: 'var(--card)' }}>
              <CardContent className="p-6 flex flex-col gap-4 h-full">
                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: item.bg }}>
                  <item.icon size={24} style={{ color: item.color }} />
                </div>
                <div>
-                 <h3 style={{ fontWeight: 500, fontSize: 'var(--text-lg)', color: 'var(--color-text-primary)', fontFamily: 'var(--font-family-base)', marginBottom: 4 }}>{item.title}</h3>
-                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', fontFamily: 'var(--font-family-base)', lineHeight: 1.6, fontWeight: 400 }}>
+                 <h3 style={{ fontWeight: 500, fontSize: '18px', color: 'var(--foreground)', fontFamily: 'var(--font-sans)', marginBottom: 4 }}>{item.title}</h3>
+                 <p style={{ fontSize: '14px', color: 'var(--muted-foreground)', fontFamily: 'var(--font-sans)', lineHeight: 1.6, fontWeight: 400 }}>
                    {item.desc}
                  </p>
                </div>
@@ -100,17 +100,17 @@ export function Assessments({ className, onNavigate }: AssessmentsProps) {
       {/* Assessment Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-medium text-[var(--color-text-primary)]">Available Assessments</h3>
+          <h3 className="text-xl font-medium text-[var(--foreground)]">Available Assessments</h3>
         </div>
 
         {assessments.length === 0 ? (
-          <Card className="border-none shadow-sm rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+          <Card className="border-none shadow-sm rounded-[var(--radius-lg)]" style={{ backgroundColor: 'var(--card)' }}>
             <CardContent className="text-center p-12">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                <FileText size={24} className="text-[var(--color-text-muted)]" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--secondary)' }}>
+                <FileText size={24} className="text-[var(--muted-foreground)]" />
               </div>
-              <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No assessments available</h3>
-              <p className="text-[var(--color-text-muted)]">Assessments will appear here once they are published. Please check back later.</p>
+              <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">No assessments available</h3>
+              <p className="text-[var(--muted-foreground)]">Assessments will appear here once they are published. Please check back later.</p>
             </CardContent>
           </Card>
         ) : (

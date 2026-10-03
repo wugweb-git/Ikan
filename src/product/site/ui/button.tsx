@@ -61,8 +61,8 @@ const Button = React.forwardRef<
       style={{
         height: 'var(--ikan-component-button-height)',
         borderRadius: 'var(--ikan-component-border-radius)',
-        fontSize: 'var(--text-base)',
-        fontWeight: 'var(--font-weight-medium)',
+        fontSize: '16px',
+        fontWeight: '500',
         minHeight: 'var(--ikan-component-button-height)',
         ...(size === 'icon' && {
           width: 'var(--ikan-component-button-height)',

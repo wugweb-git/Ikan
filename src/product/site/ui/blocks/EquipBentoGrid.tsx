@@ -182,7 +182,7 @@ export function EquipBentoGrid({
     <section 
       className={cn("w-full", className)}
       style={{
-        backgroundColor: 'var(--color-bg-page)',
+        backgroundColor: 'var(--canvas)',
         paddingTop: '20px',
         paddingBottom: '20px'
       }}
@@ -197,7 +197,7 @@ export function EquipBentoGrid({
             {/* MAIN CARD - Order 1 */}
             <div 
               className="p-[24px] lg:p-[32px] relative order-1"
-              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}
+              style={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}
             >
               <div className="flex flex-col gap-[32px]">
                 
@@ -205,11 +205,11 @@ export function EquipBentoGrid({
                 <div className="flex flex-col gap-[24px]">
                   <h2 
                     style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontWeight: 'var(--font-weight-regular)',
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: '400',
                       fontSize: '26px',
                       lineHeight: '24px',
-                      color: 'var(--color-text-primary)',
+                      color: 'var(--foreground)',
                       margin: 0
                     }}
                   >
@@ -220,11 +220,11 @@ export function EquipBentoGrid({
                       <p 
                         key={i} 
                         style={{
-                          fontFamily: 'var(--font-family-base)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontSize: 'var(--text-base)',
+                          fontFamily: 'var(--font-sans)',
+                          fontWeight: '400',
+                          fontSize: '16px',
                           lineHeight: '24px',
-                          color: 'var(--color-text-primary)',
+                          color: 'var(--foreground)',
                           margin: 0
                         }}
                       >
@@ -237,10 +237,10 @@ export function EquipBentoGrid({
                 {/* Is This For You Section */}
                 <div className="flex flex-col lg:flex-row gap-[24px] lg:gap-[49px] items-start">
                   <div className="flex flex-col gap-[14px]">
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', color: 'var(--color-text-primary)', textTransform: 'uppercase' }}>
+                    <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '14px', lineHeight: '24px', color: 'var(--foreground)', textTransform: 'uppercase' }}>
                       IS THIS FOR YOU?
                     </p>
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: '18px', lineHeight: '24px', color: 'var(--color-text-primary)', maxWidth: '167px' }}>
+                    <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '18px', lineHeight: '24px', color: 'var(--foreground)', maxWidth: '167px' }}>
                       {eligibilityIntro || "This program may be helpful if:"}
                     </p>
                   </div>
@@ -248,11 +248,11 @@ export function EquipBentoGrid({
                   {/* Checklist Grid */}
                   <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-[18px]">
                     {eligibilityPoints.map((point, idx) => (
-                      <div key={idx} className="p-[12px] flex items-center gap-[12px] w-full" style={{ backgroundColor: 'var(--color-bg-page)', borderRadius: 'var(--radius-md)' }}>
-                        <div className="rounded-full size-[40px] flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                      <div key={idx} className="p-[12px] flex items-center gap-[12px] w-full" style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--radius-md)' }}>
+                        <div className="rounded-full size-[40px] flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--card)' }}>
                           <CheckIcon />
                         </div>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
+                        <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '21px', color: 'var(--foreground)' }}>
                           {asText(point)}
                         </p>
                       </div>
@@ -293,18 +293,18 @@ export function EquipBentoGrid({
                         idx === 2 ? "border-t-0 lg:border-t-[1px] lg:border-l-0" : "",
                         idx === 3 ? "border-t-0 border-l-0 lg:border-t-[1px] lg:border-l-0" : ""
                       )}
-                      style={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border-default)', minHeight: '200px' }}
+                      style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', minHeight: '200px' }}
                     >
-                      <div className="size-[72px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+                      <div className="size-[72px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)' }}>
                         <div className="size-[32px]">
-                          <Icon className="size-full" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
+                          <Icon className="size-full" style={{ color: 'var(--foreground)' }} strokeWidth={1.5} />
                         </div>
                       </div>
                       <div className="flex flex-col justify-center h-[100px]">
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)', marginBottom: 0 }}>
+                        <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '16px', lineHeight: '24px', color: 'var(--muted-foreground)', marginBottom: 0 }}>
                           {asText(tile.title)}
                         </p>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-base)', lineHeight: '24px', color: 'var(--color-text-muted)' }}>
+                        <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '16px', lineHeight: '24px', color: 'var(--muted-foreground)' }}>
                           {asText(tile.subtitle)}
                         </p>
                       </div>
@@ -324,12 +324,12 @@ export function EquipBentoGrid({
               {resolvedRightItems.map((item, idx) => {
                 const Icon = item.icon;
                 return (
-                  <div key={idx} className="p-[20px] flex items-start gap-[12px] w-full" style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)' }}>
-                    <div className="size-[48px] shrink-0 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-                      <Icon className="size-[24px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
+                  <div key={idx} className="p-[20px] flex items-start gap-[12px] w-full" style={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+                    <div className="size-[48px] shrink-0 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)' }}>
+                      <Icon className="size-[24px]" style={{ color: 'var(--foreground)' }} strokeWidth={1.5} />
                     </div>
                     <div className="flex flex-col justify-center min-h-[48px]">
-                      <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)' }}>
+                      <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '21px', color: 'var(--foreground)' }}>
                         {asText(item.text)}
                       </p>
                     </div>
@@ -341,36 +341,36 @@ export function EquipBentoGrid({
             {/* HOW IT WORKS - Order 3 (Mobile), Order 2 (Desktop) */}
             <div 
               className="order-3 lg:order-2 p-[24px] w-full"
-              style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}
+              style={{ backgroundColor: 'var(--card)', borderRadius: 'var(--radius-lg)' }}
             >
               <div className="flex flex-col gap-[12px]">
                 {/* Header */}
                 <div className="flex items-center gap-[12px]">
-                  <div className="size-[40px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
-                    <ListTodo className="size-[20px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
+                  <div className="size-[40px] rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)' }}>
+                    <ListTodo className="size-[20px]" style={{ color: 'var(--foreground)' }} strokeWidth={1.5} />
                   </div>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '18px', lineHeight: '25px', color: 'var(--color-text-primary)' }}>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '18px', lineHeight: '25px', color: 'var(--foreground)' }}>
                     How it works
                   </p>
                 </div>
                 
                 {/* Subtitle */}
-                <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '14px', color: 'var(--color-text-muted)' }}>
+                <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '12px', lineHeight: '14px', color: 'var(--muted-foreground)' }}>
                   {howItWorksSubtitle || "This program works in progressive stages."}
                 </p>
 
                 {/* Steps */}
                 <div className="flex flex-col gap-[13px] items-center text-center py-2">
                   {howItWorksSteps.map((step, i) => (
-                    <p key={i} style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', width: '100%' }}>
+                    <p key={i} style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '12px', lineHeight: '18px', color: 'var(--foreground)', width: '100%' }}>
                       {asText(step)}
                     </p>
                   ))}
                 </div>
 
                 {/* Footer */}
-                <div className="px-[6px] py-[10px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-muted)', borderRadius: 'var(--radius-md)' }}>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontStyle: 'italic', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-xs)', lineHeight: '18px', color: 'var(--color-text-primary)', textAlign: 'center' }}>
+                <div className="px-[6px] py-[10px] flex items-center justify-center" style={{ backgroundColor: 'var(--secondary)', borderRadius: 'var(--radius-md)' }}>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontStyle: 'italic', fontWeight: '400', fontSize: '12px', lineHeight: '18px', color: 'var(--foreground)', textAlign: 'center' }}>
                     {howItWorksFooter || "The focus is on building sustainable habits and developing practical skills you can use every day."}
                   </p>
                 </div>

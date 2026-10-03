@@ -27,8 +27,8 @@ export function NotFound({ onNavigate }: NotFoundProps) {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--color-bg-page)', fontFamily: 'var(--font-family-base)' }}
+      className="ikan2-theme min-h-screen flex flex-col"
+      style={{ backgroundColor: 'var(--canvas)', fontFamily: 'var(--font-sans)' }}
     >
       <PageHero title={heroTitle} subtitle={heroSubtitle} backgroundImage={cmsContent?.heroImage} />
 
@@ -44,9 +44,9 @@ export function NotFound({ onNavigate }: NotFoundProps) {
             width: '100%',
             maxWidth: '420px',
             textAlign: 'center',
-            backgroundColor: isMobile ? 'transparent' : 'var(--color-bg-card)',
+            backgroundColor: isMobile ? 'transparent' : 'var(--card)',
             borderRadius: isMobile ? '0' : 'var(--radius-lg)',
-            border: isMobile ? 'none' : '1px solid var(--color-border-light)',
+            border: isMobile ? 'none' : '1px solid var(--border)',
             boxShadow: isMobile ? 'none' : 'var(--shadow-sm)',
             padding: isMobile ? '24px 0' : '40px 32px',
           }}
@@ -56,22 +56,22 @@ export function NotFound({ onNavigate }: NotFoundProps) {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              backgroundColor: 'var(--color-bg-muted)',
+              backgroundColor: 'var(--secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 24px',
             }}
           >
-            <Search size={36} style={{ color: 'var(--color-text-muted)' }} />
+            <Search size={36} style={{ color: 'var(--muted-foreground)' }} />
           </div>
 
           <h2
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-2xl)',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '24px',
+              fontWeight: '500',
+              color: 'var(--foreground)',
               margin: '0 0 8px 0',
             }}
           >
@@ -79,10 +79,10 @@ export function NotFound({ onNavigate }: NotFoundProps) {
           </h2>
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
-              fontSize: 'var(--text-base)',
-              fontWeight: 'var(--font-weight-regular)',
-              color: 'var(--color-text-muted)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '16px',
+              fontWeight: '400',
+              color: 'var(--muted-foreground)',
               lineHeight: '1.6',
               margin: '0 0 32px 0',
             }}
@@ -94,11 +94,11 @@ export function NotFound({ onNavigate }: NotFoundProps) {
             <button
               onClick={() => onNavigate?.('/')}
               style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-primary-on)',
-                backgroundColor: 'var(--color-primary-default)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'var(--background)',
+                backgroundColor: 'var(--foreground)',
                 border: 'none',
                 borderRadius: 'var(--radius-md)',
                 padding: '14px 24px',
@@ -120,12 +120,12 @@ export function NotFound({ onNavigate }: NotFoundProps) {
             <button
               onClick={() => window.history.back()}
               style={{
-                fontFamily: 'var(--font-family-base)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-text-primary)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '16px',
+                fontWeight: '500',
+                color: 'var(--foreground)',
                 backgroundColor: 'transparent',
-                border: '1px solid var(--color-border-default)',
+                border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
                 padding: '14px 24px',
                 cursor: 'pointer',
@@ -136,7 +136,7 @@ export function NotFound({ onNavigate }: NotFoundProps) {
                 width: '100%',
                 transition: 'background-color 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-bg-muted)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--secondary)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
               <ArrowLeft size={18} />

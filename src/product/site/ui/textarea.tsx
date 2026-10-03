@@ -24,11 +24,11 @@ function Textarea({ className, style, ...props }: React.ComponentProps<"textarea
       style={{
         minHeight: 'var(--ikan-component-input-height)',
         borderRadius: 'var(--ikan-component-border-radius)',
-        fontSize: 'var(--text-base)',
-        fontWeight: 'var(--font-weight-regular)',
+        fontSize: '16px',
+        fontWeight: '400',
         backgroundColor: 'white',
         border: '1.5px solid #D1D5DB',
-        color: 'var(--color-text-primary)',
+        color: 'var(--foreground)',
         ...style
       }}
       {...filterFigmaProps(props)}

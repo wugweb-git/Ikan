@@ -25,7 +25,7 @@ const Switch = React.forwardRef<
     {...filterFigmaProps(props)}
     ref={ref}
     style={{
-      backgroundColor: props.checked ? 'var(--color-primary-default)' : 'var(--color-bg-input)',
+      backgroundColor: props.checked ? 'var(--foreground)' : 'var(--secondary)',
       borderRadius: 'var(--radius-full, 9999px)',
       height: '20px',
       width: '36px',
@@ -37,7 +37,7 @@ const Switch = React.forwardRef<
         "pointer-events-none block h-4 w-4 rounded-full shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
       )}
       style={{
-        backgroundColor: 'var(--color-bg-card)',
+        backgroundColor: 'var(--card)',
         borderRadius: 'var(--radius-full, 9999px)',
         height: '16px',
         width: '16px'

@@ -66,20 +66,20 @@ interface AssessmentBentoGridProps {
 // exports; two of the three were truncated mid-export and rendered as stray
 // fragments, so they use lucide (same as EquipBentoGrid) instead.
 const MeasureIcon1 = () => (
-  <HeartPulse className="shrink-0 size-[20px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.67} />
+  <HeartPulse className="shrink-0 size-[20px]" style={{ color: 'var(--foreground)' }} strokeWidth={1.67} />
 );
 
 const MeasureIcon2 = () => (
-  <ClipboardList className="shrink-0 size-[20px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.67} />
+  <ClipboardList className="shrink-0 size-[20px]" style={{ color: 'var(--foreground)' }} strokeWidth={1.67} />
 );
 
 const MeasureIcon3 = () => (
-  <Gauge className="shrink-0 size-[20px]" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.67} />
+  <Gauge className="shrink-0 size-[20px]" style={{ color: 'var(--foreground)' }} strokeWidth={1.67} />
 );
 
 
 const ImportantIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--color-primary-on)' }}>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--background)' }}>
     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
     <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     <path d="M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -111,7 +111,7 @@ export function AssessmentBentoGrid({
     <section 
       className={cn("w-full", className)}
       style={{
-        backgroundColor: 'var(--color-bg-page)',
+        backgroundColor: 'var(--canvas)',
         paddingTop: '20px',
         paddingBottom: '20px'
       }}
@@ -127,9 +127,9 @@ export function AssessmentBentoGrid({
             <div 
               className="p-[24px] lg:p-[32px] relative order-1"
               style={{
-                backgroundColor: 'var(--color-bg-card)',
+                backgroundColor: 'var(--card)',
                 borderRadius: 'var(--radius-lg)',
-                border: '0.586px solid var(--color-border-default)'
+                border: '0.586px solid var(--border)'
               }}
             >
               <div className="flex flex-col gap-[16px]">
@@ -138,12 +138,12 @@ export function AssessmentBentoGrid({
                 <div className="flex flex-col gap-[24px]">
                   <h2 
                     style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontWeight: 'var(--font-weight-medium)',
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: '500',
                       fontSize: '24px',
                       lineHeight: '35px',
                       letterSpacing: '-0.317px',
-                      color: 'var(--color-text-primary)',
+                      color: 'var(--foreground)',
                       margin: 0
                     }}
                   >
@@ -154,12 +154,12 @@ export function AssessmentBentoGrid({
                       <p 
                         key={i} 
                         style={{
-                          fontFamily: 'var(--font-family-base)',
-                          fontWeight: 'var(--font-weight-regular)',
-                          fontSize: 'var(--text-base)',
+                          fontFamily: 'var(--font-sans)',
+                          fontWeight: '400',
+                          fontSize: '16px',
                           lineHeight: '26px',
                           letterSpacing: '-0.313px',
-                          color: 'var(--color-primary-default)',
+                          color: 'var(--foreground)',
                           margin: 0
                         }}
                       >
@@ -173,12 +173,12 @@ export function AssessmentBentoGrid({
                 <div className="flex flex-col gap-[16px] pt-[8px]">
                   <h3 
                     style={{
-                      fontFamily: 'var(--font-family-base)',
-                      fontWeight: 'var(--font-weight-medium)',
+                      fontFamily: 'var(--font-sans)',
+                      fontWeight: '500',
                       fontSize: '18px',
                       lineHeight: '27px',
                       letterSpacing: '-0.89px',
-                      color: 'var(--color-text-primary)',
+                      color: 'var(--foreground)',
                       margin: 0
                     }}
                   >
@@ -201,22 +201,22 @@ export function AssessmentBentoGrid({
                           key={idx} 
                           className="flex items-center p-[12px] gap-[12px] flex-1"
                           style={{ 
-                            backgroundColor: 'var(--color-bg-page)', 
+                            backgroundColor: 'var(--canvas)', 
                             borderRadius: 'var(--radius-md)',
                             minHeight: '72px' 
                           }}
                         >
-                          <div className="size-[40px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-card)' }}>
+                          <div className="size-[40px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--card)' }}>
                             <Icon />
                           </div>
                           <p 
                             style={{
-                              fontFamily: 'var(--font-family-base)',
-                              fontWeight: 'var(--font-weight-medium)',
-                              fontSize: 'var(--text-sm)',
+                              fontFamily: 'var(--font-sans)',
+                              fontWeight: '500',
+                              fontSize: '14px',
                               lineHeight: '19.25px',
                               letterSpacing: '-0.15px',
-                              color: 'var(--color-text-primary)',
+                              color: 'var(--foreground)',
                               margin: 0
                             }}
                           >
@@ -238,12 +238,12 @@ export function AssessmentBentoGrid({
               <div
                 className="p-[24px] lg:p-[32px] order-2 lg:order-none"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
+                  backgroundColor: 'var(--card)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--color-border-default)'
+                  border: '1px solid var(--border)'
                 }}
               >
-                <h3 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--color-text-primary)', margin: 0 }}>
+                <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--foreground)', margin: 0 }}>
                   {section1.title || 'How it works'}
                 </h3>
 
@@ -253,10 +253,10 @@ export function AssessmentBentoGrid({
                       <div
                         key={idx}
                         className="flex items-center gap-[12px] flex-1 p-[12px]"
-                        style={{ backgroundColor: 'var(--color-bg-page)', borderRadius: 'var(--radius-md)' }}
+                        style={{ backgroundColor: 'var(--canvas)', borderRadius: 'var(--radius-md)' }}
                       >
                         <div className="shrink-0"><CheckIcon /></div>
-                        <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '21px', color: 'var(--color-text-primary)', margin: 0 }}>
+                        <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '21px', color: 'var(--foreground)', margin: 0 }}>
                           {typeof point === 'string'
                             ? point
                             : ((point as { text?: string; title?: string })?.text
@@ -268,11 +268,11 @@ export function AssessmentBentoGrid({
                 )}
 
                 {section1.whoContent && (
-                  <div className="mt-[20px] pt-[16px]" style={{ borderTop: '1px solid var(--color-border-default)' }}>
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', color: 'var(--color-text-primary)', margin: 0 }}>
+                  <div className="mt-[20px] pt-[16px]" style={{ borderTop: '1px solid var(--border)' }}>
+                    <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '14px', lineHeight: '24px', color: 'var(--foreground)', margin: 0 }}>
                       {section1.whoTitle || 'Who is it for?'}
                     </p>
-                    <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-base)', lineHeight: '26px', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
+                    <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '16px', lineHeight: '26px', color: 'var(--muted-foreground)', margin: '4px 0 0' }}>
                       {section1.whoContent}
                     </p>
                   </div>
@@ -287,18 +287,18 @@ export function AssessmentBentoGrid({
               <div
                 className="p-[24px] lg:p-[32px] order-2 lg:order-none"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
+                  backgroundColor: 'var(--card)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--color-border-default)'
+                  border: '1px solid var(--border)'
                 }}
               >
-                <h3 style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--color-text-primary)', margin: '0 0 12px' }}>
+                <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '20px', lineHeight: '30px', letterSpacing: '-0.95px', color: 'var(--foreground)', margin: '0 0 12px' }}>
                   {section3.title || "What you'll see"}
                 </h3>
                 {/* Same treatment `Assessments.tsx` already gives these tiles. */}
                 <div
                   className="prose max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
-                  style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--text-base)', lineHeight: '26px', color: 'var(--color-text-muted)' }}
+                  style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', lineHeight: '26px', color: 'var(--muted-foreground)' }}
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(stripDuplicateHeading(whatYoullSeeHtml, section3.title || "What you'll see")) }}
                 />
               </div>
@@ -308,19 +308,19 @@ export function AssessmentBentoGrid({
             <div 
               className="p-[24px] lg:p-[32px] order-3"
               style={{
-                backgroundColor: 'var(--color-bg-card)',
+                backgroundColor: 'var(--card)',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border-default)'
+                border: '1px solid var(--border)'
               }}
             >
               <h3 
                 style={{
-                  fontFamily: 'var(--font-family-base)',
-                  fontWeight: 'var(--font-weight-medium)',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: '500',
                   fontSize: '20px',
                   lineHeight: '30px',
                   letterSpacing: '-0.95px',
-                  color: 'var(--color-text-primary)',
+                  color: 'var(--foreground)',
                   marginBottom: '16px'
                 }}
               >
@@ -334,12 +334,12 @@ export function AssessmentBentoGrid({
                     </div>
                     <p 
                       style={{
-                        fontFamily: 'var(--font-family-base)',
-                        fontWeight: 'var(--font-weight-regular)',
+                        fontFamily: 'var(--font-sans)',
+                        fontWeight: '400',
                         fontSize: '15px',
                         lineHeight: '24.4px',
                         letterSpacing: '-0.23px',
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--foreground)'
                       }}
                     >
                       {typeof note === 'string' ? note : ((note as any)?.title || (note as any)?.text || '')}
@@ -361,20 +361,20 @@ export function AssessmentBentoGrid({
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
+                  backgroundColor: 'var(--card)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '0.586px solid var(--color-border-default)',
+                  border: '0.586px solid var(--border)',
                   height: 'auto',
                 }}
               >
-                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--secondary)' }}>
                   <div className="size-[24px]">
-                    <ListTodo className="size-full" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
+                    <ListTodo className="size-full" style={{ color: 'var(--foreground)' }} strokeWidth={1.5} />
                   </div>
                 </div>
                 <div className="flex flex-col items-center lg:items-start">
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-primary)' }} className="lg:text-[16px]">Task</p>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{questionCount} Qs</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--foreground)' }} className="lg:text-[16px]">Task</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{questionCount} Qs</p>
                 </div>
               </div>
               </>)}
@@ -384,20 +384,20 @@ export function AssessmentBentoGrid({
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
+                  backgroundColor: 'var(--card)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '0.586px solid var(--color-border-default)',
+                  border: '0.586px solid var(--border)',
                   height: 'auto',
                 }}
               >
-                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
+                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--secondary)' }}>
                   <div className="size-[24px]">
-                    <Timer className="size-full" style={{ color: 'var(--color-text-primary)' }} strokeWidth={1.5} />
+                    <Timer className="size-full" style={{ color: 'var(--foreground)' }} strokeWidth={1.5} />
                   </div>
                 </div>
                 <div className="flex flex-col items-center lg:items-start">
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-primary)' }} className="lg:text-[16px]">Time</p>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{duration} min</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--foreground)' }} className="lg:text-[16px]">Time</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{duration} min</p>
                 </div>
               </div>
               </>)}
@@ -407,22 +407,22 @@ export function AssessmentBentoGrid({
               <div 
                 className="grow basis-0 flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-[10px] lg:gap-[12px] p-[16px] lg:p-[20px]"
                 style={{
-                  backgroundColor: 'var(--color-bg-card)',
+                  backgroundColor: 'var(--card)',
                   borderRadius: 'var(--radius-lg)',
-                  border: '0.586px solid var(--color-border-default)',
+                  border: '0.586px solid var(--border)',
                   height: 'auto',
                 }}
               >
-                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-bg-muted)' }}>
-                  <div className="size-[24px]" style={{ color: 'var(--color-text-primary)' }}>
+                <div className="size-[48px] lg:size-[47px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--secondary)' }}>
+                  <div className="size-[24px]" style={{ color: 'var(--foreground)' }}>
                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                      </svg>
                   </div>
                 </div>
                 <div className="flex flex-col items-center lg:items-start">
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-medium)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-primary)' }} className="lg:text-[16px]">Level</p>
-                  <p style={{ fontFamily: 'var(--font-family-base)', fontWeight: 'var(--font-weight-regular)', fontSize: 'var(--text-sm)', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{difficulty}</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '500', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--foreground)' }} className="lg:text-[16px]">Level</p>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontWeight: '400', fontSize: '14px', lineHeight: '24px', letterSpacing: '-0.313px', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }} className="lg:text-[16px]">{difficulty}</p>
                 </div>
               </div>
               </>)}
@@ -438,7 +438,7 @@ export function AssessmentBentoGrid({
               <div 
                 className="p-[20px] shadow-sm order-4"
                 style={{
-                  backgroundColor: 'var(--color-primary-default)',
+                  backgroundColor: 'var(--foreground)',
                   borderRadius: 'var(--radius-lg)',
                 }}
               >
@@ -446,21 +446,21 @@ export function AssessmentBentoGrid({
                   <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                     <ImportantIcon />
                   </div>
-                  <span style={{ fontSize: '20px', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary-on)', letterSpacing: '-0.9px' }}>Important</span>
+                  <span style={{ fontSize: '20px', fontWeight: '500', color: 'var(--background)', letterSpacing: '-0.9px' }}>Important</span>
                 </div>
                 <div className="space-y-4 pl-1">
                   {importantNotesHtml ? (
                     <div
                       className="prose max-w-none [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:font-medium"
-                      style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}
+                      style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--background)', letterSpacing: '-0.2px', opacity: 0.95 }}
                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(stripDuplicateHeading(importantNotesHtml, 'Important notes')) }}
                     />
                   ) : null}
                   {!importantNotesHtml && importantNote1 && (
-                    <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote1}</p>
+                    <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--background)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote1}</p>
                   )}
                   {!importantNotesHtml && importantNote2 && (
-                    <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--color-primary-on)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote2}</p>
+                    <p style={{ fontSize: '15px', lineHeight: '24px', color: 'var(--background)', letterSpacing: '-0.2px', opacity: 0.95 }}>{importantNote2}</p>
                   )}
                 </div>
               </div>

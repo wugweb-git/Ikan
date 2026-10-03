@@ -20,7 +20,7 @@ export function ContentImage({ src, alt, className, style, placeholderIcon = tru
         className={className}
         style={{
           ...style,
-          backgroundColor: 'var(--color-accent-default, #E9EBEF)',
+          backgroundColor: 'var(--secondary, #E9EBEF)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -31,7 +31,7 @@ export function ContentImage({ src, alt, className, style, placeholderIcon = tru
         {placeholderIcon && (
           <ImageOff 
             size={32} 
-            style={{ color: 'var(--color-text-muted, #717182)', opacity: 0.4 }} 
+            style={{ color: 'var(--muted-foreground, #717182)', opacity: 0.4 }} 
           />
         )}
       </div>

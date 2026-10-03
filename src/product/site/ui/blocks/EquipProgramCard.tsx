@@ -37,9 +37,9 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
       style={{
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
-        backgroundColor: 'var(--color-bg-card)',
+        backgroundColor: 'var(--card)',
         boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-border-default)',
+        border: '1px solid var(--border)',
       }}
     >
       {/* Thumbnail */}
@@ -58,10 +58,10 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
               padding: '4px 10px',
               borderRadius: 'var(--radius-pill)',
               backgroundColor: 'rgba(0,0,0,0.6)',
-              color: 'var(--grey-0)',
-              fontFamily: 'var(--font-family-base)',
+              color: 'var(--background)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
-              fontSize: 'var(--text-xs)',
+              fontSize: '12px',
             }}
           >
             {durationLabel}
@@ -77,12 +77,12 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
               right: 10,
               padding: '4px 10px',
               borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'var(--color-status-warning-light)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'var(--font-family-base)',
+              backgroundColor: 'var(--rest-soft)',
+              color: 'var(--foreground)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
-              fontSize: 'var(--text-xs)',
-              border: '1px solid var(--color-border-default)',
+              fontSize: '12px',
+              border: '1px solid var(--border)',
             }}
           >
             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: program.currency || 'INR', minimumFractionDigits: 0 }).format(price / 100)}
@@ -95,10 +95,10 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
         {eyebrow && (
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-muted)',
+              fontWeight: '500',
+              color: 'var(--muted-foreground)',
               letterSpacing: '1.2px',
               textTransform: 'uppercase',
               margin: '0 0 8px 0',
@@ -109,10 +109,10 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
         )}
         <h3
           style={{
-            fontFamily: 'var(--font-family-base)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
-            fontSize: 'var(--text-base)',
-            color: 'var(--color-text-primary)',
+            fontSize: '16px',
+            color: 'var(--foreground)',
             margin: '0 0 6px',
             lineHeight: 1.3,
           }}
@@ -122,10 +122,10 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
         {description && (
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 400,
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text-muted)',
+              fontSize: '14px',
+              color: 'var(--muted-foreground)',
               margin: 0,
               lineHeight: 1.5,
               display: '-webkit-box',
@@ -144,11 +144,11 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
               marginTop: 10,
               padding: '3px 10px',
               borderRadius: 'var(--radius-pill)',
-              backgroundColor: 'var(--color-accent-default)',
-              fontFamily: 'var(--font-family-base)',
+              backgroundColor: 'var(--secondary)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text-muted)',
+              fontSize: '12px',
+              color: 'var(--muted-foreground)',
             }}
           >
             {program.category}
@@ -157,10 +157,10 @@ export function EquipProgramCard({ program, href, onNavigate, durationLabel = ''
         {cta && (
           <span
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '13px',
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
+              fontWeight: '500',
+              color: 'var(--foreground)',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',

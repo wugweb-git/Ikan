@@ -31,10 +31,10 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>🧘</div>
             <h2
               style={{
-                fontFamily: 'var(--font-family-base)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 500,
-                fontSize: 'var(--text-xl)',
-                color: 'var(--color-text-primary)',
+                fontSize: '20px',
+                color: 'var(--foreground)',
                 margin: '0 0 8px',
               }}
             >
@@ -42,10 +42,10 @@ export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
             </h2>
             <p
               style={{
-                fontFamily: 'var(--font-family-base)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 400,
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text-muted)',
+                fontSize: '14px',
+                color: 'var(--muted-foreground)',
                 maxWidth: 400,
                 margin: '0 auto',
               }}

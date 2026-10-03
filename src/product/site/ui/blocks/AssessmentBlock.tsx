@@ -37,15 +37,15 @@ export function AssessmentBlock({
   if (assessments.length === 0) return null;
 
   return (
-    <div className={cn('py-[24px] lg:py-[48px] px-[20px] relative w-full', className)} style={{ backgroundColor: 'var(--color-primary-default)' }}>
+    <div className={cn('py-[24px] lg:py-[48px] px-[20px] relative w-full', className)} style={{ backgroundColor: 'var(--foreground)' }}>
       <div className="flex flex-col items-center justify-center size-full gap-[32px] mx-auto" style={{ maxWidth: CONTENT_MAX }}>
         {title?.trim() && (
-          <h2 className="font-medium leading-[48px] text-center w-full" style={{ color: 'var(--color-primary-on)', fontSize: 'var(--text-3xl)' }}>
+          <h2 className="font-medium leading-[48px] text-center w-full" style={{ color: 'var(--background)', fontSize: '32px' }}>
             {title}
           </h2>
         )}
         {subtitle?.trim() && (
-          <p className="text-center w-full" style={{ color: 'var(--color-primary-on)', opacity: 0.85, marginTop: -16 }}>
+          <p className="text-center w-full" style={{ color: 'var(--background)', opacity: 0.85, marginTop: -16 }}>
             {subtitle}
           </p>
         )}
@@ -80,13 +80,13 @@ export function AssessmentBlock({
           className="flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-90 no-underline"
           style={{
             gap: '8px',
-            backgroundColor: 'var(--color-bg-card)',
-            color: 'var(--color-primary-default)',
+            backgroundColor: 'var(--card)',
+            color: 'var(--foreground)',
             borderRadius: 'var(--radius-md)',
             padding: '12px 32px',
-            fontFamily: 'var(--font-family-base)',
-            fontWeight: 'var(--font-weight-medium)',
-            fontSize: 'var(--text-base)',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: '500',
+            fontSize: '16px',
           }}
         >
           {seeMoreText}

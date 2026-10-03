@@ -57,7 +57,7 @@ function BannerHero({ title, subtitle, backgroundImage, cta, onNavigate, classNa
         'relative w-full flex flex-col items-center justify-center text-center overflow-hidden pt-[100px] pb-[36px] md:pt-[160px] md:pb-[80px]',
         className
       )}
-      style={{ backgroundColor: 'var(--grey-9)' }}
+      style={{ backgroundColor: 'var(--foreground)' }}
     >
       <div className="absolute inset-0 z-0">
         <img
@@ -78,11 +78,11 @@ function BannerHero({ title, subtitle, backgroundImage, cta, onNavigate, classNa
       <Container className="relative z-10 flex flex-col items-center justify-center text-center">
         <h1
           style={{
-            fontFamily: 'var(--font-family-base)',
+            fontFamily: 'var(--font-sans)',
             fontSize: 'clamp(28px, 5vw, 48px)',
-            fontWeight: 'var(--font-weight-medium)',
+            fontWeight: '500',
             lineHeight: '1.2',
-            color: 'var(--grey-0)',
+            color: 'var(--background)',
             margin: '0 0 16px 0',
             maxWidth: '800px',
           }}
@@ -93,9 +93,9 @@ function BannerHero({ title, subtitle, backgroundImage, cta, onNavigate, classNa
         {subtitle && (
           <p
             style={{
-              fontFamily: 'var(--font-family-base)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 'clamp(15px, 2vw, 18px)',
-              fontWeight: 'var(--font-weight-regular)',
+              fontWeight: '400',
               lineHeight: '1.6',
               color: 'rgba(255,255,255,0.85)',
               margin: '0 0 8px 0',
@@ -115,11 +115,11 @@ function BannerHero({ title, subtitle, backgroundImage, cta, onNavigate, classNa
               marginTop: 20,
               padding: '12px 32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--grey-0)',
-              color: 'var(--color-primary-default)',
-              fontFamily: 'var(--font-family-base)',
+              backgroundColor: 'var(--background)',
+              color: 'var(--foreground)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
-              fontSize: 'var(--text-sm)',
+              fontSize: '14px',
               minHeight: 44,
             }}
           >
@@ -137,7 +137,7 @@ function SplitHero({ title, subtitle, backgroundImage, cta, onNavigate, classNam
   return (
     <section
       className={cn('relative w-full overflow-hidden flex flex-col justify-center min-h-[500px] lg:min-h-[600px]', className)}
-      style={{ backgroundColor: 'var(--color-bg-page)' }}
+      style={{ backgroundColor: 'var(--canvas)' }}
     >
       {backgroundImage && (
         <div className="absolute inset-0 w-full h-full z-0">
@@ -160,7 +160,7 @@ function SplitHero({ title, subtitle, backgroundImage, cta, onNavigate, classNam
           <div
             className="absolute inset-0 z-10"
             style={{
-              background: 'linear-gradient(to right, var(--color-bg-page) 0%, var(--color-bg-page) 30%, color-mix(in srgb, var(--color-bg-page) 70%, transparent) 55%, transparent 85%)',
+              background: 'linear-gradient(to right, var(--canvas) 0%, var(--canvas) 30%, color-mix(in srgb, var(--canvas) 70%, transparent) 55%, transparent 85%)',
             }}
           />
         </div>
@@ -170,11 +170,11 @@ function SplitHero({ title, subtitle, backgroundImage, cta, onNavigate, classNam
         <div className="max-w-[500px] flex flex-col items-start" style={{ gap: 'var(--spacing-6)' }}>
           <h1
             style={{
-              fontWeight: 'var(--font-weight-medium)',
-              fontSize: 'var(--text-3xl)',
+              fontWeight: '500',
+              fontSize: '32px',
               lineHeight: 'var(--line-height-xs)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'var(--font-family-base)',
+              color: 'var(--foreground)',
+              fontFamily: 'var(--font-sans)',
             }}
           >
             {title}
@@ -183,12 +183,12 @@ function SplitHero({ title, subtitle, backgroundImage, cta, onNavigate, classNam
           {subtitle && (
             <p
               style={{
-                fontWeight: 'var(--font-weight-regular)',
-                fontSize: 'var(--text-base)',
+                fontWeight: '400',
+                fontSize: '16px',
                 lineHeight: 'var(--line-height-md)',
-                color: 'var(--color-text-primary)',
+                color: 'var(--foreground)',
                 opacity: 0.9,
-                fontFamily: 'var(--font-family-base)',
+                fontFamily: 'var(--font-sans)',
               }}
             >
               {subtitle}
@@ -201,15 +201,15 @@ function SplitHero({ title, subtitle, backgroundImage, cta, onNavigate, classNam
               onNavigate={onNavigate}
               className={cn(buttonVariants(), 'no-underline')}
               style={{
-                backgroundColor: 'var(--color-primary-default)',
-                color: 'var(--color-primary-on)',
+                backgroundColor: 'var(--foreground)',
+                color: 'var(--background)',
                 height: 'var(--ikan-component-button-height)',
                 minHeight: 'var(--ikan-component-button-height)',
                 borderRadius: 'var(--ikan-component-border-radius)',
                 paddingLeft: 'var(--spacing-8)',
                 paddingRight: 'var(--spacing-8)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-medium)',
+                fontSize: '16px',
+                fontWeight: '500',
               }}
             >
               {cta.label}

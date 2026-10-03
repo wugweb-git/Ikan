@@ -16,7 +16,7 @@ export function LogoFull({ height = 32, className = "", style = {} }: {
   return (
     <div
       className={`relative ${className}`}
-      style={{ height, width: 'auto', color: 'var(--color-primary-default)', ...style }}
+      style={{ height, width: 'auto', color: 'var(--foreground)', ...style }}
       data-name="LogoFull"
     >
       <svg

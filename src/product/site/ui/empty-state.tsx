@@ -52,28 +52,28 @@ export function EmptyState({
       className={cn('flex flex-col items-center justify-center text-center p-12', className)}
       style={{
         minHeight: '400px',
-        backgroundColor: 'var(--color-bg-page)'
+        backgroundColor: 'var(--canvas)'
       }}
     >
       <div
         className="mb-6 p-6 rounded-full"
         style={{
-          backgroundColor: 'var(--color-bg-muted)'
+          backgroundColor: 'var(--secondary)'
         }}
       >
         <IconComponent
           className="w-16 h-16"
-          style={{ color: 'var(--color-text-muted)', opacity: 0.5 }}
+          style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}
         />
       </div>
 
       <h2
         className="mb-3"
         style={{
-          fontSize: 'var(--text-xl)',
-          fontWeight: 'var(--font-weight-medium)',
-          color: 'var(--color-text-primary)',
-          fontFamily: 'var(--font-family-base)'
+          fontSize: '20px',
+          fontWeight: '500',
+          color: 'var(--foreground)',
+          fontFamily: 'var(--font-sans)'
         }}
       >
         {config.title}
@@ -82,10 +82,10 @@ export function EmptyState({
       <p
         className="mb-8 max-w-md"
         style={{
-          fontSize: 'var(--text-base)',
-          color: 'var(--color-text-muted)',
+          fontSize: '16px',
+          color: 'var(--muted-foreground)',
           lineHeight: 'var(--line-height-md)',
-          fontFamily: 'var(--font-family-base)'
+          fontFamily: 'var(--font-sans)'
         }}
       >
         {config.description}
@@ -97,10 +97,10 @@ export function EmptyState({
           style={{
             height: 'var(--ikan-component-button-height)',
             borderRadius: 'var(--ikan-component-border-radius)',
-            fontWeight: 'var(--font-weight-medium)',
+            fontWeight: '500',
             gap: 'var(--spacing-2)',
-            backgroundColor: 'var(--color-primary-default)',
-            color: 'var(--color-primary-on)'
+            backgroundColor: 'var(--foreground)',
+            color: 'var(--background)'
           }}
         >
           <Plus className="w-4 h-4" />

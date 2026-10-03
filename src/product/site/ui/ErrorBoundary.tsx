@@ -98,25 +98,25 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-page)' }}>
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)' }}>
           <div className="text-center space-y-4 max-w-md px-4">
             <div className="flex items-center justify-center mb-4">
-              <CircleAlert size={48} color="var(--color-status-danger)" />
+              <CircleAlert size={48} color="var(--error)" />
             </div>
             
             <div className="space-y-4">
               <h2 style={{ 
-                color: 'var(--color-text-primary)',
-                fontSize: 'var(--text-xl)',
-                fontWeight: 'var(--font-weight-medium)'
+                color: 'var(--foreground)',
+                fontSize: '20px',
+                fontWeight: '500'
               }}>
                 Something went wrong
               </h2>
               
               <p style={{ 
-                color: 'var(--color-text-muted)',
-                fontSize: 'var(--text-base)',
-                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--muted-foreground)',
+                fontSize: '16px',
+                fontWeight: '400',
                 lineHeight: 'var(--line-height-md)'
               }}>
                 {/* Was: "This has been logged and we'll look into it." Nothing
@@ -133,22 +133,22 @@ export class ErrorBoundary extends Component<Props, State> {
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-left" style={{
                   padding: '12px',
-                  backgroundColor: 'var(--color-bg-muted)',
+                  backgroundColor: 'var(--secondary)',
                   borderRadius: 'var(--radius-sm)',
                   marginTop: '16px'
                 }}>
                   <summary style={{ 
-                    color: 'var(--color-text-primary)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--foreground)',
+                    fontSize: '14px',
+                    fontWeight: '500',
                     cursor: 'pointer'
                   }}>
                     Error Details (Development Only)
                   </summary>
                   <pre style={{ 
-                    color: 'var(--color-status-danger)',
-                    fontSize: 'var(--text-xs)',
-                    fontWeight: 'var(--font-weight-regular)',
+                    color: 'var(--error)',
+                    fontSize: '12px',
+                    fontWeight: '400',
                     marginTop: 'var(--spacing-2)',
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
@@ -172,10 +172,10 @@ export class ErrorBoundary extends Component<Props, State> {
                     onClick={this.handleReset}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                     style={{
-                      backgroundColor: 'var(--color-accent-default)',
-                      color: 'var(--color-accent-on)',
-                      fontSize: 'var(--text-base)',
-                      fontWeight: 'var(--font-weight-medium)',
+                      backgroundColor: 'var(--secondary)',
+                      color: 'var(--foreground)',
+                      fontSize: '16px',
+                      fontWeight: '500',
                       borderRadius: 'var(--radius-sm)',
                       border: 'none',
                       cursor: 'pointer'
@@ -190,10 +190,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   onClick={this.handleGoHome}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                   style={{
-                    backgroundColor: 'var(--color-primary-default)',
-                    color: 'var(--color-primary-on)',
-                    fontSize: 'var(--text-base)',
-                    fontWeight: 'var(--font-weight-medium)',
+                    backgroundColor: 'var(--foreground)',
+                    color: 'var(--background)',
+                    fontSize: '16px',
+                    fontWeight: '500',
                     borderRadius: 'var(--radius-sm)',
                     border: 'none',
                     cursor: 'pointer'
@@ -207,23 +207,23 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.errorCount > 1 && (
                 <p style={{
                   marginTop: '16px',
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-regular)',
-                  color: 'var(--color-text-muted)'
+                  fontSize: '14px',
+                  fontWeight: '400',
+                  color: 'var(--muted-foreground)'
                 }}>
                   This error has occurred {this.state.errorCount} times
                 </p>
               )}
             </div>
             
-            <div className="mt-6 pt-4 border-t" style={{ borderColor: 'var(--color-border-light)' }}>
+            <div className="mt-6 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
               <p style={{ 
-                color: 'var(--color-text-muted)',
-                fontSize: 'var(--text-xs)',
-                fontWeight: 'var(--font-weight-regular)',
+                color: 'var(--muted-foreground)',
+                fontSize: '12px',
+                fontWeight: '400',
                 lineHeight: 'var(--line-height-md)'
               }}>
-                <strong style={{ fontWeight: 'var(--font-weight-medium)' }}>Crisis Resources:</strong><br />
+                <strong style={{ fontWeight: '500' }}>Crisis Resources:</strong><br />
                 US: Call or text 988 for immediate help<br />
                 International: Visit findahelpline.com
               </p>
