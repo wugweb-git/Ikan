@@ -82,7 +82,11 @@ export function ResourceDetail({ resourceId, onBack, onNavigate, onResourceSelec
       title: apiData.title || 'Untitled Resource',
       description: apiData.description || '',
       category: apiData.category || 'General',
-      contentType: apiData.category || apiData.contentType || 'Article',
+      // contentType is the format badge (Video/Audio/Podcast/Article) — it must
+      // win over category here, or every resource's badge silently shows its
+      // topic category instead of its format (category is near-always populated,
+      // so the old `category || contentType` order meant contentType never won).
+      contentType: apiData.contentType || apiData.category || 'Article',
       readTimeMinutes: apiData.readTime || apiData.read_time_minutes || 5,
       author: apiData.author || 'iKan Team',
       publishedDate: apiData.created_at 
