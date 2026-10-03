@@ -6,6 +6,7 @@ import { Container, PageShell } from '../ui/Container';
 import { AssessmentCard } from '../ui/blocks/AssessmentCard';
 import { assessmentImage } from '../content/assessment-meta';
 import { assessmentMinutes, assessmentUrl, getListedAssessments } from '../content/catalog';
+import { useSeo } from '../ui/hooks/useSeo';
 
 /**
  * The public assessment catalogue — static.
@@ -39,6 +40,16 @@ const getAssessmentImage = (category?: string, customImage?: string | null) => {
 };
 
 export function Assessments({ className, onNavigate }: AssessmentsProps) {
+  /* Without this the tab keeps whatever the previous route set: arrive here
+     from another page and the title still names that one. Taken from the hero
+     so the tab and the <h1> cannot diverge. */
+  useSeo({
+    title: 'Health Assessments',
+    description: 'Quick, evidence-based screenings to help you understand your mental well-being.',
+    canonicalPath: '/assessment',
+    type: 'website',
+  });
+
   const assessments = getListedAssessments();
 
   return (

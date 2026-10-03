@@ -4,6 +4,7 @@ import { PageHero } from '../ui/PageHero';
 import { Container, PageShell } from '../ui/Container';
 import { getConsultants, type SiteConsultant } from '../content/catalog';
 import { APP_LOGIN_URL } from '../content/app-origin';
+import { useSeo } from '../ui/hooks/useSeo';
 
 /**
  * The public consultant directory — static.
@@ -41,6 +42,16 @@ const byWeightedRating = (a: Consultant, b: Consultant) =>
 const CONSULTANTS = getConsultants().map(toCard).sort(byWeightedRating);
 
 export function Consultation({ className }: ConsultationProps) {
+  /* Without this the tab keeps whatever the previous route set: arrive here
+     from another page and the title still names that one. Taken from the hero
+     so the tab and the <h1> cannot diverge. */
+  useSeo({
+    title: 'Find Your Consultant',
+    description: 'Connect with experienced mental health professionals who understand your needs.',
+    canonicalPath: '/consultation',
+    type: 'website',
+  });
+
   const reduce = useReducedMotion();
 
   return (

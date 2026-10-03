@@ -176,7 +176,7 @@ export function AboutUs({ onNavigate, className }: AboutUsProps) {
   /* The document title was the site-wide "iKan Health" on every route, so a
      shared or bookmarked /about carried no page name and no description. */
   useSeo({
-    title: 'About iKan',
+    title: 'About iKAN',
     description: a.hero.subtitle,
     canonicalPath: '/about',
     image: a.story.image,

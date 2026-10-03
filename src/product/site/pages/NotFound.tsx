@@ -4,6 +4,7 @@ import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { PageHero } from '../ui/PageHero';
 import { CONTENT_MAX } from '../ui/Container';
+import { useSeo } from '../ui/hooks/useSeo';
 
 interface NotFoundProps {
   onNavigate?: (route: string) => void;
@@ -20,6 +21,16 @@ export function NotFound({ onNavigate }: NotFoundProps) {
 
   const heroTitle = cmsContent?.heroTitle || cms?.heroTitle || 'Page Not Found';
   const heroSubtitle = cmsContent?.heroSubtitle || cms?.heroSubtitle || "We couldn't find the page you're looking for.";
+
+  /* Without this the tab keeps whatever the previous route set: arrive here
+     from another page and the title still names that one. Taken from the hero
+     so the tab and the <h1> cannot diverge. */
+  useSeo({
+    title: heroTitle,
+    description: heroSubtitle,
+    type: 'website',
+  });
+
   const heading = cms?.heading || 'Lost your way?';
   const description = cms?.description || 'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.';
   const homeButtonText = cms?.homeButtonText || 'Return Home';

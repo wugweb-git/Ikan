@@ -2,6 +2,7 @@ import { PageHero } from '../ui/PageHero';
 import { Container, PageShell } from '../ui/Container';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
 import { equipUrl, getPrograms, programDuration } from '../content/catalog';
+import { useSeo } from '../ui/hooks/useSeo';
 
 /**
  * The public Equip listing — static.
@@ -16,6 +17,16 @@ interface EquipProgramsProps {
 }
 
 export function EquipPrograms({ onNavigate }: EquipProgramsProps) {
+  /* Without this the tab keeps whatever the previous route set: arrive here
+     from another page and the title still names that one. Taken from the hero
+     so the tab and the <h1> cannot diverge. */
+  useSeo({
+    title: 'Equip Programs',
+    description: 'Evidence-based programs designed to support your mental health journey.',
+    canonicalPath: '/equip',
+    type: 'website',
+  });
+
   const programs = getPrograms();
 
   return (

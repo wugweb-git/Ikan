@@ -7,6 +7,7 @@ import { NavIcon } from '../ui/NavIcon';
 import { SiteLink } from '../ui/SiteLink';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { SITEMAP_SECTIONS } from '../content/nav';
+import { useSeo } from '../ui/hooks/useSeo';
 
 /**
  * Every page on the site, rendered from content/nav.ts — the same table the
@@ -31,6 +32,17 @@ export function Sitemap({ className, onNavigate }: SitemapProps) {
 
   const heroTitle = cms?.heroTitle || 'Site Navigation';
   const heroSubtitle = cms?.heroSubtitle || 'Explore all pages and resources available on iKan.';
+
+
+  /* Without this the tab keeps whatever the previous route set: arrive here
+     from another page and the title still names that one. Taken from the hero
+     so the tab and the <h1> cannot diverge. */
+  useSeo({
+    title: heroTitle,
+    description: heroSubtitle,
+    canonicalPath: '/sitemap',
+    type: 'website',
+  });
 
   return (
     <PageShell className={className}>

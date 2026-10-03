@@ -2947,7 +2947,16 @@ select {
  * nothing here declares a font size.
  * ─────────────────────────────────────────────────────────────── */
 
+/*
+ * CAPPED TO A READING MEASURE. The About band widens to 1080px at desktop so
+ * the story can sit beside its picture, but running body copy to that width
+ * gave lines of ~140 characters — measured at 952px on a 1440px viewport.
+ * Comfortable reading tops out around 75; the policy and FAQ pages already cap
+ * at 38rem for exactly this reason, and this paragraph was the one that did
+ * not.
+ */
 .about-team-intro {
+  max-width: 68ch;
   margin-top: 4px;
   color: var(--muted-foreground);
 }
