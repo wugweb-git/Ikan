@@ -331,15 +331,19 @@ export const METADATA_CATALOG_ITEMS: SeedItem[] = [
   s('Program',    'content_type', 'program',    { icon: 'layout-grid' }),
 
   // ── Content Formats (filter_type) ─────────────────────────────
-  s('Article',  'filter_type', 'article',  { icon: 'file-text' }),
-  s('Tool',     'filter_type', 'tool',     { icon: 'tool' }),
-  s('Exercise', 'filter_type', 'exercise', { icon: 'activity' }),
-  s('Video',    'filter_type', 'video',    { icon: 'video' }),
-  s('Audio',    'filter_type', 'audio',    { icon: 'headphones' }),
-  s('Podcast',  'filter_type', 'podcast',  { icon: 'mic' }),
-  s('Workbook', 'filter_type', 'workbook', { icon: 'notebook' }),
-  s('Guide',    'filter_type', 'guide',    { icon: 'book' }),
-  s('Course',   'filter_type', 'course',   { icon: 'graduation-cap' }),
+  /* THE THREE. 2026-10-03. A format is a MEDIUM — how you consume the thing,
+     which is what changes the verb (Read / Watch / Listen), the player and the
+     unit on the duration. It is not what the piece is about or how deep it goes.
+     `guide`, `workbook`, `course`, `exercise` and `tool` described editorial
+     shape, so they belonged on the category or intent axis and were removed;
+     `podcast` was a second name for `audio`. Nine values produced three lists
+     that disagreed with each other and with the data — the Library offered an
+     `infographic` filter that existed in no catalogue and could never match,
+     while `tool`, `exercise`, `audio`, `workbook` and `course` could be saved
+     in admin and then never filtered to. */
+  s('Article', 'filter_type', 'article', { icon: 'file-text' }),
+  s('Video',   'filter_type', 'video',   { icon: 'video' }),
+  s('Audio',   'filter_type', 'audio',   { icon: 'headphones' }),
 
   // ── Interaction Types ─────────────────────────────────────────
   // Must match all 13 InteractionType values from blocks/block-model.ts

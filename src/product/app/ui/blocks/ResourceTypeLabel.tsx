@@ -1,4 +1,4 @@
-import { BookOpen, Video, Wrench } from 'lucide-react';
+import { BookOpen, Video, Headphones } from 'lucide-react';
 import { cn } from '../utils';
 
 interface ResourceTypeLabelProps {
@@ -26,8 +26,10 @@ export function ResourceTypeLabel({ type, className }: ResourceTypeLabelProps) {
   const normalizedType = type.toLowerCase();
   let Icon = BookOpen;
   
+  // Three formats; anything else falls through to the article icon. `podcast`
+  // is still matched because stored records may predate the fold into `audio`.
   if (normalizedType.includes('video')) Icon = Video;
-  else if (normalizedType.includes('tool')) Icon = Wrench;
+  else if (normalizedType.includes('audio') || normalizedType.includes('podcast')) Icon = Headphones;
 
   return (
     <div 

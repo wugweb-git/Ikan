@@ -12,7 +12,7 @@ export interface ResourcePost {
   author?: string;
   category?: string;
   readTime?: string;
-  type?: 'article' | 'video' | 'tool';
+  type?: 'article' | 'video' | 'audio';
 }
 
 interface ResourceCardProps {

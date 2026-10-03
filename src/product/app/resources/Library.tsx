@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { useMetadata } from '../ui/hooks/useMetadata';
 import { cn } from '../ui/utils';
-import { Search, BookOpen, Video, Headphones, FileText, Image as ImageIcon } from 'lucide-react';
+import { Search, Video, Headphones, FileText } from 'lucide-react';
 import { ResourcePost } from '../ui/blocks/ResourceCard';
 import { toResourcePost } from './resource-presentation';
 import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
@@ -26,14 +26,13 @@ interface Resource extends ResourcePost {
   featured?: boolean;
 }
 
-// Content type definitions with icons
+// The three media formats — keep in step with `filter_type` in the metadata
+// catalogue and with LIBRARY_LABELS.CONTENT_TYPES.
 const CONTENT_TYPES = [
   { value: 'all', label: 'All', icon: null },
   { value: 'article', label: 'Articles', icon: FileText },
   { value: 'video', label: 'Videos', icon: Video },
-  { value: 'podcast', label: 'Podcasts', icon: Headphones },
-  { value: 'guide', label: 'Guides', icon: BookOpen },
-  { value: 'infographic', label: 'Infographics', icon: ImageIcon },
+  { value: 'audio', label: 'Audio', icon: Headphones },
 ];
 
 

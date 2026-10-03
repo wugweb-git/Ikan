@@ -152,13 +152,15 @@ export const LIBRARY_LABELS = {
   NO_RESOURCES_FOUND: 'No resources found matching your criteria.',
   CLEAR_FILTERS: 'Clear all filters',
   FEATURED: 'Featured',
+  // Three media formats, matching `filter_type` in the metadata catalogue.
+  // `podcast` folded into `audio`; `guide` is editorial shape, not a medium;
+  // `infographic` was offered here but existed in no catalogue, so it matched
+  // nothing.
   CONTENT_TYPES: [
     { value: 'all', label: 'All' },
     { value: 'article', label: 'Articles' },
     { value: 'video', label: 'Videos' },
-    { value: 'podcast', label: 'Podcasts' },
-    { value: 'guide', label: 'Guides' },
-    { value: 'infographic', label: 'Infographics' },
+    { value: 'audio', label: 'Audio' },
   ],
 } as const;
 
