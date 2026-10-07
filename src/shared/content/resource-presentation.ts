@@ -182,3 +182,19 @@ export function articleTime(r: ResourceRecord): number {
   }
   return -Infinity;
 }
+
+/**
+ * A stored category for display. The records hold bare lower-case slugs
+ * (`general`, `sleep`, `stress`), which read as a typo in a heading.
+ *
+ * CSS `text-transform: capitalize` covers a standalone chip but not a category
+ * inside a sentence — it would capitalise every word of "More in sleep".
+ */
+export function prettyCategory(category: string | undefined | null): string {
+  if (!category) return '';
+  return category
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}

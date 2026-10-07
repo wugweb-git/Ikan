@@ -5,6 +5,7 @@ import { resolveImageUrl } from '../../../shared/api/image-url';
 import {
   articleTime,
   isPublished,
+  prettyCategory,
   toResourcePost,
   type PresentedResource,
   type ResourceRecord,
@@ -130,7 +131,7 @@ export function Resources({ onNavigate }: ResourcesProps) {
                     aria-pressed={c === category}
                     onClick={() => setCategory(c)}
                   >
-                    {c}
+                    {c === ALL ? c : prettyCategory(c)}
                   </button>
                 ))}
               </div>
@@ -184,7 +185,9 @@ export function Resources({ onNavigate }: ResourcesProps) {
                       >
                         <span className="library-card__media">
                           <ContentImage src={resolveImageUrl(p.image)} alt="" />
-                          {p.category && <span className="library-card__tag">{p.category}</span>}
+                          {p.category && (
+                            <span className="library-card__tag">{prettyCategory(p.category)}</span>
+                          )}
                         </span>
                         <strong className="library-card__title">{p.title}</strong>
                         {p.description && (

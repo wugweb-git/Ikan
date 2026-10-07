@@ -6,6 +6,7 @@ import {
   articleTime,
   isPublished,
   resourceImage,
+  prettyCategory,
   toResourcePost,
   type PresentedResource,
   type ResourceRecord,
@@ -144,7 +145,7 @@ export function ResourceDetail({ resourceId, onNavigate }: ResourceDetailProps) 
             </div>
           ) : (
             <>
-              {post.category && <p className="info-eyebrow">{post.category}</p>}
+              {post.category && <p className="info-eyebrow">{prettyCategory(post.category)}</p>}
               <h1 className="info-title">{post.title}</h1>
               {post.description && <p className="info-subtitle">{post.description}</p>}
 
@@ -179,7 +180,7 @@ export function ResourceDetail({ resourceId, onNavigate }: ResourceDetailProps) 
           {related.length > 0 && (
             <section className="article-related" aria-labelledby="related-heading">
               <h2 id="related-heading" className="article-related__title">
-                More on {post?.category ?? 'this'}
+                More in {prettyCategory(post?.category) || 'the library'}
               </h2>
               <ul className="library-grid library-grid--compact">
                 {related.map((p) => (
