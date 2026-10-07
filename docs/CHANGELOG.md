@@ -31,6 +31,14 @@ visitor, because `getResources` falls back to the anon key. It also had no page 
 `useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
 `document.title` the previous route had left behind. It now sets its own title and canonical.
 
+**The real social accounts, and the beehiiv newsletter.** Three of the footer's four links were
+placeholders built from the pattern `/ikanhealth`, which is the handle on none of them — X and
+Instagram are `ikanhealth_in`, LinkedIn is the company page `ikan-mental-health`. Facebook is
+unchanged. The beehiiv publication (`ikanhealth.beehiiv.com`) is added after them, with `Newspaper`
+rather than a brand glyph this icon set does not carry, and the row's accessible name changed from
+"on social media" to "Follow iKAN" now that it is not all social accounts. Every URL was checked to
+resolve before it shipped.
+
 **The white strip above the Services header is gone.** `/service` opened with a 112px white band
 behind the fixed nav sitting on a `--canvas` title block — one seam straight across the top, on that
 page and no other. `.services-page` is white on purpose (its first section inherits that, which is

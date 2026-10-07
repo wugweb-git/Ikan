@@ -19,6 +19,8 @@ export interface SiteSettings {
   linkedinUrl: string;
   youtubeUrl: string;
   xUrl: string;
+  /** The newsletter archive on beehiiv — a publication, not a social account. */
+  beehiivUrl: string;
 }
 
 export const SITE_SETTINGS: SiteSettings = {
@@ -40,9 +42,17 @@ export const SITE_SETTINGS: SiteSettings = {
    * order the footer lists them, so adding YouTube later needs a value here
    * and no code change.
    */
+  /*
+   * The real accounts, supplied 2026-10-07. Three of these were placeholders
+   * built from the pattern `/ikanhealth`, which is not the handle on any of
+   * them — X and Instagram are `ikanhealth_in`, LinkedIn is the company page
+   * `ikan-mental-health`. Each was checked to resolve before it shipped.
+   * Facebook is unchanged.
+   */
   facebookUrl: 'https://facebook.com/ikanhealth',
-  instagramUrl: 'https://instagram.com/ikanhealth',
-  linkedinUrl: 'https://linkedin.com/company/ikanhealth',
+  instagramUrl: 'https://www.instagram.com/ikanhealth_in/',
+  linkedinUrl: 'https://www.linkedin.com/company/ikan-mental-health/',
   youtubeUrl: '',
-  xUrl: 'https://x.com/ikanhealth',
+  xUrl: 'https://x.com/ikanhealth_in',
+  beehiivUrl: 'https://ikanhealth.beehiiv.com/',
 };

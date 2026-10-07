@@ -1,5 +1,5 @@
 import { cn } from './utils';
-import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Mail, Phone, Facebook, Instagram, Linkedin, Youtube, Newspaper } from 'lucide-react';
 import { LogoFull } from './Logo';
 import { NavBadge } from './NavBadge';
 import { SiteLink } from './SiteLink';
@@ -102,14 +102,18 @@ export function Footer({ onNavigate, className }: FooterProps) {
     external: boolean;
   }>;
 
-  /* Order as the brand lists them. YouTube stays last so it appears if that
-     channel is ever filled in, without needing a code change. */
+  /* Order as the brand lists them. YouTube stays last of the social accounts
+     so it appears if that channel is ever filled in, without needing a code
+     change; beehiiv follows them because it is a publication rather than an
+     account, and `Newspaper` says that where a brand glyph would be a logo
+     this icon set does not carry. */
   const socialLinks = [
     { name: 'X', icon: XIcon, url: settings.xUrl },
     { name: 'Instagram', icon: Instagram, url: settings.instagramUrl },
     { name: 'Facebook', icon: Facebook, url: settings.facebookUrl },
     { name: 'LinkedIn', icon: Linkedin, url: settings.linkedinUrl },
     { name: 'YouTube', icon: Youtube, url: settings.youtubeUrl },
+    { name: 'Newsletter on beehiiv', icon: Newspaper, url: settings.beehiivUrl },
   ].filter((link) => link.url) as Array<{
     name: string;
     icon: React.ComponentType<{ size?: number }>;
@@ -142,7 +146,7 @@ export function Footer({ onNavigate, className }: FooterProps) {
             <p className="site-footer__blurb">{settings.companyDescription}</p>
 
             {socialLinks.length > 0 && (
-              <ul className="site-footer__social" aria-label={`${settings.siteName} on social media`}>
+              <ul className="site-footer__social" aria-label={`Follow ${settings.siteName}`}>
                 {socialLinks.map((social) => (
                   <li key={social.name}>
                     <a
