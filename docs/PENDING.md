@@ -176,13 +176,6 @@ take one **General** and one **Burnout** assessment on production and confirm:
   by raw percentage.
 
 Also needs a human pass:
-- **One real contact-form submit and one newsletter sign-up on production** (2026-10-07). Both now
-  POST to iKAN 2's `ikan2_contact_messages` / `ikan2_newsletter_subscribers`. What is proven so far:
-  the tables and every column exist, the anon key reaches them, and a deliberately invalid payload
-  comes back `400` with the table's *own* check-constraint name — so routing, headers and RLS are
-  not the blockers. What is **not** proven is a `201`, because proving it writes a row, and rows in
-  that database are not mine to create. Submit one of each and confirm it appears in iKAN 2, then
-  delete the test rows there.
 - **Do NOT undeploy `make-server-cc205da9`** (2026-10-07). The handover note assumed nothing would
   call it afterwards. Not so: the app and admin surfaces still served from this host call it
   throughout `src/shared/api/api.ts`, and `block-fallback-reporter.ts` posts to `/blocks/fallback`.

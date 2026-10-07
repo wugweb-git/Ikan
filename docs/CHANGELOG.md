@@ -23,6 +23,12 @@ empty subject is sent as the field's own placeholder, "General enquiry", since t
 one. `apiClient.submitContactForm` / `subscribeNewsletter` are deleted so a future form cannot pick
 the dead path by autocomplete; the admin readers stay, for the records collected before the handover.
 
+**Both writes confirmed `201`** over HTTP against `ikan2_contact_messages` and
+`ikan2_newsletter_subscribers` with the site's own headers — checked from the iKAN 2 side, since
+proving a success means writing a row and that database is not this repo's to write to on a whim.
+Before that the evidence stopped at a `400` carrying each table's own check-constraint name, which
+ruled out routing, headers and RLS but not the insert itself.
+
 **`SecurityProvider` no longer reports events anywhere but the console.** It POSTed each one to
 `/security/events`, fed partly by a `securitypolicyviolation` listener that passed `blockedURI`
 through verbatim. The CSP blocks some of this site's own analytics, so what was actually being
