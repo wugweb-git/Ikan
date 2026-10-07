@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from '../utils';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { LayoutGrid } from 'lucide-react';
-import { apiClient } from '../../../../shared/api/api';
+import { subscribeToNewsletter } from '../../../../shared/api/ikan2-forms';
 
 interface NewsletterBlockProps {
   title?: string;
@@ -26,6 +26,7 @@ export function NewsletterBlock({
   const isMobile = useIsMobile();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyOnList, setAlreadyOnList] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,20 +37,16 @@ export function NewsletterBlock({
     setIsSubmitting(true);
     setError('');
 
-    try {
-      const response = await apiClient.subscribeNewsletter(email.trim());
-      if (response.success) {
-        setSubmitted(true);
-        onSubscribe?.(email);
-      } else {
-        setError(response.error || 'Subscription failed.');
-      }
-    } catch (err) {
-      console.error('Newsletter signup error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // iKAN 2 owns the mailing list; 409 means the address is already on it.
+    const result = await subscribeToNewsletter(email.trim());
+    if (result.ok) {
+      setAlreadyOnList(result.alreadySubscribed === true);
+      setSubmitted(true);
+      onSubscribe?.(email);
+    } else {
+      setError(result.error || 'Subscription failed.');
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -193,7 +190,7 @@ export function NewsletterBlock({
                     margin: 0,
                   }}
                 >
-                  Thank you for subscribing!
+                  {alreadyOnList ? 'You are already on the list.' : 'Thank you for subscribing!'}
                 </p>
               </div>
             ) : (

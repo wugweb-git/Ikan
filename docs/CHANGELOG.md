@@ -9,6 +9,44 @@ undated under their original session number.
 
 ---
 
+## 2026-10-07 — the two public forms hand over to iKAN 2, and a security log stops copying analytics
+
+**Contact and newsletter now post to iKAN 2's tables**, `ikan2_contact_messages` and
+`ikan2_newsletter_subscribers`, straight over PostgREST with the anon key — no edge function in the
+path (`src/shared/api/ikan2-forms.ts`). They went to `/contact/submit` and `/newsletter/signup`,
+which wrote to the KV blob and mailed through Brevo, whose secrets are gone; the rows landed where
+nobody reads them. `Prefer: return=minimal` makes a success **201 with an empty body**, and a
+newsletter **409** is the unique index on `email` rejecting a repeat — reported as "you are already
+on the list", not as a failure. Validation mirrors the tables' own constraints, because a raw
+PostgREST `violates check constraint` is not something to show someone writing in for help. An
+empty subject is sent as the field's own placeholder, "General enquiry", since the table requires
+one. `apiClient.submitContactForm` / `subscribeNewsletter` are deleted so a future form cannot pick
+the dead path by autocomplete; the admin readers stay, for the records collected before the handover.
+
+**`SecurityProvider` no longer reports events anywhere but the console.** It POSTed each one to
+`/security/events`, fed partly by a `securitypolicyviolation` listener that passed `blockedURI`
+through verbatim. The CSP blocks some of this site's own analytics, so what was actually being
+recorded — server-side, under the signed-in user's id — was a copy of every blocked Google
+Analytics hit with its query string. That is behavioural data collected as a side effect of a
+security log. The listener is removed rather than unwired: the fix for blocked analytics is the
+`connect-src` allowance, not a second copy of the traffic.
+
+**CSP.** `connect-src` gained `analytics.google.com`, `www.google.com` and
+`stats.g.doubleclick.net`. The existing `*.analytics.google.com` wildcard does not match the apex,
+which is one of the hosts GA4 actually collects on — so the policy was blocking the site's own
+analytics and then logging what it blocked.
+
+**`/privacy` and `/terms` are unchanged and verified live (200).** The app's Google OAuth consent
+screen links to exactly those URLs; no redirect in `vercel.json` touches them.
+
+**The edge function must NOT be undeployed.** `make-server-cc205da9` was expected to be unreferenced
+after this, and it is not: the app and admin surfaces still served from this host — `/dashboard`,
+`/mood-journal`, the assessment and equip flows, every `/admin` screen — call it throughout
+`src/shared/api/api.ts`, and `block-fallback-reporter.ts` still posts diagnostics to
+`/blocks/fallback`. What this change removed is the three *public marketing* calls.
+
+---
+
 ## 2026-10-03 — the marketing site moves onto iKAN 2's design system, and production moves to `main`
 
 **Branches.** `equip-carry-forward` was renamed to `main` via GitHub's rename API (so old links

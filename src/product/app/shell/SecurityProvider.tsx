@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../../../shared/state/AuthContext';
 import { useNotifications } from '../../../shared/state/NotificationContext';
-import { projectId } from '../../../shared/api/supabase-info';
-import { getAuthHeaders } from '../../../shared/api/supabase';
 
 interface SecurityContextType {
   isSecureConnection: boolean;
@@ -66,40 +64,34 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
   // Server-verified admin only, not the cached localStorage hint.
   const exemptFromIdleSignOut = verifiedIsAdmin === true;
 
-  // Security event logging
+  /**
+   * Security events are recorded in the console and nowhere else.
+   *
+   * Until 2026-10-07 this POSTed every event to `/security/events` on the edge
+   * function. Two reasons it is gone, and the second is the serious one:
+   *
+   *   The site is becoming static marketing pages, and a public page posting
+   *   telemetry to a function nobody reads is cost and attack surface for no
+   *   return.
+   *
+   *   The CSP-violation listener that fed it reported `blockedURI` verbatim.
+   *   The policy blocks some of this site's own analytics, so what it was
+   *   actually recording — on the server, under the signed-in user's id — was
+   *   a copy of every blocked Google Analytics hit, query string and all.
+   *   That is session and behavioural data collected as a side effect of a
+   *   security log. The listener is removed, not merely unwired: the fix for
+   *   analytics being blocked is the `connect-src` allowance in `vercel.json`,
+   *   not a second copy of the traffic.
+   *
+   * The signature is kept so the callers below and `useSecurity`'s contract do
+   * not change, and because an idle sign-out worth logging is worth seeing in
+   * a console when someone is debugging one.
+   */
   const logSecurityEvent = (event: string, details?: any) => {
-    const timestamp = new Date().toISOString();
-    const securityLog = {
-      timestamp,
-      event,
+    console.info('[security]', event, {
       userId: user?.id || 'anonymous',
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-      details: details || {}
-    };
-
-    // Sink added 2026-09-02: POST /security/events on the edge function, with
-    // its `security_event:` prefix registered in KEY_REGISTRY in the same
-    // change (GOVERNANCE Rule 2).
-    //
-    // This previously POSTed to `/api/security-log`, which does not exist — and
-    // vercel.json rewrites /(.*) to /index.html, so it returned 200 with an HTML
-    // body and the .catch never fired. Nothing was recorded and nothing said so.
-    //
-    // Fire-and-forget by design: a security log must never block or break the
-    // user action that produced it. But failures are now surfaced in the console
-    // rather than swallowed, so a broken sink is visible instead of silent.
-    if (typeof window !== 'undefined') {
-      const url = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/security/events`;
-      getAuthHeaders(true)
-        .then((headers) =>
-          fetch(url, { method: 'POST', headers, body: JSON.stringify(securityLog) })
-        )
-        .then((res) => {
-          if (!res.ok) console.warn(`[security] event not recorded (HTTP ${res.status}):`, securityLog.event);
-        })
-        .catch((err) => console.warn('[security] event not recorded:', securityLog.event, err?.message));
-    }
+      ...(details || {}),
+    });
   };
 
   // Check secure connection
@@ -185,20 +177,6 @@ export function SecurityProvider({ children }: SecurityProviderProps) {
     const interval = setInterval(checkSession, 60000); // Check every minute
     return () => clearInterval(interval);
   }, [user, lastActivity, sessionTimeoutWarning, signOut, showToast, exemptFromIdleSignOut]);
-
-  // Content Security Policy violation handler
-  useEffect(() => {
-    const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
-      logSecurityEvent('csp_violation', {
-        blockedURI: event.blockedURI,
-        violatedDirective: event.violatedDirective,
-        originalPolicy: event.originalPolicy
-      });
-    };
-
-    document.addEventListener('securitypolicyviolation', handleCSPViolation);
-    return () => document.removeEventListener('securitypolicyviolation', handleCSPViolation);
-  }, []);
 
   // Monitor for unusual activity patterns
   useEffect(() => {

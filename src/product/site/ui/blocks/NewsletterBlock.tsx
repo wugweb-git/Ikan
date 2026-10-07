@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowUpRight, Check } from 'lucide-react';
 import { cn } from '../utils';
-import { apiClient } from '../../../../shared/api/api';
+import { subscribeToNewsletter } from '../../../../shared/api/ikan2-forms';
 
 /**
  * NEWSLETTER BLOCK
@@ -37,9 +37,11 @@ import { apiClient } from '../../../../shared/api/api';
  * one newsletter across this site rather than a styled one on `/service` and
  * an unstyled one everywhere else.
  *
- * The submit path is unchanged: `apiClient.subscribeNewsletter` against this
- * repo's backend. iKAN 2 has no mailing-list service and opens a `mailto:`
- * instead; this site does have one, so it posts.
+ * The submit path posts to iKAN 2's `ikan2_newsletter_subscribers`, which now
+ * owns the mailing list — see `shared/api/ikan2-forms`. An address already on
+ * the list comes back 409, and that is reported as being subscribed rather
+ * than as a failure: being told "you are already on the list" is the honest
+ * answer, and an error would invite a second attempt that can only fail too.
  */
 
 interface NewsletterBlockProps {
@@ -63,6 +65,7 @@ export function NewsletterBlock({
 }: NewsletterBlockProps) {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyOnList, setAlreadyOnList] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -73,20 +76,15 @@ export function NewsletterBlock({
     setIsSubmitting(true);
     setError('');
 
-    try {
-      const response = await apiClient.subscribeNewsletter(email.trim());
-      if (response.success) {
-        setSubmitted(true);
-        onSubscribe?.(email);
-      } else {
-        setError(response.error || 'Subscription failed.');
-      }
-    } catch (err) {
-      console.error('Newsletter signup error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    const result = await subscribeToNewsletter(email.trim());
+    if (result.ok) {
+      setAlreadyOnList(result.alreadySubscribed === true);
+      setSubmitted(true);
+      onSubscribe?.(email);
+    } else {
+      setError(result.error || 'Subscription failed.');
     }
+    setIsSubmitting(false);
   };
 
   /* The lead line carries the section; the rest become the fine print under
@@ -112,7 +110,7 @@ export function NewsletterBlock({
           {submitted ? (
             <p className="services-newsletter-done" role="status">
               <Check aria-hidden="true" />
-              Thank you for subscribing.
+              {alreadyOnList ? 'You are already on the list.' : 'Thank you for subscribing.'}
             </p>
           ) : (
             <form onSubmit={handleSubmit}>

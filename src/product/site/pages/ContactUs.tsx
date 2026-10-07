@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Mail, Phone, ShieldAlert } from 'lucide-react';
 import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
-import { apiClient } from '../../../shared/api/api';
+import { submitContactMessage, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
 import { useNotifications } from '../../../shared/state/NotificationContext';
 import { useSeo } from '../ui/hooks/useSeo';
 
@@ -14,10 +14,10 @@ import { useSeo } from '../ui/hooks/useSeo';
  * find a helpline number. The old page put the form first and the crisis
  * information at the bottom.
  *
- * The submit path is this site's, unchanged — `apiClient.submitContactForm`
- * against this repo's backend. Only the markup around it is new. The app posts
- * to a different endpoint with its own auth, so that part could not be carried
- * across even if it were wise to.
+ * The submit path now posts to iKAN 2's `ikan2_contact_messages` table, which
+ * is where the inbox lives — see `shared/api/ikan2-forms`. It used to go
+ * through this repo's edge function, which wrote to the KV blob and mailed
+ * through Brevo; nobody reads either any more.
  *
  * Content is `page-contact` from cms-defaults, which matches iKAN 2's `contact`
  * block on every field except `heroNote`, which exists only here.
@@ -70,16 +70,14 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
 
     setBusy(true);
     try {
-      const response = await apiClient.submitContactForm(form);
-      if (response.success) {
-        showToast('success', 'Message Sent', response.message || 'We will get back to you soon.');
+      const result = await submitContactMessage(form);
+      if (result.ok) {
+        showToast('success', 'Message Sent', 'We will get back to you soon.');
         setSent(true);
         setForm({ name: '', email: '', subject: '', message: '' });
       } else {
-        showToast('error', 'Error', response.error || 'Failed to send message.');
+        showToast('error', 'Error', result.error || 'Failed to send message.');
       }
-    } catch {
-      showToast('error', 'Error', 'Failed to send message. Please try again later.');
     } finally {
       setBusy(false);
     }
@@ -142,7 +140,7 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
               <form className="contact-form" onSubmit={submit} noValidate>
                 <label className="contact-field">
                   <span>Your name</span>
-                  <input value={form.name} onChange={set('name')} autoComplete="name" required />
+                  <input value={form.name} onChange={set('name')} autoComplete="name" maxLength={CONTACT_LIMITS.name} required />
                 </label>
                 <label className="contact-field">
                   <span>Email</span>
@@ -150,11 +148,11 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
                 </label>
                 <label className="contact-field contact-field--wide">
                   <span>Subject</span>
-                  <input value={form.subject} onChange={set('subject')} placeholder="General enquiry" />
+                  <input value={form.subject} onChange={set('subject')} placeholder="General enquiry" maxLength={CONTACT_LIMITS.subject} />
                 </label>
                 <label className="contact-field contact-field--wide">
                   <span>Message</span>
-                  <textarea value={form.message} onChange={set('message')} rows={6} required />
+                  <textarea value={form.message} onChange={set('message')} rows={6} maxLength={CONTACT_LIMITS.message} required />
                 </label>
                 <button type="submit" className="info-button" disabled={busy}>
                   {busy ? 'Sending…' : 'Send message'}

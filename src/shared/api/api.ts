@@ -1325,21 +1325,16 @@ class ApiClient {
     }, true);
   }
 
-  // Contact Form
-  async submitContactForm(data: { name: string; email: string; subject: string; message: string }) {
-    return this.request('/contact/submit', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    }, false);
-  }
-
-  // Newsletter
-  async subscribeNewsletter(email: string, name?: string) {
-    return this.request('/newsletter/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, name })
-    }, false);
-  }
+  /*
+   * The public contact and newsletter writes used to live here
+   * (`/contact/submit`, `/newsletter/signup`). iKAN 2 owns both inboxes as of
+   * 2026-10-07 and the forms post straight to its tables — see
+   * `shared/api/ikan2-forms`. Removed rather than left deprecated so a future
+   * form cannot pick the dead path by autocomplete.
+   *
+   * The admin readers below stay: they read the KV records this site collected
+   * before the handover, which the admin console still lists.
+   */
 
   // Admin: Contact Submissions
   async getContactSubmissions() {

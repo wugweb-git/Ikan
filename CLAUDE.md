@@ -487,7 +487,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 
 ## Don'ts
 
-- **Don't expect a push to `main` to deploy by itself.** Pushing updates the branch; it does not ship. Deploy with `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — never the Vercel or Supabase CLI directly.
+- **Don't push to `main` casually — the push itself ships.** See the deploy section above: git deployments are enabled for `main` and `autoJobCancelation` is off. This bullet said the opposite until 2026-10-07, contradicting that section two screens earlier. Still deploy through `bash scripts/deploy-prod.sh` / `bash scripts/deploy-edge.sh` — they run the guard and verify the served bundle — never the Vercel or Supabase CLI directly.
 - **Don't blindly bump major dependency versions.** React 18→19, Vite 6→8, Tailwind 4→next, etc. are breaking changes that need a dedicated session with full test coverage.
 - **Don't enable `email_confirm: false` in the edge function signup path.** That backdoor was removed in Batch 4. Users must verify their email.
 - **Don't add `EXECUTE` grants on `kv_store_row_count()` or `rls_auto_enable()` to `anon`/`authenticated`/`PUBLIC`.** These SECURITY DEFINER functions are locked down intentionally.
