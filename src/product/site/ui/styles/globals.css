@@ -1364,14 +1364,18 @@ html {
  * a heading cannot, and the About page's h1 was landing behind it. Same two
  * heights as the `scroll-padding-top` rules above — one band, one measurement.
  */
-.site-page-below-nav {
-  padding-top: 112px;
+.ikan2-theme {
+  --nav-clearance: 112px;
 }
 
 @media (max-width: 768px) {
-  .site-page-below-nav {
-    padding-top: 84px;
+  .ikan2-theme {
+    --nav-clearance: 84px;
   }
+}
+
+.site-page-below-nav {
+  padding-top: var(--nav-clearance, 112px);
 }
 
 .ikan-capsule-nav {
@@ -3994,8 +3998,25 @@ select {
  * Full-bleed, so the band spans the viewport while the text inside keeps the
  * page's measure.
  */
+/*
+ * The band paints the strip behind the nav as well as the title block.
+ *
+ * `.services-page` is white — its first section inherits that, which is what
+ * makes the alternation below the hero work — while this band is `--canvas`.
+ * So the nav clearance above the band stayed white and the page opened with a
+ * 112px white strip sitting on a grey band: one seam, right across the top,
+ * visible on this page and no other. The info-pages and About do not have it
+ * because their page root is `--canvas` too, so their clearance is already the
+ * same colour as their header.
+ *
+ * Pulling the band up by the clearance and re-adding it as the band's own
+ * padding keeps the title exactly where it is — same x, same y as every other
+ * page — and changes only what is painted behind it.
+ */
 .services-hero-band {
-  background: oklch(0.955 0.006 250);
+  margin-top: calc(var(--nav-clearance) * -1);
+  padding-top: var(--nav-clearance);
+  background: var(--canvas);
   border-bottom: 1px solid var(--border);
 }
 

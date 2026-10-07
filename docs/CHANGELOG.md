@@ -31,6 +31,15 @@ visitor, because `getResources` falls back to the anon key. It also had no page 
 `useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
 `document.title` the previous route had left behind. It now sets its own title and canonical.
 
+**The white strip above the Services header is gone.** `/service` opened with a 112px white band
+behind the fixed nav sitting on a `--canvas` title block — one seam straight across the top, on that
+page and no other. `.services-page` is white on purpose (its first section inherits that, which is
+what makes the alternation below the hero read), while `.services-hero-band` paints `--canvas`, so
+the clearance between them belonged to neither. About and the info-pages never had it because their
+page root is `--canvas` too. The band now pulls up by the clearance and re-adds it as its own
+padding, so the title does not move — only what is painted behind it. The clearance itself became
+`--nav-clearance`, declared once, since two rules now depend on it agreeing.
+
 **The two library pages moved onto the site surface** — `app/resources/Library.tsx` →
 `site/pages/Resources.tsx`, `app/resources/ResourceDetail.tsx` → `site/pages/ResourceDetail.tsx` —
 and were rebuilt on the iKAN 2 CSS. They were app screens: a dark photo hero, the app's own card
