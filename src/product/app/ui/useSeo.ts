@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const SITE_NAME = 'iKan Health';
+const SITE_NAME = 'iKAN Health';
 const SITE_ORIGIN = 'https://ikanhealth.in';
 const DEFAULT_IMAGE = `${SITE_ORIGIN}/pwa-512x512.png`;
 

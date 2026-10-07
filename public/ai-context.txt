@@ -1,6 +1,6 @@
-# iKan Health — AI context
+# iKAN Health — AI context
 
-iKan Health (ikanhealth.in) is a mental wellness SPA (Specialised Programme Application) built for the Indian market. It provides structured self-care programmes, mental health assessments, mood journaling, health data tracking, and access to wellness consultants.
+iKAN Health (ikanhealth.in) is a mental wellness SPA (Specialised Programme Application) built for the Indian market. It provides structured self-care programmes, mental health assessments, mood journaling, health data tracking, and access to wellness consultants.
 
 ## What we offer
 

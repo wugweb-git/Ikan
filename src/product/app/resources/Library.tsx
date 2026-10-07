@@ -62,7 +62,7 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
    * resolve that shape at all.
    */
   useSeo({
-    title: 'Library',
+    title: 'Resources',
     description:
       'Articles, videos and audio on sleep, stress, burnout and balance — free to read, written for India.',
     canonicalPath: '/resource',

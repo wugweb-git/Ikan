@@ -31,6 +31,14 @@ visitor, because `getResources` falls back to the anon key. It also had no page 
 `useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
 `document.title` the previous route had left behind. It now sets its own title and canonical.
 
+**Brand casing, found by reading the retained page's own title.** `/resource` was emitting
+"Library | iKan Health": `src/product/app/ui/useSeo.ts` still had `SITE_NAME = 'iKan Health'` where
+the site hook has had `iKAN Health` since the casing pass. Fixed, along with `index.html`'s
+`apple-mobile-web-app-title` and `public/llms.txt` / `public/ai-context.txt`, which are what
+crawlers and LLMs read. The page's title is now "Resources", matching its `h1`, rather than
+"Library". **About 125 `iKan` strings remain under `src/`**, mostly comments and admin-internal
+copy; not swept here, because a blanket replace across that surface is its own change.
+
 **`:slug*` matches zero or more segments**, which is the bit that made the first attempt at this a
 no-op: `/resource/:slug*` was already matching the bare `/resource`, so deleting the explicit
 `/resource` entry changed nothing and the page kept 301ing. The pattern is now `:slug+` — one or

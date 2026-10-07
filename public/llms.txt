@@ -1,9 +1,9 @@
-# iKan Health
+# iKAN Health
 
-> iKan Health (ikanhealth.in) is an India-based mental wellness platform offering self-guided mental health assessments, structured "Equip" programs, mood journaling, and access to professional consultations. Our mission is to make mental healthcare accessible, affordable, and transparent.
+> iKAN Health (ikanhealth.in) is an India-based mental wellness platform offering self-guided mental health assessments, structured "Equip" programs, mood journaling, and access to professional consultations. Our mission is to make mental healthcare accessible, affordable, and transparent.
 
 ## About
-- [About iKan](https://ikanhealth.in/about): Our story, mission, and team.
+- [About iKAN](https://ikanhealth.in/about): Our story, mission, and team.
 - [Contact](https://ikanhealth.in/contact): Support email support@ikanhealth.in, phone 8527545503.
 
 ## Assessments
@@ -24,4 +24,4 @@ Structured, self-paced programs with daily modules, exercises, and progress trac
 - [Unburn (burnout recovery)](https://ikanhealth.in/equip/burnout-reset)
 
 ## Notes
-- iKan is not an emergency service. In a crisis in India, contact the KIRAN Mental Health Helpline 1800-599-0019 (24x7), iCALL 9152987821, or emergency services on 112.
+- iKAN is not an emergency service. In a crisis in India, contact the KIRAN Mental Health Helpline 1800-599-0019 (24x7), iCALL 9152987821, or emergency services on 112.
