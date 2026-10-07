@@ -31,6 +31,40 @@ visitor, because `getResources` falls back to the anon key. It also had no page 
 `useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
 `document.title` the previous route had left behind. It now sets its own title and canonical.
 
+**The two library pages moved onto the site surface** — `app/resources/Library.tsx` →
+`site/pages/Resources.tsx`, `app/resources/ResourceDetail.tsx` → `site/pages/ResourceDetail.tsx` —
+and were rebuilt on the iKAN 2 CSS. They were app screens: a dark photo hero, the app's own card
+components, a Categories/Content-Type tab pair, and so the only public pages whose header did not
+land at the shared x and y. They now use `info-band` / `info-eyebrow` / `info-title`, the 1200px
+page measure, and a new `library-*` / `article-*` block in `globals.css`.
+
+**The article body is stripped back to semantic HTML** (`site/ui/lib/authored-html.ts`). Library
+articles are pasted out of Google Docs and arrive with a `docs-internal-guid-…` wrapper and inline
+`font-family: Arial`, `font-size: 11pt`, `line-height: 1.38` on every paragraph. Inline styles beat
+a stylesheet, so `.prose-ikan` lost every rule and articles rendered as 11pt Arial on a page set in
+Manrope. Sanitising does not help and should not — DOMPurify's job is script, not typography — so
+this runs after it and removes `style`, `class` and `id`, unwraps the attribute-less spans Google
+wraps every run of text in, and drops the empty `<p>` it uses as a line break.
+
+**The detail page dropped ~800 lines of member machinery.** The app version carried an offline
+cache, a reading-progress bar, engagement analytics, `mark-read` writes and a retry ladder; three
+of those calls need a signed-in user and simply failed for the visitor the page is for.
+
+**Shared rather than duplicated:** `resource-presentation.ts` (the mapping that knows the stored
+record says `thumbnail` not `image` and `readTime` not `read_time`) moved to `shared/content/`, and
+`resolveImageUrl` to `shared/api/image-url.ts`. The import boundary forbids site/ reaching into
+app/, and a second copy of a mapping whose whole point is that the obvious field names are wrong is
+the drift it was written to stop. Five app blocks orphaned by the move were deleted
+(`ResourceAuthor`, `ResourceCategory`, `ResourceContent`, `ResourceTags`, `ResourceTypeLabel`).
+
+**Nav and footer.** Resources joins `MENU_PRIMARY`, so it appears in both bars and in the footer's
+Quick Links. **"Open the app" is removed from the footer's Support column** on request — both bars
+already carry a Sign in to the same origin. Support is two entries now rather than three: Resources
+is a product page, so it joined Quick Links rather than padding Support out to match.
+
+Ratchets fell with the deletions and are locked at the new floor: lint 740 → 710, a11y 50 → 45,
+raw hex 502 → 498.
+
 **Brand casing, found by reading the retained page's own title.** `/resource` was emitting
 "Library | iKan Health": `src/product/app/ui/useSeo.ts` still had `SITE_NAME = 'iKan Health'` where
 the site hook has had `iKAN Health` since the casing pass. Fixed, along with `index.html`'s

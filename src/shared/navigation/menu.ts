@@ -42,6 +42,13 @@ export const MENU_SERVICES: MenuLink = {
   description: 'Assessments, Equip, Mood, Resources and Consultation in one place',
 };
 
+export const MENU_RESOURCES: MenuLink = {
+  label: 'Resources',
+  to: '/resource',
+  icon: 'book-open',
+  description: 'Articles, videos and audio on sleep, stress, burnout and balance',
+};
+
 export const MENU_ABOUT: MenuLink = {
   label: 'About Us',
   to: '/about',
@@ -63,21 +70,24 @@ export const MENU_CONTACT: MenuLink = {
   description: 'Get in touch with the iKAN team',
 };
 
-export const MENU_APP: MenuLink = {
-  label: 'Open the app',
-  to: MENU_APP_ORIGIN,
-  icon: 'user-circle',
-  description: 'Assessments, programmes and your journal, in the iKAN app',
-};
+/*
+ * "Open the app" was here, and sat in the footer's Support column. Removed
+ * 2026-10-07 on request. Both bars already carry a "Sign in" to the same
+ * origin, and the footer's own Quick Links now lead somewhere a signed-out
+ * reader can actually go.
+ */
 
 /** The product pages: the drawer's first group, the footer's "Quick Links". */
-export const MENU_PRIMARY: MenuLink[] = [MENU_HOME, MENU_SERVICES, MENU_ABOUT];
+export const MENU_PRIMARY: MenuLink[] = [MENU_HOME, MENU_SERVICES, MENU_RESOURCES, MENU_ABOUT];
 
 /**
  * Help pages, for the FOOTER's "Support" column. Contact Us belongs in a
  * footer, where someone goes looking for a way to get in touch.
+ *
+ * Two entries now rather than three: Resources is a product page, so it joined
+ * Quick Links above rather than padding this column out to match it.
  */
-export const MENU_SUPPORT: MenuLink[] = [MENU_FAQ, MENU_CONTACT, MENU_APP];
+export const MENU_SUPPORT: MenuLink[] = [MENU_FAQ, MENU_CONTACT];
 
 /**
  * THE menu. Both bars render exactly this, in this order, so they cannot say

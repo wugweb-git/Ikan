@@ -22,7 +22,6 @@ import {
   MENU_ABOUT,
   MENU_FAQ,
   MENU_CONTACT,
-  MENU_APP,
 } from '../../../shared/navigation/menu';
 
 export interface NavLink {
@@ -55,7 +54,6 @@ const LINKS = {
   terms: { label: 'Terms of Service', to: '/terms', icon: 'file-text', description: 'Legal terms governing use of iKAN' },
   returns: { label: 'Return Policy', to: '/return-policy', icon: 'rotate-ccw', description: 'Our refund and return policy' },
   cancellation: { label: 'Cancellation Policy', to: '/cancellation-policy', icon: 'ban', description: 'How to cancel subscriptions and services' },
-  app: MENU_APP,
   login: { label: 'Log in', to: APP_LOGIN_URL, icon: 'user-circle', description: 'Your dashboard, account and mood journal, in the iKAN app' },
 } satisfies Record<string, NavLink>;
 

@@ -5207,3 +5207,330 @@ select {
 .ikan2-theme .ikan-capsule-nav {
   max-width: min(100% - (var(--page-gutter) * 2), var(--page-max));
 }
+
+/* ── THE LIBRARY ──────────────────────────────────────────────────
+ *
+ * `/resource` and `/resource-detail`, moved onto the site surface 2026-10-07.
+ * They were app screens — a dark photo hero, the app's card components, a
+ * Categories/Content-Type tab pair — and so the two public pages whose header
+ * did not land where every other page's does.
+ *
+ * Named for what they are rather than reusing `.services-*` or `.contact-*`:
+ * those blocks carry their own layout assumptions, and a grid of articles is
+ * neither a service strip nor a form.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .library-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* One box, not two — same reasoning as `.faq-search`: the field draws the
+   pill, so the wrapper must not draw a second one around it. */
+.ikan2-theme .library-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.ikan2-theme .library-search__icon {
+  position: absolute;
+  left: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.ikan2-theme .library-search input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 18px 0 42px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .library-search input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The same pill the policy switcher uses, so a filter on one page and a tab on
+   another are visibly the same kind of control. */
+.ikan2-theme .library-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+  color: var(--foreground);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .library-chip:hover {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.ikan2-theme .library-chip[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.ikan2-theme .library-note,
+.ikan2-theme .library-empty {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .library-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .ikan2-theme .library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .ikan2-theme .library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ikan2-theme .library-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ikan2-theme .library-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  /* Photos keep their corners rounded across this product. */
+  border-radius: var(--radius-xl);
+  background: var(--muted);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .library-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.ikan2-theme .library-card:hover .library-card__media img {
+  transform: scale(1.03);
+}
+
+/* Reads over the photo, so it carries its own ground rather than trusting the
+   image to be dark where the label happens to sit. */
+.ikan2-theme .library-card__tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  border-radius: 999px;
+  background: oklch(0.2 0 0 / 0.55);
+  padding: 4px 10px;
+  color: var(--grey-0, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.ikan2-theme .library-card__title {
+  display: block;
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ikan2-theme .library-card__desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* Pushed to the bottom so every card's meta line sits on one baseline however
+   long its title runs. */
+.ikan2-theme .library-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .library-card__meta svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* The loading state, shaped like the grid it becomes. */
+.ikan2-theme .library-card--skeleton .library-card__media,
+.ikan2-theme .library-card__line,
+.ikan2-theme .article-skeleton .library-card__media {
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  box-shadow: none;
+}
+
+.ikan2-theme .library-card__line {
+  display: block;
+  height: 14px;
+  margin-top: 12px;
+  border-radius: 6px;
+}
+
+.ikan2-theme .library-card__line--short {
+  width: 55%;
+}
+
+.ikan2-theme .article-skeleton .library-card__media {
+  display: block;
+  aspect-ratio: 16 / 9;
+  margin-top: 20px;
+  border-radius: var(--radius-xl);
+}
+
+/* ── ONE ARTICLE ──────────────────────────────────────────────── */
+
+.ikan2-theme .article-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.ikan2-theme .article-back:hover {
+  color: var(--foreground);
+}
+
+.ikan2-theme .article-back svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ikan2-theme .article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .article-meta__author {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* The date wears a calendar here, as it does in every iKAN 2 meta row. */
+.ikan2-theme .article-meta__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ikan2-theme .article-meta__date svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ikan2-theme .article-hero {
+  margin: 24px 0 0;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .article-hero img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.ikan2-theme .article-body {
+  margin-top: 28px;
+}
+
+/* Images inside the authored body get the same corners as every other photo —
+   the markup carries none of its own once `cleanAuthoredHtml` has run. */
+.ikan2-theme .article-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-xl);
+}
+
+.ikan2-theme .article-related {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.ikan2-theme .article-related__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--foreground);
+}
+
+@media (min-width: 1024px) {
+  .ikan2-theme .library-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

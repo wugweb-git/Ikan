@@ -11,7 +11,7 @@ import { SectionReportCard } from '../programs/SectionReportCard';
 import { AssessmentCard } from './AssessmentCard';
 import { LibraryResourceCard } from '../ui/blocks/LibraryResourceCard';
 import { EquipProgramCard } from '../ui/blocks/EquipProgramCard';
-import { toResourcePost, isPublished, articleTime } from '../resources/resource-presentation';
+import { toResourcePost, isPublished, articleTime } from '../../../shared/content/resource-presentation';
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from '../ui/carousel';

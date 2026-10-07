@@ -22,8 +22,30 @@
  *
  * `Library.tsx` worked out the correct chain already; this is that chain,
  * extracted so a second reader cannot get a different answer.
+ *
+ * It sits in `shared/` because BOTH surfaces present resources now: the app's
+ * Library and the site's public Resources pages. It was in `app/resources/`
+ * until 2026-10-07, which the site surface cannot import — and a second copy
+ * of a mapping whose whole point is that the obvious field names are wrong is
+ * the exact drift this file was written to stop.
  */
-import type { ResourcePost } from '../ui/blocks/ResourceCard';
+
+/**
+ * The card shape. Declared here rather than imported from a surface's card
+ * component, so this module stays data-only and legal in `shared/`.
+ */
+export interface ResourcePost {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  image: string;
+  slug?: string;
+  author?: string;
+  category?: string;
+  readTime?: string;
+  type?: 'article' | 'video' | 'audio';
+}
 
 /** A stored `resource:` record. Untyped in KV, so every field is optional. */
 export interface ResourceRecord {
@@ -47,6 +69,9 @@ export interface ResourceRecord {
   published?: boolean;
   published_at?: string;
   featured?: boolean;
+  /** The article body: authored HTML, pasted out of Google Docs. */
+  content?: string;
+  author?: string;
 }
 
 export interface PresentedResource extends ResourcePost {

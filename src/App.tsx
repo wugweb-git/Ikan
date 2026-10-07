@@ -121,10 +121,10 @@ const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./product/app/
 
 // User screens
 const Consultation = lazy(() => lazyRetry(() => import('./product/site/pages/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
-const Library = lazy(() => lazyRetry(() => import('./product/app/resources/Library').then(m => ({ default: m.Library })), 'Library'));
+const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resources').then(m => ({ default: m.Resources })), 'Resources'));
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
-const ResourceDetail = lazy(() => lazyRetry(() => import('./product/app/resources/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
 const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
 const LearningDiary = lazy(() => lazyRetry(() => import('./product/app/journal/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
@@ -170,6 +170,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
   '/consultation', '/join/professional',
+  '/resource', '/resource-detail',
 ]);
 
 // --- Suspense fallback ---
