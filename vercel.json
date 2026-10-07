@@ -24,7 +24,7 @@
       "statusCode": 301
     },
     {
-      "source": "/resource/:slug*",
+      "source": "/resource/:slug+",
       "destination": "https://app.ikanhealth.in/resources",
       "statusCode": 301
     },

@@ -31,7 +31,14 @@ visitor, because `getResources` falls back to the anon key. It also had no page 
 `useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
 `document.title` the previous route had left behind. It now sets its own title and canonical.
 
-`/resource/:slug*` **still redirects**, deliberately. No such URL was ever canonical or in the
+**`:slug*` matches zero or more segments**, which is the bit that made the first attempt at this a
+no-op: `/resource/:slug*` was already matching the bare `/resource`, so deleting the explicit
+`/resource` entry changed nothing and the page kept 301ing. The pattern is now `:slug+` — one or
+more. The same redundancy exists on the assessment, equip and consultation pairs (`:slug*` plus an
+explicit bare path); harmless there, since both halves point at the same destination, and left
+alone rather than quietly rewritten.
+
+`/resource/:slug+` **still redirects**, deliberately. No such URL was ever canonical or in the
 sitemap, and `App.tsx` has no handler for that shape, so those requests have never resolved here;
 the app is a better destination than a blank render. Resource detail lives at
 `/resource-detail?id=<uuid>`, which the redirect does not match.
