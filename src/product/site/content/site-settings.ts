@@ -45,11 +45,14 @@ export const SITE_SETTINGS: SiteSettings = {
   /*
    * The real accounts, supplied 2026-10-07. Three of these were placeholders
    * built from the pattern `/ikanhealth`, which is not the handle on any of
-   * them — X and Instagram are `ikanhealth_in`, LinkedIn is the company page
-   * `ikan-mental-health`. Each was checked to resolve before it shipped.
-   * Facebook is unchanged.
+   * them — X, Instagram and Facebook are all `ikanhealth_in`, and LinkedIn is
+   * the company page `ikan-mental-health`.
+   *
+   * Each was checked to resolve first. Note that a Facebook URL answers 200
+   * whether or not the page exists — it serves a login wall — so that one is
+   * the only link here taken on trust rather than confirmed.
    */
-  facebookUrl: 'https://facebook.com/ikanhealth',
+  facebookUrl: 'https://www.facebook.com/ikanhealth_in',
   instagramUrl: 'https://www.instagram.com/ikanhealth_in/',
   linkedinUrl: 'https://www.linkedin.com/company/ikan-mental-health/',
   youtubeUrl: '',
