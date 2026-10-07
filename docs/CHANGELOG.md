@@ -23,6 +23,19 @@ empty subject is sent as the field's own placeholder, "General enquiry", since t
 one. `apiClient.submitContactForm` / `subscribeNewsletter` are deleted so a future form cannot pick
 the dead path by autocomplete; the admin readers stay, for the records collected before the handover.
 
+**`/resource` is kept on this host.** Its 301 to `app.ikanhealth.in/resources` is removed and the
+page is back in the sitemap. Two things made the redirect wrong: the Library is linked from the
+signed-in app navigation on *this* host, so a signed-in reader could click into it but got bounced
+to the app the moment they reloaded; and the page serves 10 published resources to an anonymous
+visitor, because `getResources` falls back to the anon key. It also had no page metadata at all —
+`useMetadata` is the category vocabulary, not SEO — so `/resource` inherited whatever
+`document.title` the previous route had left behind. It now sets its own title and canonical.
+
+`/resource/:slug*` **still redirects**, deliberately. No such URL was ever canonical or in the
+sitemap, and `App.tsx` has no handler for that shape, so those requests have never resolved here;
+the app is a better destination than a blank render. Resource detail lives at
+`/resource-detail?id=<uuid>`, which the redirect does not match.
+
 **Both writes confirmed `201`** over HTTP against `ikan2_contact_messages` and
 `ikan2_newsletter_subscribers` with the site's own headers — checked from the iKAN 2 side, since
 proving a success means writing a row and that database is not this repo's to write to on a whim.

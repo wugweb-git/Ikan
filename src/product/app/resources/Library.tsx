@@ -13,6 +13,7 @@ import { ContentImage } from '../ui/ContentImage';
 import { resolveImageUrl } from '../ui/lib/image-utils';
 import { LIBRARY_LABELS } from '../ui/lib/content';
 import { PageHero } from '../ui/PageHero';
+import { useSeo } from '../ui/useSeo';
 
 interface LibraryProps {
   onResourceSelect?: (resourceId: string) => void;
@@ -47,6 +48,26 @@ export function Library({ onResourceSelect, onNavigate, className }: LibraryProp
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState<Resource[]>([]);
   const hasLoadedResources = useRef(false);
+
+  /*
+   * This page stays on the marketing host — the `/resource` redirect to
+   * app.ikanhealth.in was removed on 2026-10-07 — so it needs a title and a
+   * canonical of its own. It had neither: `useMetadata` above is the category
+   * vocabulary, not page metadata, so until now `/resource` inherited whatever
+   * `document.title` the previously-viewed route had left behind.
+   *
+   * The detail pages are a different matter and are left alone: they live at
+   * `/resource-detail?id=<uuid>`, which has never been a crawlable URL, and
+   * `/resource/<slug>` still redirects to the app because this router cannot
+   * resolve that shape at all.
+   */
+  useSeo({
+    title: 'Library',
+    description:
+      'Articles, videos and audio on sleep, stress, burnout and balance — free to read, written for India.',
+    canonicalPath: '/resource',
+    type: 'website',
+  });
 
   const handleRefresh = () => {
     hasLoadedResources.current = false;

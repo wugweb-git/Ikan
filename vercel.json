@@ -29,11 +29,6 @@
       "statusCode": 301
     },
     {
-      "source": "/resource",
-      "destination": "https://app.ikanhealth.in/resources",
-      "statusCode": 301
-    },
-    {
       "source": "/consultation/:slug*",
       "destination": "https://app.ikanhealth.in/consult",
       "statusCode": 301
