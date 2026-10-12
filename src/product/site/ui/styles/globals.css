@@ -3600,21 +3600,90 @@ select {
 
 /* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
  *
- * LAYOUT ONLY. The page is iKAN 2's wizard (ikan2.css "FLOW CHROME, ported":
- * app column, flow bar, LinearProgress, fixed footer, bottom sheet) and every
- * control is an iKAN 2 component ported there too. What is here places those
- * components inside the 30rem column: one column of fields, rows, the
- * expertise matrix, the week grid. No colours, no states.
+ * LAYOUT ONLY, on iKAN 2's breakpoints (640, 1024). Every control is an iKAN 2
+ * component ported into ikan2.css; this places them.
+ *
+ *   phone   < 640   full-width white screen, sticky bar, sticky Back/Next,
+ *                   "n of 11" opens the steps in a bottom sheet
+ *   tablet  ≥ 640   the step on a white surface on the canvas, short fields
+ *                   in pairs
+ *   desktop ≥ 1024  a sticky rail with every step beside the surface; the
+ *                   rail replaces the sheet, so "n of 11" goes
  * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme.wizard {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.ikan2-theme .wizard__bar {
+  border-bottom: 1px solid var(--border);
+}
+
+.ikan2-theme .wizard__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: min(100%, var(--page-max));
+  min-height: 64px;
+  margin-inline: auto;
+  padding: env(safe-area-inset-top) 4px 0;
+}
+
+.ikan2-theme .wizard__count {
+  gap: 2px;
+  padding: 0 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .wizard__progress {
+  width: min(100% - 32px, var(--page-max));
+  margin-inline: auto;
+  padding-bottom: 10px;
+}
+
+.ikan2-theme .wizard__rail {
+  display: none;
+}
+
+.ikan2-theme .wizard__main {
+  min-height: calc(100dvh - 78px);
+  padding: 24px 16px 0;
+  background: var(--background);
+}
+
+.ikan2-theme .wizard__title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+/* Back + Next stay in reach: sticky to the bottom of the screen while the
+   step is longer than it, resting at the end of the step when it is not. */
+.ikan2-theme .wizard__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: 32px -16px 0;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+}
 
 .ikan2-theme .partner-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
+  gap: 20px 16px;
+}
+
+.ikan2-theme .partner-wide {
+  grid-column: 1 / -1;
 }
 
 .ikan2-theme .partner-lede {
   margin-top: 8px;
+  max-width: var(--read-max);
   font-size: 16px;
   line-height: 24px;
   color: var(--muted-foreground);
@@ -3622,24 +3691,15 @@ select {
 
 .ikan2-theme .partner-intro-title {
   margin: 28px 0 12px;
-  font-family: var(--font-display);
-  font-size: 16px;
-  line-height: 24px;
 }
 
 .ikan2-theme .partner-intro-list {
+  max-width: var(--read-max);
   margin-bottom: 16px;
 }
 
 .ikan2-theme .partner-intro-list .select-row {
   cursor: default;
-}
-
-.ikan2-theme .partner-step-button {
-  gap: 2px;
-  padding: 0 8px 0 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
 }
 
 .ikan2-theme .partner-back {
@@ -3740,6 +3800,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-width: 36rem;
 }
 
 .ikan2-theme .partner-week__row {
@@ -3758,6 +3819,7 @@ select {
 }
 
 .ikan2-theme .partner-week__part small {
+  display: none;
   font-size: 11px;
   font-weight: 400;
   color: var(--muted-foreground);
@@ -3815,9 +3877,119 @@ select {
   margin-top: 24px;
 }
 
-@media (max-width: 599px) {
+/* ── tablet ≥ 640: the step becomes a surface on the canvas; pairs ── */
+@media (min-width: 640px) {
+  .ikan2-theme .wizard__body {
+    padding: 32px 24px 48px;
+  }
+
+  /* iKAN 2's `.surface` treatment */
+  .ikan2-theme .wizard__main {
+    max-width: 46rem;
+    min-height: 0;
+    margin-inline: auto;
+    padding: 36px 36px 0;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .ikan2-theme .wizard__title {
+    font-size: 28px;
+    line-height: 36px;
+    letter-spacing: -0.01em;
+  }
+
+  .ikan2-theme .wizard__footer {
+    margin: 36px -36px 0;
+    border-radius: 0 0 20px 20px;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__actions {
+    padding: 16px 36px 20px;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__actions .btn--filled {
+    flex: 0 1 auto;
+    min-width: 12rem;
+    margin-left: auto;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__hint {
+    padding: 12px 36px 0;
+    text-align: right;
+  }
+
+  .ikan2-theme .partner-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ikan2-theme .partner-matrix__row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ikan2-theme .partner-slider {
+    grid-template-columns: 8rem minmax(0, 1fr) 8rem;
+  }
+
+  .ikan2-theme .partner-slider input {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
   .ikan2-theme .partner-week__part small {
+    display: block;
+  }
+}
+
+/* ── desktop ≥ 1024: every step in a sticky rail beside the surface ── */
+@media (min-width: 1024px) {
+  /* two classes: `.btn` (ikan2.css, loaded later) sets display too */
+  .ikan2-theme .wizard__bar .wizard__count {
     display: none;
+  }
+
+  .ikan2-theme .wizard__body {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 46rem);
+    justify-content: center;
+    align-items: start;
+    gap: 40px;
+    width: min(100%, var(--page-max));
+    margin-inline: auto;
+    padding: 40px 24px 64px;
+  }
+
+  .ikan2-theme .wizard__body--single {
+    grid-template-columns: minmax(0, 46rem);
+  }
+
+  .ikan2-theme .wizard__rail {
+    position: sticky;
+    top: 104px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ikan2-theme .wizard__rail .select-list {
+    background: var(--background);
+  }
+
+  .ikan2-theme .wizard__rail .select-row {
+    min-height: 48px;
+    padding: 10px 14px;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .ikan2-theme .wizard__main {
+    width: 100%;
+    margin: 0;
   }
 }
 

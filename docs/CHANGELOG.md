@@ -29,14 +29,16 @@ public-profile prompts with a 300-word counter. The draft saves to `localStorage
 (per-device convenience, cleared on submit). Option lists live in
 `src/product/site/content/partner-application.ts`, in the spec's order.
 
-**A wizard on iKAN 2's flow chrome**, ported from `routes/assessment-flow.tsx`: its own screen
-(no site nav or footer), the 30rem app column, a sticky bar with Close, "Partner application" and
-"n of 11", a LinearProgress, one step at a time, and a fixed footer of Back + Next. Next stays
-disabled with "Still needed: …" above it, as in iKAN 2. "n of 11" opens a bottom sheet listing
-every step: reached ones can be jumped to, ticked when complete, "Needs info" when not. An intro
-screen says what to keep handy; a returning applicant sees "Picking up where you left off". Close
-asks "Leave the application?" On the last step, if an earlier step has gaps, the button reads
-"Finish step n" and goes there.
+**A wizard in iKAN 2's style, on all three of its breakpoints** (640, 1024), its own screen with
+no site nav or footer. Phone: full width, a sticky bar (Close, "Partner application", "n of 11",
+LinearProgress), Back + Next sticky at the bottom, "n of 11" opening every step in a bottom sheet.
+Tablet: the step on a white surface on the canvas, short fields in pairs. Desktop: a sticky rail
+listing every step beside the surface; the rail replaces the sheet. Reached steps can be jumped to,
+ticked when complete, "Needs info" when not. Next stays disabled with "Still needed: …" above it,
+as in iKAN 2. An intro says what to keep handy; a returning applicant sees "Picking up where you
+left off"; Close asks "Leave the application?"; on the last step, gaps behind you turn the button
+into "Finish step n". iKAN 2's app shell (the phone column on a canvas) is deliberately not used:
+the site is not the app.
 
 **Labels are the spec's words**, verbatim and in its case ("Sliding Scale", "Language(s) in which
 you conduct therapy", "recognized"), with its hints ("JPG/PNG", "Only for offline therapists.").

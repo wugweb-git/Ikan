@@ -1561,56 +1561,24 @@
 
 /* ══ FLOW CHROME, ported ═══════════════════════════════════════════
  *
- * iKAN 2's wizard, from `routes/assessment-flow.tsx` and `routes/welcome.tsx`:
- * the app column on the canvas, a sticky top bar over a LinearProgress, one
- * step at a time, and a fixed footer of Back + Next. Its pieces:
+ * The pieces of iKAN 2's step flows (`routes/assessment-flow.tsx`) that a
+ * site page can use as they are. The app's phone column and fixed footer are
+ * deliberately NOT here: the site lays itself out across phone, tablet and
+ * desktop, so the page that uses these supplies its own responsive layout.
  *
- *   .app-column    styles.css            `@utility max-w-app` + bg-background shadow-app
- *   .flow-bar      routes/assessment-flow  sticky header, min-h-16
- *   .icon-button   components/equip/m3.ts `IconButton`
- *   .flow-footer   routes/assessment-flow  fixed footer in the column
- *   .select-row    components/equip/m3.ts `SelectRow`
- *   .sheet         components/equip/m3.ts `BottomSheet`
- *   .notice        routes/assessment-flow  "Picking up where you left off."
+ *   .flow-bar        routes/assessment-flow  sticky header
+ *   .icon-button     components/equip/m3.ts `IconButton`
+ *   .flow-footer__*  components/equip/steps.tsx `Footer` (hint + actions)
+ *   .select-row      components/equip/m3.ts `SelectRow`
+ *   .sheet           components/equip/m3.ts `BottomSheet`
+ *   .notice          routes/assessment-flow  "Picking up where you left off."
  * ═════════════════════════════════════════════════════════════════ */
-
-.ikan2-theme .flow {
-  min-height: 100dvh;
-  background: var(--canvas);
-}
-
-.ikan2-theme .app-column {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  min-height: 100dvh;
-  margin-inline: auto;
-  background: var(--background);
-  box-shadow: var(--shadow-app);
-}
-
-@media (min-width: 640px) {
-  .ikan2-theme .app-column { max-width: 36rem; }
-}
-
-@media (min-width: 1024px) {
-  .ikan2-theme .app-column { max-width: 30rem; }
-}
 
 .ikan2-theme .flow-bar {
   position: sticky;
   top: 0;
   z-index: 30;
   background: var(--background);
-}
-
-.ikan2-theme .flow-bar__row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 64px;
-  padding: max(env(safe-area-inset-top), 0px) 4px 0;
 }
 
 .ikan2-theme .flow-bar__title {
@@ -1624,10 +1592,6 @@
   font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.ikan2-theme .flow-bar__progress {
-  padding: 0 16px 8px;
 }
 
 .ikan2-theme .icon-button {
@@ -1648,36 +1612,6 @@
   height: 24px;
 }
 
-.ikan2-theme .flow-main {
-  flex: 1;
-  padding: 24px 16px 160px;
-}
-
-.ikan2-theme .flow-footer {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.ikan2-theme .flow-footer__inner {
-  width: 100%;
-  border-top: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
-  background: var(--background);
-  pointer-events: auto;
-}
-
-@media (min-width: 640px) {
-  .ikan2-theme .flow-footer__inner { max-width: 36rem; }
-}
-
-@media (min-width: 1024px) {
-  .ikan2-theme .flow-footer__inner { max-width: 30rem; }
-}
-
 .ikan2-theme .flow-footer__hint {
   margin: 0;
   padding: 8px 16px 0;
@@ -1691,7 +1625,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
 }
 
 .ikan2-theme .flow-footer__actions .btn--filled {
