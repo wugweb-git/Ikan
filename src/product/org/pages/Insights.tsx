@@ -218,12 +218,19 @@ export function Insights({ org }: { org: Organization }) {
                 <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis domain={[0, 100]} tickLine={false} axisLine={false} fontSize={12} width={44} />
                 <Tooltip formatter={(v: number) => [v, 'Average score']} />
+                {/* A seven-point move on a hundred-point index is genuinely
+                    small, and the axis stays at 0-100 rather than being
+                    cropped to make it look dramatic. So the line carries the
+                    weight instead: heavier stroke, and a dot per month so
+                    each reading is a point you can actually read. */}
                 <Area
                   type="monotone"
                   dataKey="score"
                   stroke="var(--brand-teal-ink)"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   fill="url(#orgScore)"
+                  dot={{ r: 3.5, fill: 'var(--brand-teal-ink)', strokeWidth: 0 }}
+                  activeDot={{ r: 5.5 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
