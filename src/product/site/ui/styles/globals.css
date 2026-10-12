@@ -3598,6 +3598,502 @@ select {
   }
 }
 
+/* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
+ *
+ * The form is the Contact page's form grown to eleven steps, so it reuses
+ * `contact-field`, `info-tab` and `info-button` as they are. What is below is
+ * only what the spec asks for that the site had no class for: pill groups,
+ * the expertise matrix, sliders, repeatable rows, the weekly grid and the
+ * step rail. iKAN 2 tokens only; no new colours.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .partner-form {
+  max-width: 46rem;
+}
+
+.ikan2-theme .contact-field select {
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+
+.ikan2-theme .contact-field select:focus-visible,
+.ikan2-theme .partner-form button:focus-visible,
+.ikan2-theme .partner-steps__item:focus-visible,
+.ikan2-theme .partner-slider input:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.ikan2-theme .partner-required {
+  font-style: normal;
+  color: var(--brand-coral-ink);
+}
+
+.ikan2-theme .partner-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-over {
+  color: var(--destructive);
+  font-weight: 600;
+}
+
+.ikan2-theme .partner-subhead {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Pill groups */
+.ikan2-theme .partner-group__label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .partner-group__note {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-group > .partner-hint {
+  margin: -4px 0 10px;
+}
+
+.ikan2-theme .partner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ikan2-theme .partner-chip {
+  gap: 6px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.ikan2-theme .partner-chip--sm {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.ikan2-theme .partner-chip[aria-pressed='true'] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+
+.ikan2-theme .partner-chip__tick {
+  width: 16px;
+  height: 16px;
+}
+
+/* Expertise matrix: one row per area, the four levels as a pill group. */
+.ikan2-theme .partner-matrix {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.ikan2-theme .partner-matrix__row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ikan2-theme .partner-matrix__area {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* Repeatable rows */
+.ikan2-theme .partner-row,
+.ikan2-theme .partner-upload-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ikan2-theme .partner-row__cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ikan2-theme .partner-row__cell--narrow {
+  flex: 0 0 6.5rem;
+}
+
+.ikan2-theme .partner-add,
+.ikan2-theme .partner-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .partner-icon-button {
+  width: 44px;
+  padding: 0;
+}
+
+.ikan2-theme .partner-add:hover:not(:disabled),
+.ikan2-theme .partner-icon-button:hover {
+  background: var(--secondary);
+}
+
+.ikan2-theme .partner-add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ikan2-theme .partner-add svg,
+.ikan2-theme .partner-icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Uploads */
+.ikan2-theme .partner-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.ikan2-theme .partner-files li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 6px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.ikan2-theme .partner-headshot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ikan2-theme .partner-headshot img {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.ikan2-theme .partner-error {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--destructive);
+}
+
+/* Sliders */
+.ikan2-theme .partner-slider {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) 7.5rem;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.ikan2-theme .partner-slider__pole {
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .partner-slider__pole--right {
+  text-align: right;
+}
+
+.ikan2-theme .partner-slider input {
+  width: 100%;
+  accent-color: var(--brand-teal-ink);
+}
+
+/* Weekly grid */
+.ikan2-theme .partner-week {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ikan2-theme .partner-week__row {
+  display: grid;
+  grid-template-columns: 3rem repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+
+.ikan2-theme .partner-week__part {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.ikan2-theme .partner-week__part small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-week__day {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ikan2-theme .partner-week__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--background);
+  cursor: pointer;
+}
+
+.ikan2-theme .partner-week__slot[aria-pressed='true'] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+}
+
+.ikan2-theme .partner-week__slot svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ikan2-theme .partner-currency {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ikan2-theme .partner-currency > span {
+  font-size: 16px;
+  color: var(--muted-foreground);
+}
+
+/* Step rail */
+.ikan2-theme .partner-progress {
+  margin-top: 32px;
+}
+
+.ikan2-theme .partner-progress__count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .partner-progress__bar {
+  height: 6px;
+  margin: 8px 0 16px;
+  border-radius: 999px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.ikan2-theme .partner-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--foreground);
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+.ikan2-theme .partner-steps {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.ikan2-theme .partner-steps__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ikan2-theme .partner-steps__item:disabled {
+  cursor: default;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-steps__item[aria-current='step'] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+
+.ikan2-theme .partner-steps__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.ikan2-theme .partner-steps__num svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ikan2-theme .partner-steps__item[aria-current='step'] .partner-steps__num {
+  background: var(--background);
+}
+
+/* Validation and footer */
+.ikan2-theme .partner-missing {
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.ikan2-theme .partner-missing p {
+  font-weight: 600;
+}
+
+.ikan2-theme .partner-missing ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.ikan2-theme .partner-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ikan2-theme .partner-nav .info-button {
+  margin-top: 0;
+  gap: 8px;
+}
+
+.ikan2-theme .partner-nav__arrow {
+  width: 16px;
+  height: 16px;
+}
+
+.ikan2-theme .partner-done__icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  color: var(--brand-teal-ink);
+}
+
+@media (max-width: 599px) {
+  .ikan2-theme .partner-matrix__row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .ikan2-theme .partner-row,
+  .ikan2-theme .partner-upload-row {
+    flex-wrap: wrap;
+  }
+
+  .ikan2-theme .partner-row__cell {
+    flex-basis: 100%;
+  }
+
+  .ikan2-theme .partner-row__cell--narrow {
+    flex: 1 1 0;
+  }
+
+  .ikan2-theme .partner-slider {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 4px;
+  }
+
+  .ikan2-theme .partner-slider input {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .ikan2-theme .partner-week__row {
+    grid-template-columns: 2.5rem repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .ikan2-theme .partner-week__part small {
+    display: none;
+  }
+}
+
 
 
 /* ───────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { BookingCalendar } from './BookingCalendar';
 
-export const APPLICATION_LINK_PATH = '/join/professional';
+export const APPLICATION_LINK_PATH = '/join/partner';
 
 // ── Reject application ─────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ export function ShareLinkDialog({ open, onOpenChange, onCopy, onPreview }: Share
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-medium">Universal Application Link</DialogTitle>
-          <DialogDescription>Share this link with professionals. They can fill out the application form on their device.</DialogDescription>
+          <DialogDescription>Share this link with prospective partners. They can fill out the application form on their device.</DialogDescription>
         </DialogHeader>
         <div className="mt-4">
           <div className="flex items-center gap-2">

@@ -4,6 +4,11 @@
   "framework": "vite",
   "redirects": [
     {
+      "source": "/join/professional",
+      "destination": "/join/partner",
+      "statusCode": 301
+    },
+    {
       "source": "/assessment/:slug*",
       "destination": "https://app.ikanhealth.in/assessments",
       "statusCode": 301

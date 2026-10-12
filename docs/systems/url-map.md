@@ -28,7 +28,7 @@ is the same screen as `/reset-password`, not a separate route with a different n
 | `/equip/<slug>` | EquipDetail | 4 real slugs, KV-driven |
 | `/consultation` | Consultation (landing) | |
 | `/resource` | Library | |
-| `/join/professional` | ProfessionalApplication | Public "become a consultant" form — added to sitemap this pass |
+| `/join/partner` | ProfessionalApplication | Public partner application form (therapists and other practitioners). Was `/join/professional` until 2026-10-12; `vercel.json` 301s the old path |
 | `/faq`, `/privacy` / `/privacy-policy`, `/terms`, `/contact`, `/return-policy`, `/cancellation-policy` | Legal/support pages | CMS-backed, see `repo-hygiene-audit.md`'s two-parallel-CMS-systems note |
 | `/sitemap` | This HTML sitemap page | Added to `public/sitemap.xml` this pass |
 
@@ -111,11 +111,7 @@ Manager was removed in PR #14 (2026-09-10) and the dead `/admin/pages` route ent
 
 ## Still open
 
-- `/join/professional` vs. a `/consultant/add|join|create`-style name — the current name is
-  arguably correct (it's the *public applicant's* form, distinct from the admin's own
-  `/admin/consultants` management screen), but flagging as a naming call worth a second look, not
-  changed this pass — renaming a public, potentially-already-shared URL needs more certainty than a
-  same-pass judgment call, and would need a redirect from the old path if changed later.
+- ~~`/join/professional` naming~~ — **resolved 2026-10-12:** renamed `/join/partner`. "Partner" is the umbrella term (a therapist is one type of partner; `partner.ikanhealth.in` is planned), with a 301 from the old path.
 - `/consultation-detail` and `/resource-detail` still pass their target id via component
   state/props, not a URL path segment — no per-consultant or per-resource slug exists. Same
   "content needs a slug, fixed routes don't" boundary as everything else, just not built yet for

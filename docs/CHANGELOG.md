@@ -9,6 +9,56 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — `/join/partner`: the partner application, rebuilt to the Notion v3 spec
+
+**Partner is the umbrella word.** A therapist is one type of partner, and `partner.ikanhealth.in`
+is planned for the partner portal, so the public application form moved to `/join/partner`.
+`vercel.json` 301s `/join/professional`, because admins have been sending that link and it is in the
+sitemap. Nav ("Become a Partner"), the admin's copy-link dialog and the sitemap follow. Internal names
+(`professional_application:`, `/admin/professional-applications`, `ProfessionalApplication.tsx`)
+are unchanged: nothing a person sees.
+
+**The form is now "I-Kan Therapist Onboarding Form – Version 3"** (Notion, 2026-07-29): eleven
+steps, against the old five. Qualifications and RCI/NMC registration with a conditional
+registration number, degree and certification tables, typed document uploads, the three screening
+questions, practice setting and volume, an Expert/Advanced/Comfortable/Limited expertise matrix,
+conditions not treated, client preferences, five communication-style sliders, homework, cultural
+competence, a weekly availability grid, fees per format and a sliding scale, contributions, media
+(workspace photos and a map link only when in-person or home visits are offered), and the eight
+public-profile prompts with a 300-word counter. The draft saves to `localStorage` as you go
+(per-device convenience, cleared on submit). Option lists live in
+`src/product/site/content/partner-application.ts`, in the spec's order.
+
+**Two additions the spec lacks.** Email and phone, required on the form and at the endpoint: neither
+the old form nor the spec asked, so an admin had no way to reply. And an "Add another area" row on
+the expertise matrix, because the spec's list ends in "etc."
+
+**Styled on iKAN 2.** The page uses `.ikan2-theme` and the site's existing `info-*`,
+`contact-field`, `info-tab` and `info-button` classes; the controls those did not cover live under
+`.partner-*` in `globals.css`, on iKAN 2 tokens only.
+
+**Verification is kept off the public profile, as the spec asks.** The body is now
+`{ contact, verification, profile }`. Contact and verification are stored only on the
+`professional_application:` tracker (admin); `professional:pending-*`, the record approval
+publishes, is built from an allowlist of profile keys. The admin list omits verification; the
+detail view merges it back in, and document links are re-signed on click because the stored URL
+expires after 24h. Approval re-signs the headshot for the life of the profile for the same reason.
+
+**Fixed while here: applications were publicly readable.** `GET /consultation/professionals` scans
+the `professional:` prefix, which `professional:pending-*` shares, so every application under
+review was served to anyone. It and the single-profile route now skip `pending_review` and
+`rejected` records. Live census before deploy: zero applications ever submitted, so nothing leaked
+in practice.
+
+**Deploy order:** the edge function before (or with) the frontend. The new form against the old
+function would be accepted, but the old function spreads the whole body onto the pending record,
+so contact and verification would land on the record that approval publishes.
+
+Not done: video upload (the upload route allows images and PDF up to 10 MB, too small for a
+1–3 minute video, so the form takes a YouTube/Vimeo/Drive link).
+
+---
+
 ## 2026-10-12 — the organisation (B2B) portal, first half
 
 **`/org` exists**, a fourth surface at `src/product/org/` beside site, app and admin, on iKAN 2's

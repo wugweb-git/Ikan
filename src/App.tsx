@@ -170,7 +170,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
-  '/consultation', '/join/professional',
+  '/consultation', '/join/partner',
   '/resource', '/resource-detail',
 ]);
 
@@ -272,7 +272,7 @@ function AppContent() {
   // All state hooks
   const [emergencyRender, setEmergencyRender] = useState(false);
   const [currentRoute, setCurrentRoute] = useState(() => {
-    // Read the initial route from the URL so direct navigation (e.g. /join/professional) works
+    // Read the initial route from the URL so direct navigation (e.g. /join/partner) works
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
       // Slug detail routes map to the existing detail screens
@@ -352,7 +352,7 @@ function AppContent() {
         '/consultation', '/resource', '/resource-detail', '/account', 
         '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
-        '/join/professional',
+        '/join/partner',
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
@@ -694,7 +694,7 @@ function AppContent() {
           return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate(hasCompletedFirstRun() ? '/dashboard' : '/get-started')} />);
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
-        case '/join/professional':
+        case '/join/partner':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
