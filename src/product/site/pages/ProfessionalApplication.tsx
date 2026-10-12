@@ -30,36 +30,39 @@ import {
 const API = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
 const DRAFT_KEY = 'ikan.partner-application.draft.v1';
 
+/** Step titles verbatim from the spec. Only step 2 carries a note: the spec's
+ *  "keep verification fields separate from the public profile", said to the applicant. */
 const STEPS = [
-  { title: 'Basic information', hint: 'Who you are and how we reach you.' },
-  { title: 'Qualifications & verification', hint: 'Used to verify you. Never shown on your public profile.' },
-  { title: 'Practice information', hint: 'How and where you practise.' },
-  { title: 'Clinical expertise', hint: 'Rate only the areas you work in. Leave the rest blank.' },
-  { title: 'Client preferences', hint: 'Who you work best with.' },
-  { title: 'Therapy style', hint: 'Helps us match clients to the way you work.' },
-  { title: 'Cultural competence', hint: 'Communities you have experience working with.' },
-  { title: 'Availability & fees', hint: 'Tap the slots you usually take sessions in.' },
-  { title: 'Publications & contributions', hint: 'Optional. Talks, writing, media and awards.' },
-  { title: 'Media', hint: 'A short video helps clients choose you.' },
-  { title: 'Public profile', hint: `What clients will read. Up to ${PROFILE_WORD_LIMIT} words each.` },
-] as const;
+  { title: 'Basic Information' },
+  { title: 'Qualifications & Verification', hint: 'Used to verify you. Kept separate from your public profile.' },
+  { title: 'Practice Information' },
+  { title: 'Clinical Expertise' },
+  { title: 'Client Preferences' },
+  { title: 'Therapy Style' },
+  { title: 'Cultural Competence' },
+  { title: 'Availability & Fees' },
+  { title: 'Publications & Professional Contributions' },
+  { title: 'Media' },
+  { title: 'Public Profile' },
+] as { title: string; hint?: string }[];
 
 type Form = PartnerApplicationForm;
 type SetForm = (patch: Partial<Form>) => void;
 
-function loadDraft(): { form: Form; step: number } | null {
+function loadDraft(): { form: Form; step: number; reached: number } | null {
   try {
     const raw = window.localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw);
-    return { form: { ...emptyPartnerForm(), ...saved.form }, step: Math.min(Math.max(0, saved.step | 0), STEPS.length - 1) };
+    const clamp = (n: unknown) => Math.min(Math.max(0, Number(n) | 0), STEPS.length - 1);
+    return { form: { ...emptyPartnerForm(), ...saved.form }, step: clamp(saved.step), reached: clamp(saved.reached ?? saved.step) };
   } catch {
     return null;
   }
 }
 
-function saveDraft(form: Form, step: number) {
-  try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step })); } catch { /* private mode */ }
+function saveDraft(form: Form, step: number, reached: number) {
+  try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, reached })); } catch { /* private mode */ }
 }
 
 function clearDraft() {
@@ -84,9 +87,9 @@ function Required() {
 }
 
 /** iKAN 2 `Field`: label above, the box, then an error or a hint. */
-function Field({ label, required, wide, hint, error, multiline, prefix, children }: {
+function Field({ label, required, wide, hint, error, multiline, prefix, messageId, children }: {
   label: string; required?: boolean; wide?: boolean; hint?: ReactNode; error?: string;
-  multiline?: boolean; prefix?: ReactNode; children: ReactNode;
+  multiline?: boolean; prefix?: ReactNode; messageId?: string; children: ReactNode;
 }) {
   return (
     <label className={`field${wide ? ' partner-wide' : ''}`}>
@@ -95,8 +98,8 @@ function Field({ label, required, wide, hint, error, multiline, prefix, children
         {prefix ? <span className="field__prefix" aria-hidden="true">{prefix}</span> : null}
         {children}
       </span>
-      {error ? <span className="field__message field__message--error" role="alert">{error}</span>
-        : hint ? <span className="field__message">{hint}</span> : null}
+      {error ? <span id={messageId} className="field__message field__message--error" role="alert">{error}</span>
+        : hint ? <span id={messageId} className="field__message">{hint}</span> : null}
     </label>
   );
 }
@@ -204,14 +207,18 @@ function OtherInput({ show, label, value, onChange }: { show: boolean; label: st
   return <Field label={label} wide><input className="field__control" value={value} onChange={(e) => onChange(e.target.value)} /></Field>;
 }
 
-function LongAnswer({ label, required, value, onChange, limit }: { label: string; required?: boolean; value: string; onChange: (v: string) => void; limit?: number }) {
+/** `limit` is a guide by default (the spec's "Recommended maximum 250–300 words"):
+ *  going over warns but does not block. `hard` makes it a rule ("300 words max"). */
+function LongAnswer({ label, required, value, onChange, limit, hard, hint }: { label: string; required?: boolean; value: string; onChange: (v: string) => void; limit?: number; hard?: boolean; hint?: string }) {
+  const messageId = useId();
   const n = wordCount(value);
   const over = limit !== undefined && n > limit;
+  const count = limit !== undefined ? `${n} / ${limit} words` : undefined;
   return (
-    <Field label={label} required={required} wide multiline
-      error={over ? `${n} / ${limit} words. Please shorten it.` : undefined}
-      hint={limit !== undefined ? `${n} / ${limit} words` : undefined}>
-      <textarea className="field__control" rows={5} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={over || undefined} />
+    <Field label={label} required={required} wide multiline messageId={messageId}
+      error={over && hard ? `${count}. Please shorten it.` : undefined}
+      hint={over ? `${count}. Recommended maximum is 250–300 words.` : [hint, count].filter(Boolean).join(' · ') || undefined}>
+      <textarea className="field__control" rows={5} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={(over && hard) || undefined} aria-describedby={messageId} />
     </Field>
   );
 }
@@ -327,8 +334,8 @@ function PinField({ f, set }: { f: Form; set: SetForm }) {
 function StepBasics({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
-      <Field label="Full name" required><input className="field__control" autoComplete="name" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
-      <Field label="Professional title" required>
+      <Field label="Full Name" required><input className="field__control" autoComplete="name" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
+      <Field label="Professional Title" required>
         <Select value={f.professionalTitle} onChange={(v) => set({ professionalTitle: v })} options={PROFESSIONAL_TITLES} />
       </Field>
       <OtherInput show={f.professionalTitle === 'Other'} label="Your title" value={f.professionalTitleOther} onChange={(v) => set({ professionalTitleOther: v })} />
@@ -336,16 +343,16 @@ function StepBasics({ f, set }: { f: Form; set: SetForm }) {
         <input className="field__control" type="email" autoComplete="email" value={f.email} onChange={(e) => set({ email: e.target.value })} />
       </Field>
       <PhoneField value={f.phone} onChange={(phone) => set({ phone })} />
-      <Chips label="Languages you conduct therapy in" required
+      <Chips label="Language(s) in which you conduct therapy" required hint="Example: English, Hindi, Marathi."
         options={[...LANGUAGES.map((l) => ({ value: l.value, label: l.native, lang: l.lang, dir: 'dir' in l ? l.dir : undefined })), { value: 'Other', label: 'Other', lang: 'en' }]}
         value={f.languages} onChange={(v) => set({ languages: v as string[] })} />
       <OtherInput show={f.languages.includes('Other')} label="Other languages" value={f.languagesOther} onChange={(v) => set({ languagesOther: v })} />
       <PinField f={f} set={set} />
       <Field label="City" required><input className="field__control" autoComplete="address-level2" value={f.city} onChange={(e) => set({ city: e.target.value })} /></Field>
-      <Field label="State / UT" required><Select value={f.state} onChange={(v) => set({ state: v })} options={INDIAN_STATES} /></Field>
+      <Field label="State" required><Select value={f.state} onChange={(v) => set({ state: v })} options={INDIAN_STATES} /></Field>
       <div className="partner-wide">
-        <h3 className="partner-group-title">Professional headshot</h3>
-        <p className="field__message partner-group-hint">A clear, recent photo. JPG or PNG.</p>
+        <h3 className="partner-group-title">Professional Headshot</h3>
+        <p className="field__message partner-group-hint">JPG/PNG</p>
         {f.headshot ? (
           <div className="partner-headshot">
             <img src={f.headshot.url} alt="Your headshot" />
@@ -363,26 +370,26 @@ function StepVerification({ f, set }: { f: Form; set: SetForm }) {
   const [kind, setKind] = useState<string>(DOCUMENT_KINDS[0]);
   return (
     <>
-      <Field label="Highest qualification" required>
+      <Field label="Highest Qualification" required>
         <Select value={f.highestQualification} onChange={(v) => set({ highestQualification: v })} options={HIGHEST_QUALIFICATIONS} />
       </Field>
       <OtherInput show={f.highestQualification === 'Other'} label="Your qualification" value={f.highestQualificationOther} onChange={(v) => set({ highestQualificationOther: v })} />
       <Rows label="Degrees" rows={f.degrees} onChange={(degrees) => set({ degrees })} addLabel="Add degree"
         blank={{ degree: '', institution: '', year: '' }}
         columns={[{ key: 'degree', label: 'Degree' }, { key: 'institution', label: 'Institution' }, { key: 'year', label: 'Year', type: 'number', narrow: true }]} />
-      <Field label="Professional registration" required>
+      <Field label="Professional Registration" required>
         <Select value={f.registration} onChange={(v) => set({ registration: v })} options={REGISTRATIONS} />
       </Field>
       <OtherInput show={f.registration === 'Other'} label="Registering body" value={f.registrationOther} onChange={(v) => set({ registrationOther: v })} />
       {needsRegistrationNumber(f.registration) ? (
-        <Field label="Registration number" required><input className="field__control" value={f.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} /></Field>
+        <Field label="Registration Number" required><input className="field__control" value={f.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} /></Field>
       ) : null}
       <Rows label="Certifications" rows={f.certifications} onChange={(certifications) => set({ certifications })} addLabel="Add certification"
         blank={{ certification: '', issuer: '', year: '' }}
         columns={[{ key: 'certification', label: 'Certification' }, { key: 'issuer', label: 'Issuer' }, { key: 'year', label: 'Year', type: 'number', narrow: true }]} />
       <div className="partner-wide">
-        <h3 className="partner-group-title">Upload documents</h3>
-        <p className="field__message partner-group-hint">Degree, registration certificate and certifications. PDF, JPG or PNG, up to 10 MB each.</p>
+        <h3 className="partner-group-title">Upload Documents</h3>
+        <p className="field__message partner-group-hint">Degree, Registration Certificate, Certifications. PDF, JPG or PNG, up to 10 MB each.</p>
         <FileList files={f.documents} label={(d) => `${(d as Form['documents'][number]).kind}: ${d.name}`}
           onRemove={(i) => set({ documents: f.documents.filter((_, j) => j !== i) })} />
         <div className="partner-row">
@@ -395,8 +402,8 @@ function StepVerification({ f, set }: { f: Form; set: SetForm }) {
             onUploaded={(file) => set({ documents: [...f.documents, { ...file, kind }] })} />
         </div>
       </div>
-      <h3 className="partner-wide partner-group-title">A few verification questions</h3>
-      <YesNo label="Do you hold a formal Master's degree (M.A./M.Sc.) in Psychology or Counselling from a recognised university?" value={f.hasMastersDegree} onChange={(v) => set({ hasMastersDegree: v })} />
+      <h3 className="partner-wide partner-group-title">Additional Verification Questions (Recommended)</h3>
+      <YesNo label="Do you hold a formal Master's degree (M.A./M.Sc.) in Psychology or Counselling from a recognized university?" value={f.hasMastersDegree} onChange={(v) => set({ hasMastersDegree: v })} />
       <Field label="How many hours of supervised clinical training have you completed?" wide>
         <input className="field__control" type="number" min={0} inputMode="numeric" value={f.supervisedHours} onChange={(e) => set({ supervisedHours: e.target.value })} />
       </Field>
@@ -408,16 +415,16 @@ function StepVerification({ f, set }: { f: Form; set: SetForm }) {
 function StepPractice({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
-      <Chips label="Practice setting" options={PRACTICE_SETTINGS} value={f.practiceSettings} onChange={(v) => set({ practiceSettings: v as string[] })} />
+      <Chips label="Practice Setting" options={PRACTICE_SETTINGS} value={f.practiceSettings} onChange={(v) => set({ practiceSettings: v as string[] })} />
       <OtherInput show={f.practiceSettings.includes('Other')} label="Other setting" value={f.practiceSettingOther} onChange={(v) => set({ practiceSettingOther: v })} />
-      <Field label="Years in practice" required>
+      <Field label="Years in Practice" required>
         <input className="field__control" type="number" min={0} max={70} inputMode="numeric" value={f.yearsInPractice} onChange={(e) => set({ yearsInPractice: e.target.value })} />
       </Field>
-      <Chips label="Approximate clients treated" options={CLIENTS_TREATED} value={f.clientsTreated} onChange={(v) => set({ clientsTreated: v as string })} />
-      <Chips label="Average session duration (minutes)" options={SESSION_DURATIONS} value={f.sessionDuration} onChange={(v) => set({ sessionDuration: v as string })} />
-      <Chips label="Session formats" required options={SESSION_FORMATS} value={f.sessionFormats} onChange={(v) => set({ sessionFormats: v as string[] })} />
-      <YesNo label="Weekend consultations" value={f.weekendConsultations} onChange={(v) => set({ weekendConsultations: v })} />
-      <YesNo label="Emergency consultations" value={f.emergencyConsultations} onChange={(v) => set({ emergencyConsultations: v })} />
+      <Chips label="Approximate Clients Treated" options={CLIENTS_TREATED} value={f.clientsTreated} onChange={(v) => set({ clientsTreated: v as string })} />
+      <Chips label="Average Session Duration" options={SESSION_DURATIONS.map((m) => ({ value: m, label: `${m} mins` }))} value={f.sessionDuration} onChange={(v) => set({ sessionDuration: v as string })} />
+      <Chips label="Session Formats" required options={SESSION_FORMATS} value={f.sessionFormats} onChange={(v) => set({ sessionFormats: v as string[] })} />
+      <YesNo label="Weekend Consultations" value={f.weekendConsultations} onChange={(v) => set({ weekendConsultations: v })} />
+      <YesNo label="Emergency Consultations" value={f.emergencyConsultations} onChange={(v) => set({ emergencyConsultations: v })} />
     </>
   );
 }
@@ -435,7 +442,7 @@ function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
       <div className="partner-wide">
-        <h3 className="partner-group-title">Clinical expertise</h3>
+        <h3 className="partner-group-title">Clinical Expertise Matrix</h3>
         <div className="partner-matrix">
           {areas.map((area) => (
             <div key={area} className="partner-matrix__row" role="group" aria-label={area}>
@@ -459,9 +466,9 @@ function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
           <button type="button" className="btn btn--outlined btn--md state-layer motion-press" onClick={addArea}><Plus aria-hidden="true" /> Add</button>
         </div>
       </div>
-      <Chips label="Conditions you do NOT treat" options={[...CONDITIONS_NOT_TREATED, 'Other']} value={f.conditionsNotTreated} onChange={(v) => set({ conditionsNotTreated: v as string[] })} />
+      <Chips label="Conditions You Do NOT Treat" options={[...CONDITIONS_NOT_TREATED, 'Other']} value={f.conditionsNotTreated} onChange={(v) => set({ conditionsNotTreated: v as string[] })} />
       <OtherInput show={f.conditionsNotTreated.includes('Other')} label="Other conditions" value={f.conditionsNotTreatedOther} onChange={(v) => set({ conditionsNotTreatedOther: v })} />
-      <LongAnswer label="Conditions outside your scope (optional)" value={f.outsideScope} onChange={(v) => set({ outsideScope: v })} />
+      <LongAnswer label="Conditions Outside Your Scope" hint="Optional" value={f.outsideScope} onChange={(v) => set({ outsideScope: v })} />
     </>
   );
 }
@@ -469,11 +476,11 @@ function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
 function StepClients({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
-      <Chips label="Preferred age groups" options={AGE_GROUPS} value={f.ageGroups} onChange={(v) => set({ ageGroups: v as string[] })} />
-      <Chips label="Preferred client types" options={CLIENT_TYPES} value={f.clientTypes} onChange={(v) => set({ clientTypes: v as string[] })} />
+      <Chips label="Preferred Age Groups" options={AGE_GROUPS} value={f.ageGroups} onChange={(v) => set({ ageGroups: v as string[] })} />
+      <Chips label="Preferred Client Types" options={CLIENT_TYPES} value={f.clientTypes} onChange={(v) => set({ clientTypes: v as string[] })} />
       <OtherInput show={f.clientTypes.includes('Other')} label="Other client types" value={f.clientTypeOther} onChange={(v) => set({ clientTypeOther: v })} />
-      <Chips label="Preferred therapy format" options={THERAPY_FORMATS} value={f.therapyFormats} onChange={(v) => set({ therapyFormats: v as string[] })} />
-      <Chips label="Preferred case complexity" options={CASE_COMPLEXITY} value={f.caseComplexity} onChange={(v) => set({ caseComplexity: v as string })} />
+      <Chips label="Preferred Therapy Format" options={THERAPY_FORMATS} value={f.therapyFormats} onChange={(v) => set({ therapyFormats: v as string[] })} />
+      <Chips label="Preferred Case Complexity" options={CASE_COMPLEXITY} value={f.caseComplexity} onChange={(v) => set({ caseComplexity: v as string })} />
     </>
   );
 }
@@ -481,12 +488,11 @@ function StepClients({ f, set }: { f: Form; set: SetForm }) {
 function StepStyle({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
-      <Chips label="Therapeutic approaches" options={THERAPEUTIC_APPROACHES} value={f.approaches} onChange={(v) => set({ approaches: v as string[] })} />
+      <Chips label="Therapeutic Approaches" options={THERAPEUTIC_APPROACHES} value={f.approaches} onChange={(v) => set({ approaches: v as string[] })} />
       <OtherInput show={f.approaches.includes('Other')} label="Other approaches" value={f.approachOther} onChange={(v) => set({ approachOther: v })} />
       <div className="partner-wide">
-        <h3 className="partner-group-title">Communication style</h3>
-        <p className="field__message partner-group-hint">Where do you usually sit between each pair?</p>
-        {COMMUNICATION_STYLES.map((s) => (
+        <h3 className="partner-group-title">Communication Style</h3>
+                {COMMUNICATION_STYLES.map((s) => (
           <label key={s.key} className="partner-slider">
             <span>{s.left}</span>
             <input type="range" min={1} max={5} step={1} value={f.communicationStyle[s.key]}
@@ -496,14 +502,14 @@ function StepStyle({ f, set }: { f: Form; set: SetForm }) {
           </label>
         ))}
       </div>
-      <Chips label="Homework frequency" options={HOMEWORK_FREQUENCY} value={f.homeworkFrequency} onChange={(v) => set({ homeworkFrequency: v as string })} />
+      <Chips label="Homework Frequency" options={HOMEWORK_FREQUENCY} value={f.homeworkFrequency} onChange={(v) => set({ homeworkFrequency: v as string })} />
       {f.homeworkFrequency && f.homeworkFrequency !== 'Never' ? (
         <>
-          <Chips label="Homework types" options={HOMEWORK_TYPES} value={f.homeworkTypes} onChange={(v) => set({ homeworkTypes: v as string[] })} />
+          <Chips label="Homework Types" options={HOMEWORK_TYPES} value={f.homeworkTypes} onChange={(v) => set({ homeworkTypes: v as string[] })} />
           <OtherInput show={f.homeworkTypes.includes('Other')} label="Other homework" value={f.homeworkTypeOther} onChange={(v) => set({ homeworkTypeOther: v })} />
         </>
       ) : null}
-      <LongAnswer label="Therapeutic philosophy" value={f.philosophy} onChange={(v) => set({ philosophy: v })} limit={PHILOSOPHY_WORD_LIMIT} />
+      <LongAnswer label="Therapeutic Philosophy" value={f.philosophy} onChange={(v) => set({ philosophy: v })} limit={PHILOSOPHY_WORD_LIMIT} hard />
     </>
   );
 }
@@ -511,7 +517,7 @@ function StepStyle({ f, set }: { f: Form; set: SetForm }) {
 function StepCulture({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
-      <Chips label="Experience working with" options={CULTURAL_EXPERIENCE} value={f.culturalExperience} onChange={(v) => set({ culturalExperience: v as string[] })} />
+      <Chips label="Experience Working With" options={CULTURAL_EXPERIENCE} value={f.culturalExperience} onChange={(v) => set({ culturalExperience: v as string[] })} />
       <OtherInput show={f.culturalExperience.includes('Others')} label="Other communities" value={f.culturalExperienceOther} onChange={(v) => set({ culturalExperienceOther: v })} />
     </>
   );
@@ -525,7 +531,7 @@ function StepAvailability({ f, set }: { f: Form; set: SetForm }) {
   return (
     <>
       <div className="partner-wide">
-        <h3 className="partner-group-title">Weekly availability</h3>
+        <h3 className="partner-group-title">Availability</h3>
         <div className="partner-week" role="grid" aria-label="Weekly availability">
           <div className="partner-week__row" role="row">
             <span role="columnheader" />
@@ -551,13 +557,13 @@ function StepAvailability({ f, set }: { f: Form; set: SetForm }) {
           ))}
         </div>
       </div>
-      <h3 className="partner-wide partner-group-title">Fees per session</h3>
+      <h3 className="partner-wide partner-group-title">Fees</h3>
       {([['feeIndividual', 'Individual'], ['feeCouple', 'Couple'], ['feeFamily', 'Family']] as const).map(([key, label]) => (
         <Field key={key} label={label} prefix="₹">
           <input className="field__control" type="number" min={0} step={100} inputMode="numeric" value={f[key]} onChange={(e) => set({ [key]: e.target.value } as Partial<Form>)} />
         </Field>
       ))}
-      <YesNo label="Do you offer a sliding scale?" value={f.slidingScale} onChange={(v) => set({ slidingScale: v })} />
+      <YesNo label="Sliding Scale" value={f.slidingScale} onChange={(v) => set({ slidingScale: v })} />
     </>
   );
 }
@@ -579,19 +585,19 @@ function StepMedia({ f, set }: { f: Form; set: SetForm }) {
   const offline = isOffline(f.sessionFormats);
   return (
     <>
-      <Field label="Introduction video link" wide hint="1–3 minutes introducing yourself and your approach. A YouTube, Vimeo or Google Drive link.">
+      <Field label="Introduction Video" wide hint="1–3 minutes introducing yourself and your therapeutic approach. Paste a YouTube, Vimeo or Google Drive link.">
         <input className="field__control" type="url" placeholder="https://youtube.com/…" value={f.introVideoUrl} onChange={(e) => set({ introVideoUrl: e.target.value })} />
       </Field>
       {offline ? (
         <>
           <div className="partner-wide">
-            <h3 className="partner-group-title">Workspace photos</h3>
-            <p className="field__message partner-group-hint">Where you see clients in person.</p>
+            <h3 className="partner-group-title">Workspace Photos</h3>
+            <p className="field__message partner-group-hint">Only for offline therapists.</p>
             <FileList files={f.workspacePhotos} onRemove={(i) => set({ workspacePhotos: f.workspacePhotos.filter((_, j) => j !== i) })} />
             <UploadButton label="Upload photos" accept="image/jpeg,image/png,image/webp" category="workspace" multiple
               onUploaded={(file) => set({ workspacePhotos: [...f.workspacePhotos, file] })} />
           </div>
-          <Field label="Google Maps link" wide>
+          <Field label="Google Maps Link" wide hint="Only for offline therapists.">
             <input className="field__control" type="url" placeholder="https://maps.google.com/…" value={f.mapsLink} onChange={(e) => set({ mapsLink: e.target.value })} />
           </Field>
         </>
@@ -617,45 +623,73 @@ const STEP_BODIES = [StepBasics, StepVerification, StepPractice, StepExpertise, 
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+/** iKAN 2 `BottomSheet`: a scrim and a panel in the app column. Escape and the scrim close it. */
+function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" className="sheet__scrim" aria-label="Close" onClick={onClose} />
+      <div className="sheet__panel">
+        <div className="sheet__handle" aria-hidden="true" />
+        <p className="sheet__title">{title}</p>
+        <div className="sheet__body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** "Full Name, Email and 3 more" — what the footer hint can fit on a line or two. */
+function summarise(items: string[]): string {
+  if (items.length <= 2) return items.join(' and ');
+  return `${items.slice(0, 2).join(', ')} and ${items.length - 2} more`;
+}
+
 interface ProfessionalApplicationProps {
   onNavigate?: (page: string) => void;
 }
 
 export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationProps) {
-  const [form, setForm] = useState<Form>(() => loadDraft()?.form ?? emptyPartnerForm());
-  const [step, setStep] = useState(() => loadDraft()?.step ?? 0);
-  const [missing, setMissing] = useState<string[]>([]);
+  const [draft] = useState(loadDraft);
+  const [form, setForm] = useState<Form>(() => draft?.form ?? emptyPartnerForm());
+  const [step, setStep] = useState(() => draft?.step ?? 0);
+  const [reached, setReached] = useState(() => Math.max(draft?.reached ?? 0, draft?.step ?? 0));
+  const [started, setStarted] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const top = useRef<HTMLDivElement>(null);
 
   const set: SetForm = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+  const home = () => onNavigate?.('/');
 
   useEffect(() => {
-    if (submitted) return;
-    const t = window.setTimeout(() => saveDraft(form, step), 400);
+    if (submitted || !started) return;
+    const t = window.setTimeout(() => saveDraft(form, step, reached), 400);
     return () => window.clearTimeout(t);
-  }, [form, step, submitted]);
+  }, [form, step, reached, started, submitted]);
 
   const goTo = (next: number) => {
-    setMissing([]);
+    setSubmitError(null);
     setStep(next);
-    top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setReached((r) => Math.max(r, next));
+    setStepsOpen(false);
+    window.scrollTo({ top: 0 });
   };
 
-  const next = () => {
-    const errs = stepErrors(step, form);
-    if (errs.length) { setMissing(errs); return; }
-    goTo(step + 1);
-  };
+  const errors = stepErrors(step, form);
+  const last = step === STEPS.length - 1;
+  const firstIncomplete = STEPS.findIndex((_, i) => stepErrors(i, form).length > 0);
 
   const submit = async () => {
-    // Every step, not just this one: a draft restored mid-way may have gaps behind it.
-    for (let i = 0; i < STEPS.length; i++) {
-      const errs = stepErrors(i, form);
-      if (errs.length) { goTo(i); setMissing(errs); return; }
-    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -680,73 +714,153 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
     }
   };
 
+  // The footer's one action. On the last step it submits, unless an earlier
+  // step has gaps, in which case it takes you there (as iKAN 2's assessment
+  // does with its first unanswered question).
+  const primary = !last
+    ? { label: 'Next', onClick: () => goTo(step + 1), disabled: errors.length > 0 }
+    : firstIncomplete !== -1 && firstIncomplete !== step
+      ? { label: `Finish step ${firstIncomplete + 1}`, onClick: () => goTo(firstIncomplete), disabled: false }
+      : { label: submitting ? 'Submitting…' : 'Submit application', onClick: submit, disabled: errors.length > 0 || submitting };
+
+  const root = 'ikan2-theme ikan2-type accent-calm flow';
+
   if (submitted) {
     return (
-      <div className="ikan2-theme ikan2-type accent-calm info-page site-page-below-nav">
-        <section className="info-band">
-          <div className="info-band__inner">
+      <div className={root}>
+        <div className="app-column">
+          <main className="flow-main partner-done">
             <CircleCheck className="partner-done__icon" aria-hidden="true" />
-            <p className="info-eyebrow">Partner application</p>
-            <h1>Application received</h1>
-            <p className="info-subtitle">Thank you for applying to partner with iKAN. Our team will verify your details and reply to {form.email || 'you'} within 3–5 business days.</p>
-            {onNavigate ? <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={() => onNavigate('/')}>Back to iKAN</button> : null}
-          </div>
-        </section>
+            <h1 className="type-headline-sm">Application received</h1>
+            <p className="partner-lede">Thank you for applying to partner with iKAN. Our team will verify your details and reply to {form.email || 'you'} within 3–5 business days.</p>
+            <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={home}>Back to iKAN</button>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (!started) {
+    return (
+      <div className={root}>
+        <div className="app-column">
+          <header className="flow-bar">
+            <div className="flow-bar__row">
+              <button type="button" className="icon-button state-layer" aria-label="Close" onClick={home}><X aria-hidden="true" /></button>
+              <p className="flow-bar__title">Partner application</p>
+            </div>
+          </header>
+          <main className="flow-main">
+            {draft ? <p className="notice">Picking up where you left off, at step {draft.step + 1} of {STEPS.length}.</p> : null}
+            <h1 className="type-headline-sm">Become an iKAN Partner</h1>
+            <p className="partner-lede">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved.</p>
+            <h2 className="partner-intro-title">Before you start, keep handy</h2>
+            <ul className="select-list partner-intro-list">
+              <li className="select-row">Your degree and registration details (RCI, NMC or State Medical Council)</li>
+              <li className="select-row">Scans or photos of your degree and registration certificate</li>
+              <li className="select-row">A recent headshot</li>
+            </ul>
+            <p className="field__message">{STEPS.length} short steps. Your answers save on this device as you go, so you can stop and come back.</p>
+          </main>
+          <footer className="flow-footer">
+            <div className="flow-footer__inner">
+              <div className="flow-footer__actions">
+                <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => { setStarted(true); window.scrollTo({ top: 0 }); }}>
+                  {draft ? 'Continue application' : 'Start application'}
+                </button>
+              </div>
+            </div>
+          </footer>
+        </div>
       </div>
     );
   }
 
   const Body = STEP_BODIES[step];
-  const last = step === STEPS.length - 1;
 
   return (
-    <div className="ikan2-theme ikan2-type accent-calm info-page site-page-below-nav">
-      <section className="info-band">
-        <div className="info-band__inner" ref={top}>
-          <p className="info-eyebrow">Partner with iKAN</p>
-          <h1>Become an iKAN Partner</h1>
-          <p className="info-subtitle">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved. Your progress saves on this device as you go.</p>
-
-          {/* iKAN 2's step pattern (programme player): a count and a LinearProgress, then
-              Back / Next. No rail of step names: eleven of them wrapped and clipped, and
-              repeated what the bar already says. */}
-          <div className="partner-progress">
-            <p className="field__label partner-progress__count" aria-live="polite">Step {step + 1} of {STEPS.length}</p>
+    <div className={root}>
+      <div className="app-column">
+        <header className="flow-bar">
+          <div className="flow-bar__row">
+            <button type="button" className="icon-button state-layer" aria-label="Close" onClick={() => setLeaving(true)}><X aria-hidden="true" /></button>
+            <p className="flow-bar__title">Partner application</p>
+            <button type="button" className="btn btn--text btn--md state-layer partner-step-button" aria-haspopup="dialog"
+              aria-label={`Step ${step + 1} of ${STEPS.length}. Show all steps`} onClick={() => setStepsOpen(true)}>
+              <span aria-live="polite">{step + 1} of {STEPS.length}</span>
+              <ChevronDown aria-hidden="true" />
+            </button>
+          </div>
+          <div className="flow-bar__progress">
             <div className="linear-progress" role="progressbar" aria-label="Application progress"
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(((step + 1) / STEPS.length) * 100)}>
               <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
             </div>
           </div>
+        </header>
 
-          <section className="partner-step surface" aria-labelledby="partner-step-title">
-            <h2 id="partner-step-title">{STEPS[step].title}</h2>
-            <p className="field__message">{STEPS[step].hint}</p>
+        <main className="flow-main">
+          <form key={step} className="partner-form animate-step" noValidate onSubmit={(e) => { e.preventDefault(); if (!primary.disabled) primary.onClick(); }}>
+            <div className="partner-wide">
+              <h1 className="type-headline-sm">{STEPS[step].title}</h1>
+              {STEPS[step].hint ? <p className="field__message">{STEPS[step].hint}</p> : null}
+            </div>
+            <Body f={form} set={set} />
+            {submitError ? <p className="form-error partner-wide" role="alert">{submitError}</p> : null}
+            {/* Enter in a field moves on, as in iKAN 2's flows. */}
+            <button type="submit" hidden tabIndex={-1} aria-label={primary.label} />
+          </form>
+        </main>
 
-            <form className="partner-form" noValidate onSubmit={(e) => { e.preventDefault(); if (last) submit(); else next(); }}>
-              <Body f={form} set={set} />
+        <footer className="flow-footer">
+          <div className="flow-footer__inner">
+            {primary.disabled && errors.length ? (
+              <p className="flow-footer__hint" role="status">Still needed: {summarise(errors)}</p>
+            ) : null}
+            <div className="flow-footer__actions">
+              <button type="button" className="btn btn--outlined btn--icon state-layer motion-press partner-back"
+                aria-label="Previous step" disabled={step === 0} onClick={() => goTo(step - 1)}>
+                <ArrowLeft aria-hidden="true" />
+              </button>
+              <button type="button" className="btn btn--filled state-layer motion-press" disabled={primary.disabled}
+                aria-busy={submitting || undefined} onClick={primary.onClick}>
+                {submitting ? <span className="btn__spinner" aria-hidden="true" /> : null}
+                {primary.label}
+                {!last ? <ArrowRight aria-hidden="true" /> : null}
+              </button>
+            </div>
+          </div>
+        </footer>
+      </div>
 
-              {missing.length ? (
-                <div className="form-error partner-wide" role="alert">
-                  <p>Please add:</p>
-                  <ul>{missing.map((m) => <li key={m}>{m}</li>)}</ul>
-                </div>
-              ) : null}
-              {submitError ? <p className="form-error partner-wide" role="alert">{submitError}</p> : null}
-
-              <div className="partner-nav partner-wide">
-                <button type="button" className="btn btn--outlined state-layer motion-press" onClick={() => goTo(step - 1)} disabled={step === 0}>
-                  <ArrowLeft aria-hidden="true" /> Back
+      <Sheet open={stepsOpen} onClose={() => setStepsOpen(false)} title="All steps">
+        <ol className="select-list">
+          {STEPS.map((s, i) => {
+            const gaps = stepErrors(i, form).length > 0;
+            const done = i < reached && !gaps;
+            return (
+              <li key={s.title}>
+                <button type="button" className="select-row state-layer" aria-current={i === step ? 'step' : undefined}
+                  disabled={i > reached} onClick={() => goTo(i)}>
+                  <span className={`select-row__glyph${done ? ' select-row__glyph--done' : ''}`} aria-hidden="true">
+                    {done ? <Check strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span>{s.title}</span>
+                  {i <= reached && i !== step && gaps ? <span className="select-row__meta">Needs info</span> : null}
                 </button>
-                <button type="submit" className="btn btn--filled state-layer motion-press" disabled={submitting} aria-busy={submitting || undefined}>
-                  {last
-                    ? (submitting ? <><span className="btn__spinner" aria-hidden="true" /> Submitting…</> : 'Submit application')
-                    : <>Next <ArrowRight aria-hidden="true" /></>}
-                </button>
-              </div>
-            </form>
-          </section>
+              </li>
+            );
+          })}
+        </ol>
+      </Sheet>
+
+      <Sheet open={leaving} onClose={() => setLeaving(false)} title="Leave the application?">
+        <p className="field__message partner-sheet-copy">Your answers are saved on this device. Open this page again to carry on from step {step + 1}.</p>
+        <div className="sheet__actions">
+          <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => setLeaving(false)}>Keep going</button>
+          <button type="button" className="btn btn--text state-layer" onClick={() => { saveDraft(form, step, reached); home(); }}>Leave for now</button>
         </div>
-      </section>
+      </Sheet>
     </div>
   );
 }

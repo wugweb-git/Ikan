@@ -233,14 +233,14 @@ export const CONTRIBUTION_TYPES = [
 
 /** Step 11's prompts. Each is a long answer, 250–300 words recommended. */
 export const PROFILE_PROMPTS = [
-  { key: 'bio', label: 'Professional bio', required: true },
+  { key: 'bio', label: 'Professional Bio', required: true },
   { key: 'whyClientsEnjoy', label: 'Why clients enjoy working with me' },
   { key: 'idealClient', label: 'My ideal client' },
   { key: 'uniqueApproach', label: 'What makes my approach unique' },
   { key: 'firstSession', label: 'What happens in the first session?' },
   { key: 'clientExpectations', label: 'What do I expect from clients?' },
   { key: 'faqs', label: 'FAQs' },
-  { key: 'testimonials', label: 'Testimonials (optional)' },
+  { key: 'testimonials', label: 'Testimonials (Optional)' },
 ] as const;
 export type ProfilePromptKey = (typeof PROFILE_PROMPTS)[number]['key'];
 
@@ -392,29 +392,28 @@ const LEVEL_RANK: Record<ExpertiseLevel, number> = { Expert: 0, Advanced: 1, Com
 export function stepErrors(step: number, f: PartnerApplicationForm): string[] {
   const e: string[] = [];
   if (step === 0) {
-    if (!f.name.trim()) e.push('Full name');
-    if (!EMAIL_PATTERN.test(f.email.trim())) e.push('A valid email address');
-    if (parsePhone(f.phone).number.length < 10) e.push('A 10-digit phone number');
-    if (!f.professionalTitle) e.push('Professional title');
-    if (withOther(f.languages, 'Other', f.languagesOther).length === 0) e.push('At least one language');
-    if (!PIN_PATTERN.test(f.pincode)) e.push('A 6-digit PIN code');
+    if (!f.name.trim()) e.push('Full Name');
+    if (!EMAIL_PATTERN.test(f.email.trim())) e.push('Email');
+    if (parsePhone(f.phone).number.length < 10) e.push('Phone (10 digits)');
+    if (!f.professionalTitle) e.push('Professional Title');
+    if (withOther(f.languages, 'Other', f.languagesOther).length === 0) e.push('Language(s)');
+    if (!PIN_PATTERN.test(f.pincode)) e.push('PIN code');
     if (!f.city.trim()) e.push('City');
     if (!f.state) e.push('State');
   }
   if (step === 1) {
-    if (!f.highestQualification) e.push('Highest qualification');
-    if (!f.registration) e.push('Professional registration');
-    if (needsRegistrationNumber(f.registration) && !f.registrationNumber.trim()) e.push('Registration number');
+    if (!f.highestQualification) e.push('Highest Qualification');
+    if (!f.registration) e.push('Professional Registration');
+    if (needsRegistrationNumber(f.registration) && !f.registrationNumber.trim()) e.push('Registration Number');
   }
   if (step === 2) {
-    if (f.yearsInPractice === '') e.push('Years in practice');
-    if (f.sessionFormats.length === 0) e.push('At least one session format');
+    if (f.yearsInPractice === '') e.push('Years in Practice');
+    if (f.sessionFormats.length === 0) e.push('Session Formats');
   }
   if (step === 10) {
-    if (!f.profile.bio.trim()) e.push('Professional bio');
-    if (PROFILE_PROMPTS.some((p) => wordCount(f.profile[p.key]) > PROFILE_WORD_LIMIT)) e.push(`Each answer within ${PROFILE_WORD_LIMIT} words`);
+    if (!f.profile.bio.trim()) e.push('Professional Bio');
   }
-  if (step === 5 && wordCount(f.philosophy) > PHILOSOPHY_WORD_LIMIT) e.push(`Therapeutic philosophy within ${PHILOSOPHY_WORD_LIMIT} words`);
+  if (step === 5 && wordCount(f.philosophy) > PHILOSOPHY_WORD_LIMIT) e.push(`Therapeutic Philosophy within ${PHILOSOPHY_WORD_LIMIT} words`);
   return e;
 }
 

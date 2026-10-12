@@ -3600,45 +3600,61 @@ select {
 
 /* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
  *
- * LAYOUT ONLY. Every control on the page is an iKAN 2 component ported into
- * ikan2.css (field, phone-field, chip, btn, form-error, progress, the state
- * layer), and its headings take iKAN 2's h1–h6 map through `ikan2-type`.
- * What is here places those components: the form grid, rows, the expertise
- * matrix, the week grid and the step rail. No colours, no states.
+ * LAYOUT ONLY. The page is iKAN 2's wizard (ikan2.css "FLOW CHROME, ported":
+ * app column, flow bar, LinearProgress, fixed footer, bottom sheet) and every
+ * control is an iKAN 2 component ported there too. What is here places those
+ * components inside the 30rem column: one column of fields, rows, the
+ * expertise matrix, the week grid. No colours, no states.
  * ───────────────────────────────────────────────────────────────── */
-
-.ikan2-theme .partner-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 50rem;
-  margin-top: 32px;
-}
-
-.ikan2-theme .partner-progress__count {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-/* The step sits on iKAN 2's `.surface`: its fields are `--secondary`, which
-   matches this page's `--canvas` ground, and in iKAN 2 a form is always on white. */
-.ikan2-theme .partner-step {
-  max-width: 50rem;
-  margin-top: 32px;
-  padding: 32px;
-}
 
 .ikan2-theme .partner-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px 16px;
-  max-width: 46rem;
-  margin-top: 24px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
 }
 
-.ikan2-theme .partner-wide {
-  grid-column: 1 / -1;
+.ikan2-theme .partner-lede {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-intro-title {
+  margin: 28px 0 12px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.ikan2-theme .partner-intro-list {
+  margin-bottom: 16px;
+}
+
+.ikan2-theme .partner-intro-list .select-row {
+  cursor: default;
+}
+
+.ikan2-theme .partner-step-button {
+  gap: 2px;
+  padding: 0 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-back {
+  width: 48px;
+}
+
+.ikan2-theme .partner-sheet-copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+/* One reveal per step: the step's content fades in when you arrive. */
+.ikan2-theme .animate-step {
+  animation: ikan2-fade var(--dur-base) var(--ease-out);
 }
 
 .ikan2-theme .partner-note {
@@ -3653,11 +3669,6 @@ select {
   margin: 0 0 10px;
 }
 
-/* A Yes/No pair does not need the full form width. */
-.ikan2-theme .partner-segmented {
-  max-width: 20rem;
-}
-
 .ikan2-theme .partner-chips {
   display: flex;
   flex-wrap: wrap;
@@ -3666,6 +3677,7 @@ select {
 
 .ikan2-theme .partner-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px;
   margin-bottom: 12px;
@@ -3676,12 +3688,12 @@ select {
 }
 
 .ikan2-theme .partner-row__cell {
-  flex: 1 1 0;
+  flex: 1 1 9rem;
   min-width: 0;
 }
 
 .ikan2-theme .partner-row__cell--narrow {
-  flex: 0 0 6.5rem;
+  flex: 0 1 5.5rem;
 }
 
 .ikan2-theme .partner-row > .btn {
@@ -3689,11 +3701,10 @@ select {
 }
 
 .ikan2-theme .partner-matrix__row {
-  display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -3704,20 +3715,25 @@ select {
 
 .ikan2-theme .partner-slider {
   display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr) 7.5rem;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
   padding: 8px 0;
   font-size: 14px;
+}
+
+.ikan2-theme .partner-slider input {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  accent-color: var(--accent-strong);
 }
 
 .ikan2-theme .partner-slider__right {
   text-align: right;
 }
 
-.ikan2-theme .partner-slider input {
-  width: 100%;
-  accent-color: var(--primary);
+.ikan2-theme .partner-segmented {
+  max-width: 20rem;
 }
 
 .ikan2-theme .partner-week {
@@ -3728,7 +3744,7 @@ select {
 
 .ikan2-theme .partner-week__row {
   display: grid;
-  grid-template-columns: 3rem repeat(4, minmax(0, 1fr));
+  grid-template-columns: 2.75rem repeat(4, minmax(0, 1fr));
   gap: 6px;
   align-items: center;
 }
@@ -3753,6 +3769,7 @@ select {
 
 .ikan2-theme .partner-week__slot {
   width: 100%;
+  padding: 0;
 }
 
 .ikan2-theme .partner-files {
@@ -3787,27 +3804,11 @@ select {
   object-fit: cover;
 }
 
-.ikan2-theme .form-error ul {
-  margin: 4px 0 0;
-  padding-left: 18px;
-  font-weight: 400;
-}
-
-.ikan2-theme .partner-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
 .ikan2-theme .partner-done__icon {
   width: 48px;
   height: 48px;
   margin-bottom: 16px;
-  color: var(--brand-teal-ink);
+  color: var(--accent-strong);
 }
 
 .ikan2-theme .partner-done__cta {
@@ -3815,48 +3816,14 @@ select {
 }
 
 @media (max-width: 599px) {
-  .ikan2-theme .partner-step {
-    padding: 20px 16px;
-  }
-
-  .ikan2-theme .partner-form {
-    grid-template-columns: 1fr;
-  }
-
-  .ikan2-theme .partner-matrix__row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .ikan2-theme .partner-row {
-    flex-wrap: wrap;
-  }
-
-  .ikan2-theme .partner-row__cell {
-    flex-basis: 100%;
-  }
-
-  .ikan2-theme .partner-row__cell--narrow {
-    flex: 1 1 0;
-  }
-
-  .ikan2-theme .partner-slider {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 4px;
-  }
-
-  .ikan2-theme .partner-slider input {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  .ikan2-theme .partner-week__row {
-    grid-template-columns: 2.5rem repeat(4, minmax(0, 1fr));
-    gap: 4px;
-  }
-
   .ikan2-theme .partner-week__part small {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ikan2-theme .animate-step {
+    animation: none;
   }
 }
 

@@ -29,6 +29,20 @@ public-profile prompts with a 300-word counter. The draft saves to `localStorage
 (per-device convenience, cleared on submit). Option lists live in
 `src/product/site/content/partner-application.ts`, in the spec's order.
 
+**A wizard on iKAN 2's flow chrome**, ported from `routes/assessment-flow.tsx`: its own screen
+(no site nav or footer), the 30rem app column, a sticky bar with Close, "Partner application" and
+"n of 11", a LinearProgress, one step at a time, and a fixed footer of Back + Next. Next stays
+disabled with "Still needed: …" above it, as in iKAN 2. "n of 11" opens a bottom sheet listing
+every step: reached ones can be jumped to, ticked when complete, "Needs info" when not. An intro
+screen says what to keep handy; a returning applicant sees "Picking up where you left off". Close
+asks "Leave the application?" On the last step, if an earlier step has gaps, the button reads
+"Finish step n" and goes there.
+
+**Labels are the spec's words**, verbatim and in its case ("Sliding Scale", "Language(s) in which
+you conduct therapy", "recognized"), with its hints ("JPG/PNG", "Only for offline therapists.").
+"Recommended maximum 250–300 words" warns but does not block; "300 words max" on Therapeutic
+Philosophy blocks.
+
 **Two additions the spec lacks.** Email and phone, required on the form and at the endpoint: neither
 the old form nor the spec asked, so an admin had no way to reply. And an "Add another area" row on
 the expertise matrix, because the spec's list ends in "etc."
