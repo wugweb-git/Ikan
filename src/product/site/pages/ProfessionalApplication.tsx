@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleCheck, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Check, ChevronDown, CircleCheck, FileText, IdCard, Plus, Trash2, Upload, X } from 'lucide-react';
 import { projectId } from '../../../shared/api/supabase-info';
 import { getAuthHeaders } from '../../../shared/api/supabase';
 import {
@@ -844,27 +844,56 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   }
 
   if (!started) {
+    // The intro: what to have ready, what happens after, and the one action.
+    // No step rail here — the steps are not yet something to navigate.
+    const needs = [
+      { icon: <IdCard aria-hidden="true" />, title: 'Registration details', body: 'Your degree, and your RCI, NMC or State Medical Council number' },
+      { icon: <FileText aria-hidden="true" />, title: 'Scans of certificates', body: 'Your degree and registration certificate, as PDF, JPG or PNG' },
+      { icon: <Camera aria-hidden="true" />, title: 'A recent headshot', body: 'Clear and well lit. It goes on your public profile' },
+    ];
+    const after = [
+      { title: 'Apply', body: `${STEPS.length} short steps. Only a few questions are required.` },
+      { title: 'We verify', body: 'Our team checks your qualifications and registration within 3–5 business days.' },
+      { title: 'You go live', body: 'Your profile appears to iKAN members looking for support.' },
+    ];
     return (
       <div className={root}>
         {pageHeader}
-        <div className="wizard__body">
-          <aside className="wizard__rail" aria-label="What the application covers">
-            <p className="field__label">{STEPS.length} steps</p>
-            {stepList(false)}
-          </aside>
-          <section className="wizard__card" aria-labelledby="partner-intro-title">
+        <div className="wizard__body wizard__body--single">
+          <section className="wizard__card partner-intro" aria-labelledby="partner-intro-title">
             {draft ? <p className="notice">Picking up where you left off, at step {draft.step + 1} of {STEPS.length}.</p> : null}
-            <h2 id="partner-intro-title" className="wizard__title">Before you start, keep handy</h2>
-            <ul className="select-list partner-intro-list">
-              <li className="select-row">Your degree and registration details (RCI, NMC or State Medical Council)</li>
-              <li className="select-row">Scans or photos of your degree and registration certificate</li>
-              <li className="select-row">A recent headshot</li>
+
+            <h2 id="partner-intro-title" className="wizard__title">Before you start</h2>
+            <p className="partner-lede">Keep these to hand. You can also add documents later, before you submit.</p>
+            <ul className="partner-needs">
+              {needs.map((n) => (
+                <li key={n.title}>
+                  <span className="icon-tile">{n.icon}</span>
+                  <span className="partner-needs__title">{n.title}</span>
+                  <span className="field__message">{n.body}</span>
+                </li>
+              ))}
             </ul>
-            <p className="field__message">{STEPS.length} steps. Your answers save on this device as you go, so you can stop and come back.</p>
+
+            <h3 className="partner-how-title">How it works</h3>
+            <ol className="partner-how">
+              {after.map((a, i) => (
+                <li key={a.title}>
+                  <span className="partner-how__num" aria-hidden="true">{i + 1}</span>
+                  <span>
+                    <span className="partner-how__title">{a.title}</span>
+                    <span className="field__message">{a.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+
             <div className="wizard__footer">
-              <div className="flow-footer__actions">
+              <div className="flow-footer__actions partner-intro__actions">
+                <p className="field__message">Your answers save on this device as you go.</p>
                 <button type="button" className="btn btn--filled state-layer motion-press" onClick={start}>
                   {draft ? 'Continue application' : 'Start application'}
+                  <ArrowRight aria-hidden="true" />
                 </button>
               </div>
             </div>
