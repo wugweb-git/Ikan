@@ -887,3 +887,38 @@
 }
 
 .ikan2-theme .org-seats .org-meter { margin-top: 12px; }
+
+/* The roster summary. Aggregate by default: how many have joined is a number
+   the organisation may have; which named people have not is not. */
+.ikan2-theme .org-rostercount {
+  margin: 18px 0 0;
+  max-width: var(--read-max);
+  font-size: 13.5px;
+  line-height: 21px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-rostercount__why { opacity: 0.85; }
+
+.ikan2-theme .org-linkish {
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: var(--brand-teal-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ikan2-theme .org-rolepick {
+  max-width: 140px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--foreground);
+}

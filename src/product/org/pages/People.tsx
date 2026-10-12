@@ -31,6 +31,21 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
   const [outcome, setOutcome] = useState<InviteOutcome[] | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [deliveryNote, setDeliveryNote] = useState<string | null>(null);
+  /*
+   * Who has and has not joined is HIDDEN by default.
+   *
+   * The brief's "never show" list includes names of people who have not used
+   * the platform, and a per-person Joined/Invited column is exactly that
+   * list. The counter-argument — that accepting an invitation is account
+   * administration rather than usage, and that HR typed these addresses in
+   * themselves — is real but not mine to settle, so the default is the
+   * stricter reading.
+   *
+   * It is still reachable, because resending an invitation is a legitimate
+   * thing an administrator has to do and nothing else can tell them who to
+   * resend to. Turning it on is deliberate, explained, and recorded.
+   */
+  const [showJoinState, setShowJoinState] = useState(false);
 
   /* Nothing mails the invitation, so the link has to be reachable from the
      roster or an invited person can never actually arrive. */
@@ -59,6 +74,12 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
     void load(showEnded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org.id, showEnded]);
+
+  const live = (members ?? []).filter((m) => !m.ended_at).length;
+  const joined = (members ?? []).filter((m) => !m.ended_at && m.accepted_at).length;
+  const pending = live - joined;
+  /** Email, Department, Role, (Status), (Actions) */
+  const colCount = 3 + (showJoinState ? 1 : 0) + (canWrite ? 1 : 0);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -100,6 +121,26 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
       setError(e instanceof Error ? e.message : 'Could not add those people.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const setRole = async (m: Member, role: string) => {
+    if (role === m.role) return;
+    /* An admin removing their own admin rights can lock an organisation out
+       of its own portal, so it is confirmed rather than silent. */
+    if (m.role === 'admin' && role !== 'admin') {
+      const ok = window.confirm(
+        `Remove administrator access from ${m.email}?\n\n` +
+          'They will keep their seat but will no longer be able to add people or change settings.',
+      );
+      if (!ok) { await load(); return; }
+    }
+    try {
+      await orgApi.updateMember(org.id, m.id, { role });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not change that role.');
+      await load();
     }
   };
 
@@ -227,6 +268,32 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
 
       {error && <div className="org-note org-note--error" role="alert">{error}</div>}
 
+      {members && members.length > 0 && (
+        <p className="org-rostercount">
+          {joined} of {live} have joined.
+          {pending > 0 && !showJoinState && (
+            <>
+              {' '}{pending} {pending === 1 ? 'invitation is' : 'invitations are'} outstanding.{' '}
+              <button type="button" className="org-linkish" onClick={() => setShowJoinState(true)}>
+                Show which
+              </button>{' '}
+              <span className="org-rostercount__why">
+                — hidden by default, because who has not joined is not something an employer
+                needs to know person by person.
+              </span>
+            </>
+          )}
+          {showJoinState && (
+            <>
+              {' '}
+              <button type="button" className="org-linkish" onClick={() => setShowJoinState(false)}>
+                Hide who has not joined
+              </button>
+            </>
+          )}
+        </p>
+      )}
+
       <div className="org-table-wrap">
         <table className="org-table">
           <thead>
@@ -234,16 +301,16 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
               <th>Email</th>
               <th>Department</th>
               <th>Role</th>
-              <th>Status</th>
+              {showJoinState && <th>Status</th>}
               {canWrite && <th aria-label="Actions" />}
             </tr>
           </thead>
           <tbody>
             {members === null ? (
-              <tr><td colSpan={5} className="org-empty">Loading…</td></tr>
+              <tr><td colSpan={colCount} className="org-empty">Loading…</td></tr>
             ) : shown.length === 0 ? (
               <tr>
-                <td colSpan={5} className="org-empty">
+                <td colSpan={colCount} className="org-empty">
                   {query ? 'Nobody matches that search.' : 'No one has been added yet.'}
                 </td>
               </tr>
@@ -255,7 +322,23 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                     <td className="org-table__email">{m.email}</td>
                     <td>{m.department || <span style={{ color: 'var(--muted-foreground)' }}>—</span>}</td>
                     <td>
-                      {m.role === 'member' ? (
+                      {canWrite && !m.ended_at ? (
+                        <>
+                          <label className="sr-only" htmlFor={`role-${m.id}`}>
+                            Role for {m.email}
+                          </label>
+                          <select
+                            id={`role-${m.id}`}
+                            className="org-rolepick"
+                            value={m.role}
+                            onChange={(e) => void setRole(m, e.target.value)}
+                          >
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                            <option value="viewer">Read only</option>
+                          </select>
+                        </>
+                      ) : m.role === 'member' ? (
                         <span className="org-table__quiet">Member</span>
                       ) : (
                         <span className="org-pill org-pill--admin">
@@ -263,18 +346,20 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                         </span>
                       )}
                     </td>
-                    <td>
-                      {status === 'active' ? (
-                        <span className="org-table__quiet">Joined</span>
-                      ) : (
-                        <span className={`org-pill org-pill--${status}`}>
-                          {status === 'pending' ? 'Invited' : 'Past member'}
-                        </span>
-                      )}
-                    </td>
+                    {showJoinState && (
+                      <td>
+                        {status === 'active' ? (
+                          <span className="org-table__quiet">Joined</span>
+                        ) : (
+                          <span className={`org-pill org-pill--${status}`}>
+                            {status === 'pending' ? 'Invited' : 'Past member'}
+                          </span>
+                        )}
+                      </td>
+                    )}
                     {canWrite && (
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {!m.ended_at && !m.accepted_at && (
+                        {showJoinState && !m.ended_at && !m.accepted_at && (
                           <button type="button" className="org-button org-button--link" onClick={() => copyLink(m.id)}>
                             {copied === m.id ? 'Link copied' : 'Copy invite link'}
                           </button>
