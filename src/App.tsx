@@ -283,6 +283,9 @@ function AppContent() {
       const path = window.location.pathname;
       // Slug detail routes map to the existing detail screens
       if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
+      // Every step of the partner wizard (/join/partner/<step>) is the one page;
+      // the page reads its step from the URL itself.
+      if (path.startsWith('/join/partner/')) return '/join/partner';
       /* A programme's own pages live under it — /equip/<slug>/result and
          /equip/<slug>/diary. Checked BEFORE the bare slug, or `sleep-tight/diary`
          would be read as a slug. */
@@ -366,6 +369,11 @@ function AppContent() {
         '/workplace-privacy'
       ];
       
+      if (path.startsWith('/join/partner/')) {
+        startTransition(() => setCurrentRoute('/join/partner'));
+        if (typeof window !== 'undefined') window.history.pushState({}, '', route);
+        return;
+      }
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
       if (path.startsWith('/assessment/') && path !== '/assessment/') {
         const slug = path.split('/assessment/')[1];
@@ -504,7 +512,12 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path.startsWith('/assessment/') && path !== '/assessment/') {
+      if (path === '/join/partner' || path.startsWith('/join/partner/')) {
+        // The wizard follows its own steps on popstate; leave the page mounted
+        // and do not scroll, or Back between steps would jump to the top.
+        startTransition(() => setCurrentRoute('/join/partner'));
+        return;
+      } else if (path.startsWith('/assessment/') && path !== '/assessment/') {
         setAssessmentSlug(path.split('/assessment/')[1]);
         startTransition(() => setCurrentRoute('/assessment-detail'));
       } else if (equipSubPage(path)) {

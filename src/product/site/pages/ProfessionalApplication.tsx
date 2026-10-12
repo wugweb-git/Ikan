@@ -46,6 +46,30 @@ const STEPS = [
   { title: 'Public Profile' },
 ] as { title: string; hint?: string }[];
 
+/* Every step has its own URL, /join/partner/<step>, named from the spec's
+   step title ("Availability & Fees" → availability-and-fees). /join/partner is
+   the intro and /join/partner/submitted the confirmation. Back and Forward walk
+   the steps; a link to a step not reached yet lands on the furthest reached. */
+const BASE_PATH = '/join/partner';
+const stepSlug = (title: string) =>
+  title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const STEP_SLUGS = STEPS.map((s) => stepSlug(s.title));
+const stepPath = (i: number) => `${BASE_PATH}/${STEP_SLUGS[i]}`;
+
+/** The step a path names: a step index, 'intro', or 'submitted'. Unknown slugs read as the intro. */
+function stepFromPath(pathname: string): number | 'intro' | 'submitted' {
+  const rest = pathname.replace(/\/+$/, '').slice(BASE_PATH.length).replace(/^\//, '');
+  if (!rest) return 'intro';
+  if (rest === 'submitted') return 'submitted';
+  const i = STEP_SLUGS.indexOf(rest);
+  return i === -1 ? 'intro' : i;
+}
+
+function setUrl(path: string, mode: 'push' | 'replace') {
+  if (window.location.pathname === path) return;
+  window.history[mode === 'push' ? 'pushState' : 'replaceState']({}, '', path);
+}
+
 type Form = PartnerApplicationForm;
 type SetForm = (patch: Partial<Form>) => void;
 
@@ -658,10 +682,13 @@ interface ProfessionalApplicationProps {
 
 export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationProps) {
   const [draft] = useState(loadDraft);
+  const initialReached = Math.max(draft?.reached ?? 0, draft?.step ?? 0);
+  // A step in the URL opens that step, capped at the furthest one reached.
+  const [initialStep] = useState(() => stepFromPath(window.location.pathname));
   const [form, setForm] = useState<Form>(() => draft?.form ?? emptyPartnerForm());
-  const [step, setStep] = useState(() => draft?.step ?? 0);
-  const [reached, setReached] = useState(() => Math.max(draft?.reached ?? 0, draft?.step ?? 0));
-  const [started, setStarted] = useState(false);
+  const [step, setStep] = useState(() => (typeof initialStep === 'number' ? Math.min(initialStep, initialReached) : draft?.step ?? 0));
+  const [reached, setReached] = useState(initialReached);
+  const [started, setStarted] = useState(() => typeof initialStep === 'number');
   const [stepsOpen, setStepsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -677,11 +704,50 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
     return () => window.clearTimeout(t);
   }, [form, step, reached, started, submitted]);
 
+  // Correct the URL on arrival: an unknown slug, a step not reached yet, or a
+  // stale /submitted (a confirmation does not survive a reload) all settle on
+  // what is actually shown, without adding a history entry.
+  useEffect(() => {
+    setUrl(started ? stepPath(step) : BASE_PATH, 'replace');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Back and Forward walk the steps. `reached` via a ref: the listener is bound once.
+  const reachedRef = useRef(reached);
+  reachedRef.current = reached;
+  useEffect(() => {
+    const onPop = () => {
+      const at = stepFromPath(window.location.pathname);
+      if (at === 'submitted') return;
+      setStepsOpen(false);
+      if (at === 'intro') { setStarted(false); return; }
+      const next = Math.min(at, reachedRef.current);
+      setStarted(true);
+      setStep(next);
+      if (next !== at) setUrl(stepPath(next), 'replace');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // The tab names the step, so history and bookmarks read as the wizard does.
+  useEffect(() => {
+    document.title = submitted ? 'Application received · iKAN Health'
+      : started ? `${STEPS[step].title} · Partner application · iKAN Health`
+      : 'Become an iKAN Partner · iKAN Health';
+  }, [step, started, submitted]);
+
+  const start = () => {
+    setStarted(true);
+    setUrl(stepPath(step), 'push');
+  };
+
   const goTo = (next: number) => {
     setSubmitError(null);
     setStep(next);
     setReached((r) => Math.max(r, next));
     setStepsOpen(false);
+    setUrl(stepPath(next), 'push');
     // Back to the top of the wizard, not the page: the site header stays put.
     const y = (top.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 96;
     if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
@@ -708,6 +774,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       if (!res.ok || !result.success) throw new Error(result.error || 'Failed to submit application');
       clearDraft();
       setSubmitted(true);
+      setUrl(`${BASE_PATH}/submitted`, 'replace');
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Network error. Please try again.');
     } finally {
@@ -796,7 +863,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
             <p className="field__message">{STEPS.length} steps. Your answers save on this device as you go, so you can stop and come back.</p>
             <div className="wizard__footer">
               <div className="flow-footer__actions">
-                <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => setStarted(true)}>
+                <button type="button" className="btn btn--filled state-layer motion-press" onClick={start}>
                   {draft ? 'Continue application' : 'Start application'}
                 </button>
               </div>

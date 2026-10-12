@@ -9,6 +9,18 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — every partner-wizard step has its own URL
+
+`/join/partner` is the intro, each step is `/join/partner/<step>` named from the spec's step title
+(`basic-information` … `availability-and-fees` … `public-profile`), and a sent application is
+`/join/partner/submitted`. Next, Back and the step list push history, so the browser's Back and
+Forward walk the steps; the tab title names the step. A link to a step the applicant has not
+reached yet lands on the furthest one they have, and an unknown step or a stale `/submitted` settles
+on what is shown, without adding history. `App.tsx` maps `/join/partner/*` to the page at its three
+sync points (first load, navigate, popstate) and leaves Back between steps to the page, unscrolled.
+
+---
+
 ## 2026-10-12 — the top nav is the page measure plus 20px each side
 
 **The nav was narrower than the page below ~1440px.** Measured on ikanhealth.in at 1039px: the
