@@ -3600,57 +3600,56 @@ select {
 
 /* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
  *
- * LAYOUT ONLY, on iKAN 2's breakpoints (640, 1024). Every control is an iKAN 2
- * component ported into ikan2.css; this places them.
+ * LAYOUT ONLY, on iKAN 2's breakpoints (640, 1024). A site page like Contact:
+ * the site's nav and footer, the `info-band` page header, then the wizard as
+ * a card on the canvas. Every control is an iKAN 2 component ported into
+ * ikan2.css; this places them.
  *
- *   phone   < 640   full-width white screen, sticky bar, sticky Back/Next,
- *                   "n of 11" opens the steps in a bottom sheet
- *   tablet  ≥ 640   the step on a white surface on the canvas, short fields
- *                   in pairs
- *   desktop ≥ 1024  a sticky rail with every step beside the surface; the
- *                   rail replaces the sheet, so "n of 11" goes
+ *   phone   < 640   the card full-bleed-ish, "Step n of 11" opens the steps
+ *                   in a bottom sheet, Back/Next sticky at the bottom
+ *   tablet  ≥ 640   wider card, short fields in pairs
+ *   desktop ≥ 1024  a sticky rail of every step beside the card; the rail
+ *                   replaces the sheet
  * ───────────────────────────────────────────────────────────────── */
 
-.ikan2-theme.wizard {
-  min-height: 100dvh;
-  background: var(--canvas);
+/* The page header sits as on every site page; the wizard follows closer than
+   a content band would. */
+.ikan2-theme.wizard .info-band:first-of-type {
+  padding-bottom: 32px;
 }
 
-.ikan2-theme .wizard__bar {
-  border-bottom: 1px solid var(--border);
-}
-
-.ikan2-theme .wizard__bar-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: min(100%, var(--page-max));
-  min-height: 64px;
+.ikan2-theme .wizard__body {
+  width: min(100% - (var(--page-gutter) * 2), var(--page-max));
   margin-inline: auto;
-  padding: env(safe-area-inset-top) 4px 0;
-}
-
-.ikan2-theme .wizard__count {
-  gap: 2px;
-  padding: 0 8px 0 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-}
-
-.ikan2-theme .wizard__progress {
-  width: min(100% - 32px, var(--page-max));
-  margin-inline: auto;
-  padding-bottom: 10px;
 }
 
 .ikan2-theme .wizard__rail {
   display: none;
 }
 
-.ikan2-theme .wizard__main {
-  min-height: calc(100dvh - 78px);
-  padding: 24px 16px 0;
-  background: var(--background);
+/* iKAN 2's `.surface` treatment */
+.ikan2-theme .wizard__card {
+  padding: 20px 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .wizard__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.ikan2-theme .wizard__count {
+  align-self: flex-start;
+  gap: 2px;
+  margin-left: -12px;
+  padding: 0 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
 }
 
 .ikan2-theme .wizard__title {
@@ -3661,14 +3660,19 @@ select {
 }
 
 /* Back + Next stay in reach: sticky to the bottom of the screen while the
-   step is longer than it, resting at the end of the step when it is not. */
+   step is longer than it, resting at the end of the card when it is not. */
 .ikan2-theme .wizard__footer {
   position: sticky;
   bottom: 0;
   z-index: 10;
-  margin: 32px -16px 0;
+  margin: 28px -20px 0;
   border-top: 1px solid var(--border);
-  background: var(--background);
+  border-radius: 0 0 20px 20px;
+  background: var(--card);
+}
+
+.ikan2-theme .wizard__footer .flow-footer__actions {
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom));
 }
 
 .ikan2-theme .partner-form {
@@ -3877,21 +3881,12 @@ select {
   margin-top: 24px;
 }
 
-/* ── tablet ≥ 640: the step becomes a surface on the canvas; pairs ── */
+/* ── tablet ≥ 640: a roomier card; short fields in pairs ── */
 @media (min-width: 640px) {
-  .ikan2-theme .wizard__body {
-    padding: 32px 24px 48px;
-  }
-
-  /* iKAN 2's `.surface` treatment */
-  .ikan2-theme .wizard__main {
+  .ikan2-theme .wizard__card {
     max-width: 46rem;
-    min-height: 0;
     margin-inline: auto;
-    padding: 36px 36px 0;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    box-shadow: var(--shadow-card);
+    padding: 32px 36px 0;
   }
 
   .ikan2-theme .wizard__title {
@@ -3902,7 +3897,6 @@ select {
 
   .ikan2-theme .wizard__footer {
     margin: 36px -36px 0;
-    border-radius: 0 0 20px 20px;
   }
 
   .ikan2-theme .wizard__footer .flow-footer__actions {
@@ -3945,22 +3939,14 @@ select {
   }
 }
 
-/* ── desktop ≥ 1024: every step in a sticky rail beside the surface ── */
+/* ── desktop ≥ 1024: every step in a sticky rail beside the card ── */
 @media (min-width: 1024px) {
-  /* two classes: `.btn` (ikan2.css, loaded later) sets display too */
-  .ikan2-theme .wizard__bar .wizard__count {
-    display: none;
-  }
-
   .ikan2-theme .wizard__body {
     display: grid;
     grid-template-columns: 17rem minmax(0, 46rem);
-    justify-content: center;
+    justify-content: start;
     align-items: start;
     gap: 40px;
-    width: min(100%, var(--page-max));
-    margin-inline: auto;
-    padding: 40px 24px 64px;
   }
 
   .ikan2-theme .wizard__body--single {
@@ -3969,14 +3955,14 @@ select {
 
   .ikan2-theme .wizard__rail {
     position: sticky;
-    top: 104px;
+    top: calc(var(--nav-clearance) - 8px);
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
 
   .ikan2-theme .wizard__rail .select-list {
-    background: var(--background);
+    background: var(--card);
   }
 
   .ikan2-theme .wizard__rail .select-row {
@@ -3987,9 +3973,18 @@ select {
     line-height: 20px;
   }
 
-  .ikan2-theme .wizard__main {
+  .ikan2-theme .wizard__card {
     width: 100%;
     margin: 0;
+  }
+
+  /* two classes: `.btn` (ikan2.css, loaded later) sets display too */
+  .ikan2-theme .wizard__progress .wizard__count {
+    display: none;
+  }
+
+  .ikan2-theme .wizard__progress {
+    margin-bottom: 28px;
   }
 }
 

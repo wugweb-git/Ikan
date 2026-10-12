@@ -29,16 +29,15 @@ public-profile prompts with a 300-word counter. The draft saves to `localStorage
 (per-device convenience, cleared on submit). Option lists live in
 `src/product/site/content/partner-application.ts`, in the spec's order.
 
-**A wizard in iKAN 2's style, on all three of its breakpoints** (640, 1024), its own screen with
-no site nav or footer. Phone: full width, a sticky bar (Close, "Partner application", "n of 11",
-LinearProgress), Back + Next sticky at the bottom, "n of 11" opening every step in a bottom sheet.
-Tablet: the step on a white surface on the canvas, short fields in pairs. Desktop: a sticky rail
-listing every step beside the surface; the rail replaces the sheet. Reached steps can be jumped to,
-ticked when complete, "Needs info" when not. Next stays disabled with "Still needed: …" above it,
-as in iKAN 2. An intro says what to keep handy; a returning applicant sees "Picking up where you
-left off"; Close asks "Leave the application?"; on the last step, gaps behind you turn the button
-into "Finish step n". iKAN 2's app shell (the phone column on a canvas) is deliberately not used:
-the site is not the app.
+**A wizard in iKAN 2's style, inside the site, on all three of its breakpoints** (640, 1024). It
+keeps the site's nav and footer and opens with the `info-band` page header like Contact and FAQ;
+the wizard is a card on the canvas below it. Phone: "Step n of 11" in the card opens every step in
+a bottom sheet, Back + Next sticky at the bottom. Tablet: a roomier card, short fields in pairs.
+Desktop: a sticky rail listing every step beside the card, replacing the sheet. Reached steps can
+be jumped to, ticked when complete, "Needs info" when not. Next stays disabled with "Still needed:
+…" above it, as in iKAN 2. The card first says what to keep handy; a returning applicant sees
+"Picking up where you left off"; on the last step, gaps behind you turn the button into "Finish
+step n". (`/join/` no longer counts as a full-screen flow in App.tsx, so the desktop nav shows.)
 
 **Labels are the spec's words**, verbatim and in its case ("Sliding Scale", "Language(s) in which
 you conduct therapy", "recognized"), with its hints ("JPG/PNG", "Only for offline therapists.").

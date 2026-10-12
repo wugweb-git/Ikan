@@ -663,11 +663,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   const [reached, setReached] = useState(() => Math.max(draft?.reached ?? 0, draft?.step ?? 0));
   const [started, setStarted] = useState(false);
   const [stepsOpen, setStepsOpen] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const top = useRef<HTMLDivElement>(null);
   const set: SetForm = (patch) => setForm((prev) => ({ ...prev, ...patch }));
   const home = () => onNavigate?.('/');
 
@@ -682,7 +682,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
     setStep(next);
     setReached((r) => Math.max(r, next));
     setStepsOpen(false);
-    window.scrollTo({ top: 0 });
+    // Back to the top of the wizard, not the page: the site header stays put.
+    const y = (top.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 96;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
   };
 
   const errors = stepErrors(step, form);
@@ -706,7 +708,6 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       if (!res.ok || !result.success) throw new Error(result.error || 'Failed to submit application');
       clearDraft();
       setSubmitted(true);
-      window.scrollTo({ top: 0 });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Network error. Please try again.');
     } finally {
@@ -723,10 +724,10 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       ? { label: `Finish step ${firstIncomplete + 1}`, onClick: () => goTo(firstIncomplete), disabled: false }
       : { label: submitting ? 'Submitting…' : 'Submit application', onClick: submit, disabled: errors.length > 0 || submitting };
 
-  const root = 'ikan2-theme ikan2-type accent-calm wizard';
+  const root = 'ikan2-theme ikan2-type accent-calm info-page site-page-below-nav wizard';
 
   /* One list of steps, shown two ways: a bottom sheet behind "n of 11" below
-     1024px, and a sticky rail beside the form at 1024px and up. */
+     1024px, and a sticky rail beside the card at 1024px and up. */
   const stepList = (interactive: boolean) => (
     <ol className="select-list">
       {STEPS.map((s, i) => {
@@ -748,41 +749,28 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
     </ol>
   );
 
-  const bar = (onClose: () => void, showCount: boolean) => (
-    <header className="flow-bar wizard__bar">
-      <div className="wizard__bar-row">
-        <button type="button" className="icon-button state-layer" aria-label="Close" onClick={onClose}><X aria-hidden="true" /></button>
-        <p className="flow-bar__title">Partner application</p>
-        {showCount ? (
-          <button type="button" className="btn btn--text btn--md state-layer wizard__count" aria-haspopup="dialog"
-            aria-label={`Step ${step + 1} of ${STEPS.length}. Show all steps`} onClick={() => setStepsOpen(true)}>
-            <span aria-live="polite">{step + 1} of {STEPS.length}</span>
-            <ChevronDown aria-hidden="true" />
-          </button>
-        ) : null}
+  // The site page's own header, as on Contact and FAQ.
+  const pageHeader = (
+    <section className="info-band">
+      <div className="info-band__inner">
+        <p className="info-eyebrow">Partner with iKAN</p>
+        <h1>Become an iKAN Partner</h1>
+        <p className="info-subtitle">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved.</p>
       </div>
-      {showCount ? (
-        <div className="wizard__progress">
-          <div className="linear-progress" role="progressbar" aria-label="Application progress"
-            aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(((step + 1) / STEPS.length) * 100)}>
-            <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
-          </div>
-        </div>
-      ) : null}
-    </header>
+    </section>
   );
 
   if (submitted) {
     return (
       <div className={root}>
-        {bar(home, false)}
+        {pageHeader}
         <div className="wizard__body wizard__body--single">
-          <main className="wizard__main partner-done">
+          <section className="wizard__card partner-done" aria-labelledby="partner-done-title">
             <CircleCheck className="partner-done__icon" aria-hidden="true" />
-            <h1 className="wizard__title">Application received</h1>
+            <h2 id="partner-done-title" className="wizard__title">Application received</h2>
             <p className="partner-lede">Thank you for applying to partner with iKAN. Our team will verify your details and reply to {form.email || 'you'} within 3–5 business days.</p>
             <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={home}>Back to iKAN</button>
-          </main>
+          </section>
         </div>
       </div>
     );
@@ -791,31 +779,29 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   if (!started) {
     return (
       <div className={root}>
-        {bar(home, false)}
+        {pageHeader}
         <div className="wizard__body">
           <aside className="wizard__rail" aria-label="What the application covers">
             <p className="field__label">{STEPS.length} steps</p>
             {stepList(false)}
           </aside>
-          <main className="wizard__main">
+          <section className="wizard__card" aria-labelledby="partner-intro-title">
             {draft ? <p className="notice">Picking up where you left off, at step {draft.step + 1} of {STEPS.length}.</p> : null}
-            <h1 className="wizard__title">Become an iKAN Partner</h1>
-            <p className="partner-lede">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved.</p>
-            <h2 className="partner-intro-title">Before you start, keep handy</h2>
+            <h2 id="partner-intro-title" className="wizard__title">Before you start, keep handy</h2>
             <ul className="select-list partner-intro-list">
               <li className="select-row">Your degree and registration details (RCI, NMC or State Medical Council)</li>
               <li className="select-row">Scans or photos of your degree and registration certificate</li>
               <li className="select-row">A recent headshot</li>
             </ul>
-            <p className="field__message">Your answers save on this device as you go, so you can stop and come back.</p>
+            <p className="field__message">{STEPS.length} steps. Your answers save on this device as you go, so you can stop and come back.</p>
             <div className="wizard__footer">
               <div className="flow-footer__actions">
-                <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => { setStarted(true); window.scrollTo({ top: 0 }); }}>
+                <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => setStarted(true)}>
                   {draft ? 'Continue application' : 'Start application'}
                 </button>
               </div>
             </div>
-          </main>
+          </section>
         </div>
       </div>
     );
@@ -825,9 +811,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
 
   return (
     <div className={root}>
-      {bar(() => setLeaving(true), true)}
+      {pageHeader}
 
-      <div className="wizard__body">
+      <div className="wizard__body" ref={top}>
         <aside className="wizard__rail">
           <nav aria-label="Application steps">
             <p className="field__label">Step {step + 1} of {STEPS.length}</p>
@@ -835,10 +821,22 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
           </nav>
         </aside>
 
-        <main className="wizard__main">
+        <section className="wizard__card" aria-labelledby="partner-step-title">
+          <div className="wizard__progress">
+            <button type="button" className="btn btn--text btn--md state-layer wizard__count" aria-haspopup="dialog"
+              aria-label={`Step ${step + 1} of ${STEPS.length}. Show all steps`} onClick={() => setStepsOpen(true)}>
+              <span aria-live="polite">Step {step + 1} of {STEPS.length}</span>
+              <ChevronDown aria-hidden="true" />
+            </button>
+            <div className="linear-progress" role="progressbar" aria-label="Application progress"
+              aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(((step + 1) / STEPS.length) * 100)}>
+              <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+            </div>
+          </div>
+
           <form key={step} className="partner-form animate-step" noValidate onSubmit={(e) => { e.preventDefault(); if (!primary.disabled) primary.onClick(); }}>
             <div className="partner-wide">
-              <h1 className="wizard__title">{STEPS[step].title}</h1>
+              <h2 id="partner-step-title" className="wizard__title">{STEPS[step].title}</h2>
               {STEPS[step].hint ? <p className="field__message">{STEPS[step].hint}</p> : null}
             </div>
             <Body f={form} set={set} />
@@ -864,19 +862,11 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               </button>
             </div>
           </div>
-        </main>
+        </section>
       </div>
 
       <Sheet open={stepsOpen} onClose={() => setStepsOpen(false)} title="All steps">
         {stepList(true)}
-      </Sheet>
-
-      <Sheet open={leaving} onClose={() => setLeaving(false)} title="Leave the application?">
-        <p className="field__message partner-sheet-copy">Your answers are saved on this device. Open this page again to carry on from step {step + 1}.</p>
-        <div className="sheet__actions">
-          <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => setLeaving(false)}>Keep going</button>
-          <button type="button" className="btn btn--text state-layer" onClick={() => { saveDraft(form, step, reached); home(); }}>Leave for now</button>
-        </div>
       </Sheet>
     </div>
   );

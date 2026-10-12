@@ -1566,51 +1566,11 @@
  * deliberately NOT here: the site lays itself out across phone, tablet and
  * desktop, so the page that uses these supplies its own responsive layout.
  *
- *   .flow-bar        routes/assessment-flow  sticky header
- *   .icon-button     components/equip/m3.ts `IconButton`
  *   .flow-footer__*  components/equip/steps.tsx `Footer` (hint + actions)
  *   .select-row      components/equip/m3.ts `SelectRow`
  *   .sheet           components/equip/m3.ts `BottomSheet`
  *   .notice          routes/assessment-flow  "Picking up where you left off."
  * ═════════════════════════════════════════════════════════════════ */
-
-.ikan2-theme .flow-bar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: var(--background);
-}
-
-.ikan2-theme .flow-bar__title {
-  flex: 1;
-  min-width: 0;
-  padding: 0 8px;
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 18px;
-  line-height: 26px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.ikan2-theme .icon-button {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-}
-
-.ikan2-theme .icon-button svg {
-  width: 24px;
-  height: 24px;
-}
 
 .ikan2-theme .flow-footer__hint {
   margin: 0;

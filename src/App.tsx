@@ -170,7 +170,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
-  '/consultation',
+  '/consultation', '/join/partner',
   '/resource', '/resource-detail',
 ]);
 
@@ -716,9 +716,7 @@ function AppContent() {
    * to spell out `/admin` by hand; `/org` needs the same answer from all of
    * them, and one predicate is how they stay in step.
    */
-  // /join/partner is a wizard on iKAN 2's flow chrome (its own top bar and footer), like the app's
-  // assessment flow, so it takes no site nav and no site footer.
-  const isOwnChromeSurface = currentRoute.startsWith('/admin') || currentRoute.startsWith('/org') || currentRoute === '/join/partner';
+  const isOwnChromeSurface = currentRoute.startsWith('/admin') || currentRoute.startsWith('/org');
   const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !isOwnChromeSurface && !isOnboardingFlow;
   const showPrivateNav = !!user &&
     currentRoute !== '/' &&
@@ -736,7 +734,6 @@ function AppContent() {
                            currentRoute.startsWith('/equip-program-flow') ||
                            currentRoute.startsWith('/equip-program-onboarding') ||
                            currentRoute.startsWith('/equip-program-completion') ||
-                           currentRoute.startsWith('/join/') ||
                            isOnboardingFlow;
 
   const isHeroRoute = shouldShowFooter || 
