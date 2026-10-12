@@ -1163,7 +1163,9 @@
  *   .chip          components/kit/chip.tsx      `Chip`
  *   .btn           components/equip/m3.ts       `Button`
  *   .form-error    components/auth-ui.tsx       `FormError`
- *   .progress      components/ui/progress.tsx   `Progress`
+ *   .accent-*      components/equip/m3.ts       `accentStyle`
+ *   .linear-progress components/equip/m3.ts     `LinearProgress`
+ *   .segmented     components/equip/m3.ts       `Segmented`
  *
  * When the source moves, diff and follow it; do not restyle these here.
  * ═════════════════════════════════════════════════════════════════ */
@@ -1473,19 +1475,74 @@
   font-weight: 500;
 }
 
-.ikan2-theme .progress {
-  position: relative;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--primary) 20%, transparent);
+/* Tonal accent per programme: iKAN 2 uses it only for progress and
+   selection. `--accent-strong` is the text-safe shade (4.5:1+ on white). */
+.ikan2-theme.accent-night, .ikan2-theme .accent-night { --accent: #5e86b8; --accent-strong: #2f5580; --accent-container: #e3ecf8; --on-accent-container: #1c3553; }
+.ikan2-theme.accent-ember, .ikan2-theme .accent-ember { --accent: #b98a22; --accent-strong: #7a5a12; --accent-container: #fbefd2; --on-accent-container: #4f3a0a; }
+.ikan2-theme.accent-calm, .ikan2-theme .accent-calm { --accent: #4e8f75; --accent-strong: #2b634d; --accent-container: #dff0e8; --on-accent-container: #173d2f; }
+.ikan2-theme.accent-mind, .ikan2-theme .accent-mind { --accent: #5d64b4; --accent-strong: #3b418c; --accent-container: #e6e7f6; --on-accent-container: #232761; }
+.ikan2-theme.accent-mood, .ikan2-theme .accent-mood { --accent: #c2607c; --accent-strong: #8c3652; --accent-container: #f9e2e9; --on-accent-container: #5a1f32; }
+
+/* Linear progress: a 4px accent run, a 4px gap, then the container for what is left. */
+.ikan2-theme .linear-progress {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 4px;
 }
 
-.ikan2-theme .progress > span {
-  display: block;
+.ikan2-theme .linear-progress > span {
   height: 100%;
-  background: var(--primary);
-  transition: width var(--dur-base) var(--ease-out);
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 500ms var(--ease-out);
+}
+
+.ikan2-theme .linear-progress::after {
+  content: '';
+  flex: 1;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-container);
+}
+
+/* Segmented: equal columns of 48px options; the chosen one fills with --accent-strong. */
+.ikan2-theme .segmented {
+  display: grid;
+  grid-template-columns: repeat(var(--segments, 2), minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ikan2-theme .segmented__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  border-radius: 14px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .segmented__option[aria-checked='true'] {
+  border-color: transparent;
+  background: var(--accent-strong);
+  color: var(--background);
+}
+
+.ikan2-theme .segmented__option svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1495,5 +1552,9 @@
 
   .ikan2-theme .btn__spinner {
     animation-duration: 2s;
+  }
+
+  .ikan2-theme .linear-progress > span {
+    transition: none;
   }
 }

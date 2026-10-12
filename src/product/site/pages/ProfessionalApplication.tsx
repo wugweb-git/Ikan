@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, ChevronDown, CircleCheck, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleCheck, Plus, Trash2, Upload, X } from 'lucide-react';
 import { projectId } from '../../../shared/api/supabase-info';
 import { getAuthHeaders } from '../../../shared/api/supabase';
 import {
@@ -180,10 +180,22 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
   );
 }
 
+/** iKAN 2 `Segmented`: a radio group of equal 48px options, the chosen one in the accent. */
 function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 'no'; onChange: (v: '' | 'yes' | 'no') => void }) {
+  const id = useId();
   return (
-    <Chips label={label} options={['Yes', 'No']} value={value === 'yes' ? 'Yes' : value === 'no' ? 'No' : ''}
-      onChange={(v) => onChange(v === 'Yes' ? 'yes' : v === 'No' ? 'no' : '')} />
+    <div className="partner-wide">
+      <p className="field__label" id={id}>{label}</p>
+      <div className="segmented partner-segmented" role="radiogroup" aria-labelledby={id}>
+        {(['yes', 'no'] as const).map((v) => (
+          <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
+            className="segmented__option state-layer">
+            {value === v ? <Check aria-hidden="true" strokeWidth={3} /> : null}
+            {v === 'yes' ? 'Yes' : 'No'}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -612,7 +624,6 @@ interface ProfessionalApplicationProps {
 export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationProps) {
   const [form, setForm] = useState<Form>(() => loadDraft()?.form ?? emptyPartnerForm());
   const [step, setStep] = useState(() => loadDraft()?.step ?? 0);
-  const [reached, setReached] = useState(step);
   const [missing, setMissing] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -630,7 +641,6 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   const goTo = (next: number) => {
     setMissing([]);
     setStep(next);
-    setReached((r) => Math.max(r, next));
     top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -672,7 +682,7 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
 
   if (submitted) {
     return (
-      <div className="ikan2-theme ikan2-type info-page site-page-below-nav">
+      <div className="ikan2-theme ikan2-type accent-calm info-page site-page-below-nav">
         <section className="info-band">
           <div className="info-band__inner">
             <CircleCheck className="partner-done__icon" aria-hidden="true" />
@@ -690,30 +700,23 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
   const last = step === STEPS.length - 1;
 
   return (
-    <div className="ikan2-theme ikan2-type info-page site-page-below-nav">
+    <div className="ikan2-theme ikan2-type accent-calm info-page site-page-below-nav">
       <section className="info-band">
         <div className="info-band__inner" ref={top}>
           <p className="info-eyebrow">Partner with iKAN</p>
           <h1>Become an iKAN Partner</h1>
           <p className="info-subtitle">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved. Your progress saves on this device as you go.</p>
 
-          <nav className="partner-progress" aria-label="Application steps">
-            <p className="field__label">Step {step + 1} of {STEPS.length}</p>
-            <div className="progress" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} aria-label="Progress">
+          {/* iKAN 2's step pattern (programme player): a count and a LinearProgress, then
+              Back / Next. No rail of step names: eleven of them wrapped and clipped, and
+              repeated what the bar already says. */}
+          <div className="partner-progress">
+            <p className="field__label partner-progress__count" aria-live="polite">Step {step + 1} of {STEPS.length}</p>
+            <div className="linear-progress" role="progressbar" aria-label="Application progress"
+              aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(((step + 1) / STEPS.length) * 100)}>
               <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
             </div>
-            <ol className="partner-steps">
-              {STEPS.map((s, i) => (
-                <li key={s.title}>
-                  <button type="button" className="chip chip--outline state-layer motion-press" aria-current={i === step ? 'step' : undefined}
-                    disabled={i > reached} onClick={() => goTo(i)}>
-                    {i < step ? <CircleCheck aria-hidden="true" /> : <span className="partner-steps__num">{i + 1}</span>}
-                    {s.title}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          </div>
 
           <section className="partner-step surface" aria-labelledby="partner-step-title">
             <h2 id="partner-step-title">{STEPS[step].title}</h2>

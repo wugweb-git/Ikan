@@ -35,7 +35,10 @@ the expertise matrix, because the spec's list ends in "etc."
 
 **Built from iKAN 2's components, not lookalikes.** `ikan2.css` gains a "COMPONENTS, ported"
 section transcribed class for class from iKAN 2: `Field`, `PhoneField`, `Chip`, `Button`,
-`FormError`, `Progress`, the M3 state layer (6% hover, 12% pressed, focus ring) and `motion-press`.
+`FormError`, the M3 state layer (6% hover, 12% pressed, focus ring), `motion-press`, and from the
+programme player `LinearProgress`, `Segmented` (the Yes/No questions) and the `accent-*` tonal sets
+(this page uses `accent-calm`). Progress is iKAN 2's step pattern, a count and a LinearProgress; an
+earlier rail of eleven step-name chips wrapped onto two lines and clipped, and is gone.
 It also gains iKAN 2's h1–h6 → type-role map, **opt-in via `ikan2-type`** on a page root: applied
 site-wide it would zero the UA margins and set letter-spacing on Services' and the newsletter's
 headings, which their rules only partly style. `.partner-*` in `globals.css` is layout only. The

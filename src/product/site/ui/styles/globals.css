@@ -3610,23 +3610,13 @@ select {
 .ikan2-theme .partner-progress {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  max-width: 50rem;
   margin-top: 32px;
 }
 
-.ikan2-theme .partner-steps {
-  display: flex;
-  gap: 8px;
-  margin: 8px 0 0;
-  padding: 0 0 4px;
-  list-style: none;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.ikan2-theme .partner-steps__num {
-  min-width: 16px;
-  text-align: center;
+.ikan2-theme .partner-progress__count {
+  margin: 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3661,6 +3651,11 @@ select {
 
 .ikan2-theme .partner-group-hint {
   margin: 0 0 10px;
+}
+
+/* A Yes/No pair does not need the full form width. */
+.ikan2-theme .partner-segmented {
+  max-width: 20rem;
 }
 
 .ikan2-theme .partner-chips {
