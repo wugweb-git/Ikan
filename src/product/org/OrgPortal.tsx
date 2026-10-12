@@ -48,6 +48,14 @@ export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
 
   const section = sectionFromPath(route ?? (typeof window !== 'undefined' ? window.location.pathname : '/org'));
 
+  /* The shell's title is the marketing site's. org/ cannot import the site's
+     `useSeo` across the boundary, and does not need it — there is nothing to
+     optimise on a page that is disallowed in robots.txt. */
+  useEffect(() => {
+    const label = SECTIONS.find((s) => s.id === section)?.label ?? 'Organisation';
+    document.title = `${label} · iKAN for Organisations`;
+  }, [section]);
+
   const go = (s: Section) => onNavigate?.(s === 'overview' ? '/org' : `/org/${s}`);
 
   /* Which organisations may this person open? An empty list is a complete,

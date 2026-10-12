@@ -18,8 +18,8 @@ export function Settings({ org, canWrite, onSaved }: {
   canWrite: boolean;
   onSaved: (o: Organization) => void;
 }) {
-  const [domains, setDomains] = useState(org.allowed_email_domains.join(', '));
-  const [minGroup, setMinGroup] = useState(String(org.min_group_size));
+  const [domains, setDomains] = useState((org.allowed_email_domains ?? []).join(', '));
+  const [minGroup, setMinGroup] = useState(String(org.min_group_size ?? 10));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 

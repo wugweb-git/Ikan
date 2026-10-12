@@ -28,6 +28,8 @@ export interface Organization {
   allowed_email_domains: string[];
   min_group_size: number;
   your_role?: 'admin' | 'viewer';
+  /** True when visibility comes from iKAN staff access, not a membership. */
+  via_staff?: boolean;
 }
 
 export interface Member {

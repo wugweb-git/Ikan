@@ -39,6 +39,17 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const PREFIX = "";
 
+/*
+ * The full organisation row. `/org/mine` must return all of it, not a summary:
+ * the portal hands that object to its Settings screen, which reads
+ * `allowed_email_domains` and `min_group_size` directly. Returning four
+ * columns made Settings throw on `undefined.join()` the moment anyone opened
+ * it — the kind of break that only shows up past a login.
+ */
+const ORG_COLUMNS =
+  "id, name, slug, status, seats_purchased, contract_start, contract_end, " +
+  "allowed_email_domains, min_group_size";
+
 type Role = "member" | "admin" | "viewer";
 
 /** Roles that may open the portal at all. A plain member cannot. */
@@ -111,9 +122,26 @@ export function registerOrgRoutes(app: Hono) {
       const user = await getAuthUser(c.req.header("Authorization"));
       if (!user) return c.json({ error: "Unauthorized" }, 401);
 
+      /*
+       * iKAN staff see every organisation. `authorise` already lets them act
+       * on one for support, but this listing did not offer any — so support
+       * could pass the gate and still have nothing to open, which also made
+       * the portal untestable before a first customer exists.
+       */
+      const { data: staff } = await supabase
+        .from("kv_store_cc205da9").select("value").eq("key", `user:${user.id}`).maybeSingle();
+      if (staff?.value?.is_admin === true) {
+        const { data: all, error: allErr } = await supabase
+          .from("organizations").select(ORG_COLUMNS).order("name");
+        if (allErr) throw allErr;
+        return c.json({
+          organizations: (all ?? []).map((o: any) => ({ ...o, your_role: "admin", via_staff: true })),
+        });
+      }
+
       const { data, error } = await supabase
         .from("org_memberships")
-        .select("role, organizations(id, name, slug, status)")
+        .select(`role, organizations(${ORG_COLUMNS})`)
         .eq("user_id", user.id)
         .is("ended_at", null)
         .in("role", PORTAL_ROLES);
@@ -140,7 +168,7 @@ export function registerOrgRoutes(app: Hono) {
 
       const { data: org, error: orgErr } = await supabase
         .from("organizations")
-        .select("id, name, slug, seats_purchased, contract_start, contract_end, min_group_size, status")
+        .select(ORG_COLUMNS)
         .eq("id", orgId)
         .maybeSingle();
       if (orgErr) throw orgErr;

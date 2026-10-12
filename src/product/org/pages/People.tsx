@@ -147,8 +147,8 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
           <h2 className="org-panel__title">Invite by work email</h2>
           <p className="org-panel__body">
             One address per line, or paste a column from a spreadsheet.
-            {org.allowed_email_domains.length > 0 && (
-              <> Addresses must be on {org.allowed_email_domains.join(' or ')}.</>
+            {(org.allowed_email_domains ?? []).length > 0 && (
+              <> Addresses must be on {(org.allowed_email_domains ?? []).join(' or ')}.</>
             )}
           </p>
 
