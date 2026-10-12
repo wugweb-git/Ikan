@@ -1,10 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { useAuth } from '../../../shared/state/AuthContext';
 import { requiresAuth } from '../ui/route-config';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-
-// Lazy-load LoginScreen to prevent it from being eagerly evaluated
-const LoginScreen = lazy(() => import('./LoginScreen'));
+import { APP_ORIGIN } from './app-host';
 
 interface RouteGuardProps {
   currentRoute: string;
@@ -12,7 +9,7 @@ interface RouteGuardProps {
   children: React.ReactNode;
 }
 
-export function RouteGuard({ currentRoute, onNavigate, children }: RouteGuardProps) {
+export function RouteGuard({ currentRoute, onNavigate: _onNavigate, children }: RouteGuardProps) {
   const { user, isInitialized } = useAuth();
 
   // Show loading while auth state is being determined
@@ -41,18 +38,19 @@ export function RouteGuard({ currentRoute, onNavigate, children }: RouteGuardPro
   // Check if current route requires authentication
   const routeRequiresAuth = requiresAuth(currentRoute);
 
-  // If user is not authenticated and trying to access a private route
+  /*
+   * A member route reached without a session goes to the member app, not to a
+   * login screen on this host.
+   *
+   * There is no member login here any more — ikanhealth.in serves marketing,
+   * the admin console and the organisation portal, and every member route
+   * 301s to app.ikanhealth.in at the edge. This branch only catches an
+   * in-app navigation, which never touches the edge rule, so it has to do the
+   * same thing itself.
+   */
   if (!user && routeRequiresAuth) {
-    return (
-      <Suspense fallback={<LoadingSpinner fullScreen message="Loading..." />}>
-        <LoginScreen 
-          onSuccess={() => onNavigate(currentRoute)}
-          onNavigate={onNavigate}
-          reason="auth-required"
-          redirectRoute={currentRoute}
-        />
-      </Suspense>
-    );
+    if (typeof window !== 'undefined') window.location.replace(`${APP_ORIGIN}/login`);
+    return null;
   }
 
   // Route is accessible, render children
