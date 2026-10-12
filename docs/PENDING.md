@@ -3,7 +3,7 @@
 Single source of truth for outstanding work across sessions. Update this file whenever you deploy
 something that changes what's here — see `docs/GOVERNANCE.md` for the rule.
 
-*Last updated: 2026-09-21 — restructured to hold **only open work**. Every closed item, the
+*Last updated: 2026-10-12 (section O added for the organisation portal). Previously 2026-09-21 — restructured to hold **only open work**. Every closed item, the
 "Verified fixed" section, the Batch 1–6 summary and the eleven dated session-closeout / module-pass /
 Phase A blocks moved verbatim to `docs/CHANGELOG.md` § "History moved from PENDING.md (2026-09-21)".
 Open items found inside those blocks were extracted into the sections below, each tagged with the
@@ -69,6 +69,63 @@ live blocks, and nothing is broken while it is undecided.
   shape plus a reader change. Re-verify first — the 2026-09-04 catalog work may have superseded it.
 - **Equip block palette vs the `block_type` catalog** (from Verified fixed, 2026-08-06): the palette
   was hardcoded to 4 types while the catalog held 7. Re-check against the current picker.
+
+---
+
+## O. The organisation (B2B) portal — open work, as of 2026-10-12
+
+`/org` is live: one dashboard, People, Settings. The aggregate layer, both privacy
+rules and the admin flows work. What follows is everything that does not.
+
+### O1. Blocks a real customer
+
+| | what is missing |
+|---|---|
+| Invite email | `sendInviteEmail` is a stub and says so. The link is copyable; onboarding at scale means pasting by hand. Replacing it is one function body, no caller changes. |
+| Account creation | `/org/join` links an existing account. An invitee without one is told to make it in the member app and come back. |
+| **The data pipe** | `POST /admin/org/:id/metrics` and everything downstream are real; what fills them is seeded. **This is the blocker** — see O3. |
+| Renewal notice | Contract expiry is enforced on writes, but nothing warns anyone it is coming. |
+
+### O2. Spec items not built
+
+- **G — announcements.** Nothing.
+- **E** — PDF, scheduled reports, HRMS API. CSV export only.
+- **A** — active users in the last 7/30/90 days. Needs a data-model change: `org_member_periods`
+  holds one row per member per *month*, and a rolling 7-day figure cannot be derived from it.
+- **B** — per-assessment averages and quarterly trends. One composite iKAN score only.
+- **C** — frequency, completion rates, drop-off. Only "% who used it".
+- **D** — location and team filters. "Change since" compares to the window start, not to a
+  matched prior period.
+- **F** — the whole B2B lifecycle: the three off-boarding options, grace period, email prompts,
+  CRM tagging, B2B → B2C/free transition. Partly blocked on O3.
+
+### O3. Decisions, not engineering
+
+1. **Where member data comes from.** Read `ikan2_user_state` directly, or have iKAN 2 publish a
+   feed? Its keys are versioned (`assessments.v1`, `equip.<slug>.v2`), so a direct read needs a
+   written contract and a shape test, not an adapter against today's JSON. Everything in O1 row 3
+   waits here.
+2. **What the free tier keeps, and what the personal upgrade costs.** Blocks the entire
+   off-boarding flow.
+3. **Legal sign-off** on `/workplace-privacy`, which is published and marked a draft. Under the
+   DPDP Act, consent arriving through an employer is the case a regulator looks at hardest.
+4. **Therapy reported per department.** Still shown. At n=11 a 9% figure is one person. It clears
+   the configured floor and is the one number on the page I would move to organisation-level only.
+   Raised three times; recorded here so it stops depending on anyone remembering.
+
+### O4. Housekeeping
+
+- **81 seeded people sit in the production database** for the Wugweb pitch demo. Every row carries
+  `is_demo`, so `delete from org_memberships where is_demo;` clears the set (period rows cascade).
+  Do not read 81% adoption as real.
+- The member app's components are still in the bundle, unreachable by any route. Deleting them is
+  tidy-up, not a prerequisite — access is already severed at the edge and in `RouteGuard`.
+- **The invite email-mismatch refusal is untested.** Verifying it means clicking Accept while
+  signed in as the wrong account on production. The logic is a three-line comparison and reads
+  correctly; it has never been exercised.
+- Who has not joined is hidden behind a "Show which" toggle rather than removed. If the stricter
+  reading is the final one, delete the toggle; if accepting an invitation counts as account
+  administration rather than platform usage, make it visible again. Currently the strict default.
 
 ---
 
