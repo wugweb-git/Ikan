@@ -1592,6 +1592,24 @@
   flex: 1;
 }
 
+/* Icon tile: the accent circle iKAN 2's programme steps lead a block with
+   (components/equip/steps.tsx `BlockText`, h-10 w-10 accent-container). */
+.ikan2-theme .icon-tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+}
+
+.ikan2-theme .icon-tile svg {
+  width: 20px;
+  height: 20px;
+}
+
 .ikan2-theme .notice {
   margin-bottom: 20px;
   padding: 12px 16px;
