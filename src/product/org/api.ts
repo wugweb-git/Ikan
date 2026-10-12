@@ -82,7 +82,8 @@ export interface DepartmentRow {
   reason?: string;
   avg_score?: number;
   bands?: { low: number; mid: number; high: number };
-  engagement?: { assessments: number; journal: number; equip: number; consult: number };
+  /** No `consult`: therapy is reported for the organisation only, never per department. */
+  engagement?: { assessments: number; journal: number; equip: number };
 }
 
 export interface Insights {
@@ -95,6 +96,8 @@ export interface Insights {
     bands: { low: number; mid: number; high: number };
     avg_active_days: number;
   } | null;
+  /** Therapy, organisation-wide and subject to the same floor. */
+  consultations: { available: boolean; reason?: string; pct?: number; people?: number };
   trend: TrendPoint[];
   departments: DepartmentRow[];
 }

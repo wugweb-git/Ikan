@@ -94,13 +94,16 @@ export function Insights({ org, overview }: { org: Organization; overview: Overv
           ? [MONTH(t.period), String(t.n), 'Withheld — group below the minimum']
           : [MONTH(t.period), String(t.n), String(t.avg_score)]),
       [],
-      ['Department', 'People with data', 'Average iKAN score', 'Assessments %', 'Journal %', 'Equip %', 'Consult %'],
+      ['Department', 'People with data', 'Average iKAN score', 'Assessments %', 'Journal %', 'Equip %'],
       ...(data.departments ?? []).map((d) =>
         d.suppressed
-          ? [d.department, String(d.n), 'Withheld', '', '', '', '']
+          ? [d.department, String(d.n), 'Withheld', '', '', '']
           : [d.department, String(d.n), String(d.avg_score),
              String(d.engagement!.assessments), String(d.engagement!.journal),
-             String(d.engagement!.equip), String(d.engagement!.consult)]),
+             String(d.engagement!.equip)]),
+      [],
+      ['Consultations (organisation only, never by team)',
+       data.consultations.available ? `${data.consultations.pct}%` : 'Withheld'],
     ];
     const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -372,6 +375,7 @@ export function Insights({ org, overview }: { org: Organization; overview: Overv
           <h2 className="org-panel__title">Engagement by product</h2>
           <p className="org-panel__body">
             Share of people in each department who used each product in this window.
+            Consultations are not broken down by team — see below.
           </p>
           <div className="org-table-wrap" style={{ marginTop: 16 }}>
             <table className="org-table">
@@ -382,7 +386,6 @@ export function Insights({ org, overview }: { org: Organization; overview: Overv
                   <th>Assessments</th>
                   <th>Journal</th>
                   <th>Equip</th>
-                  <th>Consultations</th>
                 </tr>
               </thead>
               <tbody>
@@ -393,7 +396,6 @@ export function Insights({ org, overview }: { org: Organization; overview: Overv
                     <td>{d.engagement!.assessments}%</td>
                     <td>{d.engagement!.journal}%</td>
                     <td>{d.engagement!.equip}%</td>
-                    <td>{d.engagement!.consult}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -401,6 +403,32 @@ export function Insights({ org, overview }: { org: Organization; overview: Overv
           </div>
         </section>
       )}
+      {data?.consultations && (
+        <section className="org-panel">
+          <h2 className="org-panel__title">Consultations</h2>
+          <p className="org-panel__body">
+            Reported for the whole organisation and never by team. A department figure would
+            clear the group threshold and still point at someone — in a team of eleven, one
+            person is nine per cent — and whether a colleague is in therapy is not something an
+            employer gets to infer.
+          </p>
+          {data.consultations.available ? (
+            <div className="org-facts" style={{ borderTop: 0, marginTop: 14 }}>
+              <div className="org-fact" style={{ paddingLeft: 0 }}>
+                <p className="org-fact__value">{data.consultations.pct}%</p>
+                <p className="org-fact__label">
+                  of {data.consultations.people} people had at least one consultation
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="org-note org-note--warn" style={{ marginTop: 14 }}>
+              {data.consultations.reason}
+            </p>
+          )}
+        </section>
+      )}
+
       <aside className="org-privacy">
         <ShieldCheck aria-hidden="true" />
         <p>

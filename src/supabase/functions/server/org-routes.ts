@@ -652,11 +652,14 @@ export function registerOrgRoutes(app: Hono) {
       const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - (months - 1), 1));
       const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-      const [{ data: periods, error: pErr }, { data: depts, error: dErr }] = await Promise.all([
+      const [{ data: periods, error: pErr }, { data: depts, error: dErr }, { data: consult }] = await Promise.all([
         supabase.rpc("org_period_aggregates", {
           p_org: orgId, p_from: iso(from), p_to: iso(to), p_department: department,
         }),
         supabase.rpc("org_department_aggregates", {
+          p_org: orgId, p_from: iso(from), p_to: iso(to),
+        }),
+        supabase.rpc("org_consult_share", {
           p_org: orgId, p_from: iso(from), p_to: iso(to),
         }),
       ]);
@@ -697,11 +700,17 @@ export function registerOrgRoutes(app: Hono) {
               suppressed: false,
               avg_score: Number(d.avg_score),
               bands: { low: Number(d.band_low), mid: Number(d.band_mid), high: Number(d.band_high) },
+              /*
+               * No `consult` here, deliberately. Therapy use per department
+               * clears the floor and still identifies — at eleven people, 9%
+               * is one person. It is stripped on the server rather than
+               * hidden in the UI, so the figure never crosses the wire and
+               * cannot be read out of a network tab or a CSV.
+               */
               engagement: {
                 assessments: Number(d.pct_assessments ?? 0),
                 journal: Number(d.pct_journal ?? 0),
                 equip: Number(d.pct_equip ?? 0),
-                consult: Number(d.pct_consult ?? 0),
               },
             },
       );
@@ -728,6 +737,16 @@ export function registerOrgRoutes(app: Hono) {
               avg_active_days: latest.avg_active_days,
             }
           : null,
+        /* The only therapy figure that exists in this payload, and it is
+           withheld like any other group below the floor. */
+        consultations: (() => {
+          const row = Array.isArray(consult) ? consult[0] : consult;
+          const people = Number(row?.people ?? 0);
+          if (!row || people < floor) {
+            return { available: false, reason: belowFloorReason(people, floor) };
+          }
+          return { available: true, pct: Number(row.pct ?? 0), people };
+        })(),
         trend,
         departments,
       });
