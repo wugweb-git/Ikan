@@ -850,3 +850,40 @@
 .ikan2-theme .org-button--link:hover {
   background: color-mix(in oklab, var(--foreground) 6%, transparent);
 }
+
+/* Seats, at the head of the one dashboard. A line rather than a tile: it is
+   context for the figures below, not a competing headline. */
+.ikan2-theme .org-seats {
+  margin-top: 26px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ikan2-theme .org-seats__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+
+.ikan2-theme .org-seats__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-seats__of {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-seats__note {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-seats .org-meter { margin-top: 12px; }

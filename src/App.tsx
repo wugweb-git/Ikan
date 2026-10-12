@@ -684,6 +684,8 @@ function AppContent() {
         case '/org/join':
           return withSuspense(<OrgJoin token={queryParams.token || ''} onNavigate={handleNavigate} />);
         case '/org':
+        // Overview and Insights merged into one dashboard; the old path still
+        // resolves so a bookmark or a link in an email does not 404.
         case '/org/insights':
         case '/org/people':
         case '/org/settings':

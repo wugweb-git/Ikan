@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Lock } from 'lucide-react';
+import { Download, Lock, ShieldCheck } from 'lucide-react';
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
   ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
-import { orgApi, type Insights as InsightsData, type Organization } from '../api';
+import { orgApi, type Insights as InsightsData, type Organization, type Overview } from '../api';
 
 /**
  * The aggregate dashboard — sections A to E of the HR brief.
@@ -35,7 +35,7 @@ const BAND_COLOURS = [
 const MONTH = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
 
-export function Insights({ org }: { org: Organization }) {
+export function Insights({ org, overview }: { org: Organization; overview: Overview | null }) {
   const [months, setMonths] = useState(6);
   const [department, setDepartment] = useState<string>('');
   const [data, setData] = useState<InsightsData | null>(null);
@@ -115,11 +115,51 @@ export function Insights({ org }: { org: Organization }) {
 
   return (
     <div className="org-page">
-      <h1 className="org-page__title">Insights</h1>
+      <h1 className="org-page__title">{org.name}</h1>
       <p className="org-page__lede">
-        How your organisation is doing, in aggregate. Nothing on this page can be traced to a
-        person, and groups smaller than {org.min_group_size} are not reported on at all.
+        Adoption and wellbeing, in aggregate. Nothing on this page can be traced to a person,
+        and groups smaller than {org.min_group_size} are not reported on at all.
       </p>
+
+      {/* Seats first: it is the commercial fact an administrator acts on, and
+          the denominator for everything below it. It was a tab of its own
+          with four numbers on it, which is not a destination. */}
+      {overview && (
+        <section className="org-seats">
+          <div className="org-seats__line">
+            <p className="org-seats__value">
+              {overview.seats.used}
+              <span className="org-seats__of"> of {overview.seats.purchased} seats</span>
+            </p>
+            <p className="org-seats__note">
+              {overview.onboarding.adoption_rate === null
+                ? 'Set a seat count to measure adoption'
+                : `${overview.onboarding.adoption_rate}% adoption`}
+              {overview.onboarding.pending > 0 && ` · ${overview.onboarding.pending} invited, not yet joined`}
+            </p>
+          </div>
+          <div className="org-meter">
+            <div
+              className={`org-meter__fill${overview.seats.remaining === 0 ? ' org-meter__fill--full' : ''}`}
+              style={{
+                width: `${overview.seats.purchased > 0
+                  ? Math.min(100, Math.round((overview.seats.used / overview.seats.purchased) * 100))
+                  : 0}%`,
+              }}
+            />
+          </div>
+        </section>
+      )}
+
+      {overview?.contract && !overview.contract.active && (
+        <div className="org-note org-note--warn" role="status">
+          <strong>Changes are paused.</strong>{' '}
+          {overview.contract.ends
+            ? `This organisation's contract ended on ${new Date(overview.contract.ends).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.`
+            : 'This organisation\u2019s contract is not currently active.'}{' '}
+          Your reports stay available; adding people and spending seats resumes on renewal.
+        </div>
+      )}
 
       <div className="org-toolbar">
         <label className="org-field" style={{ margin: 0, minWidth: 170 }}>
@@ -361,6 +401,16 @@ export function Insights({ org }: { org: Organization }) {
           </div>
         </section>
       )}
+      <aside className="org-privacy">
+        <ShieldCheck aria-hidden="true" />
+        <p>
+          <strong>You never see an individual&rsquo;s wellbeing data here.</strong> No scores, no
+          assessment answers, no journal entries, no therapy attendance — not for any person, and
+          not through any filter. The roster under People is the list you supplied, and carries
+          nothing about anyone&rsquo;s health.{' '}
+          <a href="/workplace-privacy">The page we give your people</a> says the same in their words.
+        </p>
+      </aside>
     </div>
   );
 }

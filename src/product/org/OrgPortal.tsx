@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { OrgAuthProvider, useOrgAuth } from './auth';
 import { orgApi, type Organization, type Overview as OverviewData } from './api';
 import { Insights } from './pages/Insights';
-import { Overview } from './pages/Overview';
 import { People } from './pages/People';
 import { Settings } from './pages/Settings';
 
@@ -25,11 +24,16 @@ import { Settings } from './pages/Settings';
 const HERO_IMAGE_URL =
   'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwc3Vuc2V0JTIwbGFrZSUyMG5hdHVyZSUyMG1pbmRmdWxuZXNzJTIwcGVhY2VmdWx8ZW58MXx8fHwxNzczNjY4MjU5fDA&ixlib=rb-4.1.0&q=80&w=1080';
 
-type Section = 'overview' | 'insights' | 'people' | 'settings';
+/*
+ * Three sections, not four. Overview and Insights were split only because
+ * they were built in two passes: the first held four roster numbers and the
+ * second everything an administrator actually comes for. Nobody reads
+ * adoption and wellbeing as separate errands.
+ */
+type Section = 'overview' | 'people' | 'settings';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'overview', label: 'Overview' },
-  { id: 'insights', label: 'Insights' },
   { id: 'people', label: 'People' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -37,7 +41,7 @@ const SECTIONS: Array<{ id: Section; label: string }> = [
 /** `/org`, `/org/people`, `/org/settings` — the URL is the state. */
 function sectionFromPath(path: string): Section {
   const tail = path.replace(/^\/org\/?/, '').split('?')[0];
-  return tail === 'people' || tail === 'settings' || tail === 'insights' ? tail : 'overview';
+  return tail === 'people' || tail === 'settings' ? tail : 'overview';
 }
 
 export interface OrgPortalProps {
@@ -210,8 +214,7 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
         </div>
       )}
 
-      {active && section === 'overview' && overview && <Overview data={overview} />}
-      {active && section === 'insights' && <Insights org={active} />}
+      {active && section === 'overview' && <Insights org={active} overview={overview} />}
       {active && section === 'people' && <People org={active} canWrite={canWrite} />}
       {active && section === 'settings' && (
         <Settings
