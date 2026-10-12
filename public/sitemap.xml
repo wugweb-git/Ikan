@@ -6,6 +6,7 @@
   <url><loc>https://ikanhealth.in/resource</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://ikanhealth.in/faq</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://ikanhealth.in/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://ikanhealth.in/workplace-privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
   <url><loc>https://ikanhealth.in/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://ikanhealth.in/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://ikanhealth.in/return-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>

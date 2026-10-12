@@ -9,6 +9,55 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — the five missing halves, as working stubs
+
+Each one is built to the point where the thing that is genuinely undecided is
+visible, rather than papered over.
+
+**Invitations now mint a token** (`org_invites`, random, stored only as a
+SHA-256 hash — the plaintext is returned once and never recoverable, so a lost
+link is reissued rather than looked up). **Email delivery is a stub and says
+so**: Brevo's credentials went when the public forms moved to iKAN 2, so
+`sendInviteEmail` records the attempt and returns the link. The invite response
+carries `delivery.email_sent: false`, the UI shows "No email was sent", and
+every pending person has a **Copy invite link** action — otherwise "invited"
+reads as "we emailed them" and nobody did.
+
+**`/org/join?token=` accepts an invitation** and sets `user_id` on the
+membership, which is the step that makes a roster row into a person who
+belongs to something. It refuses a token accepted from a different account
+than it was issued to — attaching the wrong person silently would corrupt
+every aggregate grouped by that roster. The stub boundary is account
+*creation*: signup lives in the member app, so an invitee without an account
+is told to make one and come back, on screen.
+
+**Contract expiry is enforced**, and gates writes only. A lapsed organisation
+keeps its dashboard — locking someone out of their own history the day a
+renewal slips is how you lose the renewal — but cannot add people or spend
+seats, with the reason stated on the Overview rather than discovered at a
+403.
+
+**`POST /admin/org/:orgId/metrics` is the ingest point**: the shape of the
+data pipe without a source, upserting on `(membership_id, period_start)` so a
+replay is safe. It exists now so the contract is fixed before the source is
+chosen. Reading ikan2's `ikan2_user_state` is still the open decision, and its
+versioned keys (`assessments.v1`, `equip.<slug>.v2`) say that read needs a
+written contract and a shape test, not an adapter against today's JSON.
+
+**`/workplace-privacy` is the consent language**, written for the employee
+rather than the buyer: what an employer can see, what they cannot, why ten,
+what happens when you leave, and the helplines. Marked a draft on the page —
+the wording has not been through legal review, and under the DPDP Act consent
+arriving via an employer is the case a regulator looks at hardest. It is the
+canonical wording; the app's own consent screen should quote it rather than
+paraphrase.
+
+**One real bug caught by lint, not by looking:** routing Join inside
+`OrgPortal` put an early return ahead of the shell's hooks, so the hook order
+changed between `/org` and `/org/join`. Routed at the app level instead.
+
+---
+
 ## 2026-10-12 — the organisation (B2B) portal, first half
 
 **`/org` exists**, a fourth surface at `src/product/org/` beside site, app and admin, on iKAN 2's

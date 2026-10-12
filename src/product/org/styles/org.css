@@ -826,3 +826,27 @@
 }
 
 .ikan2-theme .org-toggle input { accent-color: var(--brand-teal-ink); }
+
+/* A caution that is not a failure: something is paused or missing, and the
+   reader has to act, but nothing has gone wrong. */
+.ikan2-theme .org-note--warn {
+  background: var(--rest-soft, var(--muted));
+  color: var(--foreground);
+  border-left: 3px solid var(--brand-amber);
+}
+
+/* A quiet secondary action in a table row, beside the destructive one. */
+.ikan2-theme .org-button--link {
+  height: 30px;
+  padding: 0 10px;
+  margin-right: 4px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--brand-teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-button--link:hover {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}

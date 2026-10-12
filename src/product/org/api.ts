@@ -57,6 +57,7 @@ export interface Member {
 }
 
 export interface Overview {
+  contract: { active: boolean; ends: string | null; status: string };
   organization: Organization;
   seats: { purchased: number; used: number; remaining: number };
   onboarding: { accepted: number; pending: number; adoption_rate: number | null };
@@ -102,6 +103,17 @@ export interface InviteOutcome {
   email: string;
   status: 'invited' | 'skipped' | 'rejected';
   reason?: string;
+  /** Present on a successful invite: the link to send, since nothing mails it. */
+  link?: string;
+  delivered?: boolean;
+}
+
+export interface InviteCheck {
+  valid: boolean;
+  reason?: string;
+  organization?: { name: string; logo_url: string | null };
+  email?: string | null;
+  role?: string;
 }
 
 async function authHeader(): Promise<string> {
@@ -150,9 +162,25 @@ export const orgApi = {
     ),
 
   invite: (orgId: string, members: Array<{ email: string; department?: string; role?: string }>) =>
-    call<{ results: InviteOutcome[]; summary: Record<string, number> }>(
-      `/org/${orgId}/members`,
-      { method: 'POST', body: JSON.stringify({ members }) },
+    call<{
+      results: InviteOutcome[];
+      summary: Record<string, number>;
+      delivery: { email_sent: boolean; note: string };
+    }>(`/org/${orgId}/members`, { method: 'POST', body: JSON.stringify({ members }) }),
+
+  /** Public — an invitee has no session yet. */
+  checkInvite: (token: string) => call<InviteCheck>(`/org/invite/${encodeURIComponent(token)}`),
+
+  acceptInvite: (token: string) =>
+    call<{ success: true; organization: string }>(
+      `/org/invite/${encodeURIComponent(token)}/accept`,
+      { method: 'POST' },
+    ),
+
+  reissueInvite: (orgId: string, membershipId: string) =>
+    call<{ link: string; delivered: boolean; note: string }>(
+      `/org/${orgId}/members/${membershipId}/reissue`,
+      { method: 'POST' },
     ),
 
   updateMember: (orgId: string, id: string, patch: { department?: string | null; role?: string }) =>

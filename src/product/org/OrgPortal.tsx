@@ -48,6 +48,7 @@ export interface OrgPortalProps {
 
 export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
   const { user, isInitialized, signIn } = useAuth();
+
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [active, setActive] = useState<Organization | null>(null);
   const [overview, setOverview] = useState<OverviewData | null>(null);
