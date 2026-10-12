@@ -1,5 +1,6 @@
 import { Hono } from "npm:hono";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { belowFloorReason, groupsToWithhold } from "./org-suppression.ts";
 
 /**
  * The organisation (B2B) portal's API.
@@ -560,13 +561,9 @@ export function registerOrgRoutes(app: Hono) {
       if (pErr) throw pErr;
       if (dErr) throw dErr;
 
-      const suppressedNote = (n: number) =>
-        `Fewer than ${floor} people with data in this group (${n}). Showing a figure here could ` +
-        `point at an individual.`;
-
       const trend = (periods ?? []).map((r: any) => {
         const n = Number(r.n);
-        if (n < floor) return { period: r.period_start, n, suppressed: true, reason: suppressedNote(n) };
+        if (n < floor) return { period: r.period_start, n, suppressed: true, reason: belowFloorReason(n, floor) };
         return {
           period: r.period_start,
           n,
@@ -577,18 +574,12 @@ export function registerOrgRoutes(app: Hono) {
         };
       });
 
-      /* Complementary suppression. One withheld department is recoverable by
-         subtraction, so a second goes with it — the smallest of those still
-         shown, since withholding the largest would cost the most information. */
+      /* Which departments may not be reported on, including the second one
+         that a single withheld group drags with it. The rule itself lives in
+         org-suppression.ts, where it is unit-tested — it is a promise to
+         somebody's employee, not a display detail. */
       const raw = (depts ?? []).map((d: any) => ({ ...d, n: Number(d.n) }));
-      const below = raw.filter((d: any) => d.n < floor);
-      const hidden = new Set(below.map((d: any) => d.department));
-      if (below.length === 1 && raw.length > 1) {
-        const smallestShown = raw
-          .filter((d: any) => !hidden.has(d.department))
-          .sort((a: any, b: any) => a.n - b.n)[0];
-        if (smallestShown) hidden.add(smallestShown.department);
-      }
+      const hidden = groupsToWithhold(raw, floor, (d: any) => d.department);
 
       const departments = raw.map((d: any) =>
         hidden.has(d.department)
@@ -596,11 +587,7 @@ export function registerOrgRoutes(app: Hono) {
               department: d.department,
               n: d.n,
               suppressed: true,
-              reason:
-                d.n < floor
-                  ? suppressedNote(d.n)
-                  : `Withheld so the group below the threshold cannot be worked out by subtracting ` +
-                    `the rest from the organisation total.`,
+              reason: hidden.get(d.department),
             }
           : {
               department: d.department,
