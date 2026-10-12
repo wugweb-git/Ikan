@@ -4,6 +4,106 @@
   "framework": "vite",
   "redirects": [
     {
+      "source": "/login",
+      "destination": "https://app.ikanhealth.in/login",
+      "statusCode": 301
+    },
+    {
+      "source": "/dashboard",
+      "destination": "https://app.ikanhealth.in/",
+      "statusCode": 301
+    },
+    {
+      "source": "/timeline",
+      "destination": "https://app.ikanhealth.in/history",
+      "statusCode": 301
+    },
+    {
+      "source": "/mood-journal",
+      "destination": "https://app.ikanhealth.in/journal",
+      "statusCode": 301
+    },
+    {
+      "source": "/account",
+      "destination": "https://app.ikanhealth.in/profile",
+      "statusCode": 301
+    },
+    {
+      "source": "/learning-diary",
+      "destination": "https://app.ikanhealth.in/diaries",
+      "statusCode": 301
+    },
+    {
+      "source": "/assessment-flow",
+      "destination": "https://app.ikanhealth.in/assessments",
+      "statusCode": 301
+    },
+    {
+      "source": "/assessment-results",
+      "destination": "https://app.ikanhealth.in/assessments",
+      "statusCode": 301
+    },
+    {
+      "source": "/assessment-detail",
+      "destination": "https://app.ikanhealth.in/assessments",
+      "statusCode": 301
+    },
+    {
+      "source": "/assessment-history-detail",
+      "destination": "https://app.ikanhealth.in/history/assessments",
+      "statusCode": 301
+    },
+    {
+      "source": "/equip-detail",
+      "destination": "https://app.ikanhealth.in/program",
+      "statusCode": 301
+    },
+    {
+      "source": "/equip-program-flow",
+      "destination": "https://app.ikanhealth.in/program",
+      "statusCode": 301
+    },
+    {
+      "source": "/equip-program-onboarding",
+      "destination": "https://app.ikanhealth.in/program",
+      "statusCode": 301
+    },
+    {
+      "source": "/equip-program-completion",
+      "destination": "https://app.ikanhealth.in/program",
+      "statusCode": 301
+    },
+    {
+      "source": "/onboarding",
+      "destination": "https://app.ikanhealth.in/welcome",
+      "statusCode": 301
+    },
+    {
+      "source": "/get-started",
+      "destination": "https://app.ikanhealth.in/welcome",
+      "statusCode": 301
+    },
+    {
+      "source": "/verify-email",
+      "destination": "https://app.ikanhealth.in/verify-email",
+      "statusCode": 301
+    },
+    {
+      "source": "/reset-password",
+      "destination": "https://app.ikanhealth.in/reset-password",
+      "statusCode": 301
+    },
+    {
+      "source": "/resource-detail",
+      "destination": "https://app.ikanhealth.in/resources",
+      "statusCode": 301
+    },
+    {
+      "source": "/consultation-detail",
+      "destination": "https://app.ikanhealth.in/consult",
+      "statusCode": 301
+    },
+    {
       "source": "/join/professional",
       "destination": "/join/partner",
       "statusCode": 301

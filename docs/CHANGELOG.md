@@ -9,6 +9,19 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — the old member app is closed on ikanhealth.in
+
+The member app lives at app.ikanhealth.in (iKAN 2). On this host only **/admin** and **/org** sign
+in. Every old member route now 301s to its iKAN 2 equivalent in `vercel.json` (`/dashboard` → `/`,
+`/timeline` → `/history`, `/mood-journal` → `/journal`, `/account` → `/profile`, `/learning-diary` →
+`/diaries`, the assessment and equip flows → `/assessments` and `/program`, `/onboarding` and
+`/get-started` → `/welcome`, `/verify-email`, `/reset-password` and `/login` to the same paths), so
+no route here lands on a dashboard. The site never shows a signed-in state: the public nav renders
+on every site page and is given no user, because an admin signing in at /admin shares the member
+client's session and the site was showing them as a signed-in member.
+
+---
+
 ## 2026-10-12 — every partner-wizard step has its own URL
 
 `/join/partner` is the intro, each step is `/join/partner/<step>` named from the spec's step title
