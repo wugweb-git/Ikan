@@ -3675,6 +3675,43 @@ select {
   padding: 12px 20px max(16px, env(safe-area-inset-bottom));
 }
 
+/* ── THE FORM'S TYPE MAP ──
+ *
+ *   page title   h1          headline-lg 32/40        (ikan2-type map)
+ *   step title   h2          headline-sm 24/32 → headline-md 28/36 at ≥640
+ *   section      h3          title-md 16/24 600       Degrees, Fees, Availability…
+ *   question     label/legend label-lg 14/20 500, foreground
+ *   helper       .field__message body-sm 13/20, muted
+ *   error        .field__message--error body-sm 13/20, error
+ *   answer       input/textarea body-lg 16/24
+ *
+ * The question was the ported auth Field label (13/20 muted) — the same as the
+ * helper under it, so a label never outranked its hint. On a form this long
+ * the question takes label-lg at full strength; the login form keeps its own.
+ */
+.ikan2-theme.wizard .field__label {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.ikan2-theme.wizard .partner-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ikan2-theme.wizard .partner-fieldset > legend {
+  padding: 0;
+}
+
+.ikan2-theme .partner-note {
+  color: var(--muted-foreground);
+}
+
 .ikan2-theme .partner-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3920,41 +3957,101 @@ select {
   font-weight: 600;
 }
 
-.ikan2-theme .partner-how-title {
-  margin: 32px 0 12px;
+.ikan2-theme .partner-how-section {
+  display: grid;
+  gap: 20px;
+  margin-top: 32px;
 }
 
+/* Rounded like every photo on iKAN, cropped to fill whatever height the
+   timeline beside it needs. */
+.ikan2-theme .partner-how__photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: 50% 40%;
+  border-radius: 20px;
+  background: var(--secondary);
+}
+
+.ikan2-theme .partner-how-title {
+  margin: 0 0 16px;
+}
+
+/* A timeline: each step's node on a thin accent line that runs to the next. */
 .ikan2-theme .partner-how {
-  display: grid;
-  gap: 16px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .ikan2-theme .partner-how li {
-  margin: 0;
+  position: relative;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding-bottom: 22px;
+}
+
+.ikan2-theme .partner-how li:last-child {
+  padding-bottom: 0;
+}
+
+.ikan2-theme .partner-how li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 34px;
+  bottom: 2px;
+  left: 15px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--accent-container);
 }
 
 .ikan2-theme .partner-how__num {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  border: 2px solid var(--accent-strong);
-  color: var(--accent-strong);
-  font-size: 13px;
+  background: var(--accent-strong);
+  color: var(--background);
+  font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
+.ikan2-theme .partner-how__text {
+  padding-top: 4px;
+}
+
+.ikan2-theme .partner-how__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.ikan2-theme .partner-how__meta {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
 .ikan2-theme .partner-how .field__message {
-  margin-top: 0;
+  margin: 0;
 }
 
 .ikan2-theme .partner-intro__actions {
@@ -4019,21 +4116,23 @@ select {
     margin-bottom: 8px;
   }
 
-  .ikan2-theme .partner-how {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+  /* Photo beside the timeline */
+  .ikan2-theme .partner-how-section {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 28px;
+    align-items: stretch;
   }
 
-  .ikan2-theme .partner-how li {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+  .ikan2-theme .partner-how__photo {
+    height: 100%;
+    min-height: 18rem;
+    aspect-ratio: auto;
   }
 
   /* Columns stretch to the tallest; keep every column's rows at the top so the
      icons, numbers and titles line up across them. The margin reset beats a
      site-wide `li + li` rhythm rule, which offset every column but the first. */
-  .ikan2-theme .partner-needs li,
-  .ikan2-theme .partner-how li {
+  .ikan2-theme .partner-needs li {
     align-items: start;
     align-content: start;
     margin: 0;
