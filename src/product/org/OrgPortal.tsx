@@ -20,6 +20,11 @@ import { Settings } from './pages/Settings';
  * that lives on the user cannot express that.
  */
 
+/* The same photograph the member login uses, so the two front doors of one
+   product do not look like two products. */
+const HERO_IMAGE_URL =
+  'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwc3Vuc2V0JTIwbGFrZSUyMG5hdHVyZSUyMG1pbmRmdWxuZXNzJTIwcGVhY2VmdWx8ZW58MXx8fHwxNzczNjY4MjU5fDA&ixlib=rb-4.1.0&q=80&w=1080';
+
 type Section = 'overview' | 'people' | 'settings';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
@@ -219,14 +224,35 @@ function SignIn({ onSignIn }: { onSignIn: (email: string, password: string) => P
   };
 
   return (
-    <div className="ikan2-theme org-portal">
-      <div className="org-signin">
-        <div className="org-signin__card">
-          <h1 className="org-page__title" style={{ fontSize: 22, lineHeight: '30px' }}>
+    <div className="ikan2-theme org-portal org-login">
+      {/* The member login's split: image left, form right, brand top-left of
+          the form column. Rebuilt rather than imported — org/ may not reach
+          into app/ — and reduced to what an administrator signing in needs:
+          no sign-up, no social buttons, no "forgot password" to a flow this
+          surface does not own. */}
+      <aside className="org-login__art" aria-hidden="true">
+        <img src={HERO_IMAGE_URL} alt="" />
+        <div className="org-login__scrim" />
+        <div className="org-login__words">
+          <h2>Wellbeing your people can use, and you can measure.</h2>
+          <p>Aggregate insight into how your organisation is doing — never a window into any
+            one person.</p>
+        </div>
+      </aside>
+
+      <div className="org-login__form">
+        <a className="org-bar__brand" href="/">
+          <img src="/favicon.svg" alt="" width={32} height={32} />
+          iKAN
+        </a>
+
+        <div className="org-login__card">
+          <h1 className="org-page__title" style={{ fontSize: 24, lineHeight: '32px' }}>
             Organisation sign in
           </h1>
           <p className="org-page__lede" style={{ fontSize: 14 }}>
-            For administrators of an organisation that uses iKAN.
+            For administrators of an organisation that uses iKAN. Looking for your own iKAN
+            account? That lives in the app.
           </p>
 
           <form onSubmit={submit}>
@@ -238,6 +264,7 @@ function SignIn({ onSignIn }: { onSignIn: (email: string, password: string) => P
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@yourcompany.com"
               />
             </label>
             <label className="org-field">
@@ -254,11 +281,21 @@ function SignIn({ onSignIn }: { onSignIn: (email: string, password: string) => P
             {error && <div className="org-note org-note--error" role="alert">{error}</div>}
 
             <div style={{ marginTop: 20 }}>
-              <button type="submit" className="org-button" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
+              <button
+                type="submit"
+                className="org-button"
+                disabled={busy}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
             </div>
           </form>
+
+          <p className="org-login__help">
+            No access yet? Ask whoever set up iKAN at your organisation, or write to{' '}
+            <a href="mailto:support@ikanhealth.in">support@ikanhealth.in</a>.
+          </p>
         </div>
       </div>
     </div>

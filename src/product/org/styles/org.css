@@ -443,23 +443,109 @@
 }
 
 /* ── Sign in ──────────────────────────────────────────────────── */
+/*
+ * The member login's split, rebuilt here: photograph on the left, form on the
+ * right, brand above the form. Same photograph, so the two front doors of one
+ * product do not look like two products.
+ *
+ * `svh` not `vh` — on a phone `vh` excludes the browser chrome and the form
+ * ends up under it.
+ */
 
-.ikan2-theme .org-signin {
+.ikan2-theme .org-login {
   display: grid;
-  place-items: center;
+  grid-template-columns: 1fr;
   min-height: 100svh;
-  padding: 24px;
 }
 
-.ikan2-theme .org-signin__card {
+@media (min-width: 900px) {
+  .ikan2-theme .org-login {
+    grid-template-columns: 45% 1fr;
+  }
+}
+
+/* The art is decoration: it is the first thing to go when the viewport is a
+   phone, because a login that needs scrolling past a photo is worse than one
+   without the photo. */
+.ikan2-theme .org-login__art {
+  display: none;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .ikan2-theme .org-login__art { display: block; }
+}
+
+.ikan2-theme .org-login__art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ikan2-theme .org-login__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    oklch(0.2 0 0 / 0.5) 0%,
+    oklch(0.2 0 0 / 0.72) 60%,
+    oklch(0.2 0 0 / 0.88) 100%
+  );
+}
+
+.ikan2-theme .org-login__words {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 48px 40px;
+  color: var(--grey-0, #fff);
+}
+
+.ikan2-theme .org-login__words h2 {
+  margin: 0 0 12px;
+  max-width: 400px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.18;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-login__words p {
+  margin: 0;
+  max-width: 380px;
+  font-size: 15px;
+  line-height: 1.55;
+  opacity: 0.78;
+}
+
+.ikan2-theme .org-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px 24px 48px;
+  background: var(--background);
+}
+
+@media (min-width: 900px) {
+  .ikan2-theme .org-login__form { padding: 40px 48px; }
+}
+
+.ikan2-theme .org-login__card {
   width: 100%;
   max-width: 400px;
-  padding: 28px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
+  margin: auto;
 }
+
+.ikan2-theme .org-login__help {
+  margin: 22px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-login__help a { color: var(--brand-teal-ink); }
 
 @media (max-width: 640px) {
   .ikan2-theme .org-bar__org { display: none; }
