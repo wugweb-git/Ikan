@@ -9,6 +9,22 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — the top nav is the page measure plus 20px each side
+
+**The nav was narrower than the page below ~1440px.** Measured on ikanhealth.in at 1039px: the
+capsule ran 84–955 while every page's content ran 44–987, so the logo sat right of the page title
+and Sign in left of the content's edge. Two causes: the fixed band carried 40px of side padding
+(16px compact) and the capsule subtracted the page gutter again inside it, so the gutter counted
+twice; and the page scrolls inside `#root`, not the window, so the content is narrowed by #root's
+scrollbar while the fixed band spans the full window. The compact bar had the opposite fault: a
+fixed 12px inset, wider than the 24/44px gutter and aligned to nothing.
+
+Both bars are now `min(100% − 2 × gutter, --page-max)` plus `--nav-outset` (20px) each side, as
+asked, and the band ends at `right: var(--root-scrollbar)`, measured in `main.tsx` (0 with overlay
+scrollbars). Verified 20/20px overhang on every site page at 375, 768, 1039, 1280 and 1440.
+
+---
+
 ## 2026-10-12 — the organisation (B2B) portal, first half
 
 **`/org` exists**, a fourth surface at `src/product/org/` beside site, app and admin, on iKAN 2's
