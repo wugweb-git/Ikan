@@ -1354,7 +1354,7 @@ html {
 
 @media (max-width: 768px) {
   .nav-fixed-wrapper {
-    padding: 12px 16px;
+    padding: 12px 0;
   }
 }
 
@@ -5615,14 +5615,39 @@ select {
 }
 
 /*
- * The nav sits on the page measure too. It was capped at 1360px of its own
- * while the content and footer resolved to `--page-max`, so above ~1300px the
- * bar overhung everything beneath it — the logo sat left of every page title
- * and the Sign in button right of the footer's last column.
+ * THE NAV'S WIDTH: the page measure plus 20px each side.
+ *
+ * Both bars — the desktop capsule and the compact `.mnav` — are the content
+ * container (`min(100% - 2 × gutter, --page-max)`) widened by `--nav-outset`
+ * on each side, so the pill overhangs the page by exactly its own inset and
+ * never sits inside it. (User, 2026-10-12: "20 px each side".)
+ *
+ * Two things used to make it narrower than the page below ~1440px:
+ *   - the fixed band carried 40px of side padding (16px compact) AND the
+ *     capsule subtracted the gutter again inside it, so the gutter counted
+ *     twice;
+ *   - the page scrolls inside `#root`, not the window, so the content is
+ *     narrowed by #root's scrollbar while a fixed band spans the full window.
+ *     `--root-scrollbar` (measured in main.tsx; 0 with overlay scrollbars)
+ *     ends the band where the content area ends.
  */
+.ikan2-theme {
+  --nav-outset: 20px;
+}
+
+.nav-fixed-wrapper,
+.mnav {
+  right: var(--root-scrollbar, 0px);
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .ikan2-theme.ikan-capsule-nav,
-.ikan2-theme .ikan-capsule-nav {
-  max-width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+.ikan2-theme .ikan-capsule-nav,
+.ikan2-theme .mnav__bar {
+  width: calc(min(100% - (var(--page-gutter) * 2), var(--page-max)) + (var(--nav-outset) * 2));
+  max-width: none;
+  margin-inline: auto;
 }
 
 /* ── THE LIBRARY ──────────────────────────────────────────────────
