@@ -319,7 +319,12 @@ export interface PartnerApplicationForm {
   culturalExperience: string[];
   culturalExperienceOther: string;
   // 8 — availability & fees
-  availability: Record<string, string[]>; // day → day-part keys
+  /* Most partners keep the same hours each working day: days × times. Those
+     who don't switch on `availabilityByDay` and fill the per-day grid. */
+  availabilityDays: string[];
+  availabilityParts: string[];
+  availabilityByDay: boolean;
+  availability: Record<string, string[]>; // day → day-part keys, when by day
   feeIndividual: string;
   feeCouple: string;
   feeFamily: string;
@@ -351,6 +356,7 @@ export function emptyPartnerForm(): PartnerApplicationForm {
     communicationStyle: { warmDirect: 3, structuredFlexible: 3, reflectiveAction: 3, supportiveChallenging: 3, listenerInteractive: 3 },
     homeworkFrequency: '', homeworkTypes: [], homeworkTypeOther: '', philosophy: '',
     culturalExperience: [], culturalExperienceOther: '',
+    availabilityDays: [], availabilityParts: [], availabilityByDay: false,
     availability: {}, feeIndividual: '', feeCouple: '', feeFamily: '', slidingScale: '',
     contributions: [],
     introVideoUrl: '', workspacePhotos: [], mapsLink: '',
@@ -417,6 +423,12 @@ export function stepErrors(step: number, f: PartnerApplicationForm): string[] {
   return e;
 }
 
+/** The day → day-parts map the applicant means, whichever way they answered. */
+export function resolvedAvailability(f: PartnerApplicationForm): Record<string, string[]> {
+  if (f.availabilityByDay) return f.availability;
+  return Object.fromEntries((f.availabilityDays ?? []).map((d) => [d, [...(f.availabilityParts ?? [])]]));
+}
+
 // ── Payload ───────────────────────────────────────────────────────────────────
 
 /**
@@ -437,7 +449,8 @@ export function toPayload(f: PartnerApplicationForm) {
     .map((a) => ({ area: a, level: f.expertise[a] as ExpertiseLevel }));
   const languages = withOther(f.languages, 'Other', f.languagesOther);
   const approaches = withOther(f.approaches, 'Other', f.approachOther);
-  const days = WEEKDAYS.filter((d) => (f.availability[d] || []).length > 0);
+  const availability = resolvedAvailability(f);
+  const days = WEEKDAYS.filter((d) => (availability[d] || []).length > 0);
   const degrees = f.degrees.filter((d) => d.degree.trim());
   const yes = (v: string) => (v === '' ? null : v === 'yes');
   const fee = (v: string) => (v === '' ? null : Math.max(0, Number(v) || 0));
@@ -505,7 +518,7 @@ export function toPayload(f: PartnerApplicationForm) {
         homeworkFrequency: f.homeworkFrequency,
         homeworkTypes: withOther(f.homeworkTypes, 'Other', f.homeworkTypeOther),
         culturalExperience: withOther(f.culturalExperience, 'Others', f.culturalExperienceOther),
-        availability: Object.fromEntries(days.map((d) => [d, f.availability[d]])),
+        availability: Object.fromEntries(days.map((d) => [d, availability[d]])),
         slidingScale: yes(f.slidingScale),
         contributions: f.contributions.filter((c) => c.title.trim()),
         workspacePhotos: offline ? f.workspacePhotos : [],

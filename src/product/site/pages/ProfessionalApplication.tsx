@@ -163,7 +163,7 @@ function PhoneField({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-type ChipOption = string | { value: string; label: ReactNode; lang?: string; dir?: string };
+type ChipOption = string | { value: string; label: ReactNode; lang?: string; dir?: string; ariaLabel?: string };
 const optValue = (o: ChipOption) => (typeof o === 'string' ? o : o.value);
 
 /** A labelled group of iKAN 2 `Chip`s. `multi` toggles membership; single picks one (tap again to clear). */
@@ -184,9 +184,9 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
   return (
     <fieldset className="partner-wide partner-fieldset">
       <legend className="field__label">
-        {label}{required ? <Required /> : null}{multi ? <span className="partner-note"> · choose any</span> : null}
+        {label}{required ? <Required /> : null}
       </legend>
-      {hint ? <p className="field__message partner-group-hint">{hint}</p> : null}
+      {hint || multi ? <p className="field__message partner-group-hint">{[multi ? 'Choose all that apply.' : '', hint].filter(Boolean).join(' ')}</p> : null}
       <div className="partner-chips">
         {options.map((o) => {
           const v = optValue(o);
@@ -194,7 +194,7 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
           return (
             <button key={v} type="button" aria-pressed={on} onClick={() => toggle(v)}
               lang={typeof o === 'string' ? undefined : o.lang} dir={typeof o === 'string' ? undefined : o.dir}
-              aria-label={typeof o === 'string' || o.label === v ? undefined : v}
+              aria-label={typeof o === 'string' ? undefined : o.ariaLabel ?? (o.label === v || typeof o.label !== 'string' ? undefined : v)}
               className={`chip${size ? ` chip--${size}` : ' chip--lg'} state-layer motion-press`}>
               {on ? <CircleCheck aria-hidden="true" /> : null}
               {typeof o === 'string' ? o : o.label}
@@ -206,22 +206,45 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
   );
 }
 
-/** iKAN 2 `Segmented`: a radio group of equal 48px options, the chosen one in the accent. */
-function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 'no'; onChange: (v: '' | 'yes' | 'no') => void }) {
+/** iKAN 2 `Segmented`: choose ONE. A radio group of equal options, the chosen
+ *  one in the accent. Multi-select is `Chips`; the two never share a look.
+ *  `clearable` lets an optional answer be taken back by tapping it again. */
+function Choice({ label, options, value, onChange, hint, required, size, clearable = true, labelledBy }: {
+  label: string; options: readonly ChipOption[]; value: string; onChange: (v: string) => void;
+  hint?: string; required?: boolean; size?: 'sm'; clearable?: boolean; labelledBy?: string;
+}) {
   const id = useId();
+  const n = options.length;
+  const group = (
+    <div className={`segmented${size ? ' segmented--sm' : ''}${n <= 2 ? ' partner-segmented--pair' : ''}${n > 3 ? ' partner-segmented--many' : ''}`}
+      style={{ ['--segments' as string]: Math.min(n, 5) }} role="radiogroup" aria-labelledby={labelledBy ?? id}>
+      {options.map((o) => {
+        const v = optValue(o);
+        const on = value === v;
+        return (
+          <button key={v} type="button" role="radio" aria-checked={on}
+            onClick={() => onChange(on && clearable ? '' : v)} className="segmented__option state-layer">
+            {on ? <Check aria-hidden="true" strokeWidth={3} /> : null}
+            {typeof o === 'string' ? o : o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+  if (labelledBy) return group;
   return (
     <fieldset className="partner-wide partner-fieldset">
-      <legend className="field__label" id={id}>{label}</legend>
-      <div className="segmented partner-segmented" role="radiogroup" aria-labelledby={id}>
-        {(['yes', 'no'] as const).map((v) => (
-          <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
-            className="segmented__option state-layer">
-            {value === v ? <Check aria-hidden="true" strokeWidth={3} /> : null}
-            {v === 'yes' ? 'Yes' : 'No'}
-          </button>
-        ))}
-      </div>
+      <legend className="field__label" id={id}>{label}{required ? <Required /> : null}</legend>
+      {hint ? <p className="field__message partner-group-hint">{hint}</p> : null}
+      {group}
     </fieldset>
+  );
+}
+
+function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 'no'; onChange: (v: '' | 'yes' | 'no') => void }) {
+  return (
+    <Choice label={label} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+      value={value} onChange={(v) => onChange(v as '' | 'yes' | 'no')} />
   );
 }
 
@@ -443,8 +466,8 @@ function StepPractice({ f, set }: { f: Form; set: SetForm }) {
       <Field label="Years in Practice" required>
         <input className="field__control" type="number" min={0} max={70} inputMode="numeric" value={f.yearsInPractice} onChange={(e) => set({ yearsInPractice: e.target.value })} />
       </Field>
-      <Chips label="Approximate Clients Treated" options={CLIENTS_TREATED} value={f.clientsTreated} onChange={(v) => set({ clientsTreated: v as string })} />
-      <Chips label="Average Session Duration" options={SESSION_DURATIONS.map((m) => ({ value: m, label: `${m} mins` }))} value={f.sessionDuration} onChange={(v) => set({ sessionDuration: v as string })} />
+      <Choice label="Approximate Clients Treated" options={CLIENTS_TREATED} value={f.clientsTreated} onChange={(v) => set({ clientsTreated: v })} />
+      <Choice label="Average Session Duration" options={SESSION_DURATIONS.map((m) => ({ value: m, label: `${m} mins` }))} value={f.sessionDuration} onChange={(v) => set({ sessionDuration: v })} />
       <Chips label="Session Formats" required options={SESSION_FORMATS} value={f.sessionFormats} onChange={(v) => set({ sessionFormats: v as string[] })} />
       <YesNo label="Weekend Consultations" value={f.weekendConsultations} onChange={(v) => set({ weekendConsultations: v })} />
       <YesNo label="Emergency Consultations" value={f.emergencyConsultations} onChange={(v) => set({ emergencyConsultations: v })} />
@@ -455,8 +478,6 @@ function StepPractice({ f, set }: { f: Form; set: SetForm }) {
 function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
   const [adding, setAdding] = useState('');
   const areas = [...EXPERTISE_AREAS, ...f.customExpertiseAreas];
-  const rate = (area: string, level: ExpertiseLevel) =>
-    set({ expertise: { ...f.expertise, [area]: f.expertise[area] === level ? '' : level } });
   const addArea = () => {
     const a = adding.trim();
     if (a && !areas.includes(a)) set({ customExpertiseAreas: [...f.customExpertiseAreas, a] });
@@ -468,15 +489,10 @@ function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
         <h3 className="partner-group-title">Clinical Expertise Matrix</h3>
         <div className="partner-matrix">
           {areas.map((area) => (
-            <div key={area} className="partner-matrix__row" role="group" aria-label={area}>
-              <span className="partner-matrix__area">{area}</span>
-              <div className="partner-chips">
-                {EXPERTISE_LEVELS.map((level) => (
-                  <button key={level} type="button" className="chip chip--outline state-layer motion-press" aria-pressed={f.expertise[area] === level} onClick={() => rate(area, level)}>
-                    {level}
-                  </button>
-                ))}
-              </div>
+            <div key={area} className="partner-matrix__row">
+              <span className="partner-matrix__area" id={`area-${area.replace(/\W+/g, '-')}`}>{area}</span>
+              <Choice label={area} labelledBy={`area-${area.replace(/\W+/g, '-')}`} size="sm" options={EXPERTISE_LEVELS}
+                value={f.expertise[area] ?? ''} onChange={(v) => set({ expertise: { ...f.expertise, [area]: v as ExpertiseLevel | '' } })} />
             </div>
           ))}
         </div>
@@ -503,7 +519,7 @@ function StepClients({ f, set }: { f: Form; set: SetForm }) {
       <Chips label="Preferred Client Types" options={CLIENT_TYPES} value={f.clientTypes} onChange={(v) => set({ clientTypes: v as string[] })} />
       <OtherInput show={f.clientTypes.includes('Other')} label="Other client types" value={f.clientTypeOther} onChange={(v) => set({ clientTypeOther: v })} />
       <Chips label="Preferred Therapy Format" options={THERAPY_FORMATS} value={f.therapyFormats} onChange={(v) => set({ therapyFormats: v as string[] })} />
-      <Chips label="Preferred Case Complexity" options={CASE_COMPLEXITY} value={f.caseComplexity} onChange={(v) => set({ caseComplexity: v as string })} />
+      <Choice label="Preferred Case Complexity" options={CASE_COMPLEXITY.map((c) => ({ value: c, label: c.replace('-', '\u2011') }))} value={f.caseComplexity} onChange={(v) => set({ caseComplexity: v })} />
     </>
   );
 }
@@ -525,7 +541,7 @@ function StepStyle({ f, set }: { f: Form; set: SetForm }) {
           </label>
         ))}
       </div>
-      <Chips label="Homework Frequency" options={HOMEWORK_FREQUENCY} value={f.homeworkFrequency} onChange={(v) => set({ homeworkFrequency: v as string })} />
+      <Choice label="Homework Frequency" options={HOMEWORK_FREQUENCY} value={f.homeworkFrequency} onChange={(v) => set({ homeworkFrequency: v })} />
       {f.homeworkFrequency && f.homeworkFrequency !== 'Never' ? (
         <>
           <Chips label="Homework Types" options={HOMEWORK_TYPES} value={f.homeworkTypes} onChange={(v) => set({ homeworkTypes: v as string[] })} />
@@ -547,39 +563,57 @@ function StepCulture({ f, set }: { f: Form; set: SetForm }) {
 }
 
 function StepAvailability({ f, set }: { f: Form; set: SetForm }) {
-  const toggle = (day: string, part: string) => {
+  const parts = DAY_PARTS.map((p) => ({ value: p.key, ariaLabel: `${p.label}, ${p.hours}`, label: <>{p.label}<small className="partner-part-hours">{p.hours}</small></> }));
+  // Switching to by-day starts every day from the same-hours answer, and back.
+  const setByDay = (byDay: boolean) => {
+    if (byDay) {
+      set({ availabilityByDay: true, availability: Object.fromEntries(f.availabilityDays.map((d) => [d, [...f.availabilityParts]])) });
+    } else {
+      const days = WEEKDAYS.filter((d) => (f.availability[d] || []).length > 0);
+      const union = DAY_PARTS.map((p) => p.key).filter((k) => days.some((d) => f.availability[d].includes(k)));
+      set({ availabilityByDay: false, availabilityDays: days, availabilityParts: union });
+    }
+  };
+  const toggleDayPart = (day: string, part: string) => {
     const cur = f.availability[day] || [];
     set({ availability: { ...f.availability, [day]: cur.includes(part) ? cur.filter((p) => p !== part) : [...cur, part] } });
   };
   return (
     <>
-      <div className="partner-wide">
-        <h3 className="partner-group-title">Availability</h3>
-        <div className="partner-week" role="grid" aria-label="Weekly availability">
-          <div className="partner-week__row" role="row">
-            <span role="columnheader" />
-            {DAY_PARTS.map((p) => (
-              <span key={p.key} role="columnheader" className="partner-week__part">{p.label}<small>{p.hours}</small></span>
+      <h3 className="partner-wide partner-group-title">Availability</h3>
+      <Choice label="Do you keep the same hours each day?" clearable={false}
+        options={[{ value: 'same', label: 'Same every day' }, { value: 'by-day', label: 'Different by day' }]}
+        value={f.availabilityByDay ? 'by-day' : 'same'} onChange={(v) => setByDay(v === 'by-day')} />
+      {!f.availabilityByDay ? (
+        <>
+          <Chips label="Days you see clients" options={WEEKDAYS.map((d) => ({ value: d, label: d, ariaLabel: DAY_NAMES[d] }))}
+            value={f.availabilityDays} onChange={(v) => set({ availabilityDays: v as string[] })} />
+          <Chips label="Times of day" options={parts} value={f.availabilityParts} onChange={(v) => set({ availabilityParts: v as string[] })} />
+        </>
+      ) : (
+        <fieldset className="partner-wide partner-fieldset">
+          <legend className="field__label">Times on each day</legend>
+          <p className="field__message partner-group-hint">Choose all that apply. Leave a day empty if you don't work it.</p>
+          <div className="partner-week">
+            {WEEKDAYS.map((d) => (
+              <div key={d} className="partner-week__row" role="group" aria-label={DAY_NAMES[d]}>
+                <span className="partner-week__day" aria-hidden="true">{d}</span>
+                <div className="partner-chips">
+                  {DAY_PARTS.map((p) => {
+                    const on = (f.availability[d] || []).includes(p.key);
+                    return (
+                      <button key={p.key} type="button" aria-pressed={on} onClick={() => toggleDayPart(d, p.key)}
+                        className="chip chip--sm state-layer motion-press">
+                        {on ? <CircleCheck aria-hidden="true" /> : null}{p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
-          {WEEKDAYS.map((d) => (
-            <div key={d} className="partner-week__row" role="row">
-              <span role="rowheader" className="field__label partner-week__day">{d}</span>
-              {DAY_PARTS.map((p) => {
-                const on = (f.availability[d] || []).includes(p.key);
-                return (
-                  <span key={p.key} role="gridcell">
-                    <button type="button" className="chip chip--lg state-layer motion-press partner-week__slot" aria-pressed={on}
-                      aria-label={`${DAY_NAMES[d]} ${p.label.toLowerCase()}`} onClick={() => toggle(d, p.key)}>
-                      {on ? <CircleCheck aria-hidden="true" /> : null}
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
+        </fieldset>
+      )}
       <h3 className="partner-wide partner-group-title">Fees</h3>
       {([['feeIndividual', 'Individual'], ['feeCouple', 'Couple'], ['feeFamily', 'Family']] as const).map(([key, label]) => (
         <Field key={key} label={label} prefix="₹">

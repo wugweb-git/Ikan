@@ -9,6 +9,24 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — partner form: one control per kind of question; availability reworked
+
+**Choose-one and choose-any no longer look alike.** iKAN 2's rule, now applied everywhere: pills
+(`Chip`, aria-pressed) for choose-any, `Segmented` (radio group, accent when chosen) for
+choose-one. Approximate Clients Treated, Average Session Duration, Preferred Case Complexity,
+Homework Frequency, Yes/No and every row of the Clinical Expertise Matrix are Segmented (a compact
+40px variant for the matrix, which had been a third style of outlined pills). Choose-any groups say
+"Choose all that apply." as a helper line instead of " · choose any" after the label.
+
+**Sections read above questions.** Section titles stay h3/title-md and gain a rule and space above,
+rather than a size the type map does not have; questions stay label-lg.
+
+**Availability** was 28 empty slots. It is now "Do you keep the same hours each day?": same → pick
+days and times of day (each with its hours); different → a row of time pills per day, prefilled
+from the same-hours answer. Stored as before (`day → parts`, via `resolvedAvailability`).
+
+---
+
 ## 2026-10-12 — partner intro gets a photo; the form gets a type map
 
 **How it works** is a photo beside a timeline: a counselling session (Unsplash, free licence,
