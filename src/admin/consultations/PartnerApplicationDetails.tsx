@@ -133,6 +133,7 @@ export function PartnerApplicationDetails({ app }: { app: ApplicationDetail }) {
           <Section title="Practice">
             <Facts rows={[
               ['Professional title', d.professionalTitle],
+              ['PIN code', d.pincode],
               ['Settings', d.practiceSettings?.join(', ')],
               ['Clients treated', d.clientsTreated],
               ['Session length', d.sessionDurationMinutes ? `${d.sessionDurationMinutes} min` : undefined],

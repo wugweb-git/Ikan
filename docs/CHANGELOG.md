@@ -33,9 +33,23 @@ public-profile prompts with a 300-word counter. The draft saves to `localStorage
 the old form nor the spec asked, so an admin had no way to reply. And an "Add another area" row on
 the expertise matrix, because the spec's list ends in "etc."
 
-**Styled on iKAN 2.** The page uses `.ikan2-theme` and the site's existing `info-*`,
-`contact-field`, `info-tab` and `info-button` classes; the controls those did not cover live under
-`.partner-*` in `globals.css`, on iKAN 2 tokens only.
+**Built from iKAN 2's components, not lookalikes.** `ikan2.css` gains a "COMPONENTS, ported"
+section transcribed class for class from iKAN 2: `Field`, `PhoneField`, `Chip`, `Button`,
+`FormError`, `Progress`, the M3 state layer (6% hover, 12% pressed, focus ring) and `motion-press`.
+It also gains iKAN 2's h1–h6 → type-role map, **opt-in via `ikan2-type`** on a page root: applied
+site-wide it would zero the UA margins and set letter-spacing on Services' and the newsletter's
+headings, which their rules only partly style. `.partner-*` in `globals.css` is layout only. The
+step sits on iKAN 2's `.surface`, because its `--secondary` fields match this page's `--canvas`
+ground exactly and vanish on it.
+
+**Languages in their own script** (हिन्दी, मराठी, தமிழ், اردو …), with `lang` on each chip and
+`dir="rtl"` on Urdu; the English name is what is stored, so the directory keeps one spelling.
+
+**PIN code, looked up.** A required six-digit PIN (`^[1-9][0-9]{5}$`) is checked against India
+Post's public directory (`api.postalpincode.in`, no key, CORS open), which fills city and state.
+An unknown PIN is an error on the field; if the lookup is unreachable the form says so and lets
+the applicant type city and state. Stored as `details.pincode`. Phone follows iKAN 2's PhoneField:
+country code plus ten digits, stored as "+91 9876543210".
 
 **Verification is kept off the public profile, as the spec asks.** The body is now
 `{ contact, verification, profile }`. Contact and verification are stored only on the
@@ -50,9 +64,12 @@ review was served to anyone. It and the single-profile route now skip `pending_r
 `rejected` records. Live census before deploy: zero applications ever submitted, so nothing leaked
 in practice.
 
-**Deploy order:** the edge function before (or with) the frontend. The new form against the old
-function would be accepted, but the old function spreads the whole body onto the pending record,
-so contact and verification would land on the record that approval publishes.
+**Safe against the old backend.** The form posts to a new route, `POST /public/partner-application`.
+The live function predates it and 404s, so nothing is stored; the form tells the applicant it can't
+receive applications yet and keeps the draft. On the old path, that function would have spread
+contact and verification onto the record the public directory reads. The old path stays
+registered, behind the same allowlist, for a page cached before the change. Deploy order no longer
+matters for safety; until the edge function ships, submissions simply wait.
 
 Not done: video upload (the upload route allows images and PDF up to 10 MB, too small for a
 1–3 minute video, so the form takes a YouTube/Vimeo/Drive link).

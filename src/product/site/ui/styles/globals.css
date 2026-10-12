@@ -3600,84 +3600,67 @@ select {
 
 /* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
  *
- * The form is the Contact page's form grown to eleven steps, so it reuses
- * `contact-field`, `info-tab` and `info-button` as they are. What is below is
- * only what the spec asks for that the site had no class for: pill groups,
- * the expertise matrix, sliders, repeatable rows, the weekly grid and the
- * step rail. iKAN 2 tokens only; no new colours.
+ * LAYOUT ONLY. Every control on the page is an iKAN 2 component ported into
+ * ikan2.css (field, phone-field, chip, btn, form-error, progress, the state
+ * layer), and its headings take iKAN 2's h1–h6 map through `ikan2-type`.
+ * What is here places those components: the form grid, rows, the expertise
+ * matrix, the week grid and the step rail. No colours, no states.
  * ───────────────────────────────────────────────────────────────── */
 
-.ikan2-theme .partner-form {
-  max-width: 46rem;
-}
-
-.ikan2-theme .contact-field select {
-  width: 100%;
-  height: 50px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  font-size: 15px;
-}
-
-.ikan2-theme .contact-field select:focus-visible,
-.ikan2-theme .partner-form button:focus-visible,
-.ikan2-theme .partner-steps__item:focus-visible,
-.ikan2-theme .partner-slider input:focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: 2px;
-}
-
-.ikan2-theme .partner-required {
-  font-style: normal;
-  color: var(--brand-coral-ink);
-}
-
-.ikan2-theme .partner-hint {
-  display: block;
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--muted-foreground);
-}
-
-.ikan2-theme .partner-over {
-  color: var(--destructive);
-  font-weight: 600;
-}
-
-.ikan2-theme .partner-subhead {
-  margin-top: 8px;
-  font-family: var(--font-display);
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 600;
-  color: var(--foreground);
-}
-
-/* Pill groups */
-.ikan2-theme .partner-group__label {
+.ikan2-theme .partner-progress {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: 8px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  color: var(--foreground);
+  margin-top: 32px;
 }
 
-.ikan2-theme .partner-group__note {
-  font-size: 12px;
+.ikan2-theme .partner-steps {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0 0 4px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.ikan2-theme .partner-steps__num {
+  min-width: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The step sits on iKAN 2's `.surface`: its fields are `--secondary`, which
+   matches this page's `--canvas` ground, and in iKAN 2 a form is always on white. */
+.ikan2-theme .partner-step {
+  max-width: 50rem;
+  margin-top: 32px;
+  padding: 32px;
+}
+
+.ikan2-theme .partner-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+  max-width: 46rem;
+  margin-top: 24px;
+  align-items: start;
+}
+
+.ikan2-theme .partner-wide {
+  grid-column: 1 / -1;
+}
+
+.ikan2-theme .partner-note {
   font-weight: 400;
-  color: var(--muted-foreground);
 }
 
-.ikan2-theme .partner-group > .partner-hint {
-  margin: -4px 0 10px;
+.ikan2-theme .partner-group-title {
+  margin-bottom: 4px;
+}
+
+.ikan2-theme .partner-group-hint {
+  margin: 0 0 10px;
 }
 
 .ikan2-theme .partner-chips {
@@ -3686,34 +3669,28 @@ select {
   gap: 8px;
 }
 
-.ikan2-theme .partner-chip {
-  gap: 6px;
-  height: 40px;
-  border-radius: 999px;
-}
-
-.ikan2-theme .partner-chip--sm {
-  height: 34px;
-  padding: 0 12px;
-  font-size: 13px;
-}
-
-.ikan2-theme .partner-chip[aria-pressed='true'] {
-  background: var(--foreground);
-  border-color: var(--foreground);
-  color: var(--background);
-}
-
-.ikan2-theme .partner-chip__tick {
-  width: 16px;
-  height: 16px;
-}
-
-/* Expertise matrix: one row per area, the four levels as a pill group. */
-.ikan2-theme .partner-matrix {
+.ikan2-theme .partner-row {
   display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--border);
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ikan2-theme .partner-row--spaced {
+  margin-top: 16px;
+}
+
+.ikan2-theme .partner-row__cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ikan2-theme .partner-row__cell--narrow {
+  flex: 0 0 6.5rem;
+}
+
+.ikan2-theme .partner-row > .btn {
+  margin-bottom: 4px;
 }
 
 .ikan2-theme .partner-matrix__row {
@@ -3728,134 +3705,26 @@ select {
 .ikan2-theme .partner-matrix__area {
   font-size: 15px;
   font-weight: 500;
-  color: var(--foreground);
 }
 
-/* Repeatable rows */
-.ikan2-theme .partner-row,
-.ikan2-theme .partner-upload-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.ikan2-theme .partner-row__cell {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.ikan2-theme .partner-row__cell--narrow {
-  flex: 0 0 6.5rem;
-}
-
-.ikan2-theme .partner-add,
-.ikan2-theme .partner-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background var(--dur-fast) var(--ease-out);
-}
-
-.ikan2-theme .partner-icon-button {
-  width: 44px;
-  padding: 0;
-}
-
-.ikan2-theme .partner-add:hover:not(:disabled),
-.ikan2-theme .partner-icon-button:hover {
-  background: var(--secondary);
-}
-
-.ikan2-theme .partner-add:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.ikan2-theme .partner-add svg,
-.ikan2-theme .partner-icon-button svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Uploads */
-.ikan2-theme .partner-files {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0 0 10px;
-  padding: 0;
-  list-style: none;
-}
-
-.ikan2-theme .partner-files li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 6px 6px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-
-.ikan2-theme .partner-headshot {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.ikan2-theme .partner-headshot img {
-  width: 88px;
-  height: 88px;
-  border-radius: 20px;
-  object-fit: cover;
-}
-
-.ikan2-theme .partner-error {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--destructive);
-}
-
-/* Sliders */
 .ikan2-theme .partner-slider {
   display: grid;
   grid-template-columns: 7.5rem minmax(0, 1fr) 7.5rem;
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-}
-
-.ikan2-theme .partner-slider__pole {
   font-size: 14px;
-  color: var(--foreground);
 }
 
-.ikan2-theme .partner-slider__pole--right {
+.ikan2-theme .partner-slider__right {
   text-align: right;
 }
 
 .ikan2-theme .partner-slider input {
   width: 100%;
-  accent-color: var(--brand-teal-ink);
+  accent-color: var(--primary);
 }
 
-/* Weekly grid */
 .ikan2-theme .partner-week {
   display: flex;
   flex-direction: column;
@@ -3875,7 +3744,6 @@ select {
   font-size: 13px;
   font-weight: 500;
   text-align: center;
-  color: var(--foreground);
 }
 
 .ikan2-theme .partner-week__part small {
@@ -3885,147 +3753,49 @@ select {
 }
 
 .ikan2-theme .partner-week__day {
-  font-size: 14px;
-  font-weight: 500;
+  margin: 0;
 }
 
 .ikan2-theme .partner-week__slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--background);
-  cursor: pointer;
 }
 
-.ikan2-theme .partner-week__slot[aria-pressed='true'] {
-  background: var(--foreground);
-  border-color: var(--foreground);
-}
-
-.ikan2-theme .partner-week__slot svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ikan2-theme .partner-currency {
+.ikan2-theme .partner-files {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-}
-
-.ikan2-theme .partner-currency > span {
-  font-size: 16px;
-  color: var(--muted-foreground);
-}
-
-/* Step rail */
-.ikan2-theme .partner-progress {
-  margin-top: 32px;
-}
-
-.ikan2-theme .partner-progress__count {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--brand-teal-ink);
-}
-
-.ikan2-theme .partner-progress__bar {
-  height: 6px;
-  margin: 8px 0 16px;
-  border-radius: 999px;
-  background: var(--secondary);
-  overflow: hidden;
-}
-
-.ikan2-theme .partner-progress__bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--foreground);
-  transition: width var(--dur-base) var(--ease-out);
-}
-
-.ikan2-theme .partner-steps {
-  display: flex;
-  gap: 8px;
-  margin: 0;
-  padding: 0 0 4px;
+  margin: 0 0 12px;
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
-.ikan2-theme .partner-steps__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 12px 0 6px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
+.ikan2-theme .partner-files .field__box {
+  justify-content: space-between;
+  padding-right: 4px;
 }
 
-.ikan2-theme .partner-steps__item:disabled {
-  cursor: default;
-  color: var(--muted-foreground);
-}
-
-.ikan2-theme .partner-steps__item[aria-current='step'] {
-  background: var(--foreground);
-  border-color: var(--foreground);
-  color: var(--background);
-}
-
-.ikan2-theme .partner-steps__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: var(--secondary);
-  color: var(--foreground);
-  font-size: 12px;
-}
-
-.ikan2-theme .partner-steps__num svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ikan2-theme .partner-steps__item[aria-current='step'] .partner-steps__num {
-  background: var(--background);
-}
-
-/* Validation and footer */
-.ikan2-theme .partner-missing {
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: var(--error-container);
-  color: var(--on-error-container);
+.ikan2-theme .partner-files__name {
   font-size: 14px;
-  line-height: 22px;
+  overflow-wrap: anywhere;
 }
 
-.ikan2-theme .partner-missing p {
-  font-weight: 600;
+.ikan2-theme .partner-headshot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.ikan2-theme .partner-missing ul {
+.ikan2-theme .partner-headshot img {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.ikan2-theme .form-error ul {
   margin: 4px 0 0;
   padding-left: 18px;
+  font-weight: 400;
 }
 
 .ikan2-theme .partner-nav {
@@ -4038,16 +3808,6 @@ select {
   border-top: 1px solid var(--border);
 }
 
-.ikan2-theme .partner-nav .info-button {
-  margin-top: 0;
-  gap: 8px;
-}
-
-.ikan2-theme .partner-nav__arrow {
-  width: 16px;
-  height: 16px;
-}
-
 .ikan2-theme .partner-done__icon {
   width: 48px;
   height: 48px;
@@ -4055,14 +3815,25 @@ select {
   color: var(--brand-teal-ink);
 }
 
+.ikan2-theme .partner-done__cta {
+  margin-top: 24px;
+}
+
 @media (max-width: 599px) {
+  .ikan2-theme .partner-step {
+    padding: 20px 16px;
+  }
+
+  .ikan2-theme .partner-form {
+    grid-template-columns: 1fr;
+  }
+
   .ikan2-theme .partner-matrix__row {
     grid-template-columns: 1fr;
     gap: 8px;
   }
 
-  .ikan2-theme .partner-row,
-  .ikan2-theme .partner-upload-row {
+  .ikan2-theme .partner-row {
     flex-wrap: wrap;
   }
 

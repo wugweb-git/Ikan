@@ -75,6 +75,7 @@ export interface PartnerVerification {
 
 export interface PartnerDetails {
   professionalTitle?: string;
+  pincode?: string;
   practiceSettings?: string[];
   clientsTreated?: string;
   sessionDurationMinutes?: number | null;

@@ -34,10 +34,88 @@ export function categoryForTitle(title: string): string {
   return 'therapist';
 }
 
+/**
+ * Each language is shown in its own script, which is how a speaker looks for
+ * it. `value` is the English name that is stored, so the directory's language
+ * filter keeps one spelling; `lang` and `dir` let a screen reader pronounce
+ * the label and lay Urdu out right to left.
+ */
 export const LANGUAGES = [
-  'English', 'Hindi', 'Marathi', 'Gujarati', 'Bengali', 'Tamil', 'Telugu',
-  'Kannada', 'Malayalam', 'Punjabi', 'Urdu', 'Odia',
+  { value: 'English', native: 'English', lang: 'en' },
+  { value: 'Hindi', native: 'हिन्दी', lang: 'hi' },
+  { value: 'Marathi', native: 'मराठी', lang: 'mr' },
+  { value: 'Gujarati', native: 'ગુજરાતી', lang: 'gu' },
+  { value: 'Bengali', native: 'বাংলা', lang: 'bn' },
+  { value: 'Tamil', native: 'தமிழ்', lang: 'ta' },
+  { value: 'Telugu', native: 'తెలుగు', lang: 'te' },
+  { value: 'Kannada', native: 'ಕನ್ನಡ', lang: 'kn' },
+  { value: 'Malayalam', native: 'മലയാളം', lang: 'ml' },
+  { value: 'Punjabi', native: 'ਪੰਜਾਬੀ', lang: 'pa' },
+  { value: 'Urdu', native: 'اردو', lang: 'ur', dir: 'rtl' },
+  { value: 'Odia', native: 'ଓଡ଼ିଆ', lang: 'or' },
 ] as const;
+
+/**
+ * Country codes, from iKAN 2's `components/phone-field.tsx`. A phone is stored
+ * as "+91 9876543210": the dial code, a space, the last ten digits.
+ */
+export const COUNTRIES = [
+  { code: 'IN', flag: '🇮🇳', dial: '+91', name: 'India' },
+  { code: 'AE', flag: '🇦🇪', dial: '+971', name: 'United Arab Emirates' },
+  { code: 'US', flag: '🇺🇸', dial: '+1', name: 'United States' },
+  { code: 'GB', flag: '🇬🇧', dial: '+44', name: 'United Kingdom' },
+  { code: 'CA', flag: '🇨🇦', dial: '+1', name: 'Canada' },
+  { code: 'AU', flag: '🇦🇺', dial: '+61', name: 'Australia' },
+  { code: 'SG', flag: '🇸🇬', dial: '+65', name: 'Singapore' },
+  { code: 'SA', flag: '🇸🇦', dial: '+966', name: 'Saudi Arabia' },
+  { code: 'QA', flag: '🇶🇦', dial: '+974', name: 'Qatar' },
+  { code: 'DE', flag: '🇩🇪', dial: '+49', name: 'Germany' },
+  { code: 'NP', flag: '🇳🇵', dial: '+977', name: 'Nepal' },
+  { code: 'BD', flag: '🇧🇩', dial: '+880', name: 'Bangladesh' },
+  { code: 'LK', flag: '🇱🇰', dial: '+94', name: 'Sri Lanka' },
+] as const;
+export type Country = (typeof COUNTRIES)[number];
+
+/** "+91 98765 43210", "9876543210" → the country and the last ten digits. */
+export function parsePhone(value: string): { country: Country; number: string } {
+  const v = value.replace(/\s/g, '');
+  const byDial = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length).find((c) => v.startsWith(c.dial));
+  const digits = (byDial ? v.slice(byDial.dial.length) : v).replace(/\D/g, '');
+  return { country: byDial ?? COUNTRIES[0], number: digits.slice(-10) };
+}
+
+export const formatPhone = (country: Country, number: string) => (number ? `${country.dial} ${number}` : '');
+
+// ── PIN code ──────────────────────────────────────────────────────────────────
+
+/** An Indian PIN: six digits, never starting with 0. */
+export const PIN_PATTERN = /^[1-9][0-9]{5}$/;
+
+export interface PinLookup { district: string; state: string; localities: string[] }
+
+/** The state name as our list spells it ("&" → "and", case-insensitive), or ''. */
+export function matchState(name: string): string {
+  const norm = (x: string) => x.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, ' ').trim();
+  return INDIAN_STATES.find((s) => norm(s) === norm(name)) ?? '';
+}
+
+/**
+ * India Post's public PIN directory (api.postalpincode.in): free, no key, CORS
+ * open. Returns null for a PIN it does not know; throws when it cannot be
+ * reached, so the caller can tell "wrong PIN" from "lookup down".
+ */
+export async function lookupPin(pin: string, signal?: AbortSignal): Promise<PinLookup | null> {
+  const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`, { signal });
+  if (!res.ok) throw new Error(`PIN lookup failed (${res.status})`);
+  const [result] = await res.json();
+  const offices: { Name: string; District: string; State: string }[] = result?.PostOffice ?? [];
+  if (result?.Status !== 'Success' || offices.length === 0) return null;
+  return {
+    district: offices[0].District,
+    state: matchState(offices[0].State),
+    localities: offices.map((o) => o.Name),
+  };
+}
 
 export const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
@@ -192,6 +270,7 @@ export interface PartnerApplicationForm {
   professionalTitleOther: string;
   languages: string[];
   languagesOther: string;
+  pincode: string;
   city: string;
   state: string;
   headshot: UploadedFile | null;
@@ -258,7 +337,7 @@ export interface PartnerApplicationForm {
 export function emptyPartnerForm(): PartnerApplicationForm {
   return {
     name: '', email: '', phone: '', professionalTitle: '', professionalTitleOther: '',
-    languages: [], languagesOther: '', city: '', state: '', headshot: null,
+    languages: [], languagesOther: '', pincode: '', city: '', state: '', headshot: null,
     highestQualification: '', highestQualificationOther: '',
     degrees: [{ degree: '', institution: '', year: '' }],
     registration: '', registrationOther: '', registrationNumber: '',
@@ -315,9 +394,10 @@ export function stepErrors(step: number, f: PartnerApplicationForm): string[] {
   if (step === 0) {
     if (!f.name.trim()) e.push('Full name');
     if (!EMAIL_PATTERN.test(f.email.trim())) e.push('A valid email address');
-    if (f.phone.replace(/\D/g, '').length < 10) e.push('A phone number');
+    if (parsePhone(f.phone).number.length < 10) e.push('A 10-digit phone number');
     if (!f.professionalTitle) e.push('Professional title');
     if (withOther(f.languages, 'Other', f.languagesOther).length === 0) e.push('At least one language');
+    if (!PIN_PATTERN.test(f.pincode)) e.push('A 6-digit PIN code');
     if (!f.city.trim()) e.push('City');
     if (!f.state) e.push('State');
   }
@@ -409,6 +489,7 @@ export function toPayload(f: PartnerApplicationForm) {
         professionalTitle: title,
         city: f.city.trim(),
         state: f.state,
+        pincode: f.pincode,
         practiceSettings: withOther(f.practiceSettings, 'Other', f.practiceSettingOther),
         clientsTreated: f.clientsTreated,
         sessionDurationMinutes: f.sessionDuration ? Number(f.sessionDuration) : null,

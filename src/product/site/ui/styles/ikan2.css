@@ -1079,3 +1079,421 @@
   font-weight: 500;
   letter-spacing: 0.01em;
 }
+
+/* ══ HEADINGS, ported ══════════════════════════════════════════════
+ *
+ * iKAN 2 maps every heading level to a type role in its base layer
+ * (`ikan2/src/styles.css`, "h1 … h6"), so an unclassed heading is never the
+ * browser's Times-ish 2em bold. Same map here, wrapped in :where() so it has
+ * no specificity: any class on a heading still wins, exactly as iKAN 2's
+ * @layer base loses to its type-* utilities.
+ *
+ * OPT-IN, like `.ikan2-theme`: a page adds `ikan2-type` to its root. Applied
+ * site-wide it would zero the UA margins and set letter-spacing on headings
+ * that Services and the newsletter block style only partly (their rules set
+ * margin-top and font, and lean on the browser for the rest).
+ *
+ *   h1 headline-lg · h2 headline-sm · h3 title-md · h4 title-lg
+ *   h5 label-lg    · h6 label-md
+ * ═════════════════════════════════════════════════════════════════ */
+
+.ikan2-type :where(h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  color: var(--foreground);
+}
+
+.ikan2-type :where(h1) {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ikan2-type :where(h2) {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.ikan2-type :where(h3) {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ikan2-type :where(h4) {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.ikan2-type :where(h5) {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.ikan2-type :where(h6) {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ══ COMPONENTS, ported ════════════════════════════════════════════
+ *
+ * The header of this file kept iKAN 2's components out because nothing on
+ * the site rendered them. The partner application (/join/partner) is the
+ * first site page that is a real form, so the handful it needs are
+ * transcribed here, class for class, from their iKAN 2 source. They are
+ * the same controls with the same states, not a lookalike:
+ *
+ *   .state-layer   components/equip/m3.ts       `stateLayer`
+ *   .motion-press  styles.css                   `@utility motion-press`
+ *   .field         components/auth-ui.tsx       `Field`
+ *   .phone-field   components/phone-field.tsx   `PhoneField` (auth variant)
+ *   .chip          components/kit/chip.tsx      `Chip`
+ *   .btn           components/equip/m3.ts       `Button`
+ *   .form-error    components/auth-ui.tsx       `FormError`
+ *   .progress      components/ui/progress.tsx   `Progress`
+ *
+ * When the source moves, diff and follow it; do not restyle these here.
+ * ═════════════════════════════════════════════════════════════════ */
+
+/* M3 state layer: a current-colour veil, 6% on hover, 12% pressed. */
+.ikan2-theme .state-layer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.ikan2-theme .state-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .state-layer:hover::after {
+  opacity: 0.06;
+}
+
+.ikan2-theme .state-layer:active::after {
+  opacity: 0.12;
+}
+
+.ikan2-theme .state-layer:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+.ikan2-theme .motion-press {
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .motion-press:active {
+  transform: scale(0.97);
+}
+
+/* Field: label above, a 48px secondary box that whitens on focus, error border. */
+.ikan2-theme .field {
+  display: block;
+  min-width: 0;
+}
+
+.ikan2-theme .field__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .field__box {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--secondary);
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .field__box:focus-within {
+  border-color: color-mix(in oklab, var(--foreground) 60%, transparent);
+  background: var(--background);
+}
+
+.ikan2-theme .field__box[data-invalid='true'] {
+  border-color: var(--error);
+}
+
+.ikan2-theme .field__box--multiline {
+  align-items: stretch;
+  padding: 12px 16px;
+}
+
+.ikan2-theme .field__control {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  outline: none;
+}
+
+.ikan2-theme .field__control::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+}
+
+.ikan2-theme textarea.field__control {
+  height: auto;
+  min-height: 120px;
+  resize: vertical;
+}
+
+.ikan2-theme select.field__control {
+  cursor: pointer;
+}
+
+.ikan2-theme .field__prefix {
+  padding-right: 8px;
+  font-size: 16px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .field__message {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .field__message--error {
+  color: var(--error);
+}
+
+/* Phone field: flag + dial code over an invisible native select, then the number. */
+.ikan2-theme .phone-field__country {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.ikan2-theme .phone-field__country > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.ikan2-theme .phone-field__flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ikan2-theme .phone-field__country svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .phone-field__country select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ikan2-theme .phone-field__number {
+  padding-left: 12px;
+  border-left: 1px solid color-mix(in oklab, var(--foreground) 15%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chip: interactive pill. Unselected `neutral`, selected always `solid`. */
+.ikan2-theme .chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ikan2-theme .chip--sm {
+  height: 28px;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.ikan2-theme .chip--lg {
+  height: 36px;
+  padding: 0 16px;
+}
+
+.ikan2-theme .chip--outline {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 20%, transparent);
+}
+
+.ikan2-theme .chip[aria-pressed='true'],
+.ikan2-theme .chip[aria-current='step'] {
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: none;
+}
+
+.ikan2-theme .chip:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.ikan2-theme .chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Button: filled / outlined / text, 48px (lg) or 40px (md). */
+.ikan2-theme .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ikan2-theme .btn--md {
+  height: 40px;
+  padding: 0 20px;
+}
+
+.ikan2-theme .btn--filled {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.ikan2-theme .btn--outlined {
+  background: transparent;
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 25%, transparent);
+}
+
+.ikan2-theme .btn--text {
+  padding: 0 12px;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.ikan2-theme .btn--icon {
+  width: 40px;
+  padding: 0;
+}
+
+.ikan2-theme .btn:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.ikan2-theme .btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ikan2-theme .btn__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 999px;
+  animation: ikan2-spin 0.8s linear infinite;
+}
+
+@keyframes ikan2-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ikan2-theme .form-error {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.ikan2-theme .progress {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 20%, transparent);
+}
+
+.ikan2-theme .progress > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ikan2-theme .motion-press:active {
+    transform: none;
+  }
+
+  .ikan2-theme .btn__spinner {
+    animation-duration: 2s;
+  }
+}

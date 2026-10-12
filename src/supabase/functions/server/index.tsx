@@ -4810,7 +4810,12 @@ const PUBLIC_PROFILE_KEYS = [
   'details', 'clientFAQs', 'testimonials', 'certificates', 'willingToShareArticles',
 ] as const;
 
-app.post("/public/professional-application", async (c) => {
+// Served on its own path. The new form posts here, so against a server that
+// predates it the request 404s and nothing is stored; on the old path such a
+// server would have spread contact and verification onto the record the
+// public directory reads. The old path stays registered for a page cached
+// before the change, and now gets the same allowlist.
+const submitPartnerApplication = async (c: any) => {
   try {
     const body = await c.req.json().catch(() => null);
     if (!body || typeof body !== 'object') return c.json({ error: 'Expected a JSON body' }, 400);
@@ -4923,7 +4928,10 @@ app.post("/public/professional-application", async (c) => {
     console.error('Professional application error:', error);
     return c.json({ error: 'Failed to submit application' }, 500);
   }
-});
+};
+
+app.post("/public/partner-application", submitPartnerApplication);
+app.post("/public/professional-application", submitPartnerApplication);
 
 app.get("/admin/professional-applications", requireAdmin, async (c) => {
   try {
