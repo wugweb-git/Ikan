@@ -42,6 +42,7 @@ import { registerScalesRoutes } from './scales-routes.ts';
 import { registerHealthConnectRoutes } from './health-connect-routes.ts';
 import { registerBrevoRoutes } from './brevo-routes.ts';
 import { registerCorporateRoutes } from './corporate-routes.ts';
+import { registerOrgRoutes } from './org-routes.ts';
 import { registerKVAuditRoutes } from './kv-audit-routes.ts';
 import { registerCheckinTemplateRoutes } from './checkin-template-routes.ts';
 import { registerIkanScoreRoutes } from './ikan-score-routes.ts';
@@ -271,6 +272,9 @@ registerScalesRoutes(app, requireAdmin);
 registerHealthConnectRoutes(app, requireAuth);
 registerBrevoRoutes(app, requireAdmin, requireAuth);
 registerCorporateRoutes(app);
+// The organisation (B2B) portal. Guards itself per-route against
+// org_memberships, so it takes no middleware from here.
+registerOrgRoutes(app);
 // FIXED 2026-09-01: was requireAuth on all nine /admin/kv-audit* routes.
 // Eight are shadowed by requireAdmin copies in admin-routes.ts and so were
 // safe by registration order alone — including POST /admin/kv-audit/purge-prefix,

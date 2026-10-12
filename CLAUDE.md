@@ -463,6 +463,49 @@ at all — only `{date, response_id, assessment_id}` — so it needs no migratio
 
 Known data notes: `assessment_result:` stores each result twice in KV (canonical `…:{resultId}` plus a `…:{assessmentId}:latest` copy) — the tables hold 93 de-duplicated logical results, no data lost. `assessment_id` has no FK because it legitimately holds synthetic check-in ids (`checkin_{equipId}_day_N`).
 
+## The organisation (B2B) portal — real tables, not KV
+
+Four Postgres tables added 2026-10-12, serving `/org`: `organizations`,
+`org_memberships`, `org_invites`, `org_audit_log`. API in
+`src/supabase/functions/server/org-routes.ts`; UI surface `src/product/org/`.
+
+**All four have RLS on with NO POLICIES**, the same model as `kv_store_cc205da9`:
+service-role only, reachable exclusively through the edge function's guarded routes.
+This is a privacy control, not housekeeping. With permissive policies an org admin
+holding the anon key could read `org_memberships` straight through PostgREST and
+bypass the aggregate rules the portal exists to enforce.
+
+| table | holds |
+|---|---|
+| `organizations` | name, slug, seats, contract dates, `allowed_email_domains`, `min_group_size` (floor 5, default 10) |
+| `org_memberships` | the roster: `org_id`, `user_id` (null until accepted), email, role (`member`/`admin`/`viewer`), department, `started_at`/`ended_at` |
+| `org_invites` | single-use hashed tokens, separate so one can be revoked without losing the roster row |
+| `org_audit_log` | who looked at or exported what |
+
+**The two rules that are easy to break:**
+
+- **Off-boarding sets `ended_at`; it never deletes the row.** That row is what says
+  this person was in Marketing during Q3. Delete it and every historical aggregate
+  they contributed to silently rewrites itself — which is both wrong and the exact
+  change that lets a reader difference out an individual by comparing a figure
+  before and after. The seat frees anyway: `ended_at` leaves the partial unique index.
+- **Department belongs to the membership, not the person.** People change teams, and
+  an attribute on the user would retroactively re-file their history.
+
+**An org admin may see the roster** — names, emails, departments, who accepted. They
+supplied it, and HR already knows who works there. **They may never see a wellbeing
+figure about an individual**, by any route or filter. `src/product/org` is its own
+surface so that the import boundary makes reaching member components a build failure
+rather than a thing to remember.
+
+**No aggregate wellbeing reporting exists yet, deliberately.** It needs member
+activity, which lives in ikan2's `ikan2_user_state` — the old repo's five `user_*`
+tables took their last write on 2026-06-25 and are a historical archive. `/org/:id/overview`
+returns `wellbeing: { available: false, reason }` rather than a number, because an
+empty panel invites someone to fill it with whatever figure is nearest to hand.
+
+---
+
 ## CMS content architecture
 
 Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/product/site/content/cms-defaults.ts` and render it directly. `usePageContent` and its `/cms/pages/{pageId}` fetch were unwired on 2026-09-10 (`c1bb553b`), so **no KV record overrides page copy any more** — change the copy in `cms-defaults.ts` and deploy. Any `cms_page:` rows left in KV are not read by the frontend.
