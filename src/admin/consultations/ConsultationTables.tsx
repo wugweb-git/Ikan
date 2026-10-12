@@ -1,4 +1,4 @@
-import { Star, MapPin, Calendar as CalendarIcon, MoreHorizontal, CircleCheck, CircleX, Eye, Briefcase, Languages, Pencil, Download, Clock, FileText } from 'lucide-react';
+import { Star, MapPin, Calendar as CalendarIcon, MoreHorizontal, CircleCheck, CircleX, Eye, Briefcase, Languages, Pencil, Download, Clock, FileText, Mail, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
 import { AdminStatusBadge, resolveStatusVariant } from '../ui/kit/AdminStatusBadge';
 import { AdminDataTable, type Column, type FilterOption } from '../ui/kit/AdminDataTable';
@@ -134,7 +134,7 @@ export function ApplicationsTable({ applications, loading, processingApp, onView
     return (
       <AdminEmptyState
         title="No Applications Yet"
-        description="Share the universal application link with professionals to start receiving applications."
+        description="Share the partner application link with therapists and practitioners to start receiving applications."
         icon={<FileText className="w-12 h-12 text-[var(--color-text-muted)]" />}
         action={{ label: 'Copy Application Link', onClick: onCopyLink }}
       />
@@ -148,6 +148,8 @@ export function ApplicationsTable({ applications, loading, processingApp, onView
         <div className="flex flex-col">
           <span className="font-medium text-sm">{a.name}</span>
           <span className={MUTED_XS}>{a.credentials}</span>
+          {a.email && <a href={`mailto:${a.email}`} onClick={(e) => e.stopPropagation()} className={`${MUTED_XS} flex items-center gap-1 hover:underline`}><Mail className="w-3 h-3" /> {a.email}</a>}
+          {a.phone && <a href={`tel:${a.phone.replace(/[^\d+]/g, '')}`} onClick={(e) => e.stopPropagation()} className={`${MUTED_XS} flex items-center gap-1 hover:underline`}><Phone className="w-3 h-3" /> {a.phone}</a>}
         </div>
       ),
     },
@@ -208,7 +210,7 @@ export function ApplicationsTable({ applications, loading, processingApp, onView
   return (
     <AdminDataTable
       columns={columns} data={applications}
-      searchKeys={['name', 'credentials', 'category', 'location']}
+      searchKeys={['name', 'email', 'phone', 'credentials', 'category', 'location']}
       filters={APP_FILTERS} searchPlaceholder="Search applications..."
       onRowClick={(item) => onView(item.id)}
       actions={
