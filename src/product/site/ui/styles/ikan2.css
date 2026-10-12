@@ -1539,6 +1539,14 @@
   color: var(--background);
 }
 
+/* Compact: a 40px row for matrices and long lists of one-of-n questions. */
+.ikan2-theme .segmented--sm .segmented__option {
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
 .ikan2-theme .segmented__option svg {
   width: 16px;
   height: 16px;
