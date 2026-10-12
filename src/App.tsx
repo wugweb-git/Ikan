@@ -742,15 +742,12 @@ function AppContent() {
    * them, and one predicate is how they stay in step.
    */
   const isOwnChromeSurface = currentRoute.startsWith('/admin') || currentRoute.startsWith('/org');
-  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !isOwnChromeSurface && !isOnboardingFlow;
-  const showPrivateNav = !!user &&
-    currentRoute !== '/' &&
-    currentRoute !== '/login' &&
-    !isOwnChromeSurface &&
-    !currentRoute.startsWith('/assessment-flow') &&
-    !currentRoute.startsWith('/equip-program-flow') &&
-    !currentRoute.startsWith('/equip-program-onboarding') &&
-    !isOnboardingFlow;
+  // The member app moved to app.ikanhealth.in (iKAN 2). On this host only /admin
+  // and /org sign in, and neither is a member session the site should reflect:
+  // an admin signed in on the same browser must still see the public site, with
+  // "Sign in" pointing at the app. Member routes 301 away in vercel.json.
+  const showPublicNav = currentRoute !== '/login' && !isOwnChromeSurface && !isOnboardingFlow;
+  const showPrivateNav = false;
   // The site footer shows on every marketing-site route and on no member or
   // admin route (App.tsx serves both from one bundle).
   const shouldShowFooter = SITE_FOOTER_ROUTES.has(currentRoute) || currentRoute.startsWith('/page/');
@@ -810,7 +807,7 @@ function AppContent() {
       {/* Top Navigation - Floating Capsule (Desktop only) */}
       {!isCompactNav && !isFullScreenFlow && currentRoute !== '/login' && !isOwnChromeSurface && (
         <Navigation 
-          user={user} 
+          user={null} 
           onNavigate={handleNavigate} 
           currentRoute={currentRoute}
         />
