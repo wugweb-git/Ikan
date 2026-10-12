@@ -29,6 +29,21 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
   const [department, setDepartment] = useState('');
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<InviteOutcome[] | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [deliveryNote, setDeliveryNote] = useState<string | null>(null);
+
+  /* Nothing mails the invitation, so the link has to be reachable from the
+     roster or an invited person can never actually arrive. */
+  const copyLink = async (id: string) => {
+    try {
+      const { link } = await orgApi.reissueInvite(org.id, id);
+      await navigator.clipboard.writeText(link);
+      setCopied(id);
+      setTimeout(() => setCopied((c) => (c === id ? null : c)), 2500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not create an invitation link.');
+    }
+  };
 
   const load = async (includeEnded = showEnded) => {
     try {
@@ -73,11 +88,12 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
     setBusy(true);
     setOutcome(null);
     try {
-      const { results } = await orgApi.invite(
+      const { results, delivery } = await orgApi.invite(
         org.id,
         parsed.map((email) => ({ email, department: department.trim() || undefined })),
       );
       setOutcome(results);
+      setDeliveryNote(delivery?.email_sent === false ? delivery.note : null);
       setBulk('');
       await load();
     } catch (e) {
@@ -124,14 +140,13 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
           />
         </div>
 
-        <label className="org-tab" style={{ cursor: 'pointer' }}>
+        <label className="org-toggle">
           <input
             type="checkbox"
             checked={showEnded}
             onChange={(e) => setShowEnded(e.target.checked)}
-            style={{ marginRight: 8 }}
           />
-          Show past members
+          Include past members
         </label>
 
         {canWrite && (
@@ -147,8 +162,8 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
           <h2 className="org-panel__title">Invite by work email</h2>
           <p className="org-panel__body">
             One address per line, or paste a column from a spreadsheet.
-            {org.allowed_email_domains.length > 0 && (
-              <> Addresses must be on {org.allowed_email_domains.join(' or ')}.</>
+            {(org.allowed_email_domains ?? []).length > 0 && (
+              <> Addresses must be on {(org.allowed_email_domains ?? []).join(' or ')}.</>
             )}
           </p>
 
@@ -184,6 +199,13 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
               {busy ? 'Adding…' : `Invite ${parsed.length || ''}`.trim()}
             </button>
           </div>
+
+          {deliveryNote && (
+            <div className="org-note org-note--warn" role="status">
+              <strong>No email was sent.</strong> {deliveryNote} Use <em>Copy invite link</em> beside
+              each invited person below.
+            </div>
+          )}
 
           {outcome && (
             <div className={`org-note ${outcome.some((r) => r.status === 'rejected') ? 'org-note--error' : 'org-note--ok'}`}>
@@ -234,7 +256,7 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                     <td>{m.department || <span style={{ color: 'var(--muted-foreground)' }}>—</span>}</td>
                     <td>
                       {m.role === 'member' ? (
-                        <span style={{ color: 'var(--muted-foreground)' }}>Member</span>
+                        <span className="org-table__quiet">Member</span>
                       ) : (
                         <span className="org-pill org-pill--admin">
                           {m.role === 'admin' ? 'Admin' : 'Read only'}
@@ -242,12 +264,21 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                       )}
                     </td>
                     <td>
-                      <span className={`org-pill org-pill--${status}`}>
-                        {status === 'active' ? 'Joined' : status === 'pending' ? 'Invited' : 'Past member'}
-                      </span>
+                      {status === 'active' ? (
+                        <span className="org-table__quiet">Joined</span>
+                      ) : (
+                        <span className={`org-pill org-pill--${status}`}>
+                          {status === 'pending' ? 'Invited' : 'Past member'}
+                        </span>
+                      )}
                     </td>
                     {canWrite && (
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {!m.ended_at && !m.accepted_at && (
+                          <button type="button" className="org-button org-button--link" onClick={() => copyLink(m.id)}>
+                            {copied === m.id ? 'Link copied' : 'Copy invite link'}
+                          </button>
+                        )}
                         {!m.ended_at && (
                           <button type="button" className="org-button org-button--danger" onClick={() => endMembership(m)}>
                             Remove

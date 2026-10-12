@@ -126,6 +126,88 @@
 
 /* ── Stat tiles ───────────────────────────────────────────────── */
 
+.ikan2-theme .org-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 28px;
+  margin-top: 26px;
+}
+
+.ikan2-theme .org-lead__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 76px);
+  line-height: 0.95;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-lead__of {
+  font-size: 0.38em;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-lead__side {
+  padding-bottom: 6px;
+}
+
+.ikan2-theme .org-lead__label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-lead__delta {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .org-lead__delta--down { color: var(--brand-coral-ink); }
+
+/* The supporting facts: a row, separated by rules rather than boxed. Three
+   more cards beside the lead would flatten it back out. */
+.ikan2-theme .org-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0;
+  margin-top: 30px;
+  border-top: 1px solid var(--border);
+}
+
+.ikan2-theme .org-fact {
+  padding: 16px 20px 16px 0;
+  border-right: 1px solid var(--border);
+}
+
+.ikan2-theme .org-fact:last-child { border-right: 0; }
+
+@media (min-width: 640px) {
+  .ikan2-theme .org-fact { padding-left: 20px; }
+  .ikan2-theme .org-fact:first-child { padding-left: 0; }
+}
+
+.ikan2-theme .org-fact__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-fact__label {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+
 .ikan2-theme .org-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -142,10 +224,8 @@
 
 .ikan2-theme .org-stat__label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--muted-foreground);
 }
 
@@ -214,8 +294,8 @@
  * it with whatever number is nearest to hand.
  */
 .ikan2-theme .org-panel--pending {
-  border-style: dashed;
-  background: transparent;
+  border-color: transparent;
+  background: var(--rest-soft, var(--muted));
 }
 
 /* The privacy notice. Stated on the page the admin reads, not buried in a
@@ -226,7 +306,7 @@
   margin-top: 28px;
   padding: 16px 18px;
   border-radius: var(--radius-lg);
-  background: var(--calm-soft);
+  background: var(--rest-soft, var(--muted));
 }
 
 .ikan2-theme .org-privacy svg {
@@ -234,7 +314,7 @@
   width: 18px;
   height: 18px;
   margin-top: 1px;
-  color: var(--brand-teal-ink);
+  color: var(--brand-slate-ink);
 }
 
 .ikan2-theme .org-privacy p {
@@ -299,10 +379,8 @@
   background: var(--card);
   border-bottom: 1px solid var(--border);
   text-align: left;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
   white-space: nowrap;
 }
@@ -315,6 +393,8 @@
 
 .ikan2-theme .org-table tr:last-child td { border-bottom: 0; }
 
+.ikan2-theme .org-table tbody tr:hover { background: color-mix(in oklab, var(--foreground) 3%, transparent); }
+
 .ikan2-theme .org-table__email {
   font-weight: 500;
   color: var(--foreground);
@@ -326,10 +406,8 @@
   height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 .ikan2-theme .org-pill--active  { background: var(--calm-soft);  color: var(--brand-teal-ink); }
@@ -370,10 +448,29 @@
 .ikan2-theme .org-button--danger {
   background: transparent;
   border-color: transparent;
-  color: var(--destructive);
+  color: var(--muted-foreground);
   height: 30px;
   padding: 0 10px;
   font-size: 13px;
+  opacity: 0;
+}
+
+/* Revealed on the row, and on keyboard focus — an action that only exists on
+   hover is an action a keyboard cannot reach. */
+.ikan2-theme .org-table tr:hover .org-button--danger,
+.ikan2-theme .org-table tr:focus-within .org-button--danger {
+  opacity: 1;
+}
+
+.ikan2-theme .org-button--danger:hover,
+.ikan2-theme .org-button--danger:focus-visible {
+  opacity: 1;
+  color: var(--destructive);
+}
+
+@media (hover: none) {
+  /* No hover to reveal with. */
+  .ikan2-theme .org-button--danger { opacity: 1; }
 }
 
 .ikan2-theme .org-button--danger:hover { background: var(--error-container, var(--muted)); }
@@ -443,26 +540,313 @@
 }
 
 /* ── Sign in ──────────────────────────────────────────────────── */
+/*
+ * The member login's split, rebuilt here: photograph on the left, form on the
+ * right, brand above the form. Same photograph, so the two front doors of one
+ * product do not look like two products.
+ *
+ * `svh` not `vh` — on a phone `vh` excludes the browser chrome and the form
+ * ends up under it.
+ */
 
-.ikan2-theme .org-signin {
+.ikan2-theme .org-login {
   display: grid;
-  place-items: center;
+  grid-template-columns: 1fr;
   min-height: 100svh;
-  padding: 24px;
 }
 
-.ikan2-theme .org-signin__card {
+@media (min-width: 900px) {
+  .ikan2-theme .org-login {
+    grid-template-columns: 45% 1fr;
+  }
+}
+
+/* The art is decoration: it is the first thing to go when the viewport is a
+   phone, because a login that needs scrolling past a photo is worse than one
+   without the photo. */
+.ikan2-theme .org-login__art {
+  display: none;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .ikan2-theme .org-login__art { display: block; }
+}
+
+.ikan2-theme .org-login__art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ikan2-theme .org-login__scrim {
+  position: absolute;
+  inset: 0;
+  /* Built from the design system's own ink rather than a hand-mixed black,
+     so the scrim tracks the palette. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--foreground) 55%, transparent) 0%,
+    color-mix(in oklab, var(--foreground) 76%, transparent) 60%,
+    color-mix(in oklab, var(--foreground) 90%, transparent) 100%
+  );
+}
+
+.ikan2-theme .org-login__words {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 48px 40px;
+  color: var(--background);
+}
+
+.ikan2-theme .org-login__words h2 {
+  margin: 0 0 12px;
+  max-width: 400px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.18;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-login__words p {
+  margin: 0;
+  max-width: 380px;
+  font-size: 15px;
+  line-height: 1.55;
+  opacity: 0.78;
+}
+
+.ikan2-theme .org-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px 24px 48px;
+  background: var(--background);
+}
+
+@media (min-width: 900px) {
+  .ikan2-theme .org-login__form { padding: 40px 48px; }
+}
+
+.ikan2-theme .org-login__card {
   width: 100%;
   max-width: 400px;
-  padding: 28px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
+  margin: auto;
 }
+
+.ikan2-theme .org-login__help {
+  margin: 22px 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-login__help a { color: var(--brand-teal-ink); }
 
 @media (max-width: 640px) {
   .ikan2-theme .org-bar__org { display: none; }
   .ikan2-theme .org-page { padding-block: 24px 56px; }
   .ikan2-theme .org-page__title { font-size: 24px; line-height: 32px; }
+}
+
+/* The organisation's mark in the bar, beside its name. */
+.ikan2-theme .org-bar__org {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ikan2-theme .org-bar__logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* Most organisations will never upload a mark, so the initial has to look
+   chosen rather than like a failed image. */
+.ikan2-theme .org-bar__initial {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ── Insights ─────────────────────────────────────────────────── */
+
+.ikan2-theme .org-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 16px;
+}
+
+@media (min-width: 560px) {
+  .ikan2-theme .org-grid-2 { grid-template-columns: 1fr 1fr; }
+}
+
+.ikan2-theme .org-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.ikan2-theme .org-logo-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  background: var(--muted);
+}
+
+.ikan2-theme .org-logo-preview--empty {
+  display: grid;
+  place-items: center;
+  background: var(--foreground);
+  color: var(--background);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ikan2-theme .org-field select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-chart {
+  margin-top: 18px;
+  /* Recharts measures its parent, so the parent needs a width that does not
+     depend on the chart. */
+  width: 100%;
+}
+
+.ikan2-theme .org-bands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.ikan2-theme .org-band__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.ikan2-theme .org-band__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+
+.ikan2-theme .org-band__range {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-band__value {
+  margin: 8px 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The refusals. Styled as information, not as an error — a client should read
+   this as the product working. */
+.ikan2-theme .org-suppressed {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.ikan2-theme .org-suppressed li {
+  padding: 15px 18px;
+  border: 0;
+  border-left: 3px solid var(--brand-slate);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--rest-soft, var(--muted));
+}
+
+.ikan2-theme .org-suppressed strong { font-size: 14px; }
+
+.ikan2-theme .org-suppressed span {
+  margin-left: 8px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-suppressed p {
+  margin: 6px 0 0;
+  max-width: var(--read-max);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+
+/* The common value in a column, stated without a chip. A pill on every row
+   is 80 identical badges, which hides the three rows that differ. */
+.ikan2-theme .org-table__quiet { color: var(--muted-foreground); }
+
+.ikan2-theme .org-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.ikan2-theme .org-toggle input { accent-color: var(--brand-teal-ink); }
+
+/* A caution that is not a failure: something is paused or missing, and the
+   reader has to act, but nothing has gone wrong. */
+.ikan2-theme .org-note--warn {
+  background: var(--rest-soft, var(--muted));
+  color: var(--foreground);
+  border-left: 3px solid var(--brand-amber);
+}
+
+/* A quiet secondary action in a table row, beside the destructive one. */
+.ikan2-theme .org-button--link {
+  height: 30px;
+  padding: 0 10px;
+  margin-right: 4px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--brand-teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-button--link:hover {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
 }

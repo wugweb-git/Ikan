@@ -125,6 +125,11 @@ const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resource
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
 const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const WorkplacePrivacy = lazy(() => lazyRetry(() => import('./product/site/pages/WorkplacePrivacy').then(m => ({ default: m.WorkplacePrivacy })), 'WorkplacePrivacy'));
+// The invitee's door. Routed here rather than inside OrgPortal: the portal's
+// shell runs hooks before it knows the route, so branching to Join inside it
+// changed the hook order between /org and /org/join.
+const OrgJoin = lazy(() => lazyRetry(() => import('./product/org/pages/Join').then(m => ({ default: m.Join })), 'OrgJoin'));
 const OrgPortal = lazy(() => lazyRetry(() => import('./product/org/OrgPortal').then(m => ({ default: m.OrgPortal })), 'OrgPortal'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
 const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
@@ -172,6 +177,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/equip', '/equip-detail',
   '/consultation', '/join/partner',
   '/resource', '/resource-detail',
+  '/workplace-privacy',
 ]);
 
 // --- Suspense fallback ---
@@ -356,7 +362,8 @@ function AppContent() {
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
-        '/org', '/org/people', '/org/settings'
+        '/org', '/org/insights', '/org/people', '/org/settings', '/org/join',
+        '/workplace-privacy'
       ];
       
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
@@ -658,7 +665,12 @@ function AppContent() {
           return withSuspense(<Library onNavigate={handleNavigate} />);
         case '/resource-detail':
           return withSuspense(<ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />);
+        case '/workplace-privacy':
+          return withSuspense(<WorkplacePrivacy />);
+        case '/org/join':
+          return withSuspense(<OrgJoin token={queryParams.token || ''} onNavigate={handleNavigate} />);
         case '/org':
+        case '/org/insights':
         case '/org/people':
         case '/org/settings':
           return withSuspense(<OrgPortal route={currentRoute} onNavigate={handleNavigate} />);
