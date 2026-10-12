@@ -168,8 +168,22 @@ export const orgApi = {
       delivery: { email_sent: boolean; note: string };
     }>(`/org/${orgId}/members`, { method: 'POST', body: JSON.stringify({ members }) }),
 
-  /** Public — an invitee has no session yet. */
-  checkInvite: (token: string) => call<InviteCheck>(`/org/invite/${encodeURIComponent(token)}`),
+  /*
+   * Public — an invitee has no session yet.
+   *
+   * Does not go through `call`, because 404 and 410 are MEANINGFUL answers
+   * here, not failures: expired, already used, withdrawn. Throwing on them
+   * collapsed four distinct explanations into "could not check that
+   * invitation", which tells the person nothing about what to do next.
+   */
+  checkInvite: async (token: string): Promise<InviteCheck> => {
+    const res = await fetch(`${BASE}/org/invite/${encodeURIComponent(token)}`, {
+      headers: { Authorization: `Bearer ${publicAnonKey}` },
+    });
+    const body = await res.json().catch(() => null);
+    if (body && typeof body.valid === 'boolean') return body as InviteCheck;
+    return { valid: false, reason: 'Could not check that invitation.' };
+  },
 
   acceptInvite: (token: string) =>
     call<{ success: true; organization: string }>(
