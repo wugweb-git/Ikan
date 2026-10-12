@@ -9,6 +9,91 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — `/join/partner`: the partner application, rebuilt to the Notion v3 spec
+
+**Partner is the umbrella word.** A therapist is one type of partner, and `partner.ikanhealth.in`
+is planned for the partner portal, so the public application form moved to `/join/partner`.
+`vercel.json` 301s `/join/professional`, because admins have been sending that link and it is in the
+sitemap. Nav ("Become a Partner"), the admin's copy-link dialog and the sitemap follow. Internal names
+(`professional_application:`, `/admin/professional-applications`, `ProfessionalApplication.tsx`)
+are unchanged: nothing a person sees.
+
+**The form is now "I-Kan Therapist Onboarding Form – Version 3"** (Notion, 2026-07-29): eleven
+steps, against the old five. Qualifications and RCI/NMC registration with a conditional
+registration number, degree and certification tables, typed document uploads, the three screening
+questions, practice setting and volume, an Expert/Advanced/Comfortable/Limited expertise matrix,
+conditions not treated, client preferences, five communication-style sliders, homework, cultural
+competence, a weekly availability grid, fees per format and a sliding scale, contributions, media
+(workspace photos and a map link only when in-person or home visits are offered), and the eight
+public-profile prompts with a 300-word counter. The draft saves to `localStorage` as you go
+(per-device convenience, cleared on submit). Option lists live in
+`src/product/site/content/partner-application.ts`, in the spec's order.
+
+**A wizard in iKAN 2's style, inside the site, on all three of its breakpoints** (640, 1024). It
+keeps the site's nav and footer and opens with the `info-band` page header like Contact and FAQ;
+the wizard is a card on the canvas below it. Phone: "Step n of 11" in the card opens every step in
+a bottom sheet, Back + Next sticky at the bottom. Tablet: a roomier card, short fields in pairs.
+Desktop: a sticky rail listing every step beside the card, replacing the sheet. Reached steps can
+be jumped to, ticked when complete, "Needs info" when not. Next stays disabled with "Still needed:
+…" above it, as in iKAN 2. The card first says what to keep handy; a returning applicant sees
+"Picking up where you left off"; on the last step, gaps behind you turn the button into "Finish
+step n". (`/join/` no longer counts as a full-screen flow in App.tsx, so the desktop nav shows.)
+
+**Labels are the spec's words**, verbatim and in its case ("Sliding Scale", "Language(s) in which
+you conduct therapy", "recognized"), with its hints ("JPG/PNG", "Only for offline therapists.").
+"Recommended maximum 250–300 words" warns but does not block; "300 words max" on Therapeutic
+Philosophy blocks.
+
+**Two additions the spec lacks.** Email and phone, required on the form and at the endpoint: neither
+the old form nor the spec asked, so an admin had no way to reply. And an "Add another area" row on
+the expertise matrix, because the spec's list ends in "etc."
+
+**Built from iKAN 2's components, not lookalikes.** `ikan2.css` gains a "COMPONENTS, ported"
+section transcribed class for class from iKAN 2: `Field`, `PhoneField`, `Chip`, `Button`,
+`FormError`, the M3 state layer (6% hover, 12% pressed, focus ring), `motion-press`, and from the
+programme player `LinearProgress`, `Segmented` (the Yes/No questions) and the `accent-*` tonal sets
+(this page uses `accent-calm`). Progress is iKAN 2's step pattern, a count and a LinearProgress; an
+earlier rail of eleven step-name chips wrapped onto two lines and clipped, and is gone.
+It also gains iKAN 2's h1–h6 → type-role map, **opt-in via `ikan2-type`** on a page root: applied
+site-wide it would zero the UA margins and set letter-spacing on Services' and the newsletter's
+headings, which their rules only partly style. `.partner-*` in `globals.css` is layout only. The
+step sits on iKAN 2's `.surface`, because its `--secondary` fields match this page's `--canvas`
+ground exactly and vanish on it.
+
+**Languages in their own script** (हिन्दी, मराठी, தமிழ், اردو …), with `lang` on each chip and
+`dir="rtl"` on Urdu; the English name is what is stored, so the directory keeps one spelling.
+
+**PIN code, looked up.** A required six-digit PIN (`^[1-9][0-9]{5}$`) is checked against India
+Post's public directory (`api.postalpincode.in`, no key, CORS open), which fills city and state.
+An unknown PIN is an error on the field; if the lookup is unreachable the form says so and lets
+the applicant type city and state. Stored as `details.pincode`. Phone follows iKAN 2's PhoneField:
+country code plus ten digits, stored as "+91 9876543210".
+
+**Verification is kept off the public profile, as the spec asks.** The body is now
+`{ contact, verification, profile }`. Contact and verification are stored only on the
+`professional_application:` tracker (admin); `professional:pending-*`, the record approval
+publishes, is built from an allowlist of profile keys. The admin list omits verification; the
+detail view merges it back in, and document links are re-signed on click because the stored URL
+expires after 24h. Approval re-signs the headshot for the life of the profile for the same reason.
+
+**Fixed while here: applications were publicly readable.** `GET /consultation/professionals` scans
+the `professional:` prefix, which `professional:pending-*` shares, so every application under
+review was served to anyone. It and the single-profile route now skip `pending_review` and
+`rejected` records. Live census before deploy: zero applications ever submitted, so nothing leaked
+in practice.
+
+**Safe against the old backend.** The form posts to a new route, `POST /public/partner-application`.
+The live function predates it and 404s, so nothing is stored; the form tells the applicant it can't
+receive applications yet and keeps the draft. On the old path, that function would have spread
+contact and verification onto the record the public directory reads. The old path stays
+registered, behind the same allowlist, for a page cached before the change. Deploy order no longer
+matters for safety; until the edge function ships, submissions simply wait.
+
+Not done: video upload (the upload route allows images and PDF up to 10 MB, too small for a
+1–3 minute video, so the form takes a YouTube/Vimeo/Drive link).
+
+---
+
 ## 2026-10-12 — the five missing halves, as working stubs
 
 Each one is built to the point where the thing that is genuinely undecided is

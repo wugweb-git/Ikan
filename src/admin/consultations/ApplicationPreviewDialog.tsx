@@ -1,9 +1,10 @@
 import type React from 'react';
-import { MapPin, CircleCheck, CircleX, ExternalLink, FileText } from 'lucide-react';
+import { MapPin, CircleCheck, CircleX, ExternalLink, FileText, Mail, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
 import { AdminStatusBadge } from '../ui/kit/AdminStatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import type { ApplicationDetail } from './useConsultationData';
+import { PartnerApplicationDetails } from './PartnerApplicationDetails';
 
 function PreviewSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -52,6 +53,14 @@ export function ApplicationPreviewDialog({ open, onOpenChange, application: app,
                 <div className="flex-1">
                   <h3 className="text-lg font-medium">{app.name}</h3>
                   <p className="text-sm text-[var(--color-text-muted)]">{app.credentials}</p>
+                  {(app.email || app.phone) ? (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm">
+                      {app.email && <a href={`mailto:${app.email}`} className="flex items-center gap-1 hover:underline"><Mail className="w-3 h-3" /> {app.email}</a>}
+                      {app.phone && <a href={`tel:${app.phone.replace(/[^\d+]/g, '')}`} className="flex items-center gap-1 hover:underline"><Phone className="w-3 h-3" /> {app.phone}</a>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">No contact details: submitted before the form asked for them.</p>
+                  )}
                   <div className="flex flex-wrap gap-2 mt-2">
                     <AdminStatusBadge status="neutral" label={app.category} />
                     <AdminStatusBadge status="neutral" label={`${app.yearsExperience || 0}+ yrs experience`} />
@@ -65,8 +74,10 @@ export function ApplicationPreviewDialog({ open, onOpenChange, application: app,
               </div>
 
               <PreviewSection title="Brief Introduction">
-                <p className="text-sm leading-[var(--line-height-lg)]">{app.bio}</p>
+                <p className="text-sm leading-[var(--line-height-lg)] whitespace-pre-line">{app.bio}</p>
               </PreviewSection>
+
+              <PartnerApplicationDetails app={app} />
 
               {(app.languages || []).length > 0 && (
                 <PreviewSection title="Languages"><BadgeList items={app.languages} /></PreviewSection>
@@ -177,11 +188,13 @@ export function ApplicationPreviewDialog({ open, onOpenChange, application: app,
                 </PreviewSection>
               )}
 
+              {app.willingToShareArticles !== undefined && (
               <PreviewSection title="Content Contribution">
                 <p className="text-sm">
                   {app.willingToShareArticles ? '✓ Willing to share articles on iKan' : '✗ Not interested in sharing articles'}
                 </p>
               </PreviewSection>
+              )}
             </div>
 
             {app.status === 'pending_review' && (

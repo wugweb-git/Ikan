@@ -1,553 +1,873 @@
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, CircleCheck, Plus, Trash2, Upload, X } from 'lucide-react';
 import { projectId } from '../../../shared/api/supabase-info';
 import { getAuthHeaders } from '../../../shared/api/supabase';
-import { useState, useRef, useEffect } from 'react';
 import {
-  User,
-  Briefcase,
-  Heart,
-  Clock,
-  FileText,
-  Upload,
-  Plus,
-  X,
-  Video,
-  Phone,
-  MessageSquare,
-  CircleCheck,
-  Sparkles,
-  ArrowLeft,
-  Send,
-  Loader2,
-} from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { useIsMobile } from '../ui/hooks/useIsMobile';
-import { useMetadata } from '../ui/hooks/useMetadata';
+  AGE_GROUPS, CASE_COMPLEXITY, CLIENT_TYPES, CLIENTS_TREATED, COMMUNICATION_STYLES,
+  CONDITIONS_NOT_TREATED, CONTRIBUTION_TYPES, COUNTRIES, CULTURAL_EXPERIENCE, DAY_NAMES, DAY_PARTS,
+  DOCUMENT_KINDS, EXPERTISE_AREAS, EXPERTISE_LEVELS, HIGHEST_QUALIFICATIONS, HOMEWORK_FREQUENCY,
+  HOMEWORK_TYPES, INDIAN_STATES, LANGUAGES, PHILOSOPHY_WORD_LIMIT, PIN_PATTERN, PRACTICE_SETTINGS,
+  PROFESSIONAL_TITLES, PROFILE_PROMPTS, PROFILE_WORD_LIMIT, REGISTRATIONS, SESSION_DURATIONS,
+  SESSION_FORMATS, THERAPEUTIC_APPROACHES, THERAPY_FORMATS, WEEKDAYS,
+  emptyPartnerForm, formatPhone, isOffline, lookupPin, needsRegistrationNumber, parsePhone,
+  stepErrors, toPayload, wordCount,
+  type ExpertiseLevel, type PartnerApplicationForm, type UploadedFile,
+} from '../content/partner-application';
 
-const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+/*
+ * /join/partner — the partner application.
+ *
+ * Built to "I-Kan Therapist Onboarding Form – Version 3" (Notion). Eleven steps,
+ * chips and matrices over free text, conditional questions, and a draft that
+ * saves itself to this device.
+ *
+ * Every control is an iKAN 2 component ported into `ikan2.css` — Field,
+ * PhoneField, Chip, Button, FormError, Progress, the M3 state layer — and the
+ * headings take iKAN 2's h1–h6 map via `ikan2-type`. `.partner-*` in
+ * globals.css is layout only: grids and rows, no colours or states.
+ */
 
-const inputStyle = {
-  height: 'var(--ikan-component-button-height)',
-  borderRadius: 'var(--ikan-component-border-radius)',
-};
+const API = `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9`;
+const DRAFT_KEY = 'ikan.partner-application.draft.v1';
 
-const sectionTitleStyle = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: '18px',
-  fontWeight: 500 as const,
-  color: 'var(--foreground)',
-  marginBottom: 'var(--spacing-1)',
-};
+/** Step titles verbatim from the spec. Only step 2 carries a note: the spec's
+ *  "keep verification fields separate from the public profile", said to the applicant. */
+const STEPS = [
+  { title: 'Basic Information' },
+  { title: 'Qualifications & Verification', hint: 'Used to verify you. Kept separate from your public profile.' },
+  { title: 'Practice Information' },
+  { title: 'Clinical Expertise' },
+  { title: 'Client Preferences' },
+  { title: 'Therapy Style' },
+  { title: 'Cultural Competence' },
+  { title: 'Availability & Fees' },
+  { title: 'Publications & Professional Contributions' },
+  { title: 'Media' },
+  { title: 'Public Profile' },
+] as { title: string; hint?: string }[];
 
-const sectionDescStyle = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: '14px',
-  fontWeight: 400 as const,
-  color: 'var(--muted-foreground)',
-  marginBottom: 'var(--spacing-4)',
-};
+type Form = PartnerApplicationForm;
+type SetForm = (patch: Partial<Form>) => void;
+
+function loadDraft(): { form: Form; step: number; reached: number } | null {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    const clamp = (n: unknown) => Math.min(Math.max(0, Number(n) | 0), STEPS.length - 1);
+    return { form: { ...emptyPartnerForm(), ...saved.form }, step: clamp(saved.step), reached: clamp(saved.reached ?? saved.step) };
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(form: Form, step: number, reached: number) {
+  try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, reached })); } catch { /* private mode */ }
+}
+
+function clearDraft() {
+  try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* private mode */ }
+}
+
+async function uploadFile(file: File, category: string): Promise<UploadedFile> {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('category', category);
+  fd.append('professionalId', 'application');
+  const res = await fetch(`${API}/upload/professional-file`, { method: 'POST', headers: await getAuthHeaders(), body: fd });
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok || !result.success) throw new Error(result.error || 'Upload failed');
+  return { path: result.path, url: result.url, name: file.name };
+}
+
+// ── Controls (iKAN 2 components, see ikan2.css "COMPONENTS, ported") ─────────
+
+function Required() {
+  return <span aria-hidden="true"> *</span>;
+}
+
+/** iKAN 2 `Field`: label above, the box, then an error or a hint. */
+function Field({ label, required, wide, hint, error, multiline, prefix, messageId, children }: {
+  label: string; required?: boolean; wide?: boolean; hint?: ReactNode; error?: string;
+  multiline?: boolean; prefix?: ReactNode; messageId?: string; children: ReactNode;
+}) {
+  return (
+    <label className={`field${wide ? ' partner-wide' : ''}`}>
+      <span className="field__label">{label}{required ? <Required /> : null}</span>
+      <span className={`field__box${multiline ? ' field__box--multiline' : ''}`} data-invalid={error ? 'true' : undefined}>
+        {prefix ? <span className="field__prefix" aria-hidden="true">{prefix}</span> : null}
+        {children}
+      </span>
+      {error ? <span id={messageId} className="field__message field__message--error" role="alert">{error}</span>
+        : hint ? <span id={messageId} className="field__message">{hint}</span> : null}
+    </label>
+  );
+}
+
+function Select({ value, onChange, options, placeholder = 'Choose…' }: { value: string; onChange: (v: string) => void; options: readonly string[]; placeholder?: string }) {
+  return (
+    <select className="field__control" value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{placeholder}</option>
+      {options.map((o) => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+/** iKAN 2 `PhoneField` (auth variant): flag and dial code over a native select, then ten digits. */
+function PhoneField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { country, number } = parsePhone(value);
+  return (
+    <Field label="Phone" required hint="For our team only. Not shown publicly.">
+      <span className="phone-field__country">
+        <span aria-hidden="true">
+          <span className="phone-field__flag">{country.flag}</span>
+          {country.dial}
+          <ChevronDown />
+        </span>
+        <select aria-label="Country code" value={`${country.code}${country.dial}`}
+          onChange={(e) => {
+            const next = COUNTRIES.find((c) => `${c.code}${c.dial}` === e.target.value) ?? COUNTRIES[0];
+            onChange(formatPhone(next, number) || `${next.dial} `);
+          }}>
+          {COUNTRIES.map((c) => <option key={c.code} value={`${c.code}${c.dial}`}>{c.flag} {c.name} ({c.dial})</option>)}
+        </select>
+      </span>
+      <input className="field__control phone-field__number" aria-label="Phone number" type="tel" inputMode="numeric" autoComplete="tel-national"
+        maxLength={10} placeholder="98765 43210" value={number}
+        onChange={(e) => onChange(formatPhone(country, e.target.value.replace(/\D/g, '').slice(0, 10)))} />
+    </Field>
+  );
+}
+
+type ChipOption = string | { value: string; label: ReactNode; lang?: string; dir?: string };
+const optValue = (o: ChipOption) => (typeof o === 'string' ? o : o.value);
+
+/** A labelled group of iKAN 2 `Chip`s. `multi` toggles membership; single picks one (tap again to clear). */
+function Chips({ label, required, options, value, onChange, hint, size }: {
+  label: string; required?: boolean; options: readonly ChipOption[]; hint?: string; size?: 'sm' | 'lg';
+  value: string[] | string; onChange: (v: string[] | string) => void;
+}) {
+  const id = useId();
+  const multi = Array.isArray(value);
+  const isOn = (v: string) => (multi ? (value as string[]).includes(v) : value === v);
+  const toggle = (v: string) => {
+    if (multi) {
+      const cur = value as string[];
+      onChange(cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]);
+    } else {
+      onChange(value === v ? '' : v);
+    }
+  };
+  return (
+    <div className="partner-wide" role="group" aria-labelledby={id}>
+      <p className="field__label" id={id}>
+        {label}{required ? <Required /> : null}{multi ? <span className="partner-note"> · choose any</span> : null}
+      </p>
+      {hint ? <p className="field__message partner-group-hint">{hint}</p> : null}
+      <div className="partner-chips">
+        {options.map((o) => {
+          const v = optValue(o);
+          const on = isOn(v);
+          return (
+            <button key={v} type="button" aria-pressed={on} onClick={() => toggle(v)}
+              lang={typeof o === 'string' ? undefined : o.lang} dir={typeof o === 'string' ? undefined : o.dir}
+              aria-label={typeof o === 'string' || o.label === v ? undefined : v}
+              className={`chip${size ? ` chip--${size}` : ' chip--lg'} state-layer motion-press`}>
+              {on ? <CircleCheck aria-hidden="true" /> : null}
+              {typeof o === 'string' ? o : o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** iKAN 2 `Segmented`: a radio group of equal 48px options, the chosen one in the accent. */
+function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 'no'; onChange: (v: '' | 'yes' | 'no') => void }) {
+  const id = useId();
+  return (
+    <div className="partner-wide">
+      <p className="field__label" id={id}>{label}</p>
+      <div className="segmented partner-segmented" role="radiogroup" aria-labelledby={id}>
+        {(['yes', 'no'] as const).map((v) => (
+          <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
+            className="segmented__option state-layer">
+            {value === v ? <Check aria-hidden="true" strokeWidth={3} /> : null}
+            {v === 'yes' ? 'Yes' : 'No'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OtherInput({ show, label, value, onChange }: { show: boolean; label: string; value: string; onChange: (v: string) => void }) {
+  if (!show) return null;
+  return <Field label={label} wide><input className="field__control" value={value} onChange={(e) => onChange(e.target.value)} /></Field>;
+}
+
+/** `limit` is a guide by default (the spec's "Recommended maximum 250–300 words"):
+ *  going over warns but does not block. `hard` makes it a rule ("300 words max"). */
+function LongAnswer({ label, required, value, onChange, limit, hard, hint }: { label: string; required?: boolean; value: string; onChange: (v: string) => void; limit?: number; hard?: boolean; hint?: string }) {
+  const messageId = useId();
+  const n = wordCount(value);
+  const over = limit !== undefined && n > limit;
+  const count = limit !== undefined ? `${n} / ${limit} words` : undefined;
+  return (
+    <Field label={label} required={required} wide multiline messageId={messageId}
+      error={over && hard ? `${count}. Please shorten it.` : undefined}
+      hint={over ? `${count}. Recommended maximum is 250–300 words.` : [hint, count].filter(Boolean).join(' · ') || undefined}>
+      <textarea className="field__control" rows={5} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={(over && hard) || undefined} aria-describedby={messageId} />
+    </Field>
+  );
+}
+
+/** A repeatable table: each row a set of Fields, with add and remove. */
+function Rows<T extends Record<string, string>>({ label, rows, onChange, blank, columns, addLabel }: {
+  label: string; rows: T[]; onChange: (rows: T[]) => void; blank: T; addLabel: string;
+  columns: { key: keyof T & string; label: string; type?: string; options?: readonly string[]; narrow?: boolean }[];
+}) {
+  const id = useId();
+  const set = (i: number, key: keyof T, v: string) => onChange(rows.map((r, j) => (j === i ? { ...r, [key]: v } : r)));
+  return (
+    <div className="partner-wide" role="group" aria-labelledby={id}>
+      <h3 id={id} className="partner-group-title">{label}</h3>
+      {rows.map((row, i) => (
+        <div key={i} className="partner-row">
+          {columns.map((c) => (
+            <div key={c.key} className={`partner-row__cell${c.narrow ? ' partner-row__cell--narrow' : ''}`}>
+              <Field label={c.label}>
+                {c.options
+                  ? <Select value={row[c.key]} onChange={(v) => set(i, c.key, v)} options={c.options} />
+                  : <input className="field__control" type={c.type || 'text'} value={row[c.key]} onChange={(e) => set(i, c.key, e.target.value)} inputMode={c.type === 'number' ? 'numeric' : undefined} />}
+              </Field>
+            </div>
+          ))}
+          <button type="button" className="btn btn--text btn--icon btn--md state-layer" aria-label={`Remove row ${i + 1}`} onClick={() => onChange(rows.filter((_, j) => j !== i))}>
+            <Trash2 aria-hidden="true" />
+          </button>
+        </div>
+      ))}
+      <button type="button" className="btn btn--outlined btn--md state-layer motion-press" onClick={() => onChange([...rows, { ...blank }])}>
+        <Plus aria-hidden="true" /> {addLabel}
+      </button>
+    </div>
+  );
+}
+
+function UploadButton({ label, accept, category, onUploaded, multiple }: { label: string; accept: string; category: string; onUploaded: (f: UploadedFile) => void; multiple?: boolean }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const onFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const file of Array.from(files)) onUploaded(await uploadFile(file, category));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = '';
+    }
+  };
+  return (
+    <div>
+      <input ref={input} type="file" accept={accept} multiple={multiple} hidden onChange={(e) => onFiles(e.target.files)} />
+      <button type="button" className="btn btn--outlined btn--md state-layer motion-press" onClick={() => input.current?.click()} disabled={busy} aria-busy={busy || undefined}>
+        {busy ? <span className="btn__spinner" aria-hidden="true" /> : <Upload aria-hidden="true" />} {busy ? 'Uploading…' : label}
+      </button>
+      {error ? <p className="field__message field__message--error" role="alert">{error}</p> : null}
+    </div>
+  );
+}
+
+function FileList({ files, onRemove, label = (f: UploadedFile) => f.name }: { files: UploadedFile[]; onRemove: (i: number) => void; label?: (f: UploadedFile) => string }) {
+  if (!files.length) return null;
+  return (
+    <ul className="partner-files">
+      {files.map((f, i) => (
+        <li key={f.path} className="field__box">
+          <span className="partner-files__name">{label(f)}</span>
+          <button type="button" className="btn btn--text btn--icon btn--md state-layer" aria-label={`Remove ${f.name}`} onClick={() => onRemove(i)}><X aria-hidden="true" /></button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+
+/** PIN first: India Post fills city and state, and an unknown PIN is flagged. */
+function PinField({ f, set }: { f: Form; set: SetForm }) {
+  const [status, setStatus] = useState<{ kind: 'idle' | 'busy' | 'found' | 'unknown' | 'offline'; text?: string }>({ kind: 'idle' });
+  const pin = f.pincode;
+  useEffect(() => {
+    if (!PIN_PATTERN.test(pin)) { setStatus({ kind: 'idle' }); return; }
+    const ctrl = new AbortController();
+    setStatus({ kind: 'busy' });
+    lookupPin(pin, ctrl.signal)
+      .then((hit) => {
+        if (!hit) { setStatus({ kind: 'unknown' }); return; }
+        set({ city: hit.district, ...(hit.state ? { state: hit.state } : {}) });
+        setStatus({ kind: 'found', text: `${hit.district}, ${hit.state || 'India'}` });
+      })
+      .catch((e) => { if (e?.name !== 'AbortError') setStatus({ kind: 'offline' }); });
+    return () => ctrl.abort();
+    // `set` is a fresh closure each render; the lookup depends only on the PIN.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin]);
+
+  const typedBadly = pin.length > 0 && pin.length === 6 && !PIN_PATTERN.test(pin);
+  return (
+    <Field label="PIN code" required
+      error={typedBadly ? 'A PIN code is 6 digits and does not start with 0.' : status.kind === 'unknown' ? 'India Post does not know this PIN code. Please check it.' : undefined}
+      hint={status.kind === 'busy' ? 'Looking up…' : status.kind === 'found' ? `Found: ${status.text}` : status.kind === 'offline' ? 'Could not check the PIN right now. Please fill city and state yourself.' : 'Fills in your city and state.'}>
+      <input className="field__control" inputMode="numeric" autoComplete="postal-code" maxLength={6} placeholder="411001"
+        value={pin} onChange={(e) => set({ pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })} />
+    </Field>
+  );
+}
+
+function StepBasics({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      <Field label="Full Name" required><input className="field__control" autoComplete="name" value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
+      <Field label="Professional Title" required>
+        <Select value={f.professionalTitle} onChange={(v) => set({ professionalTitle: v })} options={PROFESSIONAL_TITLES} />
+      </Field>
+      <OtherInput show={f.professionalTitle === 'Other'} label="Your title" value={f.professionalTitleOther} onChange={(v) => set({ professionalTitleOther: v })} />
+      <Field label="Email" required hint="For our team only. Not shown publicly.">
+        <input className="field__control" type="email" autoComplete="email" value={f.email} onChange={(e) => set({ email: e.target.value })} />
+      </Field>
+      <PhoneField value={f.phone} onChange={(phone) => set({ phone })} />
+      <Chips label="Language(s) in which you conduct therapy" required hint="Example: English, Hindi, Marathi."
+        options={[...LANGUAGES.map((l) => ({ value: l.value, label: l.native, lang: l.lang, dir: 'dir' in l ? l.dir : undefined })), { value: 'Other', label: 'Other', lang: 'en' }]}
+        value={f.languages} onChange={(v) => set({ languages: v as string[] })} />
+      <OtherInput show={f.languages.includes('Other')} label="Other languages" value={f.languagesOther} onChange={(v) => set({ languagesOther: v })} />
+      <PinField f={f} set={set} />
+      <Field label="City" required><input className="field__control" autoComplete="address-level2" value={f.city} onChange={(e) => set({ city: e.target.value })} /></Field>
+      <Field label="State" required><Select value={f.state} onChange={(v) => set({ state: v })} options={INDIAN_STATES} /></Field>
+      <div className="partner-wide">
+        <h3 className="partner-group-title">Professional Headshot</h3>
+        <p className="field__message partner-group-hint">JPG/PNG</p>
+        {f.headshot ? (
+          <div className="partner-headshot">
+            <img src={f.headshot.url} alt="Your headshot" />
+            <button type="button" className="btn btn--outlined btn--md state-layer motion-press" onClick={() => set({ headshot: null })}><X aria-hidden="true" /> Remove</button>
+          </div>
+        ) : (
+          <UploadButton label="Upload photo" accept="image/jpeg,image/png" category="photo" onUploaded={(file) => set({ headshot: file })} />
+        )}
+      </div>
+    </>
+  );
+}
+
+function StepVerification({ f, set }: { f: Form; set: SetForm }) {
+  const [kind, setKind] = useState<string>(DOCUMENT_KINDS[0]);
+  return (
+    <>
+      <Field label="Highest Qualification" required>
+        <Select value={f.highestQualification} onChange={(v) => set({ highestQualification: v })} options={HIGHEST_QUALIFICATIONS} />
+      </Field>
+      <OtherInput show={f.highestQualification === 'Other'} label="Your qualification" value={f.highestQualificationOther} onChange={(v) => set({ highestQualificationOther: v })} />
+      <Rows label="Degrees" rows={f.degrees} onChange={(degrees) => set({ degrees })} addLabel="Add degree"
+        blank={{ degree: '', institution: '', year: '' }}
+        columns={[{ key: 'degree', label: 'Degree' }, { key: 'institution', label: 'Institution' }, { key: 'year', label: 'Year', type: 'number', narrow: true }]} />
+      <Field label="Professional Registration" required>
+        <Select value={f.registration} onChange={(v) => set({ registration: v })} options={REGISTRATIONS} />
+      </Field>
+      <OtherInput show={f.registration === 'Other'} label="Registering body" value={f.registrationOther} onChange={(v) => set({ registrationOther: v })} />
+      {needsRegistrationNumber(f.registration) ? (
+        <Field label="Registration Number" required><input className="field__control" value={f.registrationNumber} onChange={(e) => set({ registrationNumber: e.target.value })} /></Field>
+      ) : null}
+      <Rows label="Certifications" rows={f.certifications} onChange={(certifications) => set({ certifications })} addLabel="Add certification"
+        blank={{ certification: '', issuer: '', year: '' }}
+        columns={[{ key: 'certification', label: 'Certification' }, { key: 'issuer', label: 'Issuer' }, { key: 'year', label: 'Year', type: 'number', narrow: true }]} />
+      <div className="partner-wide">
+        <h3 className="partner-group-title">Upload Documents</h3>
+        <p className="field__message partner-group-hint">Degree, Registration Certificate, Certifications. PDF, JPG or PNG, up to 10 MB each.</p>
+        <FileList files={f.documents} label={(d) => `${(d as Form['documents'][number]).kind}: ${d.name}`}
+          onRemove={(i) => set({ documents: f.documents.filter((_, j) => j !== i) })} />
+        <div className="partner-row">
+          <div className="partner-row__cell">
+            <Field label="Document type">
+              <Select value={kind} onChange={(v) => setKind(v || DOCUMENT_KINDS[0])} options={DOCUMENT_KINDS} placeholder="Document type" />
+            </Field>
+          </div>
+          <UploadButton label="Upload document" accept="application/pdf,image/jpeg,image/png" category="verification" multiple
+            onUploaded={(file) => set({ documents: [...f.documents, { ...file, kind }] })} />
+        </div>
+      </div>
+      <h3 className="partner-wide partner-group-title">Additional Verification Questions (Recommended)</h3>
+      <YesNo label="Do you hold a formal Master's degree (M.A./M.Sc.) in Psychology or Counselling from a recognized university?" value={f.hasMastersDegree} onChange={(v) => set({ hasMastersDegree: v })} />
+      <Field label="How many hours of supervised clinical training have you completed?" wide>
+        <input className="field__control" type="number" min={0} inputMode="numeric" value={f.supervisedHours} onChange={(e) => set({ supervisedHours: e.target.value })} />
+      </Field>
+      <YesNo label="Do you currently work under an experienced clinical supervisor?" value={f.underSupervision} onChange={(v) => set({ underSupervision: v })} />
+    </>
+  );
+}
+
+function StepPractice({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      <Chips label="Practice Setting" options={PRACTICE_SETTINGS} value={f.practiceSettings} onChange={(v) => set({ practiceSettings: v as string[] })} />
+      <OtherInput show={f.practiceSettings.includes('Other')} label="Other setting" value={f.practiceSettingOther} onChange={(v) => set({ practiceSettingOther: v })} />
+      <Field label="Years in Practice" required>
+        <input className="field__control" type="number" min={0} max={70} inputMode="numeric" value={f.yearsInPractice} onChange={(e) => set({ yearsInPractice: e.target.value })} />
+      </Field>
+      <Chips label="Approximate Clients Treated" options={CLIENTS_TREATED} value={f.clientsTreated} onChange={(v) => set({ clientsTreated: v as string })} />
+      <Chips label="Average Session Duration" options={SESSION_DURATIONS.map((m) => ({ value: m, label: `${m} mins` }))} value={f.sessionDuration} onChange={(v) => set({ sessionDuration: v as string })} />
+      <Chips label="Session Formats" required options={SESSION_FORMATS} value={f.sessionFormats} onChange={(v) => set({ sessionFormats: v as string[] })} />
+      <YesNo label="Weekend Consultations" value={f.weekendConsultations} onChange={(v) => set({ weekendConsultations: v })} />
+      <YesNo label="Emergency Consultations" value={f.emergencyConsultations} onChange={(v) => set({ emergencyConsultations: v })} />
+    </>
+  );
+}
+
+function StepExpertise({ f, set }: { f: Form; set: SetForm }) {
+  const [adding, setAdding] = useState('');
+  const areas = [...EXPERTISE_AREAS, ...f.customExpertiseAreas];
+  const rate = (area: string, level: ExpertiseLevel) =>
+    set({ expertise: { ...f.expertise, [area]: f.expertise[area] === level ? '' : level } });
+  const addArea = () => {
+    const a = adding.trim();
+    if (a && !areas.includes(a)) set({ customExpertiseAreas: [...f.customExpertiseAreas, a] });
+    setAdding('');
+  };
+  return (
+    <>
+      <div className="partner-wide">
+        <h3 className="partner-group-title">Clinical Expertise Matrix</h3>
+        <div className="partner-matrix">
+          {areas.map((area) => (
+            <div key={area} className="partner-matrix__row" role="group" aria-label={area}>
+              <span className="partner-matrix__area">{area}</span>
+              <div className="partner-chips">
+                {EXPERTISE_LEVELS.map((level) => (
+                  <button key={level} type="button" className="chip chip--outline state-layer motion-press" aria-pressed={f.expertise[area] === level} onClick={() => rate(area, level)}>
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="partner-row partner-row--spaced">
+          <div className="partner-row__cell">
+            <Field label="Add another area">
+              <input className="field__control" value={adding} onChange={(e) => setAdding(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addArea(); } }} />
+            </Field>
+          </div>
+          <button type="button" className="btn btn--outlined btn--md state-layer motion-press" onClick={addArea}><Plus aria-hidden="true" /> Add</button>
+        </div>
+      </div>
+      <Chips label="Conditions You Do NOT Treat" options={[...CONDITIONS_NOT_TREATED, 'Other']} value={f.conditionsNotTreated} onChange={(v) => set({ conditionsNotTreated: v as string[] })} />
+      <OtherInput show={f.conditionsNotTreated.includes('Other')} label="Other conditions" value={f.conditionsNotTreatedOther} onChange={(v) => set({ conditionsNotTreatedOther: v })} />
+      <LongAnswer label="Conditions Outside Your Scope" hint="Optional" value={f.outsideScope} onChange={(v) => set({ outsideScope: v })} />
+    </>
+  );
+}
+
+function StepClients({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      <Chips label="Preferred Age Groups" options={AGE_GROUPS} value={f.ageGroups} onChange={(v) => set({ ageGroups: v as string[] })} />
+      <Chips label="Preferred Client Types" options={CLIENT_TYPES} value={f.clientTypes} onChange={(v) => set({ clientTypes: v as string[] })} />
+      <OtherInput show={f.clientTypes.includes('Other')} label="Other client types" value={f.clientTypeOther} onChange={(v) => set({ clientTypeOther: v })} />
+      <Chips label="Preferred Therapy Format" options={THERAPY_FORMATS} value={f.therapyFormats} onChange={(v) => set({ therapyFormats: v as string[] })} />
+      <Chips label="Preferred Case Complexity" options={CASE_COMPLEXITY} value={f.caseComplexity} onChange={(v) => set({ caseComplexity: v as string })} />
+    </>
+  );
+}
+
+function StepStyle({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      <Chips label="Therapeutic Approaches" options={THERAPEUTIC_APPROACHES} value={f.approaches} onChange={(v) => set({ approaches: v as string[] })} />
+      <OtherInput show={f.approaches.includes('Other')} label="Other approaches" value={f.approachOther} onChange={(v) => set({ approachOther: v })} />
+      <div className="partner-wide">
+        <h3 className="partner-group-title">Communication Style</h3>
+                {COMMUNICATION_STYLES.map((s) => (
+          <label key={s.key} className="partner-slider">
+            <span>{s.left}</span>
+            <input type="range" min={1} max={5} step={1} value={f.communicationStyle[s.key]}
+              aria-label={`${s.left} to ${s.right}`} aria-valuetext={`${f.communicationStyle[s.key]} of 5`}
+              onChange={(e) => set({ communicationStyle: { ...f.communicationStyle, [s.key]: Number(e.target.value) } })} />
+            <span className="partner-slider__right">{s.right}</span>
+          </label>
+        ))}
+      </div>
+      <Chips label="Homework Frequency" options={HOMEWORK_FREQUENCY} value={f.homeworkFrequency} onChange={(v) => set({ homeworkFrequency: v as string })} />
+      {f.homeworkFrequency && f.homeworkFrequency !== 'Never' ? (
+        <>
+          <Chips label="Homework Types" options={HOMEWORK_TYPES} value={f.homeworkTypes} onChange={(v) => set({ homeworkTypes: v as string[] })} />
+          <OtherInput show={f.homeworkTypes.includes('Other')} label="Other homework" value={f.homeworkTypeOther} onChange={(v) => set({ homeworkTypeOther: v })} />
+        </>
+      ) : null}
+      <LongAnswer label="Therapeutic Philosophy" value={f.philosophy} onChange={(v) => set({ philosophy: v })} limit={PHILOSOPHY_WORD_LIMIT} hard />
+    </>
+  );
+}
+
+function StepCulture({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      <Chips label="Experience Working With" options={CULTURAL_EXPERIENCE} value={f.culturalExperience} onChange={(v) => set({ culturalExperience: v as string[] })} />
+      <OtherInput show={f.culturalExperience.includes('Others')} label="Other communities" value={f.culturalExperienceOther} onChange={(v) => set({ culturalExperienceOther: v })} />
+    </>
+  );
+}
+
+function StepAvailability({ f, set }: { f: Form; set: SetForm }) {
+  const toggle = (day: string, part: string) => {
+    const cur = f.availability[day] || [];
+    set({ availability: { ...f.availability, [day]: cur.includes(part) ? cur.filter((p) => p !== part) : [...cur, part] } });
+  };
+  return (
+    <>
+      <div className="partner-wide">
+        <h3 className="partner-group-title">Availability</h3>
+        <div className="partner-week" role="grid" aria-label="Weekly availability">
+          <div className="partner-week__row" role="row">
+            <span role="columnheader" />
+            {DAY_PARTS.map((p) => (
+              <span key={p.key} role="columnheader" className="partner-week__part">{p.label}<small>{p.hours}</small></span>
+            ))}
+          </div>
+          {WEEKDAYS.map((d) => (
+            <div key={d} className="partner-week__row" role="row">
+              <span role="rowheader" className="field__label partner-week__day">{d}</span>
+              {DAY_PARTS.map((p) => {
+                const on = (f.availability[d] || []).includes(p.key);
+                return (
+                  <span key={p.key} role="gridcell">
+                    <button type="button" className="chip chip--lg state-layer motion-press partner-week__slot" aria-pressed={on}
+                      aria-label={`${DAY_NAMES[d]} ${p.label.toLowerCase()}`} onClick={() => toggle(d, p.key)}>
+                      {on ? <CircleCheck aria-hidden="true" /> : null}
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <h3 className="partner-wide partner-group-title">Fees</h3>
+      {([['feeIndividual', 'Individual'], ['feeCouple', 'Couple'], ['feeFamily', 'Family']] as const).map(([key, label]) => (
+        <Field key={key} label={label} prefix="₹">
+          <input className="field__control" type="number" min={0} step={100} inputMode="numeric" value={f[key]} onChange={(e) => set({ [key]: e.target.value } as Partial<Form>)} />
+        </Field>
+      ))}
+      <YesNo label="Sliding Scale" value={f.slidingScale} onChange={(v) => set({ slidingScale: v })} />
+    </>
+  );
+}
+
+function StepContributions({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <Rows label="Professional contributions" rows={f.contributions} onChange={(contributions) => set({ contributions })} addLabel="Add contribution"
+      blank={{ type: '', title: '', year: '', link: '' }}
+      columns={[
+        { key: 'type', label: 'Type', options: CONTRIBUTION_TYPES },
+        { key: 'title', label: 'Title' },
+        { key: 'year', label: 'Year', type: 'number', narrow: true },
+        { key: 'link', label: 'Link', type: 'url' },
+      ]} />
+  );
+}
+
+function StepMedia({ f, set }: { f: Form; set: SetForm }) {
+  const offline = isOffline(f.sessionFormats);
+  return (
+    <>
+      <Field label="Introduction Video" wide hint="1–3 minutes introducing yourself and your therapeutic approach. Paste a YouTube, Vimeo or Google Drive link.">
+        <input className="field__control" type="url" placeholder="https://youtube.com/…" value={f.introVideoUrl} onChange={(e) => set({ introVideoUrl: e.target.value })} />
+      </Field>
+      {offline ? (
+        <>
+          <div className="partner-wide">
+            <h3 className="partner-group-title">Workspace Photos</h3>
+            <p className="field__message partner-group-hint">Only for offline therapists.</p>
+            <FileList files={f.workspacePhotos} onRemove={(i) => set({ workspacePhotos: f.workspacePhotos.filter((_, j) => j !== i) })} />
+            <UploadButton label="Upload photos" accept="image/jpeg,image/png,image/webp" category="workspace" multiple
+              onUploaded={(file) => set({ workspacePhotos: [...f.workspacePhotos, file] })} />
+          </div>
+          <Field label="Google Maps Link" wide hint="Only for offline therapists.">
+            <input className="field__control" type="url" placeholder="https://maps.google.com/…" value={f.mapsLink} onChange={(e) => set({ mapsLink: e.target.value })} />
+          </Field>
+        </>
+      ) : (
+        <p className="field__message partner-wide">Workspace photos and a map link are asked for when you offer in-person or home-visit sessions (step 3).</p>
+      )}
+    </>
+  );
+}
+
+function StepProfile({ f, set }: { f: Form; set: SetForm }) {
+  return (
+    <>
+      {PROFILE_PROMPTS.map((p) => (
+        <LongAnswer key={p.key} label={p.label} required={'required' in p && p.required} value={f.profile[p.key]} limit={PROFILE_WORD_LIMIT}
+          onChange={(v) => set({ profile: { ...f.profile, [p.key]: v } })} />
+      ))}
+    </>
+  );
+}
+
+const STEP_BODIES = [StepBasics, StepVerification, StepPractice, StepExpertise, StepClients, StepStyle, StepCulture, StepAvailability, StepContributions, StepMedia, StepProfile];
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+/** iKAN 2 `BottomSheet`: a scrim and a panel in the app column. Escape and the scrim close it. */
+function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" className="sheet__scrim" aria-label="Close" onClick={onClose} />
+      <div className="sheet__panel">
+        <div className="sheet__handle" aria-hidden="true" />
+        <p className="sheet__title">{title}</p>
+        <div className="sheet__body">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** "Full Name, Email and 3 more" — what the footer hint can fit on a line or two. */
+function summarise(items: string[]): string {
+  if (items.length <= 2) return items.join(' and ');
+  return `${items.slice(0, 2).join(', ')} and ${items.length - 2} more`;
+}
 
 interface ProfessionalApplicationProps {
-  onNavigate?: (route: string) => void;
+  onNavigate?: (page: string) => void;
 }
 
 export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationProps) {
-  const isMobile = useIsMobile();
-  const {
-    consultantTypes,
-    languages: kvLanguages,
-    therapeuticApproaches: kvTherapeuticApproaches,
-    demographicSpecialties: kvDemographicSpecialties,
-    expertiseCategories: kvExpertiseCategories,
-  } = useMetadata();
-
-  const expertiseCategories = kvExpertiseCategories.map(e => e.label);
-  const therapeuticApproachOptions = kvTherapeuticApproaches.map(e => e.label);
-  const demographicSpecialtyOptions = kvDemographicSpecialties.map(e => e.label);
-  const languageOptions = kvLanguages.map(e => e.label);
-
+  const [draft] = useState(loadDraft);
+  const [form, setForm] = useState<Form>(() => draft?.form ?? emptyPartnerForm());
+  const [step, setStep] = useState(() => draft?.step ?? 0);
+  const [reached, setReached] = useState(() => Math.max(draft?.reached ?? 0, draft?.step ?? 0));
+  const [started, setStarted] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
-  const formRef = useRef<HTMLDivElement>(null);
 
-  // Ensure page scrolls to top on mount
+  const top = useRef<HTMLDivElement>(null);
+  const set: SetForm = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+  const home = () => onNavigate?.('/');
+
   useEffect(() => {
-    window.scrollTo(0, 0);
-    console.log('📝 ProfessionalApplication mounted at', window.location.pathname);
-  }, []);
+    if (submitted || !started) return;
+    const t = window.setTimeout(() => saveDraft(form, step, reached), 400);
+    return () => window.clearTimeout(t);
+  }, [form, step, reached, started, submitted]);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    credentials: '',
-    category: 'therapist' as string,
-    yearsExperience: 0,
-    location: '',
-    bio: '',
-    photo: '',
-    languages: [] as string[],
-    expertises: [] as string[],
-    therapeuticApproaches: [] as string[],
-    qualifications: [] as string[],
-    clientFAQs: [] as { question: string; answer: string }[],
-    demographicSpecialties: [] as string[],
-    availabilityPreferences: { workingHours: '', daysAvailable: [] as string[], weekendAvailability: false },
-    willingToShareArticles: false,
-    therapeuticPhilosophy: '',
-    testimonials: [] as { text: string; clientName: string }[],
-    videoIntroUrl: '',
-    certificates: [] as string[],
-    sessionModes: [] as string[],
-    pricing: { video: 0, call: 0, chat: 0 },
-  });
-
-  const toggleArray = (field: string, value: string) => {
-    setFormData(prev => {
-      const current = (prev as any)[field] || [];
-      const updated = current.includes(value) ? current.filter((v: string) => v !== value) : [...current, value];
-      return { ...prev, [field]: updated };
-    });
+  const goTo = (next: number) => {
+    setSubmitError(null);
+    setStep(next);
+    setReached((r) => Math.max(r, next));
+    setStepsOpen(false);
+    // Back to the top of the wizard, not the page: the site header stays put.
+    const y = (top.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 96;
+    if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
   };
 
-  const handleFileUpload = async (file: File, category: string): Promise<string | null> => {
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('category', category);
-      fd.append('professionalId', 'application');
+  const errors = stepErrors(step, form);
+  const last = step === STEPS.length - 1;
+  const firstIncomplete = STEPS.findIndex((_, i) => stepErrors(i, form).length > 0);
 
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/upload/professional-file`,
-        { method: 'POST', headers: await getAuthHeaders(), body: fd }
-      );
-      const result = await response.json();
-      if (result.success) return result.url;
-      console.error('Upload failed:', result.error);
-      return null;
-    } catch (err) {
-      console.error('Upload error:', err);
-      return null;
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.credentials.trim() || !formData.bio.trim()) {
-      setError('Please fill in at least your name, credentials, and a brief introduction.');
-      return;
-    }
-
+  const submit = async () => {
     setSubmitting(true);
-    setError(null);
-
+    setSubmitError(null);
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-cc205da9/public/professional-application`,
-        {
-          method: 'POST',
-          headers: { ...(await getAuthHeaders(true)) },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const result = await response.json();
-      if (result.success) {
-        setSubmitted(true);
-      } else {
-        setError(result.error || 'Failed to submit application');
-      }
-    } catch (err) {
-      console.error('Submit error:', err);
-      setError('Network error. Please try again.');
+      // Its own route, not the old `/public/professional-application`: a server
+      // that predates this form would accept the old path and store contact and
+      // verification where the public directory reads. An old server 404s here.
+      const res = await fetch(`${API}/public/partner-application`, {
+        method: 'POST',
+        headers: await getAuthHeaders(true),
+        body: JSON.stringify(toPayload(form)),
+      });
+      if (res.status === 404) throw new Error("We can't receive applications just yet. Your answers are saved on this device, so please try again later.");
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.success) throw new Error(result.error || 'Failed to submit application');
+      clearDraft();
+      setSubmitted(true);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Network error. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const steps = [
-    { label: 'Basic Info', icon: User },
-    { label: 'Expertise', icon: Briefcase },
-    { label: 'Approach', icon: Heart },
-    { label: 'Availability', icon: Clock },
-    { label: 'Extras', icon: FileText },
-  ];
+  // The footer's one action. On the last step it submits, unless an earlier
+  // step has gaps, in which case it takes you there (as iKAN 2's assessment
+  // does with its first unanswered question).
+  const primary = !last
+    ? { label: 'Next', onClick: () => goTo(step + 1), disabled: errors.length > 0 }
+    : firstIncomplete !== -1 && firstIncomplete !== step
+      ? { label: `Finish step ${firstIncomplete + 1}`, onClick: () => goTo(firstIncomplete), disabled: false }
+      : { label: submitting ? 'Submitting…' : 'Submit application', onClick: submit, disabled: errors.length > 0 || submitting };
 
-  // ── Success Screen ──
+  const root = 'ikan2-theme ikan2-type accent-calm info-page site-page-below-nav wizard';
+
+  /* One list of steps, shown two ways: a bottom sheet behind "n of 11" below
+     1024px, and a sticky rail beside the card at 1024px and up. */
+  const stepList = (interactive: boolean) => (
+    <ol className="select-list">
+      {STEPS.map((s, i) => {
+        const gaps = stepErrors(i, form).length > 0;
+        const done = interactive && i < reached && !gaps;
+        return (
+          <li key={s.title}>
+            <button type="button" className="select-row state-layer" aria-current={interactive && i === step ? 'step' : undefined}
+              disabled={!interactive || i > reached} onClick={() => goTo(i)}>
+              <span className={`select-row__glyph${done ? ' select-row__glyph--done' : ''}`} aria-hidden="true">
+                {done ? <Check strokeWidth={3} /> : i + 1}
+              </span>
+              <span>{s.title}</span>
+              {interactive && i <= reached && i !== step && gaps ? <span className="select-row__meta">Needs info</span> : null}
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  // The site page's own header, as on Contact and FAQ.
+  const pageHeader = (
+    <section className="info-band">
+      <div className="info-band__inner">
+        <p className="info-eyebrow">Partner with iKAN</p>
+        <h1>Become an iKAN Partner</h1>
+        <p className="info-subtitle">For therapists, psychologists, psychiatrists and counsellors. Our team reviews every application, and your profile goes live once you're approved.</p>
+      </div>
+    </section>
+  );
+
   if (submitted) {
     return (
-      <div className="ikan2-theme min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--canvas)', padding: 'var(--spacing-4)' }}>
-        <Card style={{ maxWidth: 520, width: '100%', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
-          <CardContent style={{ padding: 'var(--spacing-8)' }}>
-            <div style={{ width: 64, height: 64, borderRadius: 'var(--radius-pill)', backgroundColor: 'var(--calm-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--spacing-4)' }}>
-              <CircleCheck className="w-8 h-8" style={{ color: 'var(--calm-strong)' }} />
-            </div>
-            <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '24px', fontWeight: 500, marginBottom: 'var(--spacing-3)' }}>
-              Application Submitted!
-            </h1>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', color: 'var(--muted-foreground)', marginBottom: 'var(--spacing-6)', lineHeight: 'var(--line-height-lg)' }}>
-              Thank you for your interest in joining the iKAN platform. Our team will review your profile and get back to you within 3-5 business days.
-            </p>
-            {onNavigate && (
-              <Button onClick={() => onNavigate('/')} style={{ borderRadius: 'var(--radius-md)' }}>
-                Back to Home
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+      <div className={root}>
+        {pageHeader}
+        <div className="wizard__body wizard__body--single">
+          <section className="wizard__card partner-done" aria-labelledby="partner-done-title">
+            <CircleCheck className="partner-done__icon" aria-hidden="true" />
+            <h2 id="partner-done-title" className="wizard__title">Application received</h2>
+            <p className="partner-lede">Thank you for applying to partner with iKAN. Our team will verify your details and reply to {form.email || 'you'} within 3–5 business days.</p>
+            <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={home}>Back to iKAN</button>
+          </section>
+        </div>
       </div>
     );
   }
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0: return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Full Name *</Label>
-              <Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Dr. Jane Doe" style={inputStyle} />
-            </div>
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Credentials *</Label>
-              <Input value={formData.credentials} onChange={(e) => setFormData(prev => ({ ...prev, credentials: e.target.value }))} placeholder="Ph.D., Clinical Psychologist" style={inputStyle} />
-            </div>
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Category</Label>
-              <Select value={formData.category} onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}>
-                <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {consultantTypes.map((ct) => (
-                    <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Years of Experience</Label>
-              <Input type="number" value={formData.yearsExperience} onChange={(e) => setFormData(prev => ({ ...prev, yearsExperience: parseInt(e.target.value) || 0 }))} min="0" max="60" style={inputStyle} />
-            </div>
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Location</Label>
-              <Input value={formData.location} onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))} placeholder="Mumbai, India" style={inputStyle} />
-            </div>
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Photo URL</Label>
-              <Input value={formData.photo} onChange={(e) => setFormData(prev => ({ ...prev, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
-              <input type="file" accept="image/*" className="hidden" id="photo-upload" onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const url = await handleFileUpload(file, 'photo');
-                  if (url) setFormData(prev => ({ ...prev, photo: url }));
-                }
-              }} />
-              <Button variant="outline" size="sm" onClick={() => document.getElementById('photo-upload')?.click()} style={{ marginTop: 'var(--spacing-2)', gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}>
-                <Upload className="w-3 h-3" /> Upload Photo
-              </Button>
-            </div>
-          </div>
-          <div>
-            <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 4, display: 'block' }}>Brief Introduction *</Label>
-            <Textarea value={formData.bio} onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))} placeholder="Tell us about yourself, your background, and your approach to therapy..." className="min-h-[120px]" style={{ borderRadius: 'var(--radius-md)' }} />
-          </div>
-          <div>
-            <Label style={{ fontWeight: 500, fontSize: '14px', marginBottom: 8, display: 'block' }}>Languages Spoken</Label>
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-              {languageOptions.map(lang => (
-                <div key={lang} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('languages', lang)}>
-                  <Checkbox checked={formData.languages.includes(lang)} onCheckedChange={() => toggleArray('languages', lang)} />
-                  <span style={{ fontSize: '14px' }}>{lang}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-
-      case 1: return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div>
-            <h3 style={sectionTitleStyle}>Types of Issues You Address</h3>
-            <p style={sectionDescStyle}>Select all that apply. You can also add custom items.</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {expertiseCategories.map(exp => (
-                <div key={exp} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('expertises', exp)}>
-                  <Checkbox checked={formData.expertises.includes(exp)} onCheckedChange={() => toggleArray('expertises', exp)} />
-                  <span style={{ fontSize: '14px' }}>{exp}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Demographic Specialties</h3>
-            <p style={sectionDescStyle}>Client groups you work with.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {demographicSpecialtyOptions.map(d => (
-                <div key={d} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('demographicSpecialties', d)}>
-                  <Checkbox checked={formData.demographicSpecialties.includes(d)} onCheckedChange={() => toggleArray('demographicSpecialties', d)} />
-                  <span style={{ fontSize: '14px' }}>{d}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Qualifications</h3>
-            <p style={sectionDescStyle}>Degrees, certifications, licenses, and additional training.</p>
-            {formData.qualifications.map((q, i) => (
-              <div key={i} className="flex items-center gap-2 mb-2">
-                <Input value={q} onChange={(e) => { const qs = [...formData.qualifications]; qs[i] = e.target.value; setFormData(prev => ({ ...prev, qualifications: qs })); }} placeholder="e.g., Ph.D. Clinical Psychology" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, qualifications: prev.qualifications.filter((_, j) => j !== i) }))} style={{ color: 'var(--error)' }}><X className="w-4 h-4" /></Button>
-              </div>
-            ))}
-            <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, qualifications: [...prev.qualifications, ''] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Qualification</Button>
-          </div>
-        </div>
-      );
-
-      case 2: return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div>
-            <h3 style={sectionTitleStyle}>Therapeutic Approaches</h3>
-            <p style={sectionDescStyle}>Select the modalities you practice.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {therapeuticApproachOptions.map(a => (
-                <div key={a} className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--secondary)]" style={{ cursor: 'pointer' }} onClick={() => toggleArray('therapeuticApproaches', a)}>
-                  <Checkbox checked={formData.therapeuticApproaches.includes(a)} onCheckedChange={() => toggleArray('therapeuticApproaches', a)} />
-                  <span style={{ fontSize: '14px' }}>{a}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Therapeutic Philosophy</h3>
-            <Textarea value={formData.therapeuticPhilosophy} onChange={(e) => setFormData(prev => ({ ...prev, therapeuticPhilosophy: e.target.value }))} placeholder="Describe your guiding philosophy..." className="min-h-[100px]" style={{ borderRadius: 'var(--radius-md)' }} />
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Session Formats</h3>
-            <div className="flex flex-wrap gap-3">
-              {[{ key: 'online', label: 'Video Call', icon: Video }, { key: 'call', label: 'Phone Call', icon: Phone }, { key: 'chat', label: 'Chat', icon: MessageSquare }].map(({ key, label, icon: Ic }) => (
-                <div key={key} className="flex items-center gap-3 p-4 rounded-lg border cursor-pointer" onClick={() => toggleArray('sessionModes', key)}
-                  style={{ borderColor: formData.sessionModes.includes(key) ? 'var(--foreground)' : 'var(--border)', backgroundColor: formData.sessionModes.includes(key) ? 'var(--secondary)' : 'var(--card)', borderRadius: 'var(--radius-md)' }}>
-                  <Checkbox checked={formData.sessionModes.includes(key)} onCheckedChange={() => toggleArray('sessionModes', key)} />
-                  <Ic className="w-4 h-4" /><span style={{ fontSize: '14px' }}>{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-
-      case 3: return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div>
-            <h3 style={sectionTitleStyle}>Working Hours</h3>
-            <Input value={formData.availabilityPreferences.workingHours} onChange={(e) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...prev.availabilityPreferences, workingHours: e.target.value } }))} placeholder="e.g., 10:00 AM - 6:00 PM IST" style={inputStyle} />
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Days Available</h3>
-            <div className="flex flex-wrap gap-2">
-              {DAYS_OF_WEEK.map(day => {
-                const sel = formData.availabilityPreferences.daysAvailable.includes(day);
-                return (
-                  <button key={day} type="button" onClick={() => {
-                    setFormData(prev => {
-                      const days = prev.availabilityPreferences.daysAvailable.includes(day)
-                        ? prev.availabilityPreferences.daysAvailable.filter(d => d !== day)
-                        : [...prev.availabilityPreferences.daysAvailable, day];
-                      return { ...prev, availabilityPreferences: { ...prev.availabilityPreferences, daysAvailable: days } };
-                    });
-                  }} style={{ padding: 'var(--spacing-2) var(--spacing-4)', borderRadius: 'var(--radius-md)', border: '1px solid', borderColor: sel ? 'var(--foreground)' : 'var(--border)', backgroundColor: sel ? 'var(--foreground)' : 'var(--card)', color: sel ? 'var(--background)' : 'var(--foreground)', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
-                    {day.slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch checked={formData.availabilityPreferences.weekendAvailability} onCheckedChange={(c) => setFormData(prev => ({ ...prev, availabilityPreferences: { ...prev.availabilityPreferences, weekendAvailability: c } }))} />
-            <Label style={{ fontSize: '14px' }}>Available on weekends</Label>
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Common Client FAQs</h3>
-            <p style={sectionDescStyle}>Help clients understand your practice better.</p>
-            {formData.clientFAQs.map((faq, i) => (
-              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius-md)' }}>
-                <div className="flex justify-between mb-2">
-                  <span style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>FAQ #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: prev.clientFAQs.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--error)' }}><X className="w-3 h-3" /></Button>
-                </div>
-                <Input value={faq.question} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], question: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Question..." className="mb-2" style={inputStyle} />
-                <Textarea value={faq.answer} onChange={(e) => { const faqs = [...formData.clientFAQs]; faqs[i] = { ...faqs[i], answer: e.target.value }; setFormData(prev => ({ ...prev, clientFAQs: faqs })); }} placeholder="Answer..." className="min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
-              </div>
-            ))}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: [...prev.clientFAQs, { question: '', answer: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add FAQ</Button>
-              {formData.clientFAQs.length === 0 && (
-                <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, clientFAQs: [{ question: 'Do you see individuals, couples, or families?', answer: '' }, { question: 'How many sessions do clients typically need?', answer: '' }, { question: 'What is your general working style?', answer: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Sparkles className="w-4 h-4" /> Load Suggested</Button>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-
-      case 4: return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div>
-            <h3 style={sectionTitleStyle}>Video Introduction</h3>
-            <p style={sectionDescStyle}>YouTube, Vimeo, or direct video link.</p>
-            <Input value={formData.videoIntroUrl} onChange={(e) => setFormData(prev => ({ ...prev, videoIntroUrl: e.target.value }))} placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Certificates for Verification</h3>
-            {formData.certificates.map((c, i) => (
-              <div key={i} className="flex items-center gap-2 mb-2">
-                <Input value={c} onChange={(e) => { const certs = [...formData.certificates]; certs[i] = e.target.value; setFormData(prev => ({ ...prev, certificates: certs })); }} placeholder="Certificate URL or upload below" style={inputStyle} className="flex-1" />
-                <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, j) => j !== i) }))} style={{ color: 'var(--error)' }}><X className="w-4 h-4" /></Button>
-              </div>
-            ))}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, certificates: [...prev.certificates, ''] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Certificate</Button>
-              <div>
-                <input type="file" accept="image/*,.pdf" className="hidden" id="cert-upload" onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const url = await handleFileUpload(file, 'certificate');
-                    if (url) setFormData(prev => ({ ...prev, certificates: [...prev.certificates, url] }));
-                  }
-                }} />
-                <Button variant="outline" onClick={() => document.getElementById('cert-upload')?.click()} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Upload className="w-4 h-4" /> Upload File</Button>
+  if (!started) {
+    return (
+      <div className={root}>
+        {pageHeader}
+        <div className="wizard__body">
+          <aside className="wizard__rail" aria-label="What the application covers">
+            <p className="field__label">{STEPS.length} steps</p>
+            {stepList(false)}
+          </aside>
+          <section className="wizard__card" aria-labelledby="partner-intro-title">
+            {draft ? <p className="notice">Picking up where you left off, at step {draft.step + 1} of {STEPS.length}.</p> : null}
+            <h2 id="partner-intro-title" className="wizard__title">Before you start, keep handy</h2>
+            <ul className="select-list partner-intro-list">
+              <li className="select-row">Your degree and registration details (RCI, NMC or State Medical Council)</li>
+              <li className="select-row">Scans or photos of your degree and registration certificate</li>
+              <li className="select-row">A recent headshot</li>
+            </ul>
+            <p className="field__message">{STEPS.length} steps. Your answers save on this device as you go, so you can stop and come back.</p>
+            <div className="wizard__footer">
+              <div className="flow-footer__actions">
+                <button type="button" className="btn btn--filled state-layer motion-press" onClick={() => setStarted(true)}>
+                  {draft ? 'Continue application' : 'Start application'}
+                </button>
               </div>
             </div>
-          </div>
-          <div>
-            <h3 style={sectionTitleStyle}>Testimonials</h3>
-            <p style={sectionDescStyle}>Client testimonials you'd like displayed on your profile.</p>
-            {formData.testimonials.map((t, i) => (
-              <div key={i} className="p-3 rounded-lg border mb-3" style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius-md)' }}>
-                <div className="flex justify-between mb-2">
-                  <span style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>Testimonial #{i + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setFormData(prev => ({ ...prev, testimonials: prev.testimonials.filter((_, j) => j !== i) }))} style={{ height: 24, width: 24, color: 'var(--error)' }}><X className="w-3 h-3" /></Button>
-                </div>
-                <Textarea value={t.text} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], text: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Testimonial text..." className="mb-2 min-h-[60px]" style={{ borderRadius: 'var(--radius-md)' }} />
-                <Input value={t.clientName} onChange={(e) => { const ts = [...formData.testimonials]; ts[i] = { ...ts[i], clientName: e.target.value }; setFormData(prev => ({ ...prev, testimonials: ts })); }} placeholder="Client name (or anonymous)" style={inputStyle} />
-              </div>
-            ))}
-            <Button variant="outline" onClick={() => setFormData(prev => ({ ...prev, testimonials: [...prev.testimonials, { text: '', clientName: '' }] }))} style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}><Plus className="w-4 h-4" /> Add Testimonial</Button>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: 'var(--secondary)', borderRadius: 'var(--radius-md)' }}>
-            <Switch checked={formData.willingToShareArticles} onCheckedChange={(c) => setFormData(prev => ({ ...prev, willingToShareArticles: c }))} />
-            <div>
-              <Label style={{ fontWeight: 500, fontSize: '14px' }}>Willing to contribute articles</Label>
-              <p style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>Share articles on our blog/resources section</p>
-            </div>
-          </div>
+          </section>
         </div>
-      );
+      </div>
+    );
+  }
 
-      default: return null;
-    }
-  };
+  const Body = STEP_BODIES[step];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--canvas)' }}>
-      {/* Header */}
-      <div style={{ backgroundColor: 'var(--foreground)', color: 'var(--background)', padding: isMobile ? 'var(--spacing-6) var(--spacing-4)' : 'var(--spacing-8) var(--spacing-6)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          {onNavigate && (
-            <Button variant="ghost" onClick={() => onNavigate('/')} style={{ color: 'var(--background)', marginBottom: 'var(--spacing-4)', gap: 'var(--spacing-2)' }}>
-              <ArrowLeft className="w-4 h-4" /> Back to iKAN
-            </Button>
-          )}
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? '24px' : '32px', fontWeight: 500, marginBottom: 'var(--spacing-2)' }}>
-            Join iKAN as a Professional
-          </h1>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '16px', opacity: 0.85, lineHeight: 'var(--line-height-lg)' }}>
-            Complete this form to apply. Your profile will be reviewed by our team and go live once approved.
-          </p>
-        </div>
-      </div>
+    <div className={root}>
+      {pageHeader}
 
-      {/* Progress Steps */}
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: 'var(--spacing-4)' }}>
-        <div className="flex items-center justify-between mb-6" style={{ overflowX: 'auto' }}>
-          {steps.map((step, i) => {
-            const StepIcon = step.icon;
-            const isActive = i === currentStep;
-            const isDone = i < currentStep;
-            return (
-              <button
-                key={i}
-                onClick={() => setCurrentStep(i)}
-                className="flex flex-col items-center gap-1"
-                style={{ flex: 1, cursor: 'pointer', background: 'none', border: 'none', minWidth: 60 }}
-              >
-                <div style={{
-                  width: 36, height: 36, borderRadius: 'var(--radius-pill)',
-                  backgroundColor: isActive ? 'var(--foreground)' : isDone ? 'var(--calm-strong)' : 'var(--secondary)',
-                  color: isActive || isDone ? 'var(--background)' : 'var(--muted-foreground)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s',
-                }}>
-                  {isDone ? <CircleCheck className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
-                </div>
-                <span style={{ fontSize: '12px', fontWeight: isActive ? 500 : 400, color: isActive ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
-                  {step.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="wizard__body" ref={top}>
+        <aside className="wizard__rail">
+          <nav aria-label="Application steps">
+            <p className="field__label">Step {step + 1} of {STEPS.length}</p>
+            {stepList(true)}
+          </nav>
+        </aside>
 
-        {/* Form Content */}
-        <Card ref={formRef} style={{ borderRadius: 'var(--radius-lg)', marginBottom: 'var(--spacing-6)' }}>
-          <CardContent style={{ padding: isMobile ? 'var(--spacing-4)' : 'var(--spacing-6)' }}>
-            {renderStepContent()}
-          </CardContent>
-        </Card>
-
-        {/* Error */}
-        {error && (
-          <div className="flex items-center gap-3 p-4 rounded-lg mb-4" style={{ backgroundColor: 'var(--error-container)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)' }}>
-            <X className="w-4 h-4" style={{ color: 'var(--error)' }} />
-            <span style={{ fontSize: '14px', color: 'var(--error)' }}>{error}</span>
+        <section className="wizard__card" aria-labelledby="partner-step-title">
+          <div className="wizard__progress">
+            <button type="button" className="btn btn--text btn--md state-layer wizard__count" aria-haspopup="dialog"
+              aria-label={`Step ${step + 1} of ${STEPS.length}. Show all steps`} onClick={() => setStepsOpen(true)}>
+              <span aria-live="polite">Step {step + 1} of {STEPS.length}</span>
+              <ChevronDown aria-hidden="true" />
+            </button>
+            <div className="linear-progress" role="progressbar" aria-label="Application progress"
+              aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(((step + 1) / STEPS.length) * 100)}>
+              <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+            </div>
           </div>
-        )}
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between" style={{ paddingBottom: 'var(--spacing-8)' }}>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-            disabled={currentStep === 0}
-            style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)' }}
-          >
-            <ArrowLeft className="w-4 h-4" /> Previous
-          </Button>
+          <form key={step} className="partner-form animate-step" noValidate onSubmit={(e) => { e.preventDefault(); if (!primary.disabled) primary.onClick(); }}>
+            <div className="partner-wide">
+              <h2 id="partner-step-title" className="wizard__title">{STEPS[step].title}</h2>
+              {STEPS[step].hint ? <p className="field__message">{STEPS[step].hint}</p> : null}
+            </div>
+            <Body f={form} set={set} />
+            {submitError ? <p className="form-error partner-wide" role="alert">{submitError}</p> : null}
+            {/* Enter in a field moves on, as in iKAN 2's flows. */}
+            <button type="submit" hidden tabIndex={-1} aria-label={primary.label} />
+          </form>
 
-          {currentStep < steps.length - 1 ? (
-            <Button
-              onClick={() => setCurrentStep(currentStep + 1)}
-              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--foreground)', color: 'var(--background)' }}
-            >
-              Next Step
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting}
-              style={{ gap: 'var(--spacing-2)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--foreground)', color: 'var(--background)', minWidth: 180 }}
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {submitting ? 'Submitting...' : 'Submit Application'}
-            </Button>
-          )}
-        </div>
+          <div className="wizard__footer">
+            {primary.disabled && errors.length ? (
+              <p className="flow-footer__hint" role="status">Still needed: {summarise(errors)}</p>
+            ) : null}
+            <div className="flow-footer__actions">
+              <button type="button" className="btn btn--outlined btn--icon state-layer motion-press partner-back"
+                aria-label="Previous step" disabled={step === 0} onClick={() => goTo(step - 1)}>
+                <ArrowLeft aria-hidden="true" />
+              </button>
+              <button type="button" className="btn btn--filled state-layer motion-press" disabled={primary.disabled}
+                aria-busy={submitting || undefined} onClick={primary.onClick}>
+                {submitting ? <span className="btn__spinner" aria-hidden="true" /> : null}
+                {primary.label}
+                {!last ? <ArrowRight aria-hidden="true" /> : null}
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <Sheet open={stepsOpen} onClose={() => setStepsOpen(false)} title="All steps">
+        {stepList(true)}
+      </Sheet>
     </div>
   );
 }
