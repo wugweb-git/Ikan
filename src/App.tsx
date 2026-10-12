@@ -151,7 +151,6 @@ const AdminLoginScreen = lazy(() => lazyRetry(() => import('./admin/shell/AdminL
 const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').then(m => ({ default: m.AdminGate })), 'AdminGate'));
 
 // --- Eagerly loaded non-screen components ---
-import { AdminWidget } from './admin/shell/AdminWidget';
 import { ADMIN_ROUTE_PATHS } from './admin/shell/sections';
 import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
 import { Footer } from './product/site/ui/Footer';
@@ -917,9 +916,6 @@ function AppContent() {
           className: 'ikan-toast'
         }}
       />
-      
-      {/* Admin Widget */}
-      <AdminWidget onNavigate={handleNavigate} />
     </div>
   );
 }
