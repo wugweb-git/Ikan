@@ -10,7 +10,7 @@ interface RouteGuardProps {
 }
 
 export function RouteGuard({ currentRoute, onNavigate: _onNavigate, children }: RouteGuardProps) {
-  const { user, isInitialized } = useAuth();
+  const { isInitialized } = useAuth();
 
   // Show loading while auth state is being determined
   if (!isInitialized) {
@@ -39,16 +39,19 @@ export function RouteGuard({ currentRoute, onNavigate: _onNavigate, children }: 
   const routeRequiresAuth = requiresAuth(currentRoute);
 
   /*
-   * A member route reached without a session goes to the member app, not to a
-   * login screen on this host.
+   * A member route leaves this host — signed in or not.
    *
-   * There is no member login here any more — ikanhealth.in serves marketing,
-   * the admin console and the organisation portal, and every member route
-   * 301s to app.ikanhealth.in at the edge. This branch only catches an
-   * in-app navigation, which never touches the edge rule, so it has to do the
-   * same thing itself.
+   * The earlier version only redirected when there was NO session, which
+   * missed the case that actually happens: the only people with a session
+   * here are admins, and for them `user` is set, so every member route
+   * rendered normally. ikanhealth.in served a working member dashboard to
+   * exactly the people most likely to open it.
+   *
+   * The edge 301s in `vercel.json` cannot cover this either — an in-app
+   * navigation never makes a request — so the rule has to exist in both
+   * places. Admin routes are the exception and are returned above.
    */
-  if (!user && routeRequiresAuth) {
+  if (routeRequiresAuth) {
     if (typeof window !== 'undefined') window.location.replace(`${APP_ORIGIN}/login`);
     return null;
   }

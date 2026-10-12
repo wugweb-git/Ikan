@@ -15,7 +15,7 @@ import { BottomNavBarMobile } from './product/app/shell/navigation/BottomNavBarM
 import { PublicBottomNavMobile } from './product/site/ui/PublicBottomNavMobile';
 import { useIsCompactNav } from './product/site/ui/hooks/useIsMobile';
 import { RouteGuard } from './product/app/shell/RouteGuard';
-import { DEFAULT_PUBLIC_ROUTE, DEFAULT_PRIVATE_ROUTE } from './product/app/ui/route-config';
+import { DEFAULT_PUBLIC_ROUTE } from './product/app/ui/route-config';
 import { MobileOnboarding } from './product/app/onboarding/MobileOnboarding';
 import { VerifyEmail } from './product/app/onboarding/VerifyEmail';
 import { GetStarted } from './product/app/onboarding/GetStarted';
@@ -403,8 +403,11 @@ function AppContent() {
         if (path.startsWith('/page/')) {
           // CMS page — let it pass through to the switch
         } else {
-          logger.warn('Invalid route:', path, 'redirecting to appropriate default');
-          const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
+          logger.warn('Invalid route:', path, 'redirecting to the homepage');
+          // Always the public home. It used to be the member dashboard for a
+          // signed-in visitor, which on this host means an admin — and the
+          // member app is on another origin now.
+          const defaultRoute = DEFAULT_PUBLIC_ROUTE;
           startTransition(() => setCurrentRoute(defaultRoute));
           setResourceDetailId(null);
           if (typeof window !== 'undefined') {
@@ -436,27 +439,27 @@ function AppContent() {
       }
     } catch (error) {
       logger.error('Navigation error:', error);
-      startTransition(() => setCurrentRoute('/dashboard'));
+      startTransition(() => setCurrentRoute(DEFAULT_PUBLIC_ROUTE));
       setResourceDetailId(null);
     }
-  }, [isMobile, user, triggerHapticFeedback]);
+  }, [isMobile, triggerHapticFeedback]);
 
   // ALL useEffect HOOKS - CALLED CONSISTENTLY ON EVERY RENDER
   
-  // Auth state changes + first-run gate
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (user && currentRoute === '/') {
-      // First sign-in on this device sees the getting-started screen once.
-      const target = hasCompletedFirstRun() ? DEFAULT_PRIVATE_ROUTE : '/get-started';
-      startTransition(() => setCurrentRoute(target));
-      if (typeof window !== 'undefined') window.history.replaceState({}, '', target);
-    }
-    /* The mobile splash that used to live at /welcome is gone. It was the member
-       app's first-run screen, and the member app is iKAN 2 now — on a static
-       marketing site it sent a first-time visitor to an onboarding dead end
-       instead of the homepage. */
-  }, [user, isInitialized, currentRoute, isMobile]);
+  /*
+   * REMOVED: the signed-in bounce from `/` to `/dashboard`.
+   *
+   * This threw any signed-in visitor on the homepage into the member
+   * dashboard with `history.replaceState`, which never touches the network —
+   * so the 301 in `vercel.json` could not catch it, and nor could RouteGuard,
+   * because the person *was* signed in. The only session left on this host is
+   * an admin's, so the effect of closing the member app was that every admin
+   * who opened ikanhealth.in landed in a member dashboard that is supposed to
+   * live on another origin entirely.
+   *
+   * A signed-in admin on the homepage now sees the homepage. The member app's
+   * first-run gate went with it; iKAN 2 owns that.
+   */
 
   // Mobile viewport optimization effect
   useEffect(() => {
@@ -545,10 +548,9 @@ function AppContent() {
   // Fix invalid route state (moved out of render to avoid setState-during-render)
   useEffect(() => {
     if (!currentRoute || typeof currentRoute !== 'string') {
-      const defaultRoute = user ? DEFAULT_PRIVATE_ROUTE : DEFAULT_PUBLIC_ROUTE;
-      startTransition(() => setCurrentRoute(defaultRoute));
+      startTransition(() => setCurrentRoute(DEFAULT_PUBLIC_ROUTE));
     }
-  }, [currentRoute, user]);
+  }, [currentRoute]);
 
   // Redirect unauthenticated users from admin routes (moved out of render)
   useEffect(() => {
