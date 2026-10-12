@@ -14,7 +14,7 @@ import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* The three UI surfaces. components/ was emptied into them. */
-const SRCS = ['src/admin', 'src/product/app', 'src/product/site'].map(d => join(ROOT, d));
+const SRCS = ['src/admin', 'src/product/app', 'src/product/site', 'src/product/org'].map(d => join(ROOT, d));
 const BASELINE_FILE = join(ROOT, 'scripts/baselines/rawhex');
 
 /* globals.css is where literals belong. Tests and stories may pin values. */

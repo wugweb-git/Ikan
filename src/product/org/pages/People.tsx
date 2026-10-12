@@ -124,14 +124,13 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
           />
         </div>
 
-        <label className="org-tab" style={{ cursor: 'pointer' }}>
+        <label className="org-toggle">
           <input
             type="checkbox"
             checked={showEnded}
             onChange={(e) => setShowEnded(e.target.checked)}
-            style={{ marginRight: 8 }}
           />
-          Show past members
+          Include past members
         </label>
 
         {canWrite && (
@@ -234,7 +233,7 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                     <td>{m.department || <span style={{ color: 'var(--muted-foreground)' }}>—</span>}</td>
                     <td>
                       {m.role === 'member' ? (
-                        <span style={{ color: 'var(--muted-foreground)' }}>Member</span>
+                        <span className="org-table__quiet">Member</span>
                       ) : (
                         <span className="org-pill org-pill--admin">
                           {m.role === 'admin' ? 'Admin' : 'Read only'}
@@ -242,9 +241,13 @@ export function People({ org, canWrite }: { org: Organization; canWrite: boolean
                       )}
                     </td>
                     <td>
-                      <span className={`org-pill org-pill--${status}`}>
-                        {status === 'active' ? 'Joined' : status === 'pending' ? 'Invited' : 'Past member'}
-                      </span>
+                      {status === 'active' ? (
+                        <span className="org-table__quiet">Joined</span>
+                      ) : (
+                        <span className={`org-pill org-pill--${status}`}>
+                          {status === 'pending' ? 'Invited' : 'Past member'}
+                        </span>
+                      )}
                     </td>
                     {canWrite && (
                       <td style={{ textAlign: 'right' }}>

@@ -26,49 +26,47 @@ export function Overview({ data }: { data: OverviewData }) {
         and will always be aggregate.
       </p>
 
-      <div className="org-stats">
-        <div className="org-stat">
-          <p className="org-stat__label">Seats used</p>
-          <p className="org-stat__value">
-            {seats.used}
-            <span style={{ fontSize: 18, color: 'var(--muted-foreground)' }}> / {seats.purchased}</span>
-          </p>
-          <div className="org-meter">
-            <div
-              className={`org-meter__fill${seats.remaining === 0 ? ' org-meter__fill--full' : ''}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="org-stat__note">
-            {seats.remaining === 0
-              ? 'No seats remaining'
-              : `${seats.remaining} remaining`}
+      {/* Seats are the fact an administrator acts on — whether to invite more
+          people, and whether to buy more room. It gets the weight; the rest
+          of the roster arithmetic sits under a rule beneath it. Four equal
+          cards gave "0 invited" the same prominence as the contract. */}
+      <div className="org-lead">
+        <p className="org-lead__value">
+          {seats.used}
+          <span className="org-lead__of"> of {seats.purchased}</span>
+        </p>
+        <div className="org-lead__side">
+          <p className="org-lead__label">seats in use</p>
+          <p className={`org-lead__delta${seats.remaining === 0 ? ' org-lead__delta--down' : ''}`}>
+            {seats.remaining === 0 ? 'None remaining' : `${seats.remaining} remaining`}
           </p>
         </div>
+      </div>
 
-        <div className="org-stat">
-          <p className="org-stat__label">Joined</p>
-          <p className="org-stat__value">{onboarding.accepted}</p>
-          <p className="org-stat__note">People who accepted their invitation</p>
+      <div className="org-meter" style={{ marginTop: 18 }}>
+        <div
+          className={`org-meter__fill${seats.remaining === 0 ? ' org-meter__fill--full' : ''}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      <div className="org-facts">
+        <div className="org-fact">
+          <p className="org-fact__value">{onboarding.accepted}</p>
+          <p className="org-fact__label">have joined</p>
         </div>
-
-        <div className="org-stat">
-          <p className="org-stat__label">Invited, not yet joined</p>
-          <p className="org-stat__value">{onboarding.pending}</p>
-          <p className="org-stat__note">
-            {onboarding.pending === 0 ? 'Everyone invited has joined' : 'Awaiting sign-up'}
+        <div className="org-fact">
+          <p className="org-fact__value">{onboarding.pending}</p>
+          <p className="org-fact__label">
+            {onboarding.pending === 0 ? 'invitations outstanding' : 'invited, not yet joined'}
           </p>
         </div>
-
-        <div className="org-stat">
-          <p className="org-stat__label">Adoption</p>
-          <p className="org-stat__value">
+        <div className="org-fact">
+          <p className="org-fact__value">
             {onboarding.adoption_rate === null ? '—' : `${onboarding.adoption_rate}%`}
           </p>
-          <p className="org-stat__note">
-            {onboarding.adoption_rate === null
-              ? 'Set a seat count to measure adoption'
-              : 'Of purchased seats'}
+          <p className="org-fact__label">
+            {onboarding.adoption_rate === null ? 'set a seat count to measure adoption' : 'of seats taken up'}
           </p>
         </div>
       </div>

@@ -126,6 +126,88 @@
 
 /* ── Stat tiles ───────────────────────────────────────────────── */
 
+.ikan2-theme .org-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 28px;
+  margin-top: 26px;
+}
+
+.ikan2-theme .org-lead__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 76px);
+  line-height: 0.95;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-lead__of {
+  font-size: 0.38em;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-lead__side {
+  padding-bottom: 6px;
+}
+
+.ikan2-theme .org-lead__label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-lead__delta {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .org-lead__delta--down { color: var(--brand-coral-ink); }
+
+/* The supporting facts: a row, separated by rules rather than boxed. Three
+   more cards beside the lead would flatten it back out. */
+.ikan2-theme .org-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0;
+  margin-top: 30px;
+  border-top: 1px solid var(--border);
+}
+
+.ikan2-theme .org-fact {
+  padding: 16px 20px 16px 0;
+  border-right: 1px solid var(--border);
+}
+
+.ikan2-theme .org-fact:last-child { border-right: 0; }
+
+@media (min-width: 640px) {
+  .ikan2-theme .org-fact { padding-left: 20px; }
+  .ikan2-theme .org-fact:first-child { padding-left: 0; }
+}
+
+.ikan2-theme .org-fact__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-fact__label {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+
 .ikan2-theme .org-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -142,10 +224,8 @@
 
 .ikan2-theme .org-stat__label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--muted-foreground);
 }
 
@@ -214,8 +294,8 @@
  * it with whatever number is nearest to hand.
  */
 .ikan2-theme .org-panel--pending {
-  border-style: dashed;
-  background: transparent;
+  border-color: transparent;
+  background: var(--rest-soft, var(--muted));
 }
 
 /* The privacy notice. Stated on the page the admin reads, not buried in a
@@ -226,7 +306,7 @@
   margin-top: 28px;
   padding: 16px 18px;
   border-radius: var(--radius-lg);
-  background: var(--calm-soft);
+  background: var(--rest-soft, var(--muted));
 }
 
 .ikan2-theme .org-privacy svg {
@@ -234,7 +314,7 @@
   width: 18px;
   height: 18px;
   margin-top: 1px;
-  color: var(--brand-teal-ink);
+  color: var(--brand-slate-ink);
 }
 
 .ikan2-theme .org-privacy p {
@@ -299,10 +379,8 @@
   background: var(--card);
   border-bottom: 1px solid var(--border);
   text-align: left;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
   white-space: nowrap;
 }
@@ -315,6 +393,8 @@
 
 .ikan2-theme .org-table tr:last-child td { border-bottom: 0; }
 
+.ikan2-theme .org-table tbody tr:hover { background: color-mix(in oklab, var(--foreground) 3%, transparent); }
+
 .ikan2-theme .org-table__email {
   font-weight: 500;
   color: var(--foreground);
@@ -326,10 +406,8 @@
   height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 .ikan2-theme .org-pill--active  { background: var(--calm-soft);  color: var(--brand-teal-ink); }
@@ -370,10 +448,29 @@
 .ikan2-theme .org-button--danger {
   background: transparent;
   border-color: transparent;
-  color: var(--destructive);
+  color: var(--muted-foreground);
   height: 30px;
   padding: 0 10px;
   font-size: 13px;
+  opacity: 0;
+}
+
+/* Revealed on the row, and on keyboard focus — an action that only exists on
+   hover is an action a keyboard cannot reach. */
+.ikan2-theme .org-table tr:hover .org-button--danger,
+.ikan2-theme .org-table tr:focus-within .org-button--danger {
+  opacity: 1;
+}
+
+.ikan2-theme .org-button--danger:hover,
+.ikan2-theme .org-button--danger:focus-visible {
+  opacity: 1;
+  color: var(--destructive);
+}
+
+@media (hover: none) {
+  /* No hover to reveal with. */
+  .ikan2-theme .org-button--danger { opacity: 1; }
 }
 
 .ikan2-theme .org-button--danger:hover { background: var(--error-container, var(--muted)); }
@@ -488,11 +585,13 @@
 .ikan2-theme .org-login__scrim {
   position: absolute;
   inset: 0;
+  /* Built from the design system's own ink rather than a hand-mixed black,
+     so the scrim tracks the palette. */
   background: linear-gradient(
     180deg,
-    oklch(0.2 0 0 / 0.5) 0%,
-    oklch(0.2 0 0 / 0.72) 60%,
-    oklch(0.2 0 0 / 0.88) 100%
+    color-mix(in oklab, var(--foreground) 55%, transparent) 0%,
+    color-mix(in oklab, var(--foreground) 76%, transparent) 60%,
+    color-mix(in oklab, var(--foreground) 90%, transparent) 100%
   );
 }
 
@@ -500,7 +599,7 @@
   position: absolute;
   inset: auto 0 0 0;
   padding: 48px 40px;
-  color: var(--grey-0, #fff);
+  color: var(--background);
 }
 
 .ikan2-theme .org-login__words h2 {
@@ -684,9 +783,11 @@
 }
 
 .ikan2-theme .org-suppressed li {
-  padding: 14px 16px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
+  padding: 15px 18px;
+  border: 0;
+  border-left: 3px solid var(--brand-slate);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--rest-soft, var(--muted));
 }
 
 .ikan2-theme .org-suppressed strong { font-size: 14px; }
@@ -704,3 +805,24 @@
   line-height: 20px;
   color: var(--muted-foreground);
 }
+
+/* The common value in a column, stated without a chip. A pill on every row
+   is 80 identical badges, which hides the three rows that differ. */
+.ikan2-theme .org-table__quiet { color: var(--muted-foreground); }
+
+.ikan2-theme .org-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.ikan2-theme .org-toggle input { accent-color: var(--brand-teal-ink); }

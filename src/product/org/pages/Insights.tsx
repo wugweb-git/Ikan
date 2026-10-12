@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, Lock } from 'lucide-react';
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { orgApi, type Insights as InsightsData, type Organization } from '../api';
 
@@ -21,7 +21,16 @@ import { orgApi, type Insights as InsightsData, type Organization } from '../api
  * like missing data.
  */
 
-const BAND_COLOURS = ['#C2694F', '#E0B252', '#4F7A62'];
+/*
+ * iKAN 2's brand ramp, not invented hex. SVG presentation attributes resolve
+ * CSS custom properties, so recharts takes these directly and the chart
+ * follows the design system — including anywhere the tokens are redefined.
+ */
+const BAND_COLOURS = [
+  'var(--brand-coral-ink)',   // struggling
+  'var(--brand-amber-ink)',   // coping
+  'var(--brand-teal-ink)',    // thriving
+] as const;
 
 const MONTH = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
@@ -142,34 +151,41 @@ export function Insights({ org }: { org: Organization }) {
       {loading && !data && <p className="org-empty">Loading…</p>}
 
       {data?.headline && (
-        <div className="org-stats">
-          <div className="org-stat">
-            <p className="org-stat__label">Organisation iKAN score</p>
-            <p className="org-stat__value">{data.headline.avg_score}</p>
-            <p className="org-stat__note">
-              {data.headline.change === null
-                ? 'This period'
-                : `${data.headline.change >= 0 ? '+' : ''}${data.headline.change} since ${MONTH(data.window.from)}`}
-            </p>
+        <>
+          {/* The organisation's score is what the whole page is about, so it
+              is the one thing allowed to be large. Everything under it is
+              context for reading it. */}
+          <div className="org-lead">
+            <p className="org-lead__value">{data.headline.avg_score}</p>
+            <div className="org-lead__side">
+              <p className="org-lead__label">
+                average iKAN score, {MONTH(data.window.to)}
+              </p>
+              {data.headline.change !== null && (
+                <p className={`org-lead__delta${data.headline.change < 0 ? ' org-lead__delta--down' : ''}`}>
+                  {data.headline.change >= 0 ? '+' : ''}{data.headline.change} since {MONTH(data.window.from)}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="org-stat">
-            <p className="org-stat__label">People with data</p>
-            <p className="org-stat__value">{data.headline.people}</p>
-            <p className="org-stat__note">In the most recent month</p>
+
+          <div className="org-facts">
+            <div className="org-fact">
+              <p className="org-fact__value">{data.headline.people}</p>
+              <p className="org-fact__label">people with data this month</p>
+            </div>
+            <div className="org-fact">
+              <p className="org-fact__value">
+                {Math.round((data.headline.bands.high / Math.max(1, data.headline.people)) * 100)}%
+              </p>
+              <p className="org-fact__label">scoring 70 or above</p>
+            </div>
+            <div className="org-fact">
+              <p className="org-fact__value">{data.headline.avg_active_days}</p>
+              <p className="org-fact__label">active days a month, per person</p>
+            </div>
           </div>
-          <div className="org-stat">
-            <p className="org-stat__label">Thriving</p>
-            <p className="org-stat__value">
-              {Math.round((data.headline.bands.high / Math.max(1, data.headline.people)) * 100)}%
-            </p>
-            <p className="org-stat__note">Scoring 70 or above</p>
-          </div>
-          <div className="org-stat">
-            <p className="org-stat__label">Active days a month</p>
-            <p className="org-stat__value">{data.headline.avg_active_days}</p>
-            <p className="org-stat__note">Average per person</p>
-          </div>
-        </div>
+        </>
       )}
 
       {trendRows.length > 1 && (
@@ -183,15 +199,32 @@ export function Insights({ org }: { org: Organization }) {
               <AreaChart data={trendRows} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
                 <defs>
                   <linearGradient id="orgScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4F7A62" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="#4F7A62" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--brand-teal-ink)" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="var(--brand-teal-ink)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.08)" />
+                {/* The bands behind the line. A 0-100 axis with data sitting
+                    at 60 is mostly air; shading the score bands makes that
+                    space mean something, without truncating the axis and
+                    overstating the movement. */}
+                <ReferenceArea y1={0} y2={45} fill="var(--brand-coral)" fillOpacity={0.07} />
+                <ReferenceArea y1={45} y2={70} fill="var(--brand-amber)" fillOpacity={0.07} />
+                <ReferenceArea y1={70} y2={100} fill="var(--brand-teal)" fillOpacity={0.07} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="color-mix(in oklab, var(--foreground) 10%, transparent)"
+                />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis domain={[0, 100]} tickLine={false} axisLine={false} fontSize={12} width={44} />
                 <Tooltip formatter={(v: number) => [v, 'Average score']} />
-                <Area type="monotone" dataKey="score" stroke="#4F7A62" strokeWidth={2} fill="url(#orgScore)" />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="var(--brand-teal-ink)"
+                  strokeWidth={2}
+                  fill="url(#orgScore)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -238,7 +271,11 @@ export function Insights({ org }: { org: Organization }) {
           <div className="org-chart">
             <ResponsiveContainer width="100%" height={Math.max(180, deptRows.length * 46)}>
               <BarChart data={deptRows} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.08)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="color-mix(in oklab, var(--foreground) 10%, transparent)"
+                />
                 <XAxis type="number" domain={[0, 100]} tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis type="category" dataKey="department" width={96} tickLine={false} axisLine={false} fontSize={12} />
                 <Tooltip
