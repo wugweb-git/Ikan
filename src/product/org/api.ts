@@ -1,5 +1,5 @@
 import { projectId, publicAnonKey } from '../../shared/api/supabase-info';
-import { supabase } from '../../shared/api/supabase';
+import { getOrgSupabase } from './auth';
 
 /**
  * The organisation portal's API client.
@@ -116,8 +116,13 @@ export interface InviteCheck {
   role?: string;
 }
 
+/*
+ * The portal's own session, never the member app's. If this read the shared
+ * client, an administrator signed into /dashboard would be silently
+ * authorised here without ever signing in to the portal.
+ */
 async function authHeader(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await getOrgSupabase().auth.getSession();
   return `Bearer ${data.session?.access_token ?? publicAnonKey}`;
 }
 
@@ -185,11 +190,25 @@ export const orgApi = {
     return { valid: false, reason: 'Could not check that invitation.' };
   },
 
-  acceptInvite: (token: string) =>
-    call<{ success: true; organization: string }>(
-      `/org/invite/${encodeURIComponent(token)}/accept`,
-      { method: 'POST' },
-    ),
+  /*
+   * Takes the caller's access token explicitly, because this one call is made
+   * with the MEMBER's session rather than the portal's. An invitee is an
+   * employee linking their own iKAN account; they are not signing in to the
+   * admin console, and after the split those are two different sessions.
+   * Passing it in keeps this module from having to know about both.
+   */
+  acceptInvite: async (token: string, accessToken: string | null) => {
+    const res = await fetch(`${BASE}/org/invite/${encodeURIComponent(token)}/accept`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken ?? publicAnonKey}`,
+      },
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`);
+    return body as { success: true; organization: string };
+  },
 
   reissueInvite: (orgId: string, membershipId: string) =>
     call<{ link: string; delivered: boolean; note: string }>(

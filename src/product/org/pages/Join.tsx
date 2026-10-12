@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../../shared/state/AuthContext';
+import { supabase } from '../../../shared/api/supabase';
 import { orgApi, type InviteCheck } from '../api';
 
 /**
@@ -9,6 +10,13 @@ import { orgApi, type InviteCheck } from '../api';
  * This is the step that turns a row on a roster into a person who belongs to
  * an organisation: accepting is what sets `user_id` on the membership, and
  * until it happens nothing can be grouped by them.
+ *
+ * This page runs on the MEMBER session, not the portal's. The two were split
+ * so that administering an organisation does not hand someone a member
+ * account, and joining is the member-side action of the pair: an invitee is
+ * linking their own iKAN account, not signing in to the admin console. An
+ * administrator accepting their own invitation therefore signs in here as
+ * themselves, which is the correct amount of friction.
  *
  * STUB BOUNDARY, stated on the screen rather than hidden: creating an account
  * happens in the iKAN app, not here. Someone invited who has no account is
@@ -45,7 +53,8 @@ export function Join({ token, onNavigate }: { token: string; onNavigate?: (r: st
     setState('accepting');
     setError('');
     try {
-      await orgApi.acceptInvite(token);
+      const { data } = await supabase.auth.getSession();
+      await orgApi.acceptInvite(token, data.session?.access_token ?? null);
       setState('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not accept that invitation.');

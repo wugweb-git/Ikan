@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../shared/state/AuthContext';
-import { signOutLocal } from '../../shared/api/supabase';
+import { OrgAuthProvider, useOrgAuth } from './auth';
 import { orgApi, type Organization, type Overview as OverviewData } from './api';
 import { Insights } from './pages/Insights';
 import { Overview } from './pages/Overview';
@@ -46,8 +45,23 @@ export interface OrgPortalProps {
   onNavigate?: (route: string) => void;
 }
 
-export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
-  const { user, isInitialized, signIn } = useAuth();
+/**
+ * The portal, inside its own auth provider.
+ *
+ * Wrapped here rather than in App.tsx so the member app's tree never mounts
+ * a second GoTrue client, and so the portal's session begins and ends with
+ * the portal.
+ */
+export function OrgPortal(props: OrgPortalProps) {
+  return (
+    <OrgAuthProvider>
+      <OrgPortalInner {...props} />
+    </OrgAuthProvider>
+  );
+}
+
+function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
+  const { user, isInitialized, signIn, signOut } = useOrgAuth();
 
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [active, setActive] = useState<Organization | null>(null);
@@ -118,7 +132,7 @@ export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
             write to <a href="mailto:support@ikanhealth.in">support@ikanhealth.in</a>.
           </p>
           <div style={{ marginTop: 22 }}>
-            <button type="button" className="org-button org-button--quiet" onClick={() => void signOutLocal()}>
+            <button type="button" className="org-button org-button--quiet" onClick={() => void signOut()}>
               Sign out
             </button>
           </div>
@@ -167,7 +181,7 @@ export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
             ))}
           </nav>
 
-          <button type="button" className="org-button org-button--quiet" onClick={() => void signOutLocal()}>
+          <button type="button" className="org-button org-button--quiet" onClick={() => void signOut()}>
             Sign out
           </button>
         </div>

@@ -482,6 +482,18 @@ bypass the aggregate rules the portal exists to enforce.
 | `org_invites` | single-use hashed tokens, separate so one can be revoked without losing the roster row |
 | `org_audit_log` | who looked at or exported what |
 
+**The portal has its own session.** `src/product/org/auth.tsx` builds a second Supabase
+client with `storageKey: 'ikan-org-auth-token'`, so a portal sign-in does not create a
+member session and vice versa. Both surfaces are served from ikanhealth.in and the shared
+client stores under `sb-<project>-auth-token`, so before this an HR administrator who signed
+in at `/org` was simultaneously signed in at `/dashboard`. `detectSessionInUrl` is off on the
+portal's client — the member app's already claims any auth fragment, and two clients racing
+for one is how a session lands in whichever initialised first.
+
+`/org/join` is the exception and deliberately runs on the **member** session: an invitee is
+linking their own iKAN account, not signing in to the console. That is why `orgApi.acceptInvite`
+takes an access token as an argument instead of reading one.
+
 **The two rules that are easy to break:**
 
 - **Off-boarding sets `ended_at`; it never deletes the row.** That row is what says
