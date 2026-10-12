@@ -40,6 +40,51 @@ import { belowFloorReason, groupsToWithhold } from "./org-suppression.ts";
 
 const PREFIX = "";
 
+/** Where an invitee lands. Same origin as the portal. */
+const PORTAL_ORIGIN = "https://ikanhealth.in";
+
+const INVITE_TTL_DAYS = 14;
+
+/**
+ * Invite tokens: random, stored only as a SHA-256 hash.
+ *
+ * The plaintext is returned to the caller once, at creation, and never again
+ * — the same reason a password reset link is not readable from the database.
+ * An admin who loses it reissues rather than recovers.
+ */
+async function sha256(input: string): Promise<string> {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(bytes)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function newToken(): string {
+  const raw = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(raw).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * STUB — nothing is sent.
+ *
+ * Brevo's credentials were removed when the public forms moved to iKAN 2, so
+ * this cannot deliver mail and does not pretend to. It records the attempt in
+ * the audit log and hands the caller the link, which the portal surfaces as
+ * "copy invite link" so an administrator can send it themselves.
+ *
+ * Replacing this means one function body and no caller changes: resolve a
+ * provider, send, and return `{ delivered: true }`.
+ */
+async function sendInviteEmail(
+  log: (action: string, detail: unknown) => Promise<void>,
+  args: { email: string; orgName: string; link: string },
+): Promise<{ delivered: boolean; reason: string }> {
+  await log("invite.email_stub", { to: args.email, link_issued: true });
+  console.log(`[org] invite email NOT SENT (stub) to ${args.email} for ${args.orgName}`);
+  return {
+    delivered: false,
+    reason: "Email delivery is not connected yet — send the invitation link yourself.",
+  };
+}
+
 /*
  * The full organisation row. `/org/mine` must return all of it, not a summary:
  * the portal hands that object to its Settings screen, which reads
@@ -101,12 +146,37 @@ export function registerOrgRoutes(app: Hono) {
 
     const role = (m?.role ?? null) as Role | null;
     const mayRead = isStaff || (role !== null && PORTAL_ROLES.includes(role));
-    const mayWrite = isStaff || role === "admin";
+    let mayWrite = isStaff || role === "admin";
+
+    /*
+     * Contract state gates WRITES, not reads.
+     *
+     * An organisation whose contract has lapsed keeps its dashboard — locking
+     * someone out of their own history the day a renewal slips is a way to
+     * lose a renewal — but cannot add people or spend seats until it is back
+     * in force. iKAN staff are exempt, since fixing a lapsed contract is the
+     * work they would be here to do.
+     */
+    const { data: org } = await supabase
+      .from("organizations").select("status, contract_end").eq("id", orgId).maybeSingle();
+    const lapsed =
+      org?.status !== "active" ||
+      (org?.contract_end != null && new Date(org.contract_end) < new Date(new Date().toDateString()));
+    if (lapsed && !isStaff) mayWrite = false;
 
     if (need === "read" ? !mayRead : !mayWrite) {
+      if (need === "write" && mayRead && lapsed) {
+        return {
+          error: c.json({
+            error:
+              "This organisation's contract is not currently active, so changes are paused. " +
+              "Your reports are still available. Contact iKAN to renew.",
+          }, 403),
+        };
+      }
       return { error: c.json({ error: "Not authorized for this organisation" }, 403) };
     }
-    return { user, role, isStaff };
+    return { user, role, isStaff, lapsed };
   }
 
   async function audit(orgId: string, actorId: string, action: string, detail: unknown = {}) {
@@ -210,6 +280,12 @@ export function registerOrgRoutes(app: Hono) {
          * silently missing: an empty dashboard invites someone to fill it
          * with whatever number is nearest to hand.
          */
+        contract: {
+          active: org.status === "active" &&
+            (org.contract_end == null || new Date(org.contract_end) >= new Date(new Date().toDateString())),
+          ends: org.contract_end,
+          status: org.status,
+        },
         wellbeing: {
           available: (periodRows ?? 0) > 0,
           reason: (periodRows ?? 0) > 0
@@ -265,7 +341,7 @@ export function registerOrgRoutes(app: Hono) {
 
       const { data: org } = await supabase
         .from("organizations")
-        .select("seats_purchased, allowed_email_domains")
+        .select("name, seats_purchased, allowed_email_domains")
         .eq("id", orgId)
         .maybeSingle();
       if (!org) return c.json({ error: "Organisation not found" }, 404);
@@ -276,7 +352,10 @@ export function registerOrgRoutes(app: Hono) {
 
       let remaining = Math.max(0, org.seats_purchased - (used ?? 0));
       const domains: string[] = org.allowed_email_domains ?? [];
-      const results: Array<{ email: string; status: string; reason?: string }> = [];
+      const orgName = org.name ?? "your organisation";
+      const results: Array<{
+        email: string; status: string; reason?: string; link?: string; delivered?: boolean;
+      }> = [];
 
       for (const raw of incoming) {
         const email = String(raw?.email ?? "").trim().toLowerCase();
@@ -294,24 +373,41 @@ export function registerOrgRoutes(app: Hono) {
         }
 
         const role: Role = raw?.role === "admin" || raw?.role === "viewer" ? raw.role : "member";
-        const { error } = await supabase.from("org_memberships").insert({
+        const { data: created, error } = await supabase.from("org_memberships").insert({
           org_id: orgId,
           email,
           role,
           department: raw?.department ?? null,
-        });
+        }).select("id").maybeSingle();
 
-        if (error) {
+        if (error || !created) {
           // 23505 is the live-membership unique index: already on the roster.
           results.push({
             email,
-            status: error.code === "23505" ? "skipped" : "rejected",
-            reason: error.code === "23505" ? "Already on the roster" : "Could not be added",
+            status: error?.code === "23505" ? "skipped" : "rejected",
+            reason: error?.code === "23505" ? "Already on the roster" : "Could not be added",
           });
           continue;
         }
+
+        const token = newToken();
+        const expires = new Date(Date.now() + INVITE_TTL_DAYS * 86400_000).toISOString();
+        await supabase.from("org_invites").insert({
+          org_id: orgId,
+          membership_id: created.id,
+          token_hash: await sha256(token),
+          expires_at: expires,
+        });
+
+        const link = `${PORTAL_ORIGIN}/org/join?token=${token}`;
+        const mail = await sendInviteEmail((a, d) => audit(orgId, auth.user.id, a, d), {
+          email,
+          orgName: orgName,
+          link,
+        });
+
         remaining -= 1;
-        results.push({ email, status: "invited" });
+        results.push({ email, status: "invited", link, delivered: mail.delivered });
       }
 
       await audit(orgId, auth.user.id, "members.invite", {
@@ -321,6 +417,12 @@ export function registerOrgRoutes(app: Hono) {
 
       return c.json({
         results,
+        /* Stated on every batch, because "invited" without this reads as
+           "we emailed them" and nobody did. */
+        delivery: {
+          email_sent: false,
+          note: "Email delivery is not connected yet. Copy each invitation link and send it yourself.",
+        },
         summary: {
           invited: results.filter((r) => r.status === "invited").length,
           skipped: results.filter((r) => r.status === "skipped").length,
@@ -632,6 +734,204 @@ export function registerOrgRoutes(app: Hono) {
     } catch (err) {
       console.log("org insights failed:", err);
       return c.json({ error: "Failed to load insights" }, 500);
+    }
+  });
+
+  // ── GET /org/invite/:token ───────────────────────────────────────
+  // Public: what an invitee needs to see BEFORE signing in. Deliberately
+  // thin — the organisation's name and nothing about who else is on it.
+  app.get(`${PREFIX}/org/invite/:token`, async (c) => {
+    try {
+      const hash = await sha256(c.req.param("token"));
+      const { data: inv } = await supabase
+        .from("org_invites")
+        .select("id, expires_at, accepted_at, revoked_at, org_id, membership_id")
+        .eq("token_hash", hash)
+        .maybeSingle();
+
+      if (!inv) return c.json({ valid: false, reason: "This invitation link is not recognised." }, 404);
+      if (inv.revoked_at) return c.json({ valid: false, reason: "This invitation was withdrawn." }, 410);
+      if (inv.accepted_at) return c.json({ valid: false, reason: "This invitation has already been used." }, 410);
+      if (new Date(inv.expires_at) < new Date()) {
+        return c.json({ valid: false, reason: "This invitation has expired. Ask for a new one." }, 410);
+      }
+
+      const [{ data: org }, { data: m }] = await Promise.all([
+        supabase.from("organizations").select("name, logo_url").eq("id", inv.org_id).maybeSingle(),
+        supabase.from("org_memberships").select("email, role").eq("id", inv.membership_id).maybeSingle(),
+      ]);
+
+      return c.json({
+        valid: true,
+        organization: { name: org?.name ?? "", logo_url: org?.logo_url ?? null },
+        email: m?.email ?? null,
+        role: m?.role ?? "member",
+      });
+    } catch (err) {
+      console.log("invite lookup failed:", err);
+      return c.json({ valid: false, reason: "Could not check that invitation." }, 500);
+    }
+  });
+
+  // ── POST /org/invite/:token/accept ───────────────────────────────
+  /*
+   * Links a signed-in account to the membership the invitation was issued
+   * for. This is what populates `user_id` — without it a membership is a row
+   * on a list and the person can never actually belong to anything.
+   *
+   * STUB BOUNDARY: account creation is not here. The member app owns signup,
+   * so an invitee with no account is told to create one and come back. That
+   * round trip is the part still missing, and it is a product decision
+   * (which app do they sign up in?) rather than a missing function.
+   */
+  app.post(`${PREFIX}/org/invite/:token/accept`, async (c) => {
+    try {
+      const user = await getAuthUser(c.req.header("Authorization"));
+      if (!user) {
+        return c.json({
+          error: "Sign in with the address this invitation was sent to, then open the link again.",
+        }, 401);
+      }
+
+      const hash = await sha256(c.req.param("token"));
+      const { data: inv } = await supabase
+        .from("org_invites")
+        .select("id, expires_at, accepted_at, revoked_at, org_id, membership_id")
+        .eq("token_hash", hash)
+        .maybeSingle();
+
+      if (!inv) return c.json({ error: "This invitation link is not recognised." }, 404);
+      if (inv.revoked_at || inv.accepted_at || new Date(inv.expires_at) < new Date()) {
+        return c.json({ error: "This invitation can no longer be used." }, 410);
+      }
+
+      const { data: m } = await supabase
+        .from("org_memberships").select("id, email, user_id, ended_at").eq("id", inv.membership_id).maybeSingle();
+      if (!m || m.ended_at) return c.json({ error: "This membership is no longer active." }, 410);
+
+      /* The invitation is for one address. Accepting it from a different
+         account would silently attach the wrong person to the organisation,
+         and the roster is what every aggregate is grouped by. */
+      if ((user.email ?? "").toLowerCase() !== String(m.email).toLowerCase()) {
+        return c.json({
+          error: `This invitation is for ${m.email}. You are signed in as ${user.email}.`,
+        }, 403);
+      }
+
+      const now = new Date().toISOString();
+      await supabase.from("org_memberships")
+        .update({ user_id: user.id, accepted_at: m.user_id ? undefined : now, started_at: now })
+        .eq("id", m.id);
+      await supabase.from("org_invites").update({ accepted_at: now }).eq("id", inv.id);
+      await audit(inv.org_id, user.id, "invite.accept", { membership_id: m.id });
+
+      const { data: org } = await supabase
+        .from("organizations").select("name").eq("id", inv.org_id).maybeSingle();
+      return c.json({ success: true, organization: org?.name ?? "" });
+    } catch (err) {
+      console.log("invite accept failed:", err);
+      return c.json({ error: "Could not accept that invitation." }, 500);
+    }
+  });
+
+  // ── POST /org/:orgId/members/:id/reissue ─────────────────────────
+  // A fresh token, because the plaintext of the old one is unrecoverable by
+  // design. Revokes whatever was outstanding first.
+  app.post(`${PREFIX}/org/:orgId/members/:id/reissue`, async (c) => {
+    try {
+      const orgId = c.req.param("orgId");
+      const auth = await authorise(c, orgId, "write");
+      if ("error" in auth) return auth.error;
+
+      const membershipId = c.req.param("id");
+      const { data: m } = await supabase
+        .from("org_memberships").select("id, email, accepted_at")
+        .eq("id", membershipId).eq("org_id", orgId).is("ended_at", null).maybeSingle();
+      if (!m) return c.json({ error: "Member not found" }, 404);
+      if (m.accepted_at) return c.json({ error: "They have already joined." }, 409);
+
+      await supabase.from("org_invites")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("membership_id", membershipId).is("accepted_at", null).is("revoked_at", null);
+
+      const token = newToken();
+      await supabase.from("org_invites").insert({
+        org_id: orgId,
+        membership_id: membershipId,
+        token_hash: await sha256(token),
+        expires_at: new Date(Date.now() + INVITE_TTL_DAYS * 86400_000).toISOString(),
+      });
+
+      const link = `${PORTAL_ORIGIN}/org/join?token=${token}`;
+      const mail = await sendInviteEmail((a, d) => audit(orgId, auth.user.id, a, d), {
+        email: m.email, orgName: "", link,
+      });
+      return c.json({ link, delivered: mail.delivered, note: mail.reason });
+    } catch (err) {
+      console.log("invite reissue failed:", err);
+      return c.json({ error: "Could not reissue that invitation." }, 500);
+    }
+  });
+
+  // ── POST /admin/org/:orgId/metrics ───────────────────────────────
+  /*
+   * THE INGEST POINT — the shape of the data pipe, without a source.
+   *
+   * Everything the dashboard shows comes from `org_member_periods`, and this
+   * is the only way in. It exists now so the contract is fixed before the
+   * source is chosen: whatever eventually feeds it — ikan2's `ikan2_user_state`,
+   * an events pipeline, a nightly job — produces these rows and nothing
+   * downstream changes.
+   *
+   * What is NOT decided, and is a product question rather than a missing
+   * function: reading across into ikan2's store. Its keys are versioned
+   * (`assessments.v1`, `equip.<slug>.v2`), which says its shapes are expected
+   * to change, so that read needs a written contract and a shape test rather
+   * than an adapter written against today's JSON.
+   *
+   * Rows are keyed on (membership_id, period_start) and upserted, so a replay
+   * is safe. A CLOSED period should never be rewritten — that immutability is
+   * what stops a departure changing last quarter's figure — but this endpoint
+   * does not enforce it, because nothing is writing real periods yet. Enforce
+   * it when the source lands.
+   */
+  app.post(`${PREFIX}/admin/org/:orgId/metrics`, async (c) => {
+    try {
+      const user = await getAuthUser(c.req.header("Authorization"));
+      if (!user) return c.json({ error: "Unauthorized" }, 401);
+      const { data: staff } = await supabase
+        .from("kv_store_cc205da9").select("value").eq("key", `user:${user.id}`).maybeSingle();
+      if (staff?.value?.is_admin !== true) return c.json({ error: "Admin access required" }, 403);
+
+      const orgId = c.req.param("orgId");
+      const body = await c.req.json();
+      const rows = Array.isArray(body?.periods) ? body.periods : [];
+      if (rows.length === 0) return c.json({ error: "No periods supplied" }, 400);
+
+      const prepared = rows.map((r: any) => ({
+        org_id: orgId,
+        membership_id: r.membership_id,
+        period_start: r.period_start,
+        department: r.department ?? null,
+        ikan_score: r.ikan_score ?? null,
+        assessments_taken: r.assessments_taken ?? 0,
+        journal_entries: r.journal_entries ?? 0,
+        equip_days: r.equip_days ?? 0,
+        consult_sessions: r.consult_sessions ?? 0,
+        active_days: r.active_days ?? 0,
+        is_demo: r.is_demo === true,
+      }));
+
+      const { error } = await supabase
+        .from("org_member_periods")
+        .upsert(prepared, { onConflict: "membership_id,period_start" });
+      if (error) throw error;
+
+      await audit(orgId, user.id, "metrics.ingest", { rows: prepared.length });
+      return c.json({ ingested: prepared.length });
+    } catch (err) {
+      console.log("metrics ingest failed:", err);
+      return c.json({ error: "Could not ingest those periods" }, 500);
     }
   });
 

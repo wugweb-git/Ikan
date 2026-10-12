@@ -7,6 +7,8 @@ import type { Consultant } from './consultant-form';
 export interface ApplicationSummary {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   credentials: string;
   category?: string;
   location?: string;
@@ -21,6 +23,8 @@ export interface ApplicationSummary {
 export interface ApplicationDetail {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   credentials: string;
   category: string;
   bio: string;
@@ -47,7 +51,53 @@ export interface ApplicationDetail {
   submitted_at: string;
   status: string;
   rejection_reason?: string;
+  /** Admin-only, from the application tracker (never on the published record). */
+  verification?: PartnerVerification;
+  /** The partner application's answers beyond the directory's own fields. */
+  details?: PartnerDetails;
+  pricing?: { individual?: number | null; couple?: number | null; family?: number | null; video?: number; call?: number; chat?: number };
   [key: string]: unknown;
+}
+
+export interface UploadedFileRef { path: string; url: string; name: string; kind?: string }
+
+export interface PartnerVerification {
+  highestQualification?: string;
+  degrees?: { degree: string; institution: string; year: string }[];
+  registration?: string;
+  registrationNumber?: string;
+  certifications?: { certification: string; issuer: string; year: string }[];
+  documents?: UploadedFileRef[];
+  hasMastersDegree?: boolean | null;
+  supervisedHours?: number | null;
+  underSupervision?: boolean | null;
+}
+
+export interface PartnerDetails {
+  professionalTitle?: string;
+  pincode?: string;
+  practiceSettings?: string[];
+  clientsTreated?: string;
+  sessionDurationMinutes?: number | null;
+  weekendConsultations?: boolean | null;
+  emergencyConsultations?: boolean | null;
+  expertiseMatrix?: { area: string; level: string }[];
+  conditionsNotTreated?: string[];
+  outsideScope?: string;
+  ageGroups?: string[];
+  clientTypes?: string[];
+  therapyFormats?: string[];
+  caseComplexity?: string;
+  communicationStyle?: Record<string, number>;
+  homeworkFrequency?: string;
+  homeworkTypes?: string[];
+  culturalExperience?: string[];
+  availability?: Record<string, string[]>;
+  slidingScale?: boolean | null;
+  contributions?: { type: string; title: string; year: string; link: string }[];
+  workspacePhotos?: UploadedFileRef[];
+  mapsLink?: string;
+  profileAnswers?: Record<string, string>;
 }
 
 type RawProfessional = Record<string, unknown> & Partial<Consultant> & {

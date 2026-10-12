@@ -71,6 +71,16 @@ export function Overview({ data }: { data: OverviewData }) {
         </div>
       </div>
 
+      {data.contract && !data.contract.active && (
+        <div className="org-note org-note--warn" role="status">
+          <strong>Changes are paused.</strong>{' '}
+          {data.contract.ends
+            ? `This organisation's contract ended on ${new Date(data.contract.ends).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.`
+            : 'This organisation\u2019s contract is not currently active.'}{' '}
+          Your reports stay available; adding people and spending seats resumes on renewal.
+        </div>
+      )}
+
       {!data.wellbeing.available && (
         <section className="org-panel org-panel--pending">
           <h2 className="org-panel__title">Wellbeing reporting is not connected yet</h2>
@@ -90,7 +100,8 @@ export function Overview({ data }: { data: OverviewData }) {
           not through any filter. Figures are only ever shown for groups of at least{' '}
           {organization.min_group_size} people; below that, this portal says so rather than showing
           a number. The roster below is the list your organisation supplied, and carries nothing
-          about anyone&rsquo;s health.
+          about anyone&rsquo;s health.{' '}
+          <a href="/workplace-privacy">The page we give your people</a> says the same in their words.
         </p>
       </aside>
     </div>

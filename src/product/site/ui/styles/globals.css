@@ -3598,6 +3598,402 @@ select {
   }
 }
 
+/* ── PARTNER APPLICATION (/join/partner) ──────────────────────────
+ *
+ * LAYOUT ONLY, on iKAN 2's breakpoints (640, 1024). A site page like Contact:
+ * the site's nav and footer, the `info-band` page header, then the wizard as
+ * a card on the canvas. Every control is an iKAN 2 component ported into
+ * ikan2.css; this places them.
+ *
+ *   phone   < 640   the card full-bleed-ish, "Step n of 11" opens the steps
+ *                   in a bottom sheet, Back/Next sticky at the bottom
+ *   tablet  ≥ 640   wider card, short fields in pairs
+ *   desktop ≥ 1024  a sticky rail of every step beside the card; the rail
+ *                   replaces the sheet
+ * ───────────────────────────────────────────────────────────────── */
+
+/* The page header sits as on every site page; the wizard follows closer than
+   a content band would. */
+.ikan2-theme.wizard .info-band:first-of-type {
+  padding-bottom: 32px;
+}
+
+.ikan2-theme .wizard__body {
+  width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+  margin-inline: auto;
+}
+
+.ikan2-theme .wizard__rail {
+  display: none;
+}
+
+/* iKAN 2's `.surface` treatment */
+.ikan2-theme .wizard__card {
+  padding: 20px 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.ikan2-theme .wizard__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.ikan2-theme .wizard__count {
+  align-self: flex-start;
+  gap: 2px;
+  margin-left: -12px;
+  padding: 0 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .wizard__title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+/* Back + Next stay in reach: sticky to the bottom of the screen while the
+   step is longer than it, resting at the end of the card when it is not. */
+.ikan2-theme .wizard__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: 28px -20px 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 20px 20px;
+  background: var(--card);
+}
+
+.ikan2-theme .wizard__footer .flow-footer__actions {
+  padding: 12px 20px max(16px, env(safe-area-inset-bottom));
+}
+
+.ikan2-theme .partner-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px 16px;
+}
+
+.ikan2-theme .partner-wide {
+  grid-column: 1 / -1;
+}
+
+.ikan2-theme .partner-lede {
+  margin-top: 8px;
+  max-width: var(--read-max);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-intro-title {
+  margin: 28px 0 12px;
+}
+
+.ikan2-theme .partner-intro-list {
+  max-width: var(--read-max);
+  margin-bottom: 16px;
+}
+
+.ikan2-theme .partner-intro-list .select-row {
+  cursor: default;
+}
+
+.ikan2-theme .partner-back {
+  width: 48px;
+}
+
+.ikan2-theme .partner-sheet-copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+/* One reveal per step: the step's content fades in when you arrive. */
+.ikan2-theme .animate-step {
+  animation: ikan2-fade var(--dur-base) var(--ease-out);
+}
+
+.ikan2-theme .partner-note {
+  font-weight: 400;
+}
+
+.ikan2-theme .partner-group-title {
+  margin-bottom: 4px;
+}
+
+.ikan2-theme .partner-group-hint {
+  margin: 0 0 10px;
+}
+
+.ikan2-theme .partner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ikan2-theme .partner-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ikan2-theme .partner-row--spaced {
+  margin-top: 16px;
+}
+
+.ikan2-theme .partner-row__cell {
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+
+.ikan2-theme .partner-row__cell--narrow {
+  flex: 0 1 5.5rem;
+}
+
+.ikan2-theme .partner-row > .btn {
+  margin-bottom: 4px;
+}
+
+.ikan2-theme .partner-matrix__row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ikan2-theme .partner-matrix__area {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.ikan2-theme .partner-slider {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.ikan2-theme .partner-slider input {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+  accent-color: var(--accent-strong);
+}
+
+.ikan2-theme .partner-slider__right {
+  text-align: right;
+}
+
+.ikan2-theme .partner-segmented {
+  max-width: 20rem;
+}
+
+.ikan2-theme .partner-week {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 36rem;
+}
+
+.ikan2-theme .partner-week__row {
+  display: grid;
+  grid-template-columns: 2.75rem repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+
+.ikan2-theme .partner-week__part {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.ikan2-theme .partner-week__part small {
+  display: none;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .partner-week__day {
+  margin: 0;
+}
+
+.ikan2-theme .partner-week__slot {
+  width: 100%;
+  padding: 0;
+}
+
+.ikan2-theme .partner-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.ikan2-theme .partner-files .field__box {
+  justify-content: space-between;
+  padding-right: 4px;
+}
+
+.ikan2-theme .partner-files__name {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.ikan2-theme .partner-headshot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ikan2-theme .partner-headshot img {
+  width: 88px;
+  height: 88px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.ikan2-theme .partner-done__icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  color: var(--accent-strong);
+}
+
+.ikan2-theme .partner-done__cta {
+  margin-top: 24px;
+}
+
+/* ── tablet ≥ 640: a roomier card; short fields in pairs ── */
+@media (min-width: 640px) {
+  .ikan2-theme .wizard__card {
+    max-width: 46rem;
+    margin-inline: auto;
+    padding: 32px 36px 0;
+  }
+
+  .ikan2-theme .wizard__title {
+    font-size: 28px;
+    line-height: 36px;
+    letter-spacing: -0.01em;
+  }
+
+  .ikan2-theme .wizard__footer {
+    margin: 36px -36px 0;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__actions {
+    padding: 16px 36px 20px;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__actions .btn--filled {
+    flex: 0 1 auto;
+    min-width: 12rem;
+    margin-left: auto;
+  }
+
+  .ikan2-theme .wizard__footer .flow-footer__hint {
+    padding: 12px 36px 0;
+    text-align: right;
+  }
+
+  .ikan2-theme .partner-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ikan2-theme .partner-matrix__row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ikan2-theme .partner-slider {
+    grid-template-columns: 8rem minmax(0, 1fr) 8rem;
+  }
+
+  .ikan2-theme .partner-slider input {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ikan2-theme .partner-week__part small {
+    display: block;
+  }
+}
+
+/* ── desktop ≥ 1024: every step in a sticky rail beside the card ── */
+@media (min-width: 1024px) {
+  .ikan2-theme .wizard__body {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 46rem);
+    justify-content: start;
+    align-items: start;
+    gap: 40px;
+  }
+
+  .ikan2-theme .wizard__body--single {
+    grid-template-columns: minmax(0, 46rem);
+  }
+
+  .ikan2-theme .wizard__rail {
+    position: sticky;
+    top: calc(var(--nav-clearance) - 8px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ikan2-theme .wizard__rail .select-list {
+    background: var(--card);
+  }
+
+  .ikan2-theme .wizard__rail .select-row {
+    min-height: 48px;
+    padding: 10px 14px;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .ikan2-theme .wizard__card {
+    width: 100%;
+    margin: 0;
+  }
+
+  /* two classes: `.btn` (ikan2.css, loaded later) sets display too */
+  .ikan2-theme .wizard__progress .wizard__count {
+    display: none;
+  }
+
+  .ikan2-theme .wizard__progress {
+    margin-bottom: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ikan2-theme .animate-step {
+    animation: none;
+  }
+}
+
 
 
 /* ───────────────────────────────────────────────────────────────
@@ -5578,4 +5974,51 @@ select {
   .ikan2-theme .library-grid--compact {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+/* ── Plain prose on an info page ──────────────────────────────────
+ *
+ * Used by the workplace-privacy page, which is a written statement rather
+ * than CMS HTML, so it does not go through `.prose-ikan`. Same measure and
+ * rhythm; declared here because the page is authored in JSX.
+ * ───────────────────────────────────────────────────────────────── */
+
+.ikan2-theme .info-subhead {
+  margin: 36px 0 10px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ikan2-theme .info-band__inner > p + p { margin-top: 14px; }
+
+.ikan2-theme .info-list {
+  margin: 0;
+  padding-left: 20px;
+  max-width: var(--read-max);
+  list-style: disc;
+}
+
+.ikan2-theme .info-list li {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 25px;
+}
+
+.ikan2-theme .info-list li::marker { color: var(--brand-teal-ink); }
+
+/* The list of things that cannot happen carries the weight on this page —
+   it is the promise, and the reason someone is reading. */
+.ikan2-theme .info-list--strong li { font-weight: 500; }
+.ikan2-theme .info-list--strong li::marker { color: var(--brand-coral-ink); }
+
+.ikan2-theme .info-fine {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  max-width: var(--read-max);
+  font-size: 14px;
+  color: var(--muted-foreground);
 }

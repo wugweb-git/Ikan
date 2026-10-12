@@ -1928,7 +1928,9 @@ app.get("/consultation/professionals", async (c) => {
     professionals = [...professionals, ...consultants];
     
     // Filter out null/undefined entries
-    professionals = professionals.filter((p: any) => p && p.id);
+    // `professional:pending-*` shares this prefix, so applications under review
+    // were served to anyone who asked. Only listings leave.
+    professionals = professionals.filter((p: any) => p && p.id && p.status !== 'pending_review' && p.status !== 'rejected');
     
     // Filter by specialty if provided
     if (specialty) {
@@ -1966,7 +1968,7 @@ app.get("/consultation/professionals/:professionalId", async (c) => {
       professional = await kv.get(`consultant:${professionalId}`);
     }
     
-    if (!professional) {
+    if (!professional || professional.status === 'pending_review' || professional.status === 'rejected') {
       return c.json({ error: 'Professional not found' }, 404);
     }
     
@@ -4793,17 +4795,65 @@ app.delete("/admin/content/:id", requireAdmin, async (c) => {
 // PUBLIC PROFESSIONAL APPLICATION (Universal Link)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-app.post("/public/professional-application", async (c) => {
+// The partner application (/join/partner). The body is three objects that are
+// never merged (see src/product/site/content/partner-application.ts):
+//   contact      → admin only
+//   verification → admin only
+//   profile      → becomes the public listing on approval
+// The record that approval publishes is built from an allowlist of `profile`
+// keys, so nothing private reaches the directory by being sent at the top
+// level. The old flat body is still accepted from a page cached before the change.
+const PUBLIC_PROFILE_KEYS = [
+  'name', 'credentials', 'category', 'yearsExperience', 'location', 'bio', 'photo', 'photoPath',
+  'languages', 'expertises', 'therapeuticApproaches', 'qualifications', 'demographicSpecialties',
+  'therapeuticPhilosophy', 'sessionModes', 'videoIntroUrl', 'availabilityPreferences', 'pricing',
+  'details', 'clientFAQs', 'testimonials', 'certificates', 'willingToShareArticles',
+] as const;
+
+// Served on its own path. The new form posts here, so against a server that
+// predates it the request 404s and nothing is stored; on the old path such a
+// server would have spread contact and verification onto the record the
+// public directory reads. The old path stays registered for a page cached
+// before the change, and now gets the same allowlist.
+const submitPartnerApplication = async (c: any) => {
   try {
-    const body = await c.req.json();
-    if (!body.name || !body.bio || !body.credentials) {
+    const body = await c.req.json().catch(() => null);
+    if (!body || typeof body !== 'object') return c.json({ error: 'Expected a JSON body' }, 400);
+    // One KV value per application; a body this size is a mistake or abuse.
+    if (JSON.stringify(body).length > 200_000) return c.json({ error: 'Application is too large' }, 413);
+
+    const nested = body.profile && typeof body.profile === 'object';
+    const rawProfile = nested ? body.profile : body;
+    const rawContact = nested ? (body.contact || {}) : body;
+    const verification = nested && body.verification && typeof body.verification === 'object' ? body.verification : {};
+
+    const profile: Record<string, unknown> = {};
+    for (const key of PUBLIC_PROFILE_KEYS) if (rawProfile[key] !== undefined) profile[key] = rawProfile[key];
+
+    const name = typeof profile.name === 'string' ? profile.name.trim() : '';
+    const credentials = typeof profile.credentials === 'string' ? profile.credentials.trim() : '';
+    const bio = typeof profile.bio === 'string' ? profile.bio.trim() : '';
+    if (!name || !bio || !credentials) {
       return c.json({ error: 'Name, credentials, and bio are required' }, 400);
+    }
+    // Without these the admin has no way to reply to an applicant.
+    const email = typeof rawContact.email === 'string' ? rawContact.email.trim().toLowerCase() : '';
+    const phone = typeof rawContact.phone === 'string' ? rawContact.phone.trim() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/\D/g, '').length < 10) {
+      return c.json({ error: 'A valid email address and phone number are required' }, 400);
     }
 
     const applicationId = `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const now = new Date().toISOString();
+    const expertises = Array.isArray(profile.expertises) ? profile.expertises as string[] : [];
+    const category = (profile.category as string) || 'therapist';
+    const location = (profile.location as string) || '';
+    const yearsExperience = Number(profile.yearsExperience) || 0;
+    const languages = Array.isArray(profile.languages) ? profile.languages as string[] : [];
 
     const application = {
-      ...body,
+      ...profile,
+      name, credentials, bio,
       id: applicationId,
       professional_id: applicationId,
       status: 'pending_review',
@@ -4812,31 +4862,34 @@ app.post("/public/professional-application", async (c) => {
       rating: 0,
       reviewCount: 0,
       reviews: [],
-      faqs: (body.clientFAQs || []).map((faq: any) => ({ question: faq.question || faq.q, answer: faq.answer || faq.a })),
-      approaches: body.therapeuticApproaches || [],
-      concernsICanHelp: body.expertises || [],
-      topExpertises: (body.expertises || []).slice(0, 3),
+      faqs: ((profile.clientFAQs as any[]) || []).map((faq: any) => ({ question: faq.question || faq.q, answer: faq.answer || faq.a })),
+      approaches: profile.therapeuticApproaches || [],
+      concernsICanHelp: expertises,
+      topExpertises: expertises.slice(0, 3),
       availability: [],
       nextAvailableSlot: '',
       qas: [],
       articles: [],
-      submitted_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      submitted_at: now,
+      created_at: now,
+      updated_at: now,
     };
 
     await kv.set(`professional:pending-${applicationId}`, application);
     await kv.set(`professional_application:${applicationId}`, {
       id: applicationId,
-      name: body.name,
-      credentials: body.credentials,
-      category: body.category || 'therapist',
-      location: body.location || '',
-      yearsExperience: body.yearsExperience || 0,
-      expertises: (body.expertises || []).slice(0, 5),
-      languages: body.languages || [],
+      name,
+      email,
+      phone,
+      credentials,
+      category,
+      location,
+      yearsExperience,
+      expertises: expertises.slice(0, 5),
+      languages,
+      verification,
       status: 'pending_review',
-      submitted_at: new Date().toISOString(),
+      submitted_at: now,
     });
 
     // Queue admin notification about new application
@@ -4844,11 +4897,11 @@ app.post("/public/professional-application", async (c) => {
     await kv.set(`admin_notification:${notifId}`, {
       id: notifId,
       type: 'professional_application',
-      title: 'New Professional Application',
-      message: `${body.name} (${body.credentials}) has applied to join as a ${body.category || 'therapist'}. Location: ${body.location || 'Not specified'}.`,
+      title: 'New Partner Application',
+      message: `${name} (${credentials}) has applied to join as a ${category}. Location: ${location || 'Not specified'}. Contact: ${email}, ${phone}.`,
       applicationId,
       read: false,
-      created_at: new Date().toISOString(),
+      created_at: now,
     });
 
     // Attempt to send email notification if email provider is configured
@@ -4858,29 +4911,33 @@ app.post("/public/professional-application", async (c) => {
         await kv.set(`email_queue:${notifId}`, {
           id: notifId,
           to: emailConfig.sender_id || 'admin@ikanhealth.in',
-          subject: `[iKan] New Professional Application: ${body.name}`,
-          body: `A new professional has applied to join iKan.\n\nName: ${body.name}\nCredentials: ${body.credentials}\nCategory: ${body.category || 'Therapist'}\nLocation: ${body.location || 'Not specified'}\nExperience: ${body.yearsExperience || 0} years\nLanguages: ${(body.languages || []).join(', ') || 'Not specified'}\n\nPlease review in Admin Dashboard > Consultation Manager > Applications tab.`,
+          subject: `[iKan] New Partner Application: ${name}`,
+          body: `A new partner has applied to join iKan.\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nCredentials: ${credentials}\nCategory: ${category}\nLocation: ${location || 'Not specified'}\nExperience: ${yearsExperience} years\nLanguages: ${languages.join(', ') || 'Not specified'}\n\nPlease review in Admin Dashboard > Consultation Manager > Applications tab.`,
           status: 'queued',
-          created_at: new Date().toISOString(),
+          created_at: now,
         });
-        console.log(`📧 Admin email notification queued for new application: ${body.name}`);
+        console.log(`📧 Admin email notification queued for new application: ${name}`);
       }
     } catch (emailErr) {
       console.log('Email notification skipped (not configured):', emailErr);
     }
 
-    console.log(`📋 New professional application: ${body.name} (${applicationId})`);
+    console.log(`📋 New partner application: ${name} (${applicationId})`);
     return c.json({ success: true, applicationId, message: 'Application submitted successfully. Our team will review it shortly.' });
   } catch (error) {
     console.error('Professional application error:', error);
     return c.json({ error: 'Failed to submit application' }, 500);
   }
-});
+};
+
+app.post("/public/partner-application", submitPartnerApplication);
+app.post("/public/professional-application", submitPartnerApplication);
 
 app.get("/admin/professional-applications", requireAdmin, async (c) => {
   try {
     const applications = await kv.getByPrefix('professional_application:');
     const sorted = (applications || []).filter((a: any) => a && a.id)
+      .map(({ verification: _v, ...summary }: any) => summary)
       .sort((a: any, b: any) => new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime());
     return c.json({ applications: sorted });
   } catch (error) {
@@ -4895,7 +4952,15 @@ app.post("/admin/professional-applications/:id/approve", requireAdmin, async (c)
     const pendingData = await kv.get(`professional:pending-${appId}`);
     if (!pendingData) return c.json({ error: 'Application not found' }, 404);
 
-    const activeProfessional = { ...pendingData, id: appId, professional_id: appId, status: 'active', available: true, published: true, approved_at: new Date().toISOString() };
+    // The headshot's URL from the application was signed for 24 hours. A listed
+    // partner's photo is public by intent, so re-sign it for the life of a profile.
+    let photo = pendingData.photo;
+    if (typeof pendingData.photoPath === 'string' && pendingData.photoPath && !pendingData.photoPath.includes('..')) {
+      const { data: signed } = await supabase.storage.from(UPLOAD_BUCKET).createSignedUrl(pendingData.photoPath, 5 * 365 * 24 * 60 * 60);
+      if (signed?.signedUrl) photo = signed.signedUrl;
+    }
+
+    const activeProfessional = { ...pendingData, photo, id: appId, professional_id: appId, status: 'active', available: true, published: true, approved_at: new Date().toISOString() };
     await kv.set(`professional:${appId}`, activeProfessional);
     await kv.del(`professional:pending-${appId}`);
 
@@ -4936,7 +5001,17 @@ app.get("/admin/professional-applications/:id", requireAdmin, async (c) => {
     const appId = c.req.param('id');
     const fullData = await kv.get(`professional:pending-${appId}`);
     if (!fullData) return c.json({ error: 'Application not found' }, 404);
-    return c.json({ application: fullData });
+    // Contact and verification live on the tracker, never on the record that
+    // approval publishes. The admin sees both together here.
+    const tracker = await kv.get(`professional_application:${appId}`);
+    return c.json({
+      application: {
+        ...fullData,
+        email: tracker?.email,
+        phone: tracker?.phone,
+        verification: tracker?.verification,
+      },
+    });
   } catch (error) {
     console.error('Get application detail error:', error);
     return c.json({ error: 'Failed to get application' }, 500);

@@ -1644,6 +1644,11 @@ class ApiClient {
     return this.request(`/admin/professional-applications/${id}/approve`, { method: 'POST' }, true);
   }
 
+  /** A fresh 24h link to a file in the private uploads bucket (the one stored with an application expires). */
+  async refreshUploadUrl(path: string): Promise<{ url?: string }> {
+    return this.request('/upload/refresh-url', { method: 'POST', body: JSON.stringify({ path }) }, true);
+  }
+
   async rejectProfessionalApplication(id: string, reason: string) {
     return this.request(`/admin/professional-applications/${id}/reject`, {
       method: 'POST',

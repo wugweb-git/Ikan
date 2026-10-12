@@ -125,6 +125,11 @@ const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resource
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
 const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const WorkplacePrivacy = lazy(() => lazyRetry(() => import('./product/site/pages/WorkplacePrivacy').then(m => ({ default: m.WorkplacePrivacy })), 'WorkplacePrivacy'));
+// The invitee's door. Routed here rather than inside OrgPortal: the portal's
+// shell runs hooks before it knows the route, so branching to Join inside it
+// changed the hook order between /org and /org/join.
+const OrgJoin = lazy(() => lazyRetry(() => import('./product/org/pages/Join').then(m => ({ default: m.Join })), 'OrgJoin'));
 const OrgPortal = lazy(() => lazyRetry(() => import('./product/org/OrgPortal').then(m => ({ default: m.OrgPortal })), 'OrgPortal'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
 const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
@@ -170,8 +175,9 @@ const SITE_FOOTER_ROUTES = new Set([
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
-  '/consultation', '/join/professional',
+  '/consultation', '/join/partner',
   '/resource', '/resource-detail',
+  '/workplace-privacy',
 ]);
 
 // --- Suspense fallback ---
@@ -272,7 +278,7 @@ function AppContent() {
   // All state hooks
   const [emergencyRender, setEmergencyRender] = useState(false);
   const [currentRoute, setCurrentRoute] = useState(() => {
-    // Read the initial route from the URL so direct navigation (e.g. /join/professional) works
+    // Read the initial route from the URL so direct navigation (e.g. /join/partner) works
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
       // Slug detail routes map to the existing detail screens
@@ -352,11 +358,12 @@ function AppContent() {
         '/consultation', '/resource', '/resource-detail', '/account', 
         '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
-        '/join/professional',
+        '/join/partner',
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
-        '/org', '/org/insights', '/org/people', '/org/settings'
+        '/org', '/org/insights', '/org/people', '/org/settings', '/org/join',
+        '/workplace-privacy'
       ];
       
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
@@ -658,6 +665,10 @@ function AppContent() {
           return withSuspense(<Library onNavigate={handleNavigate} />);
         case '/resource-detail':
           return withSuspense(<ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />);
+        case '/workplace-privacy':
+          return withSuspense(<WorkplacePrivacy />);
+        case '/org/join':
+          return withSuspense(<OrgJoin token={queryParams.token || ''} onNavigate={handleNavigate} />);
         case '/org':
         case '/org/insights':
         case '/org/people':
@@ -695,7 +706,7 @@ function AppContent() {
           return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate(hasCompletedFirstRun() ? '/dashboard' : '/get-started')} />);
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
-        case '/join/professional':
+        case '/join/partner':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
@@ -735,7 +746,6 @@ function AppContent() {
                            currentRoute.startsWith('/equip-program-flow') ||
                            currentRoute.startsWith('/equip-program-onboarding') ||
                            currentRoute.startsWith('/equip-program-completion') ||
-                           currentRoute.startsWith('/join/') ||
                            isOnboardingFlow;
 
   const isHeroRoute = shouldShowFooter || 
