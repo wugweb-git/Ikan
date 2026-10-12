@@ -27,6 +27,18 @@ export interface Organization {
   contract_end: string | null;
   allowed_email_domains: string[];
   min_group_size: number;
+  /** The organisation's own mark. Null is normal; the UI falls back to an initial. */
+  logo_url: string | null;
+  website: string | null;
+  industry: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  /** Whoever is responsible for the account — often not a portal admin. */
+  primary_contact_name: string | null;
+  primary_contact_role: string | null;
+  primary_contact_email: string | null;
+  primary_contact_phone: string | null;
   your_role?: 'admin' | 'viewer';
   /** True when visibility comes from iKAN staff access, not a membership. */
   via_staff?: boolean;
@@ -50,6 +62,40 @@ export interface Overview {
   onboarding: { accepted: number; pending: number; adoption_rate: number | null };
   /** Always `available: false` today — see `org-routes.ts` for why. */
   wellbeing: { available: boolean; reason: string };
+}
+
+export interface TrendPoint {
+  period: string;
+  n: number;
+  suppressed: boolean;
+  reason?: string;
+  avg_score?: number;
+  bands?: { low: number; mid: number; high: number };
+  avg_active_days?: number;
+}
+
+export interface DepartmentRow {
+  department: string;
+  n: number;
+  suppressed: boolean;
+  reason?: string;
+  avg_score?: number;
+  bands?: { low: number; mid: number; high: number };
+  engagement?: { assessments: number; journal: number; equip: number; consult: number };
+}
+
+export interface Insights {
+  window: { from: string; to: string; months: number; department: string | null };
+  privacy: { min_group_size: number; suppressed_departments: number };
+  headline: {
+    avg_score: number;
+    people: number;
+    change: number | null;
+    bands: { low: number; mid: number; high: number };
+    avg_active_days: number;
+  } | null;
+  trend: TrendPoint[];
+  departments: DepartmentRow[];
 }
 
 export interface InviteOutcome {
@@ -90,6 +136,14 @@ export const orgApi = {
 
   overview: (orgId: string) => call<Overview>(`/org/${orgId}/overview`),
 
+  insights: (orgId: string, opts: { months?: number; department?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (opts.months) q.set('months', String(opts.months));
+    if (opts.department) q.set('department', opts.department);
+    const qs = q.toString();
+    return call<Insights>(`/org/${orgId}/insights${qs ? `?${qs}` : ''}`);
+  },
+
   members: (orgId: string, includeEnded = false) =>
     call<{ members: Member[] }>(
       `/org/${orgId}/members${includeEnded ? '?include_ended=true' : ''}`,
@@ -110,6 +164,22 @@ export const orgApi = {
   /** Ends a membership. Never deletes — the row is the historical record. */
   endMembership: (orgId: string, id: string) =>
     call<{ success: true }>(`/org/${orgId}/members/${id}`, { method: 'DELETE' }),
+
+  /** multipart, so no Content-Type header — the browser sets the boundary. */
+  uploadLogo: async (orgId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${BASE}/org/${orgId}/logo`, {
+      method: 'POST',
+      headers: { Authorization: await authHeader() },
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error || `Upload failed (${res.status})`);
+    }
+    return res.json() as Promise<{ organization: Organization }>;
+  },
 
   updateOrg: (orgId: string, patch: Partial<Organization>) =>
     call<{ organization: Organization }>(`/org/${orgId}`, {

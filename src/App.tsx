@@ -356,7 +356,7 @@ function AppContent() {
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
-        '/org', '/org/people', '/org/settings'
+        '/org', '/org/insights', '/org/people', '/org/settings'
       ];
       
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
@@ -659,6 +659,7 @@ function AppContent() {
         case '/resource-detail':
           return withSuspense(<ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />);
         case '/org':
+        case '/org/insights':
         case '/org/people':
         case '/org/settings':
           return withSuspense(<OrgPortal route={currentRoute} onNavigate={handleNavigate} />);

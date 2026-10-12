@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../shared/state/AuthContext';
 import { signOutLocal } from '../../shared/api/supabase';
 import { orgApi, type Organization, type Overview as OverviewData } from './api';
+import { Insights } from './pages/Insights';
 import { Overview } from './pages/Overview';
 import { People } from './pages/People';
 import { Settings } from './pages/Settings';
@@ -25,10 +26,11 @@ import { Settings } from './pages/Settings';
 const HERO_IMAGE_URL =
   'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwc3Vuc2V0JTIwbGFrZSUyMG5hdHVyZSUyMG1pbmRmdWxuZXNzJTIwcGVhY2VmdWx8ZW58MXx8fHwxNzczNjY4MjU5fDA&ixlib=rb-4.1.0&q=80&w=1080';
 
-type Section = 'overview' | 'people' | 'settings';
+type Section = 'overview' | 'insights' | 'people' | 'settings';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'overview', label: 'Overview' },
+  { id: 'insights', label: 'Insights' },
   { id: 'people', label: 'People' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -36,7 +38,7 @@ const SECTIONS: Array<{ id: Section; label: string }> = [
 /** `/org`, `/org/people`, `/org/settings` — the URL is the state. */
 function sectionFromPath(path: string): Section {
   const tail = path.replace(/^\/org\/?/, '').split('?')[0];
-  return tail === 'people' || tail === 'settings' ? tail : 'overview';
+  return tail === 'people' || tail === 'settings' || tail === 'insights' ? tail : 'overview';
 }
 
 export interface OrgPortalProps {
@@ -134,7 +136,19 @@ export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
             <img src="/favicon.svg" alt="" width={32} height={32} />
             iKAN
           </a>
-          {active && <span className="org-bar__org">{active.name}</span>}
+          {active && (
+            <span className="org-bar__org">
+              {/* The organisation's own mark where it has one. The initial is
+                  not a placeholder for a missing image — it is what most
+                  organisations will show, so it has to look deliberate. */}
+              {active.logo_url ? (
+                <img className="org-bar__logo" src={active.logo_url} alt="" />
+              ) : (
+                <span className="org-bar__initial" aria-hidden="true">{active.name.charAt(0)}</span>
+              )}
+              {active.name}
+            </span>
+          )}
 
           <span className="org-bar__spacer" />
 
@@ -182,6 +196,7 @@ export function OrgPortal({ route, onNavigate }: OrgPortalProps) {
       )}
 
       {active && section === 'overview' && overview && <Overview data={overview} />}
+      {active && section === 'insights' && <Insights org={active} />}
       {active && section === 'people' && <People org={active} canWrite={canWrite} />}
       {active && section === 'settings' && (
         <Settings

@@ -48,7 +48,9 @@ const PREFIX = "";
  */
 const ORG_COLUMNS =
   "id, name, slug, status, seats_purchased, contract_start, contract_end, " +
-  "allowed_email_domains, min_group_size";
+  "allowed_email_domains, min_group_size, logo_url, " +
+  "website, industry, address, city, country, " +
+  "primary_contact_name, primary_contact_role, primary_contact_email, primary_contact_phone";
 
 type Role = "member" | "admin" | "viewer";
 
@@ -177,12 +179,14 @@ export function registerOrgRoutes(app: Hono) {
       const live = supabase.from("org_memberships").select("id", { count: "exact", head: true })
         .eq("org_id", orgId).is("ended_at", null);
 
-      const [{ count: seatsUsed }, { count: accepted }, { count: pending }] = await Promise.all([
+      const [{ count: seatsUsed }, { count: accepted }, { count: pending }, { count: periodRows }] = await Promise.all([
         live,
         supabase.from("org_memberships").select("id", { count: "exact", head: true })
           .eq("org_id", orgId).is("ended_at", null).not("accepted_at", "is", null),
         supabase.from("org_memberships").select("id", { count: "exact", head: true })
           .eq("org_id", orgId).is("ended_at", null).is("accepted_at", null),
+        supabase.from("org_member_periods").select("id", { count: "exact", head: true })
+          .eq("org_id", orgId),
       ]);
 
       return c.json({
@@ -201,13 +205,15 @@ export function registerOrgRoutes(app: Hono) {
             : null,
         },
         /*
-         * Named rather than silently missing. An empty dashboard invites
-         * someone to fill it with whatever number is nearest to hand, and the
-         * nearest to hand here is four months stale.
+         * Whether there is anything to aggregate at all. Named rather than
+         * silently missing: an empty dashboard invites someone to fill it
+         * with whatever number is nearest to hand.
          */
         wellbeing: {
-          available: false,
-          reason: "Member activity is not yet connected to this portal.",
+          available: (periodRows ?? 0) > 0,
+          reason: (periodRows ?? 0) > 0
+            ? ""
+            : "No member activity has been recorded for this organisation yet.",
         },
       });
     } catch (err) {
@@ -401,6 +407,18 @@ export function registerOrgRoutes(app: Hono) {
       const body = await c.req.json();
       const patch: Record<string, unknown> = {};
       if (typeof body.name === "string" && body.name.trim()) patch.name = body.name.trim();
+      if (typeof body.logo_url === "string") patch.logo_url = body.logo_url.trim() || null;
+
+      /* Descriptive fields an org admin owns. Commercial terms (seats,
+         contract dates, status) are not here — they are iKAN's, and are
+         handled in the staff-only block below. */
+      for (const f of [
+        "website", "industry", "address", "city", "country",
+        "primary_contact_name", "primary_contact_role",
+        "primary_contact_email", "primary_contact_phone",
+      ]) {
+        if (typeof body[f] === "string") patch[f] = body[f].trim() || null;
+      }
       if (Array.isArray(body.allowed_email_domains)) patch.allowed_email_domains = body.allowed_email_domains;
       if (Number.isInteger(body.min_group_size)) {
         const { data: cur } = await supabase
@@ -428,6 +446,205 @@ export function registerOrgRoutes(app: Hono) {
     } catch (err) {
       console.log("org update failed:", err);
       return c.json({ error: "Failed to update organisation" }, 500);
+    }
+  });
+
+  // ── POST /org/:orgId/logo ────────────────────────────────────────
+  /*
+   * Upload rather than "paste a URL". A URL means the mark lives on somebody
+   * else's server and disappears when they reorganise it; it is also the kind
+   * of field people fill with a link to a Google Drive preview page that
+   * never renders. The bucket is public because a logo is public by nature.
+   */
+  app.post(`${PREFIX}/org/:orgId/logo`, async (c) => {
+    try {
+      const orgId = c.req.param("orgId");
+      const auth = await authorise(c, orgId, "write");
+      if ("error" in auth) return auth.error;
+
+      const form = await c.req.formData();
+      const file = form.get("file");
+      if (!(file instanceof File)) return c.json({ error: "No file provided" }, 400);
+      if (!file.type.startsWith("image/")) return c.json({ error: "That is not an image" }, 400);
+      if (file.size > 2 * 1024 * 1024) return c.json({ error: "Keep the logo under 2MB" }, 400);
+
+      const bucket = "org-logos";
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.some((b: any) => b.name === bucket)) {
+        const { error } = await supabase.storage.createBucket(bucket, {
+          public: true,
+          fileSizeLimit: 2 * 1024 * 1024,
+        });
+        if (error) throw error;
+      }
+
+      const ext = (file.name.split(".").pop() || "png").replace(/[^a-z0-9]/gi, "").toLowerCase();
+      const path = `${orgId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(bucket)
+        .upload(path, new Uint8Array(await file.arrayBuffer()), {
+          contentType: file.type,
+          upsert: true,
+        });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
+      const logo_url = pub?.publicUrl;
+      if (!logo_url) return c.json({ error: "Uploaded, but no public URL came back" }, 500);
+
+      const { data, error } = await supabase
+        .from("organizations").update({ logo_url }).eq("id", orgId).select(ORG_COLUMNS).maybeSingle();
+      if (error) throw error;
+
+      await audit(orgId, auth.user.id, "organization.logo", { path });
+      return c.json({ organization: data });
+    } catch (err) {
+      console.log("org logo upload failed:", err);
+      return c.json({ error: "Could not upload that logo" }, 500);
+    }
+  });
+
+
+  // ── GET /org/:orgId/insights ─────────────────────────────────────
+  /*
+   * The aggregate dashboard, and the only place the suppression rules live.
+   *
+   * A minimum group size is not sufficient on its own, and the three ways it
+   * fails are all handled here rather than left to the UI:
+   *
+   *   APPLIED AFTER FILTERING. The floor is checked against the rows that
+   *   actually produced a figure, not against the department's headcount. A
+   *   40-person team where 9 people have data is a group of 9.
+   *
+   *   COMPLEMENTARY SUPPRESSION. Hiding exactly one department leaks it: the
+   *   organisation total minus the departments shown is the one withheld. So
+   *   when a single group falls below the floor, the next smallest is
+   *   withheld too, and the total stops being decomposable.
+   *
+   *   NO BARE COUNTS BELOW THE FLOOR. A suppressed group reports that it is
+   *   suppressed and its size, and nothing else — no score, no distribution,
+   *   no engagement percentage.
+   *
+   * What is NOT solved here, and should not be pretended away: differencing
+   * the same group across two periods as its membership changes. The defence
+   * for that is that `org_member_periods` rows are written once at period
+   * close and never recomputed, so a historical figure does not move when
+   * somebody leaves. Enforce that at the write path, not here.
+   */
+  app.get(`${PREFIX}/org/:orgId/insights`, async (c) => {
+    try {
+      const orgId = c.req.param("orgId");
+      const auth = await authorise(c, orgId, "read");
+      if ("error" in auth) return auth.error;
+
+      const months = Math.min(24, Math.max(1, Number.parseInt(c.req.query("months") ?? "6", 10) || 6));
+      const department = c.req.query("department") || null;
+
+      const { data: org } = await supabase
+        .from("organizations").select("min_group_size, seats_purchased").eq("id", orgId).maybeSingle();
+      if (!org) return c.json({ error: "Organisation not found" }, 404);
+      const floor = org.min_group_size ?? 10;
+
+      const to = new Date();
+      const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - (months - 1), 1));
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+      const [{ data: periods, error: pErr }, { data: depts, error: dErr }] = await Promise.all([
+        supabase.rpc("org_period_aggregates", {
+          p_org: orgId, p_from: iso(from), p_to: iso(to), p_department: department,
+        }),
+        supabase.rpc("org_department_aggregates", {
+          p_org: orgId, p_from: iso(from), p_to: iso(to),
+        }),
+      ]);
+      if (pErr) throw pErr;
+      if (dErr) throw dErr;
+
+      const suppressedNote = (n: number) =>
+        `Fewer than ${floor} people with data in this group (${n}). Showing a figure here could ` +
+        `point at an individual.`;
+
+      const trend = (periods ?? []).map((r: any) => {
+        const n = Number(r.n);
+        if (n < floor) return { period: r.period_start, n, suppressed: true, reason: suppressedNote(n) };
+        return {
+          period: r.period_start,
+          n,
+          suppressed: false,
+          avg_score: Number(r.avg_score),
+          bands: { low: Number(r.band_low), mid: Number(r.band_mid), high: Number(r.band_high) },
+          avg_active_days: Number(r.active_days),
+        };
+      });
+
+      /* Complementary suppression. One withheld department is recoverable by
+         subtraction, so a second goes with it — the smallest of those still
+         shown, since withholding the largest would cost the most information. */
+      const raw = (depts ?? []).map((d: any) => ({ ...d, n: Number(d.n) }));
+      const below = raw.filter((d: any) => d.n < floor);
+      const hidden = new Set(below.map((d: any) => d.department));
+      if (below.length === 1 && raw.length > 1) {
+        const smallestShown = raw
+          .filter((d: any) => !hidden.has(d.department))
+          .sort((a: any, b: any) => a.n - b.n)[0];
+        if (smallestShown) hidden.add(smallestShown.department);
+      }
+
+      const departments = raw.map((d: any) =>
+        hidden.has(d.department)
+          ? {
+              department: d.department,
+              n: d.n,
+              suppressed: true,
+              reason:
+                d.n < floor
+                  ? suppressedNote(d.n)
+                  : `Withheld so the group below the threshold cannot be worked out by subtracting ` +
+                    `the rest from the organisation total.`,
+            }
+          : {
+              department: d.department,
+              n: d.n,
+              suppressed: false,
+              avg_score: Number(d.avg_score),
+              bands: { low: Number(d.band_low), mid: Number(d.band_mid), high: Number(d.band_high) },
+              engagement: {
+                assessments: Number(d.pct_assessments ?? 0),
+                journal: Number(d.pct_journal ?? 0),
+                equip: Number(d.pct_equip ?? 0),
+                consult: Number(d.pct_consult ?? 0),
+              },
+            },
+      );
+
+      const latest = [...trend].reverse().find((t: any) => !t.suppressed) as any;
+      const first = trend.find((t: any) => !t.suppressed) as any;
+
+      await audit(orgId, auth.user.id, "insights.view", { months, department });
+
+      return c.json({
+        window: { from: iso(from), to: iso(to), months, department },
+        privacy: {
+          min_group_size: floor,
+          suppressed_departments: departments.filter((d: any) => d.suppressed).length,
+        },
+        headline: latest
+          ? {
+              avg_score: latest.avg_score,
+              people: latest.n,
+              change: first && first.period !== latest.period
+                ? Math.round((latest.avg_score - first.avg_score) * 10) / 10
+                : null,
+              bands: latest.bands,
+              avg_active_days: latest.avg_active_days,
+            }
+          : null,
+        trend,
+        departments,
+      });
+    } catch (err) {
+      console.log("org insights failed:", err);
+      return c.json({ error: "Failed to load insights" }, 500);
     }
   });
 
