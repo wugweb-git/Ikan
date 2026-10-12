@@ -1630,6 +1630,12 @@
   border-radius: 20px;
 }
 
+/* Rows touch: the site's `li + li` rhythm rule would open a gap between a
+   highlighted row and the divider under it. */
+.ikan2-theme .select-list > li {
+  margin: 0;
+}
+
 .ikan2-theme .select-list > li + li {
   border-top: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
 }
@@ -1654,6 +1660,11 @@
 
 .ikan2-theme .select-row[aria-current='step'] {
   background: var(--accent-container);
+  color: var(--on-accent-container);
+}
+
+.ikan2-theme .select-row[aria-current='step'] .select-row__glyph:not(.select-row__glyph--done) {
+  border-color: var(--accent-strong);
   color: var(--on-accent-container);
 }
 

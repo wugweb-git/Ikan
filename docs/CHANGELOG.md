@@ -9,6 +9,23 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — partner intro gets a photo; the form gets a type map
+
+**How it works** is a photo beside a timeline: a counselling session (Unsplash, free licence,
+`photo-1714976694867-bc0e012fab70`, rounded like every iKAN photo) next to Apply → We verify → You
+go live, each on an accent node with a pill for the fact that matters ("11 steps", "3–5 business
+days", "After approval"). Stacked on phones.
+
+**The form's hierarchy is now explicit** (see THE FORM'S TYPE MAP in globals.css): page title
+headline-lg, step title headline-sm → headline-md, section title-md, question label-lg at full
+strength, helper body-sm muted. Questions had been the ported auth label, 13/20 muted — identical to
+the helper under them. Pill groups and Yes/No are now `fieldset` + `legend`.
+
+**The step rail's highlighted row met a gap**: the site's `li + li` rhythm rule put 6.4px between a
+row and its divider. `.select-list > li` resets it; the current step's number takes the accent.
+
+---
+
 ## 2026-10-12 — the old member app is closed on ikanhealth.in
 
 The member app lives at app.ikanhealth.in (iKAN 2). On this host only **/admin** and **/org** sign

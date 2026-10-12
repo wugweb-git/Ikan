@@ -171,7 +171,6 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
   label: string; required?: boolean; options: readonly ChipOption[]; hint?: string; size?: 'sm' | 'lg';
   value: string[] | string; onChange: (v: string[] | string) => void;
 }) {
-  const id = useId();
   const multi = Array.isArray(value);
   const isOn = (v: string) => (multi ? (value as string[]).includes(v) : value === v);
   const toggle = (v: string) => {
@@ -183,10 +182,10 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
     }
   };
   return (
-    <div className="partner-wide" role="group" aria-labelledby={id}>
-      <p className="field__label" id={id}>
+    <fieldset className="partner-wide partner-fieldset">
+      <legend className="field__label">
         {label}{required ? <Required /> : null}{multi ? <span className="partner-note"> · choose any</span> : null}
-      </p>
+      </legend>
       {hint ? <p className="field__message partner-group-hint">{hint}</p> : null}
       <div className="partner-chips">
         {options.map((o) => {
@@ -203,7 +202,7 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -211,8 +210,8 @@ function Chips({ label, required, options, value, onChange, hint, size }: {
 function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 'no'; onChange: (v: '' | 'yes' | 'no') => void }) {
   const id = useId();
   return (
-    <div className="partner-wide">
-      <p className="field__label" id={id}>{label}</p>
+    <fieldset className="partner-wide partner-fieldset">
+      <legend className="field__label" id={id}>{label}</legend>
       <div className="segmented partner-segmented" role="radiogroup" aria-labelledby={id}>
         {(['yes', 'no'] as const).map((v) => (
           <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
@@ -222,7 +221,7 @@ function YesNo({ label, value, onChange }: { label: string; value: '' | 'yes' | 
           </button>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -852,9 +851,9 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       { icon: <Camera aria-hidden="true" />, title: 'A recent headshot', body: 'Clear and well lit. It goes on your public profile' },
     ];
     const after = [
-      { title: 'Apply', body: `${STEPS.length} short steps. Only a few questions are required.` },
-      { title: 'We verify', body: 'Our team checks your qualifications and registration within 3–5 business days.' },
-      { title: 'You go live', body: 'Your profile appears to iKAN members looking for support.' },
+      { title: 'Apply', meta: `${STEPS.length} steps`, body: 'Tell us about your training, practice and the way you work. Only a few questions are required.' },
+      { title: 'We verify', meta: '3–5 business days', body: 'Our team checks your qualifications and registration, and may call you to confirm details.' },
+      { title: 'You go live', meta: 'After approval', body: 'Your profile appears to iKAN members looking for support, and they can book with you.' },
     ];
     return (
       <div className={root}>
@@ -875,18 +874,28 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               ))}
             </ul>
 
-            <h3 className="partner-how-title">How it works</h3>
-            <ol className="partner-how">
-              {after.map((a, i) => (
-                <li key={a.title}>
-                  <span className="partner-how__num" aria-hidden="true">{i + 1}</span>
-                  <span>
-                    <span className="partner-how__title">{a.title}</span>
-                    <span className="field__message">{a.body}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <section className="partner-how-section" aria-labelledby="partner-how-title">
+              {/* Unsplash, free licence: photo-1714976694867-bc0e012fab70 */}
+              <img className="partner-how__photo" loading="lazy" decoding="async"
+                src="https://images.unsplash.com/photo-1714976694867-bc0e012fab70?auto=format&fit=crop&w=900&q=80"
+                srcSet="https://images.unsplash.com/photo-1714976694867-bc0e012fab70?auto=format&fit=crop&w=600&q=80 600w, https://images.unsplash.com/photo-1714976694867-bc0e012fab70?auto=format&fit=crop&w=900&q=80 900w, https://images.unsplash.com/photo-1714976694867-bc0e012fab70?auto=format&fit=crop&w=1200&q=80 1200w"
+                sizes="(min-width: 640px) 18rem, 100vw"
+                alt="A counsellor in conversation with a client on a sofa, in a bright consulting room" />
+              <div>
+                <h3 id="partner-how-title" className="partner-how-title">How it works</h3>
+                <ol className="partner-how">
+                  {after.map((a, i) => (
+                    <li key={a.title}>
+                      <span className="partner-how__num" aria-hidden="true">{i + 1}</span>
+                      <div className="partner-how__text">
+                        <p className="partner-how__title">{a.title} <span className="partner-how__meta">{a.meta}</span></p>
+                        <p className="field__message">{a.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
 
             <div className="wizard__footer">
               <div className="flow-footer__actions partner-intro__actions">
