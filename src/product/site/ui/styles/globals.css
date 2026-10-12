@@ -3766,6 +3766,14 @@ select {
   margin-bottom: 4px;
 }
 
+/* A section (h3) opens with a rule and air above it, so it reads one level
+   above the questions (label-lg) without a bigger size than the type map has. */
+.ikan2-theme .partner-form h3.partner-group-title {
+  margin-top: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
 .ikan2-theme .partner-group-hint {
   margin: 0 0 10px;
 }
@@ -3833,46 +3841,42 @@ select {
   text-align: right;
 }
 
-.ikan2-theme .partner-segmented {
-  max-width: 20rem;
+/* A Yes/No pair does not need the full width; one-of-n lists take what they
+   need, and wrap to two or three columns on a phone. */
+.ikan2-theme .partner-segmented--pair {
+  max-width: 22rem;
+}
+
+@media (max-width: 639px) {
+  .ikan2-theme .partner-form .partner-segmented--many {
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  }
+}
+
+.ikan2-theme .partner-part-hours {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 .ikan2-theme .partner-week {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-width: 36rem;
 }
 
 .ikan2-theme .partner-week__row {
   display: grid;
-  grid-template-columns: 2.75rem repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: 3rem minmax(0, 1fr);
   align-items: center;
-}
-
-.ikan2-theme .partner-week__part {
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
-  font-weight: 500;
-  text-align: center;
-}
-
-.ikan2-theme .partner-week__part small {
-  display: none;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--muted-foreground);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .ikan2-theme .partner-week__day {
-  margin: 0;
-}
-
-.ikan2-theme .partner-week__slot {
-  width: 100%;
-  padding: 0;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .ikan2-theme .partner-files {
@@ -4154,9 +4158,6 @@ select {
     grid-row: 1;
   }
 
-  .ikan2-theme .partner-week__part small {
-    display: block;
-  }
 }
 
 /* ── desktop ≥ 1024: every step in a sticky rail beside the card ── */
