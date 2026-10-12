@@ -102,11 +102,19 @@ export default tseslint.config(
   ...[
     { dir: 'admin', blocked: ['app', 'site'],
       allow: ['app/programs/BlockRenderer', 'app/programs/ProgramPlayer'] },
-    { dir: 'app', blocked: ['admin', 'site'] },
-    { dir: 'site', blocked: ['admin', 'app'] },
-    { dir: 'shared', blocked: ['admin', 'app', 'site', 'components'] },
+    { dir: 'app', blocked: ['admin', 'site', 'org'] },
+    { dir: 'site', blocked: ['admin', 'app', 'org'] },
+    /*
+     * org/ is the B2B portal, and its boundary is a privacy control rather
+     * than housekeeping. An organisation admin must never see an individual's
+     * wellbeing data; app/ is where every component that renders exactly that
+     * lives. Blocking the import makes reaching one a build failure instead of
+     * something a reviewer has to notice.
+     */
+    { dir: 'org', blocked: ['admin', 'app', 'site'] },
+    { dir: 'shared', blocked: ['admin', 'app', 'site', 'org', 'components'] },
   ].map(({ dir, blocked, allow = [] }) => ({
-    files: [`src/${dir === 'app' || dir === 'site' ? `product/${dir}` : dir}/**/*.{ts,tsx}`],
+    files: [`src/${['app', 'site', 'org'].includes(dir) ? `product/${dir}` : dir}/**/*.{ts,tsx}`],
     rules: {
       'no-restricted-imports': ['warn', {
         patterns: [{

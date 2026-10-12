@@ -125,6 +125,7 @@ const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resource
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
 const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const OrgPortal = lazy(() => lazyRetry(() => import('./product/org/OrgPortal').then(m => ({ default: m.OrgPortal })), 'OrgPortal'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
 const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
 const LearningDiary = lazy(() => lazyRetry(() => import('./product/app/journal/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
@@ -354,7 +355,8 @@ function AppContent() {
         '/join/professional',
         '/timeline',
         '/learning-diary',
-        '/onboarding', '/verify-email', '/get-started'
+        '/onboarding', '/verify-email', '/get-started',
+        '/org', '/org/people', '/org/settings'
       ];
       
       // Slug detail routes: /assessment/<slug> and /equip/<slug>
@@ -656,6 +658,10 @@ function AppContent() {
           return withSuspense(<Library onNavigate={handleNavigate} />);
         case '/resource-detail':
           return withSuspense(<ResourceDetail onNavigate={handleNavigate} resourceId={resourceDetailId || queryParams.id} />);
+        case '/org':
+        case '/org/people':
+        case '/org/settings':
+          return withSuspense(<OrgPortal route={currentRoute} onNavigate={handleNavigate} />);
         case '/account':
           return withSuspense(<Account onNavigate={handleNavigate} />);
         case '/mood-journal':
@@ -704,11 +710,18 @@ function AppContent() {
   };
 
   const isOnboardingFlow = currentRoute === '/onboarding' || currentRoute === '/verify-email' || currentRoute === '/get-started';
-  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && !isOnboardingFlow;
+  /*
+   * Surfaces that render their own bar and own the whole viewport: the admin
+   * console and the organisation portal. Four separate conditions below used
+   * to spell out `/admin` by hand; `/org` needs the same answer from all of
+   * them, and one predicate is how they stay in step.
+   */
+  const isOwnChromeSurface = currentRoute.startsWith('/admin') || currentRoute.startsWith('/org');
+  const showPublicNav = (!user || currentRoute === '/') && currentRoute !== '/login' && !isOwnChromeSurface && !isOnboardingFlow;
   const showPrivateNav = !!user &&
     currentRoute !== '/' &&
     currentRoute !== '/login' &&
-    !currentRoute.startsWith('/admin') &&
+    !isOwnChromeSurface &&
     !currentRoute.startsWith('/assessment-flow') &&
     !currentRoute.startsWith('/equip-program-flow') &&
     !currentRoute.startsWith('/equip-program-onboarding') &&
@@ -771,7 +784,7 @@ function AppContent() {
       />
 
       {/* Top Navigation - Floating Capsule (Desktop only) */}
-      {!isCompactNav && !isFullScreenFlow && currentRoute !== '/login' && !currentRoute.startsWith('/admin') && (
+      {!isCompactNav && !isFullScreenFlow && currentRoute !== '/login' && !isOwnChromeSurface && (
         <Navigation 
           user={user} 
           onNavigate={handleNavigate} 
@@ -784,7 +797,7 @@ function AppContent() {
         id="main-content"
         tabIndex={-1}
         className={cn("flex-1 w-full relative outline-none p-[0px]", 
-          !isHeroRoute && !currentRoute.startsWith('/admin') && !isMobile && "pt-[100px]")}
+          !isHeroRoute && !isOwnChromeSurface && !isMobile && "pt-[100px]")}
         role="main"
         aria-label="Page content"
       >
@@ -793,8 +806,8 @@ function AppContent() {
           isMobile && showPrivateNav ? "pb-24" : ""
         )}>
           <RouteGuard currentRoute={currentRoute} onNavigate={handleNavigate}>
-            {currentRoute.startsWith('/admin') ? (
-              // Admin routes: NO animation wrapper — render directly for speed
+            {isOwnChromeSurface ? (
+              // Admin and org routes: NO animation wrapper — render directly for speed
               <div className="w-full h-full">
                 {renderScreen()}
               </div>

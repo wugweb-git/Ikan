@@ -15,7 +15,7 @@ import { dirname, join, relative } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE_FILE = join(ROOT, 'scripts/baselines/boundary');
-const SURFACES = ['src/admin', 'src/product/app', 'src/product/site', 'src/shared'];
+const SURFACES = ['src/admin', 'src/product/app', 'src/product/site', 'src/product/org', 'src/shared'];
 
 let report;
 try {

@@ -1,0 +1,468 @@
+/*
+ * The organisation portal's own stylesheet.
+ *
+ * It sits in `org/` rather than in the site's `globals.css` because this is
+ * the org surface's CSS and the boundary rule means org/ cannot import from
+ * site/. There is no import either way: `main.tsx` is the composition root and
+ * loads both, so these rules simply land in the same cascade as iKAN 2's
+ * design system and use its tokens. A portal page wraps itself in
+ * `.ikan2-theme` exactly as a site page does.
+ *
+ * Loaded AFTER `index.css`, so `.ikan2-theme` is already defined and these
+ * two-class selectors win where they need to.
+ */
+
+.ikan2-theme.org-portal,
+.ikan2-theme .org-portal {
+  min-height: 100svh;
+  background: var(--canvas);
+  color: var(--foreground);
+}
+
+/* ── The bar ──────────────────────────────────────────────────── */
+
+.ikan2-theme .org-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding-block: 10px;
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.ikan2-theme .org-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+  margin-inline: auto;
+}
+
+.ikan2-theme .org-bar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-bar__brand img {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+/* The organisation's name, so an admin who manages two never acts on the
+   wrong one by accident. */
+.ikan2-theme .org-bar__org {
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-bar__spacer { flex: 1; }
+
+.ikan2-theme .org-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.ikan2-theme .org-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-tab:hover { background: color-mix(in oklab, var(--foreground) 6%, transparent); }
+
+.ikan2-theme .org-tab[aria-current='page'] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* ── Page ─────────────────────────────────────────────────────── */
+
+.ikan2-theme .org-page {
+  width: min(100% - (var(--page-gutter) * 2), var(--page-max));
+  margin-inline: auto;
+  padding-block: 32px 72px;
+}
+
+.ikan2-theme .org-page__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ikan2-theme .org-page__lede {
+  margin: 6px 0 0;
+  max-width: var(--read-max);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--muted-foreground);
+}
+
+/* ── Stat tiles ───────────────────────────────────────────────── */
+
+.ikan2-theme .org-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.ikan2-theme .org-stat {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+}
+
+.ikan2-theme .org-stat__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .org-stat__value {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-stat__note {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+/* Seat usage. A bar rather than a number alone, because "48 of 50" is the
+   thing an admin acts on and it should be legible at a glance. */
+.ikan2-theme .org-meter {
+  height: 6px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+  overflow: hidden;
+}
+
+.ikan2-theme .org-meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-teal-ink);
+}
+
+.ikan2-theme .org-meter__fill--full { background: var(--alert, var(--destructive)); }
+
+/* ── Panels ───────────────────────────────────────────────────── */
+
+.ikan2-theme .org-panel {
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+}
+
+.ikan2-theme .org-panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-panel__body {
+  margin: 6px 0 0;
+  max-width: var(--read-max);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--muted-foreground);
+}
+
+/*
+ * The panel that says a number is NOT being shown. It reads as information
+ * rather than as an error, because nothing has gone wrong — the figure simply
+ * is not available, and dressing that as a failure invites someone to "fix"
+ * it with whatever number is nearest to hand.
+ */
+.ikan2-theme .org-panel--pending {
+  border-style: dashed;
+  background: transparent;
+}
+
+/* The privacy notice. Stated on the page the admin reads, not buried in a
+   contract, because it is also the explanation for why numbers go missing. */
+.ikan2-theme .org-privacy {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--calm-soft);
+}
+
+.ikan2-theme .org-privacy svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--brand-teal-ink);
+}
+
+.ikan2-theme .org-privacy p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--foreground);
+}
+
+/* ── Table ────────────────────────────────────────────────────── */
+
+.ikan2-theme .org-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ikan2-theme .org-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 240px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.ikan2-theme .org-search input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  overflow-x: auto;
+}
+
+.ikan2-theme .org-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ikan2-theme .org-table th {
+  position: sticky;
+  top: 0;
+  padding: 12px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.ikan2-theme .org-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  vertical-align: middle;
+}
+
+.ikan2-theme .org-table tr:last-child td { border-bottom: 0; }
+
+.ikan2-theme .org-table__email {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ikan2-theme .org-pill--active  { background: var(--calm-soft);  color: var(--brand-teal-ink); }
+.ikan2-theme .org-pill--pending { background: var(--rest-soft, var(--muted)); color: var(--muted-foreground); }
+.ikan2-theme .org-pill--ended   { background: var(--muted); color: var(--muted-foreground); }
+.ikan2-theme .org-pill--admin   { background: var(--mind-soft); color: var(--foreground); }
+
+/* ── Controls ─────────────────────────────────────────────────── */
+
+.ikan2-theme .org-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .org-button:hover:not(:disabled) { opacity: 0.88; }
+.ikan2-theme .org-button:active:not(:disabled) { transform: translateY(1px); }
+.ikan2-theme .org-button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ikan2-theme .org-button--quiet {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-button--danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--destructive);
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.ikan2-theme .org-button--danger:hover { background: var(--error-container, var(--muted)); }
+
+.ikan2-theme .org-field {
+  display: block;
+  margin-top: 14px;
+}
+
+.ikan2-theme .org-field > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ikan2-theme .org-field input,
+.ikan2-theme .org-field textarea,
+.ikan2-theme .org-field select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-field textarea {
+  min-height: 132px;
+  resize: vertical;
+  font-variant-numeric: tabular-nums;
+}
+
+.ikan2-theme .org-field__hint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+/* ── Messages ─────────────────────────────────────────────────── */
+
+.ikan2-theme .org-note {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+.ikan2-theme .org-note--error {
+  background: var(--error-container, var(--muted));
+  color: var(--on-error-container, var(--foreground));
+}
+
+.ikan2-theme .org-note--ok {
+  background: var(--calm-soft);
+  color: var(--foreground);
+}
+
+.ikan2-theme .org-empty {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+/* ── Sign in ──────────────────────────────────────────────────── */
+
+.ikan2-theme .org-signin {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 24px;
+}
+
+.ikan2-theme .org-signin__card {
+  width: 100%;
+  max-width: 400px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 640px) {
+  .ikan2-theme .org-bar__org { display: none; }
+  .ikan2-theme .org-page { padding-block: 24px 56px; }
+  .ikan2-theme .org-page__title { font-size: 24px; line-height: 32px; }
+}

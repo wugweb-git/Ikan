@@ -9,6 +9,46 @@ undated under their original session number.
 
 ---
 
+## 2026-10-12 — the organisation (B2B) portal, first half
+
+**`/org` exists**, a fourth surface at `src/product/org/` beside site, app and admin, on iKAN 2's
+design system. An organisation admin can sign in, see seats and adoption, invite people by work
+email in bulk, set departments, and off-board. Backed by four new Postgres tables —
+`organizations`, `org_memberships`, `org_invites`, `org_audit_log`. Purely additive; nothing ikan2
+can see or reach.
+
+**The import boundary is the privacy control.** `org/` may not import `app/`, and `app/` is where
+every component that renders an individual's wellbeing lives. The spec's core principle — HR never
+sees an individual — is therefore a build failure rather than something a reviewer has to notice.
+`scripts/boundary-ratchet.mjs` now scans five surfaces; crossings still 0.
+
+**RLS on, zero policies, on all four tables** — the `kv_store_cc205da9` model. With permissive
+policies an org admin holding the anon key could read `org_memberships` straight through PostgREST
+and bypass every aggregate rule the portal exists to enforce.
+
+**Two schema decisions carry the privacy model.** Off-boarding sets `ended_at` and never deletes:
+that row is what says this person was in Marketing during Q3, and deleting it rewrites every
+historical aggregate they contributed to — which is both wrong and the change that lets a reader
+difference out the leaver by comparing a figure before and after. The seat frees anyway, because
+`ended_at` leaves the partial unique index. And department lives on the membership, not the person,
+so a transfer does not retroactively re-file somebody's history.
+
+**No wellbeing reporting, deliberately.** `/org/:id/overview` returns `wellbeing.available: false`
+with a reason, and the page says so in words. Every figure it does show — seats, invited, joined,
+adoption — is roster arithmetic from the portal's own tables. Real reporting needs member activity,
+which lives in ikan2's `ikan2_user_state`; the five `user_*` tables in this repo took their last
+write on **2026-06-25** and are a historical archive, so a dashboard built on them would report a
+workforce that stopped existing in June.
+
+**Also:** `isOwnChromeSurface` in `App.tsx` replaces four hand-written `startsWith('/admin')`
+checks that `/org` needed the same answer from; `/org` is disallowed in `robots.txt`.
+
+Still open: the aggregation layer and its suppression rules, invite email delivery, the partner
+portal, and the four product decisions that block them — minimum group size, whether therapy is
+ever reported per department, the free tier's contents, and legal sign-off on consent.
+
+---
+
 ## 2026-10-07 — the two public forms hand over to iKAN 2, and a security log stops copying analytics
 
 **Contact and newsletter now post to iKAN 2's tables**, `ikan2_contact_messages` and
