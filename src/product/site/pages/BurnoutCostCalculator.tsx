@@ -7,12 +7,17 @@ import {
 import { useSeo } from '../ui/hooks/useSeo';
 import {
   SECTORS, STRESS_LEVELS, LIMITS, WORKING_DAYS, REDUCTIONS, RESEARCH_DATE, MODEL_VERSION,
-  DEFAULT_STATE, DEFAULT_HEADCOUNT, sectorById, sectorInputs, estimate, checkHeadcount, checkNumber,
+  DEFAULT_STATE, DEFAULT_HEADCOUNT, sectorById, estimate, checkHeadcount, checkNumber,
   resolveInputs, parseState, serializeState, headcountBand, unitFor, formatLakh, formatAmount,
   formatRupees, formatPercent,
   type CalcState, type Estimate, type Evidence, type SectorId, type StressLevel,
 } from '../../../shared/content/burnout-cost-model';
 import { SOURCES, JUDGEMENTS, EXCLUDED } from '../../../shared/content/burnout-sources';
+import {
+  CALC_PATH, CALC_TITLE, CALC_DESCRIPTION, CALC_IMAGE, CALC_EXAMPLE, CALC_EXAMPLE_LINE, CALC_FAQ, calcJsonLd,
+} from '../../../shared/content/burnout-calc-seo';
+
+const CALC_JSON_LD = calcJsonLd();
 import { submitContactMessage, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
 import { trackCalc, CALC_STATE_KEY } from '../../../shared/content/calc-analytics';
 
@@ -35,7 +40,7 @@ import { trackCalc, CALC_STATE_KEY } from '../../../shared/content/calc-analytic
  * Spec: Notion "iKan, Employer Cost Calculator (live spec)".
  */
 
-const PATH = '/burnout-cost-calculator';
+const PATH = CALC_PATH;
 
 const EVIDENCE_LABEL: Record<Evidence, string> = {
   sourced: 'Sourced',
@@ -83,40 +88,11 @@ const REVIEWED = new Date(`${RESEARCH_DATE}T00:00:00`).toLocaleDateString('en-IN
   day: 'numeric', month: 'short', year: 'numeric',
 });
 
-/* The worked example, computed rather than typed, so the copy cannot drift from the model. */
-const EXAMPLE = estimate(sectorInputs(sectorById('saas')!, DEFAULT_HEADCOUNT));
-const EXAMPLE_UNIT = unitFor(EXAMPLE.base.total);
-const EXAMPLE_LINE =
-  `On this model, burnout costs a ${DEFAULT_HEADCOUNT}-person Indian software company about ` +
-  `${formatLakh(EXAMPLE.base.total, EXAMPLE_UNIT)} a year, ${formatPercent(EXAMPLE.base.shareOfPayroll)} of payroll, ` +
-  `in a scenario range of ₹${formatAmount(EXAMPLE.low.total, EXAMPLE_UNIT)} to ${formatAmount(EXAMPLE.high.total, EXAMPLE_UNIT)} ${EXAMPLE_UNIT}.`;
-
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: 'What does burnout cost an Indian company?',
-    a: `${EXAMPLE_LINE} Sector, team size and pay move the figure a lot, which is why every input above can be changed.`,
-  },
-  {
-    q: 'How is it calculated?',
-    a: 'Three costs are added up. People who leave because of burnout, times what it costs to replace them. Extra sick days taken by people in burnout. And presenteeism, people at work but working below their usual level, estimated at 3 to 4 times the sick-day cost, the method Deloitte India used.',
-  },
-  {
-    q: 'Is this an audit of my company?',
-    a: 'No. It is a ballpark from sector averages and stated assumptions. A real figure needs your own attrition, leave and survey data.',
-  },
-  {
-    q: 'Why a range and not one number?',
-    a: 'Several inputs are judgement rather than data. The low figure sets every one of them low at once and the high figure sets every one high. It is a scenario range, not a statistical confidence interval.',
-  },
-  {
-    q: 'What is not included?',
-    a: 'Direct costs such as insurance and treatment, managers’ time, effects on customers, and mental health costs that are not burnout. Leaving them out keeps the estimate on the conservative side.',
-  },
-  {
-    q: 'Where do my numbers go?',
-    a: 'Nowhere. The calculation runs in your browser. We record which sector was picked and a size band such as 50 to 99 people, never the numbers you type. If you ask about a pilot, the estimate is copied into the message, and you can edit it before sending.',
-  },
-];
+/* The worked example and the FAQ live in burnout-calc-seo.ts, shared with the
+   build's static copy of this page. */
+const EXAMPLE = CALC_EXAMPLE;
+const EXAMPLE_LINE = CALC_EXAMPLE_LINE;
+const FAQ = CALC_FAQ;
 
 function loadInitialState(): { state: CalcState; fromUrl: boolean } {
   if (typeof window === 'undefined') return { state: DEFAULT_STATE, fromUrl: false };
@@ -182,49 +158,12 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const overridden = { ctc: state.ctc !== '', attr: state.attr !== '', stress: state.stress !== '' };
 
   useSeo({
-    title: 'Employee Burnout Cost Calculator for India',
-    description:
-      'Estimate what burnout costs your team each year in rupees. Pick your sector and headcount, see the range and the method. Free, no sign-up.',
+    title: CALC_TITLE,
+    description: CALC_DESCRIPTION,
     canonicalPath: PATH,
-    image: 'https://ikanhealth.in/og/burnout-cost-calculator.png',
+    image: CALC_IMAGE.url,
     type: 'website',
-    jsonLd: {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'WebApplication',
-          name: 'Burnout cost calculator for Indian teams',
-          url: `https://ikanhealth.in${PATH}`,
-          applicationCategory: 'BusinessApplication',
-          operatingSystem: 'Any',
-          isAccessibleForFree: true,
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
-          publisher: { '@type': 'Organization', name: 'iKAN Health', url: 'https://ikanhealth.in' },
-        },
-        {
-          '@type': 'WebPage',
-          name: 'Burnout cost calculator for Indian teams',
-          url: `https://ikanhealth.in${PATH}`,
-          dateModified: RESEARCH_DATE,
-          about: 'The cost of employee burnout to Indian employers',
-        },
-        {
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://ikanhealth.in/' },
-            { '@type': 'ListItem', position: 2, name: 'Burnout cost calculator', item: `https://ikanhealth.in${PATH}` },
-          ],
-        },
-        {
-          '@type': 'FAQPage',
-          mainEntity: FAQ.map((f) => ({
-            '@type': 'Question',
-            name: f.q,
-            acceptedAnswer: { '@type': 'Answer', text: f.a },
-          })),
-        },
-      ],
-    },
+    jsonLd: CALC_JSON_LD,
   });
 
   /* A hash link is read once, then the address goes back to the plain path:

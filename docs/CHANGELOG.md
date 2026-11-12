@@ -9,6 +9,19 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12 — Burnout calculator: its own head tags for crawlers that skip JavaScript
+
+The live page served index.html's homepage title, description, PWA icon and a
+canonical pointing at "/" to anything that does not run JavaScript (LinkedIn,
+WhatsApp, Slack, most AI crawlers). The build now writes
+`dist/burnout-cost-calculator/index.html` (vite.config.ts, `calcPrerender`),
+which Vercel serves before the SPA rewrite: the calculator's title, description,
+canonical, OG and Twitter tags with image size and alt, a JSON-LD @graph
+(Organization, WebSite, WebPage with citations, WebApplication, BreadcrumbList,
+FAQPage), and a plain-HTML summary inside #root that the app replaces on boot.
+Metadata, the worked example and the FAQ moved to
+`src/shared/content/burnout-calc-seo.ts`, which the page and the build share.
+
 ## 2026-11-12, burnout calculator: lead capture on the page
 
 - The pilot request is now a form inside the dark band (name, work email, company, optional role and note), posted through the existing contact pipeline (`submitContactMessage`, source "website"). The estimate, sector, team size and any own numbers go into the message. Before, the button sent people to /contact, which opens with the crisis card.
