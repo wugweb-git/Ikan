@@ -12,7 +12,7 @@
  *
  * Wording rules every claim on the page follows:
  * - Deloitte India 2022 measured POOR MENTAL HEALTH, not burnout. Never cite
- *   its Rs 1.1 lakh crore as a burnout cost.
+ *   its ₹1.1 lakh crore as a burnout cost.
  * - Aon, GPTW and Indeed figures are shares of respondents, not rates.
  */
 
@@ -35,7 +35,7 @@ export interface Source {
 export const SOURCES: readonly Source[] = [
   {
     id: 'S9', usedFor: 'Prevalence at high stress, the presenteeism multiple, the cross-check',
-    finding: 'Survey of 3,995 corporate employees. More than half of those with a symptom reported burnout. Poor mental health was estimated to cost Indian employers about Rs 1.1 lakh crore a year, with presenteeism assumed at 3 to 4 times absenteeism.',
+    finding: 'Survey of 3,995 corporate employees. More than half of those with a symptom reported burnout. Poor mental health was estimated to cost Indian employers about ₹1.1 lakh crore a year, with presenteeism assumed at 3 to 4 times absenteeism.',
     title: 'Mental health and well-being in the workplace', publisher: 'Deloitte India', date: 'Sep 2022', tier: 'A',
     url: 'https://www.deloitte.com/content/dam/assets-shared/legacy/docs/perspectives/2022/gx-mental-health-2022-report-noexp.pdf',
     caveat: 'Self-selected online sample, white-collar, during COVID. Measures poor mental health, which is broader than burnout. Excludes direct costs such as insurance.',

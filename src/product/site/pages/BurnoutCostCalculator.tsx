@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Link2, RotateCcw } from 'lucide-react';
+import {
+  ArrowDown, ArrowRight, BadgeIndianRupee, BatteryLow, BookOpen, CalendarDays, Check, ClipboardCheck,
+  Link2, Lock, MessagesSquare, RotateCcw, Sparkles, Thermometer, UserMinus, Users,
+} from 'lucide-react';
 import { useSeo } from '../ui/hooks/useSeo';
 import {
   SECTORS, STRESS_LEVELS, LIMITS, WORKING_DAYS, REDUCTIONS, RESEARCH_DATE, MODEL_VERSION,
@@ -60,7 +63,7 @@ const EXAMPLE_UNIT = unitFor(EXAMPLE.base.total);
 const EXAMPLE_LINE =
   `On this model, burnout costs a ${DEFAULT_HEADCOUNT}-person Indian software company about ` +
   `${formatLakh(EXAMPLE.base.total, EXAMPLE_UNIT)} a year, ${formatPercent(EXAMPLE.base.shareOfPayroll)} of payroll, ` +
-  `in a scenario range of Rs ${formatAmount(EXAMPLE.low.total, EXAMPLE_UNIT)} to ${formatAmount(EXAMPLE.high.total, EXAMPLE_UNIT)} ${EXAMPLE_UNIT}.`;
+  `in a scenario range of ₹${formatAmount(EXAMPLE.low.total, EXAMPLE_UNIT)} to ${formatAmount(EXAMPLE.high.total, EXAMPLE_UNIT)} ${EXAMPLE_UNIT}.`;
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -148,6 +151,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     description:
       'Estimate what burnout costs your team each year in rupees. Pick your sector and headcount, see the range and the method. Free, no sign-up.',
     canonicalPath: PATH,
+    image: 'https://ikanhealth.in/og/burnout-cost-calculator.png',
     type: 'website',
     jsonLd: {
       '@context': 'https://schema.org',
@@ -291,7 +295,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     const n = current && inputs ? inputs.headcount : shownHeadcount;
     const u = unitFor(est.base.total);
     const changed = [
-      overridden.ctc && ctcValue !== null ? `average CTC Rs ${ctcValue} lakh` : '',
+      overridden.ctc && ctcValue !== null ? `average CTC ₹${ctcValue} lakh` : '',
       overridden.attr && attrValue !== null ? `voluntary attrition ${attrValue}%` : '',
       overridden.stress && state.stress ? `stress level ${STRESS_LABEL[state.stress].toLowerCase()}` : '',
     ].filter(Boolean);
@@ -300,7 +304,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
       message:
         `We used the burnout cost calculator (model ${MODEL_VERSION}).\n\n` +
         `${sector.label}, ${n} people: about ${formatLakh(est.base.total, u)} a year, ` +
-        `scenario range Rs ${formatAmount(est.low.total, u)} to ${formatAmount(est.high.total, u)} ${u}, ` +
+        `scenario range ₹${formatAmount(est.low.total, u)} to ${formatAmount(est.high.total, u)} ${u}, ` +
         `${formatPercent(est.base.shareOfPayroll)} of payroll.` +
         (changed.length ? `\nOur own numbers: ${changed.join(', ')}.` : '') +
         `\n\nWe would like to talk about a pilot.`,
@@ -320,29 +324,57 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
   const total = shown.base.total || 1;
   const parts = [
-    { key: 'turnover', label: 'People leaving', note: 'Replacing people who quit because of burnout', value: shown.base.turnover },
-    { key: 'presenteeism', label: 'Working below par', note: 'At work but not at their usual level', value: shown.base.presenteeism },
-    { key: 'absenteeism', label: 'Extra sick days', note: 'Time off taken by people in burnout', value: shown.base.absenteeism },
+    { key: 'turnover', label: 'People leaving', icon: UserMinus, value: shown.base.turnover,
+      explain: 'Hiring and training replacements for people who quit because of burnout.' },
+    { key: 'presenteeism', label: 'Working below par', icon: BatteryLow, value: shown.base.presenteeism,
+      explain: 'People at work but not at their usual level while they are burnt out.' },
+    { key: 'absenteeism', label: 'Extra sick days', icon: Thermometer, value: shown.base.absenteeism,
+      explain: 'Paid days off taken by people in burnout, over and above the usual.' },
   ];
   const pos = (v: number) => `${Math.max(0, Math.min(100, (v / (shown.high.total || 1)) * 100))}%`;
 
   return (
     <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', 'calc-page', className].filter(Boolean).join(' ')}>
-      <section className="info-band">
+      {/* ── 1. Hero: the question, one action, and the example as a picture ── */}
+      <section className="calc-hero" aria-labelledby={`${ids}-h1`}>
+        <div className="info-band__inner calc-hero__inner">
+          <div className="calc-hero__copy">
+            <p className="calc-eyebrow">For HR leads and founders</p>
+            <h1 className="calc-hero__title" id={`${ids}-h1`}>Burnout cost calculator for Indian teams</h1>
+            <p className="calc-hero__lead">
+              What is burnout costing your team each year? Pick your sector and headcount and get a figure in
+              rupees, with the method in full.
+            </p>
+            <div className="calc-hero__actions">
+              <a className="info-button calc-hero__cta" href="#calculator">
+                Work out your cost <ArrowDown aria-hidden="true" size={16} />
+              </a>
+              <a className="calc-ghost" href="#method">How it is estimated</a>
+            </div>
+            <ul className="calc-trust">
+              <li><BadgeIndianRupee aria-hidden="true" size={16} /> Free, no sign-up</li>
+              <li><Lock aria-hidden="true" size={16} /> Runs in your browser</li>
+              <li><BookOpen aria-hidden="true" size={16} /> {SOURCES.length} named sources</li>
+            </ul>
+          </div>
+          <HeroArt />
+        </div>
+      </section>
+
+      {/* ── 2. The calculator ── */}
+      <section className="calc-band calc-band--white" id="calculator" aria-labelledby={`${ids}-calc-h`}>
         <div className="info-band__inner">
-          <p className="info-eyebrow">For HR leads and founders</p>
-          <h1 className="info-title">Burnout cost calculator for Indian teams</h1>
-          <p className="info-subtitle">What is burnout costing your team each year?</p>
-          <p className="calc-answer">
-            {EXAMPLE_LINE} The cost comes from burnout-related resignations, extra sick days and
-            reduced work while unwell. Pick your sector and headcount to see yours.
-          </p>
+          <header className="calc-head">
+            <p className="calc-kicker"><span className="calc-kicker__num">1</span> Your estimate</p>
+            <h2 className="calc-head__title" id={`${ids}-calc-h`}>Work out your number</h2>
+            <p className="calc-answer">{EXAMPLE_LINE} Pick your sector and headcount to see yours.</p>
+          </header>
 
           <div className="calc-layout">
             {/* ── Inputs ── */}
             <div className="calc-inputs">
               <fieldset className="calc-fieldset">
-                <legend className="calc-label">Your sector</legend>
+                <legend className="calc-step"><span className="calc-step__num" aria-hidden="true">1</span> Your sector</legend>
                 <div className="calc-chips calc-chips--sectors">
                   {SECTORS.map((s) => (
                     <label key={s.id} className="calc-chip">
@@ -359,10 +391,11 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                 </div>
               </fieldset>
 
-              <div className="calc-field">
-                <label className="calc-label" htmlFor={`${ids}-n`}>Number of employees</label>
+              <div className="calc-field calc-field--step">
+                <label className="calc-step" htmlFor={`${ids}-n`}><span className="calc-step__num" aria-hidden="true">2</span> Number of employees</label>
                 <p className="calc-help" id={`${ids}-n-help`}>Between {LIMITS.headcount.min} and {LIMITS.headcount.max.toLocaleString('en-IN')}</p>
-                <div className="contact-field">
+                <div className="contact-field calc-number">
+                  <Users aria-hidden="true" size={18} />
                   <input
                     id={`${ids}-n`}
                     type="text"
@@ -400,7 +433,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                 className="faq-item calc-disclosure"
                 onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) trackCalc('calc_assumptions_open', { sector: state.sector }); }}
               >
-                <summary>Use your own numbers</summary>
+                <summary><span className="calc-step"><span className="calc-step__num calc-step__num--soft" aria-hidden="true">3</span> Use your own numbers <span className="calc-optional">Optional</span></span></summary>
                 <div className="calc-disclosure__body">
                   <p className="calc-help">
                     These start at the defaults for {sector.label.toLowerCase()}. Each one says how much evidence is behind it.
@@ -408,7 +441,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
                   <div className="calc-field">
                     <div className="calc-label-row">
-                      <label className="calc-label" htmlFor={`${ids}-ctc`}>Average CTC (Rs lakh a year)</label>
+                      <label className="calc-label" htmlFor={`${ids}-ctc`}>Average CTC (₹ lakh a year)</label>
                       <EvidenceBadge evidence={sector.evidence.ctc} own={overridden.ctc} />
                     </div>
                     <div className="contact-field">
@@ -493,159 +526,261 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
               className={['calc-result', stale ? 'calc-result--stale' : ''].filter(Boolean).join(' ')}
               aria-labelledby={`${ids}-result-h`}
             >
-              <h2 className="calc-result__title" id={`${ids}-result-h`}>Your estimate</h2>
-              <p className="calc-result__caption">
-                {isDefault ? 'Example: software, 75 people. Change either to see yours.' : `${sector.label}, ${shownHeadcount.toLocaleString('en-IN')} people`}
-              </p>
-
-              {stale ? (
-                <p className="calc-stale-note">{empty ? 'Enter your headcount to see your estimate.' : 'Showing your last valid estimate. Fix the highlighted field to update it.'}</p>
-              ) : null}
-
-              <p className="calc-figure">
-                <span className="calc-figure__about">about</span>{' '}
-                {formatLakh(shown.base.total, unit)}
-                {' '}<span className="calc-figure__per">a year</span>
-              </p>
-              <p className="calc-result__caption">Estimated yearly cost of burnout, as a scenario range</p>
-
-              {/* The range strip: the one thing a reader should remember is that this is a range. */}
-              <div className="calc-range" aria-hidden="true">
-                <div className="calc-range__track">
-                  <span className="calc-range__span" style={{ left: pos(shown.low.total), right: `calc(100% - ${pos(shown.high.total)})` }} />
-                  <span className="calc-range__tick" style={{ left: pos(shown.low.total) }} />
-                  <span className="calc-range__tick calc-range__tick--base" style={{ left: pos(shown.base.total) }} />
-                  <span className="calc-range__tick" style={{ left: pos(shown.high.total) }} />
+              <div className="calc-result__hero">
+                <div className="calc-result__top">
+                  <h3 className="calc-result__title" id={`${ids}-result-h`}>Your estimate</h3>
+                  <span className="calc-result__tag">
+                    {isDefault ? 'Example' : `${sector.label}, ${shownHeadcount.toLocaleString('en-IN')} people`}
+                  </span>
                 </div>
+
+                {stale ? (
+                  <p className="calc-stale-note">{empty ? 'Enter your headcount to see your estimate.' : 'Showing your last valid estimate. Fix the highlighted field to update it.'}</p>
+                ) : null}
+
+                <p className="calc-figure">
+                  <span className="calc-figure__about">about</span>{' '}
+                  <span className="calc-figure__num">{formatLakh(shown.base.total, unit)}</span>
+                  {' '}<span className="calc-figure__per">a year</span>
+                </p>
+                <p className="calc-result__caption">
+                  {isDefault ? 'A 75-person software company. Change the sector or headcount to see yours.' : 'Estimated yearly cost of burnout, as a scenario range'}
+                </p>
+
+                {/* The range strip: the one thing to remember is that this is a range. */}
+                <div className="calc-range" aria-hidden="true">
+                  <div className="calc-range__track">
+                    <span className="calc-range__span" style={{ left: pos(shown.low.total), right: `calc(100% - ${pos(shown.high.total)})` }} />
+                    <span className="calc-range__tick" style={{ left: pos(shown.low.total) }} />
+                    <span className="calc-range__tick calc-range__tick--base" style={{ left: pos(shown.base.total) }} />
+                    <span className="calc-range__tick" style={{ left: pos(shown.high.total) }} />
+                  </div>
+                </div>
+                <dl className="calc-range__labels">
+                  <div><dt>Low</dt><dd>{formatLakh(shown.low.total, unit)}</dd></div>
+                  <div className="calc-range__labels-base"><dt>Base</dt><dd>{formatLakh(shown.base.total, unit)}</dd></div>
+                  <div><dt>High</dt><dd>{formatLakh(shown.high.total, unit)}</dd></div>
+                </dl>
               </div>
-              <dl className="calc-range__labels">
-                <div><dt>Low</dt><dd>{formatLakh(shown.low.total, unit)}</dd></div>
-                <div className="calc-range__labels-base"><dt>Base</dt><dd>{formatLakh(shown.base.total, unit)}</dd></div>
-                <div><dt>High</dt><dd>{formatLakh(shown.high.total, unit)}</dd></div>
-              </dl>
 
-              <p className="calc-meta">
-                {formatPercent(shown.base.shareOfPayroll)} of payroll, about {formatRupees(shown.base.perEmployee)} per employee
-              </p>
+              <div className="calc-result__body">
+                <ul className="calc-pills">
+                  <li><strong>{formatPercent(shown.base.shareOfPayroll)}</strong> of payroll</li>
+                  <li><strong>{formatRupees(shown.base.perEmployee)}</strong> per employee</li>
+                </ul>
 
-              <h3 className="calc-split__title">Where it comes from</h3>
-              <div className="calc-split" aria-hidden="true">
-                {parts.map((p) => (
-                  <span key={p.key} className={`calc-split__seg calc-split__seg--${p.key}`} style={{ flexGrow: p.value / total }} />
-                ))}
+                <h4 className="calc-split__title">Where it comes from</h4>
+                <div className="calc-split" aria-hidden="true">
+                  {parts.map((p) => (
+                    <span key={p.key} className={`calc-split__seg calc-split__seg--${p.key}`} style={{ flexGrow: p.value / total }} />
+                  ))}
+                </div>
+                <ul className="calc-split__list">
+                  {parts.map((p) => (
+                    <li key={p.key}>
+                      <span className={`calc-swatch calc-split__seg--${p.key}`} aria-hidden="true" />
+                      <span className="calc-split__label">{p.label}</span>
+                      <span className="calc-split__value">{formatLakh(p.value, unitFor(p.value))} <span className="calc-split__pct">({Math.round((p.value / total) * 100)}%)</span></span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="calc-result__actions">
+                  <button type="button" className="calc-copy" onClick={copyLink}>
+                    {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy link to this estimate'}
+                  </button>
+                </div>
+                <p className="calc-help">A ballpark from sector averages, not an audit of your company.</p>
               </div>
-              <ul className="calc-split__list">
-                {parts.map((p) => (
-                  <li key={p.key}>
-                    <span className={`calc-swatch calc-split__seg--${p.key}`} aria-hidden="true" />
-                    <span className="calc-split__label">{p.label}<span className="calc-split__note">{p.note}</span></span>
-                    <span className="calc-split__value">{formatLakh(p.value, unitFor(p.value))} <span className="calc-split__pct">({Math.round((p.value / total) * 100)}%)</span></span>
-                  </li>
-                ))}
-              </ul>
-
-              <h3 className="calc-split__title">If burnout fell</h3>
-              <ul className="calc-reduce">
-                {REDUCTIONS.map((r) => (
-                  <li key={r}>
-                    <span>{Math.round(r * 100)}% less</span>
-                    <span>about {formatLakh(shown.base.total * r, unitFor(shown.base.total * r))} a year avoided</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="calc-help">Assumes every cost falls in proportion. Not a forecast of what any programme achieves.</p>
-
-              <button type="button" className="calc-copy" onClick={copyLink}>
-                <Link2 aria-hidden="true" size={16} /> {copied ? 'Link copied' : 'Copy link to this estimate'}
-              </button>
-              <p className="calc-help">A ballpark from sector averages, not an audit of your company.</p>
             </section>
           </div>
+        </div>
+      </section>
 
-          {/* ── The ask ── */}
-          <section ref={pilotRef} className="calc-pilot" aria-labelledby={`${ids}-pilot-h`}>
-            <h2 className="calc-pilot__title" id={`${ids}-pilot-h`}>Talk to us about a pilot</h2>
-            <p>
-              Tell us about your team and we will talk through what a pilot of iKAN would look like. Your estimate goes
-              into the message, and you can edit it before sending.
-            </p>
-            <button type="button" className="info-button" onClick={() => askForPilot('inline')}>
-              Talk to us about a pilot
-            </button>
-          </section>
+      {/* ── 3. What drives it, and what a drop would avoid ── */}
+      <section className="calc-band" aria-labelledby={`${ids}-drivers-h`}>
+        <div className="info-band__inner">
+          <header className="calc-head">
+            <p className="calc-kicker"><span className="calc-kicker__num">2</span> What drives it</p>
+            <h2 className="calc-head__title" id={`${ids}-drivers-h`}>Where the cost comes from</h2>
+            <p className="calc-head__lead">Three costs, added up for a year. The figures follow your inputs above.</p>
+          </header>
 
-          {/* ── Method ── */}
-          <h2 className="info-subhead">How this is estimated</h2>
-          <details className="faq-item" onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) trackCalc('calc_method_open', {}); }}>
-            <summary>The method, in full</summary>
-            <div className="calc-method">
-              <p>Three costs, each worked out for a year:</p>
-              <ul className="info-list">
-                <li><strong>People leaving.</strong> Headcount, times voluntary attrition, times the share of exits that are burnout-related (20, 25 or 30%), times average pay, times the cost of replacing someone as a share of pay.</li>
-                <li><strong>Extra sick days.</strong> The share of people in burnout (from 13% at low stress to 45% at high), times 1.5 to 2.5 extra sick days, at a day&apos;s pay over {WORKING_DAYS} working days.</li>
-                <li><strong>Working below par.</strong> 3, 3.5 or 4 times the sick-day cost, inside the 3 to 4 times range Deloitte India assumed.</li>
-              </ul>
-              <p>
-                The low figure sets every uncertain input low and the high figure sets them all high. Covers
-                burnout-related attrition, absenteeism and presenteeism. Not all mental health costs, and no direct medical costs.
-              </p>
-              <p>
-                Deloitte India estimated in 2022 that poor mental health, which is broader than burnout, costs Indian
-                employers about Rs 1.1 lakh crore a year. That is a cross-check on the shape of the costs, not a like-for-like comparison.
-              </p>
-              <p className="calc-help">Model {MODEL_VERSION}. Built from a research workbook dated {REVIEWED}, with its weaker inputs corrected and labelled.</p>
-
-              <h3 className="calc-split__title">Our assumptions, with no source</h3>
-              <ul className="info-list">
-                {JUDGEMENTS.map((j) => <li key={j.item}><strong>{j.item}.</strong> {j.bound}</li>)}
-              </ul>
-            </div>
-          </details>
-
-          <details className="faq-item">
-            <summary>Sources</summary>
-            <ol className="calc-sources">
-              {SOURCES.map((s) => (
-                <li key={s.id}>
-                  <p className="calc-source__title">
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={() => trackCalc('calc_source_click', { source_id: s.id })}>
-                      {s.title}
-                    </a>
+          <ul className="calc-drivers">
+            {parts.map((p) => {
+              const Icon = p.icon;
+              return (
+                <li key={p.key} className={`calc-driver calc-driver--${p.key}`}>
+                  <span className="calc-driver__icon"><Icon aria-hidden="true" size={22} /></span>
+                  <h3 className="calc-driver__title">{p.label}</h3>
+                  <p className="calc-driver__value">
+                    {formatLakh(p.value, unitFor(p.value))}
+                    <span> {Math.round((p.value / total) * 100)}% of the total</span>
                   </p>
-                  <p className="calc-source__meta">{s.publisher}, {s.date}. Quality tier {s.tier}. Used for: {s.usedFor.toLowerCase()}.</p>
-                  <p>{s.finding}</p>
-                  <p className="calc-help">{s.caveat}</p>
+                  <p className="calc-driver__note">{p.explain}</p>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="calc-savings">
+            <div className="calc-savings__head">
+              <h3 className="calc-savings__title">If burnout fell</h3>
+              <p className="calc-help">Assumes every cost falls in proportion. Not a forecast of what any programme achieves.</p>
+            </div>
+            <ul className="calc-savings__list">
+              {REDUCTIONS.map((r) => (
+                <li key={r}>
+                  <span className="calc-savings__pct">{Math.round(r * 100)}% less burnout</span>
+                  <strong>{formatLakh(shown.base.total * r, unitFor(shown.base.total * r))}</strong>
+                  <span className="calc-savings__per">a year avoided</span>
                 </li>
               ))}
-            </ol>
-            <p className="calc-help">Tier A is institutional or primary research, B is trade press or secondary coverage, C is vendor content.</p>
-          </details>
-
-          <details className="faq-item">
-            <summary>Figures we chose not to use</summary>
-            <ul className="info-list calc-method">
-              {EXCLUDED.map((x) => <li key={x.claim}><strong>{x.claim}.</strong> {x.why}</li>)}
             </ul>
-          </details>
+          </div>
+        </div>
+      </section>
 
-          <h2 className="info-subhead">Questions HR leads ask</h2>
-          {FAQ.map((f) => (
-            <details key={f.q} className="faq-item">
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
+      {/* ── 4. The ask ── */}
+      <div className="calc-band calc-band--tight">
+        <div className="info-band__inner">
+          <section ref={pilotRef} className="calc-pilot" aria-labelledby={`${ids}-pilot-h`}>
+            <div className="calc-pilot__copy">
+              <p className="calc-kicker calc-kicker--dark"><span className="calc-kicker__num">3</span> For your team</p>
+              <h2 className="calc-pilot__title" id={`${ids}-pilot-h`}>Talk to us about a pilot</h2>
+              <p className="calc-pilot__lead">
+                Tell us about your team and we will talk through what a pilot of iKAN would look like. Your estimate
+                goes into the message, and you can edit it before sending.
+              </p>
+              <ul className="calc-pilot__list">
+                <li><ClipboardCheck aria-hidden="true" size={18} /> Assessments people take privately</li>
+                <li><Sparkles aria-hidden="true" size={18} /> Self-paced programmes and daily habits</li>
+                <li><MessagesSquare aria-hidden="true" size={18} /> Access to qualified professionals</li>
+              </ul>
+              <div className="calc-pilot__actions">
+                <button type="button" className="info-button calc-pilot__cta" onClick={() => askForPilot('inline')}>
+                  Talk to us about a pilot <ArrowRight aria-hidden="true" size={16} />
+                </button>
+                <p className="calc-pilot__estimate">Your estimate: about {formatLakh(shown.base.total, unit)} a year</p>
+              </div>
+            </div>
+            <PilotArt />
+          </section>
+        </div>
+      </div>
+
+      {/* ── 5. Method and sources ── */}
+      <section className="calc-band calc-band--white" id="method" aria-labelledby={`${ids}-method-h`}>
+        <div className="info-band__inner calc-split-layout">
+          <header className="calc-head calc-head--side">
+            <p className="calc-kicker"><span className="calc-kicker__num">4</span> The method</p>
+            <h2 className="calc-head__title" id={`${ids}-method-h`}>How this is estimated</h2>
+            <p className="calc-head__lead">
+              Every input is either sourced, worked out from a source, or our stated judgement. The low figure sets every
+              uncertain input low, and the high figure sets them all high.
+            </p>
+            <p className="calc-reviewed">
+              <CalendarDays aria-hidden="true" size={15} />
+              Last reviewed <time dateTime={RESEARCH_DATE}>{REVIEWED}</time>
+            </p>
+          </header>
+
+          <div>
+            <ol className="calc-formula">
+              <li>
+                <span className="calc-formula__num calc-split__seg--turnover" aria-hidden="true">1</span>
+                <div>
+                  <h3>People leaving</h3>
+                  <p>Headcount × voluntary attrition × the burnout share of exits (20, 25 or 30%) × average pay × the cost of replacing someone.</p>
+                </div>
+              </li>
+              <li>
+                <span className="calc-formula__num calc-split__seg--absenteeism" aria-hidden="true">2</span>
+                <div>
+                  <h3>Extra sick days</h3>
+                  <p>The share of people in burnout (13% at low stress to 45% at high) × 1.5 to 2.5 extra sick days × a day&apos;s pay over {WORKING_DAYS} working days.</p>
+                </div>
+              </li>
+              <li>
+                <span className="calc-formula__num calc-split__seg--presenteeism" aria-hidden="true">3</span>
+                <div>
+                  <h3>Working below par</h3>
+                  <p>3, 3.5 or 4 times the sick-day cost, inside the 3 to 4 times range Deloitte India assumed.</p>
+                </div>
+              </li>
+            </ol>
+
+            <details className="faq-item" onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) trackCalc('calc_method_open', {}); }}>
+              <summary>Scope, cross-check and our assumptions</summary>
+              <div className="calc-method">
+                <p>
+                  Covers burnout-related attrition, absenteeism and presenteeism. Not all mental health costs, and no
+                  direct medical costs.
+                </p>
+                <p>
+                  Deloitte India estimated in 2022 that poor mental health, which is broader than burnout, costs Indian
+                  employers about ₹1.1 lakh crore a year. That is a cross-check on the shape of the costs, not a like-for-like comparison.
+                </p>
+                <p className="calc-help">Model {MODEL_VERSION}. Built from a research workbook dated {REVIEWED}, with its weaker inputs corrected and labelled.</p>
+
+                <h3 className="calc-split__title">Our assumptions, with no source</h3>
+                <ul className="info-list">
+                  {JUDGEMENTS.map((j) => <li key={j.item}><strong>{j.item}.</strong> {j.bound}</li>)}
+                </ul>
+              </div>
             </details>
-          ))}
 
-          <p className="calc-reviewed">
-            <CalendarDays aria-hidden="true" size={15} />
-            Last reviewed <time dateTime={RESEARCH_DATE}>{REVIEWED}</time>
-          </p>
+            <details className="faq-item">
+              <summary>Sources ({SOURCES.length})</summary>
+              <ol className="calc-sources">
+                {SOURCES.map((s) => (
+                  <li key={s.id}>
+                    <p className="calc-source__title">
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" onClick={() => trackCalc('calc_source_click', { source_id: s.id })}>
+                        {s.title}
+                      </a>
+                      <span className={`calc-tier calc-tier--${s.tier.toLowerCase()}`}>Tier {s.tier}</span>
+                    </p>
+                    <p className="calc-source__meta">{s.publisher}, {s.date}. Used for: {s.usedFor.toLowerCase()}.</p>
+                    <p>{s.finding}</p>
+                    <p className="calc-help">{s.caveat}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="calc-help">Tier A is institutional or primary research, B is trade press or secondary coverage, C is vendor content.</p>
+            </details>
+
+            <details className="faq-item">
+              <summary>Figures we chose not to use</summary>
+              <ul className="info-list calc-method">
+                {EXCLUDED.map((x) => <li key={x.claim}><strong>{x.claim}.</strong> {x.why}</li>)}
+              </ul>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. Questions ── */}
+      <section className="calc-band" aria-labelledby={`${ids}-faq-h`}>
+        <div className="info-band__inner calc-split-layout">
+          <header className="calc-head calc-head--side">
+            <h2 className="calc-head__title" id={`${ids}-faq-h`}>Questions HR leads ask</h2>
+            <p className="calc-head__lead">Something else? Write to us from the contact page and we reply within 24 hours.</p>
+          </header>
+          <div>
+            {FAQ.map((f) => (
+              <details key={f.q} className="faq-item">
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Phones only (CSS). Never on screen together with the inline pilot button. */}
       <div className="calc-dock" data-visible={showDock || undefined} aria-hidden={!showDock}>
-        <p className="calc-dock__figure">about {formatLakh(shown.base.total, unit)} a year</p>
+        <p className="calc-dock__figure"><small>Your estimate</small>about {formatLakh(shown.base.total, unit)} a year</p>
         <button type="button" className="info-button" tabIndex={showDock ? 0 : -1} onClick={() => askForPilot('dock')}>
           Talk to us about a pilot
         </button>
@@ -655,6 +790,107 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     </div>
   );
 }
+
+/* The hero picture. The scene is iKAN 2's own "burnout" illustration (the app's
+   art.tsx), redrawn on site tokens; the cards beside it follow the homepage's
+   label chips and the app's dark programme card. The figures are the worked
+   example, computed, so they cannot drift from the model. Decorative: the
+   same facts are in the text below. */
+function HeroArt() {
+  const unitEx = unitFor(EXAMPLE.base.total);
+  const gid = useId().replace(/:/g, '');
+  return (
+    <div className="calc-art" aria-hidden="true">
+      <svg className="calc-art__scene" viewBox="0 0 320 300" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id={`g${gid}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style={{ stopColor: 'var(--rest-soft)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--brand-amber)', stopOpacity: 0.5 }} />
+          </linearGradient>
+        </defs>
+        <rect width="320" height="300" fill={`url(#g${gid})`} />
+        <circle cx="250" cy="58" r="34" style={{ fill: 'var(--background)', fillOpacity: 0.7 }} />
+        <circle cx="64" cy="70" r="5" style={{ fill: 'var(--brand-coral)' }} />
+        <circle cx="98" cy="42" r="4" style={{ fill: 'var(--brand-coral)', fillOpacity: 0.7 }} />
+        <circle cx="160" cy="170" r="92" style={{ fill: 'var(--brand-amber)', fillOpacity: 0.45 }} />
+        <g transform="translate(160 160) scale(1.45) translate(-160 -110)">
+          <path
+            d="M160 48 C 196 92, 206 120, 184 156 C 176 170, 144 172, 136 156 C 120 128, 132 98, 160 48 Z"
+            style={{ fill: 'var(--brand-amber-ink)' }}
+          />
+          <path
+            d="M160 104 C 174 124, 176 138, 168 152 C 162 160, 154 160, 150 152 C 144 140, 148 126, 160 104 Z"
+            style={{ fill: 'var(--rest-soft)' }}
+          />
+        </g>
+        <rect x="70" y="268" width="180" height="7" rx="3.5" style={{ fill: 'var(--brand-amber-ink)', fillOpacity: 0.35 }} />
+      </svg>
+
+      <div className="calc-art__tags">
+        <span className="calc-art__tag calc-art__tag--teal">Resignations</span>
+        <span className="calc-art__tag calc-art__tag--amber">Sick days</span>
+        <span className="calc-art__tag calc-art__tag--coral">Working below par</span>
+      </div>
+
+      <div className="calc-art__card">
+        <span className="calc-art__label">Example · 75-person software team</span>
+        <strong>{formatLakh(EXAMPLE.base.total, unitEx)}</strong>
+        <span className="calc-art__sub">a year · {formatPercent(EXAMPLE.base.shareOfPayroll)} of payroll</span>
+      </div>
+
+      <div className="calc-art__stat">
+        <span>Per employee</span>
+        <strong>{formatRupees(EXAMPLE.base.perEmployee)}</strong>
+      </div>
+    </div>
+  );
+}
+
+/* The pilot picture: the homepage's workplace photo, with the app's home
+   screen in front of it, built from the same iKAN 2 primitives the homepage
+   phone uses (program-band, metric-pill, mini-score, semantic-chip). */
+const WORKPLACE_PHOTO =
+  'https://images.unsplash.com/photo-1758691737182-d42aefd6dee8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900';
+
+function PilotArt() {
+  return (
+    <div className="calc-pilot__art" aria-hidden="true">
+      <img className="calc-pilot__photo" src={WORKPLACE_PHOTO} alt="" loading="lazy" decoding="async" width={900} height={600} />
+      <div className="calc-phone">
+        <span className="calc-phone__notch" />
+        <div className="app-screen">
+          <div className="app-screen__top">
+            <span>
+              <small>Good morning</small>
+              <strong>Today</strong>
+            </span>
+            <span className="semantic-chip app-screen__chip">Day 3</span>
+          </div>
+          <div className="app-screen__mood">
+            <p>How are you feeling?</p>
+            <div>
+              {['\u{1F62B}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F604}'].map((e, i) => (
+                <span key={e} className={i === 3 ? 'is-on' : undefined}>{e}</span>
+              ))}
+            </div>
+          </div>
+          <div className="program-band app-screen__band">
+            <span>
+              <span>PROGRAMME</span>
+              <strong>Unburn</strong>
+            </span>
+            <span className="mini-score app-screen__ring"><span>3</span></span>
+          </div>
+          <div className="app-screen__metrics">
+            <div className="metric-pill"><span>Day streak</span><strong>7</strong></div>
+            <div className="metric-pill"><span>Well-being</span><strong>85%</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function EvidenceBadge({ evidence, own }: { evidence: Evidence; own: boolean }) {
   if (own) return <span className="calc-badge calc-badge--own">Your number</span>;

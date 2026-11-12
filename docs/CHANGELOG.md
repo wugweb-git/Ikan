@@ -9,6 +9,13 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12, burnout calculator redesign
+
+- /burnout-cost-calculator rebuilt as six bands: hero with picture, calculator (dark result panel), cost drivers as cards plus "if burnout fell", a dark pilot band, method (formula steps, sources on demand), FAQ. Canvas and white bands alternate.
+- Visuals from the system: the app's burnout illustration redrawn on site tokens, the homepage's label chips and workplace photo, the app's home screen in a phone (iKAN 2 primitives, programme "Unburn").
+- Money shows as ₹ everywhere (formatters, tests, sources, proof ledger).
+- New OG image, public/og/burnout-cost-calculator.png (1200x630), set through useSeo.
+
 ## 2026-11-12 — public burnout cost calculator at /burnout-cost-calculator
 
 A mobile-first employer tool page: pick a sector and headcount, get a yearly burnout cost as a

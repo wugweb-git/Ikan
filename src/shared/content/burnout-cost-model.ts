@@ -236,9 +236,9 @@ export function unitFor(lakh: number): MoneyUnit {
   return sig2(lakh) >= 100 ? 'crore' : 'lakh';
 }
 
-/** "Rs 35 lakh", "Rs 1.2 crore". Two significant figures. */
+/** "₹35 lakh", "₹1.2 crore". Two significant figures. */
 export function formatLakh(lakh: number, unit: MoneyUnit = unitFor(lakh)): string {
-  return `Rs ${formatAmount(lakh, unit)} ${unit}`;
+  return `₹${formatAmount(lakh, unit)} ${unit}`;
 }
 
 /** The number alone, in the given unit, two significant figures. */
@@ -247,9 +247,9 @@ export function formatAmount(lakh: number, unit: MoneyUnit): string {
   return INR.format(sig2(v));
 }
 
-/** "about Rs 46,000" — whole rupees, two significant figures, Indian grouping. */
+/** "about ₹46,000" — whole rupees, two significant figures, Indian grouping. */
 export function formatRupees(rupees: number): string {
-  return `Rs ${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(sig2(rupees))}`;
+  return `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(sig2(rupees))}`;
 }
 
 export function formatPercent(share: number): string {

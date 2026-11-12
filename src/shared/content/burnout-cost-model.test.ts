@@ -107,16 +107,16 @@ test('display: two significant figures, lakh below a crore, crore above', () => 
   assert.equal(sig2(34.722), 35);
   assert.equal(sig2(21.8595), 22);
   assert.equal(sig2(149.6), 150);
-  assert.equal(formatLakh(34.722), 'Rs 35 lakh');
-  assert.equal(formatLakh(48.33), 'Rs 48 lakh');
-  assert.equal(formatLakh(9.94), 'Rs 9.9 lakh');
-  assert.equal(formatLakh(123.4), 'Rs 1.2 crore');
+  assert.equal(formatLakh(34.722), '₹35 lakh');
+  assert.equal(formatLakh(48.33), '₹48 lakh');
+  assert.equal(formatLakh(9.94), '₹9.9 lakh');
+  assert.equal(formatLakh(123.4), '₹1.2 crore');
   assert.equal(unitFor(99.4), 'lakh');
   assert.equal(unitFor(99.6), 'crore'); // rounds to 100 lakh, so shown as Rs 1 crore
-  assert.equal(formatLakh(99.6), 'Rs 1 crore');
-  assert.equal(formatLakh(22, 'lakh'), 'Rs 22 lakh');
-  assert.equal(formatRupees(46296), 'Rs 46,000');
-  assert.equal(formatRupees(123456), 'Rs 1,20,000');
+  assert.equal(formatLakh(99.6), '₹1 crore');
+  assert.equal(formatLakh(22, 'lakh'), '₹22 lakh');
+  assert.equal(formatRupees(46296), '₹46,000');
+  assert.equal(formatRupees(123456), '₹1,20,000');
 });
 
 test('URL state round-trips and whitelists', () => {
