@@ -144,6 +144,12 @@ rules and the admin flows work. What follows is everything that does not.
 - **Mark as GA key events:** `calc_pilot_click`, `contact_submit_success`. Read conversion by
   device and channel; no target rate until 30 days of baseline.
 
+### P2. Burnout calculator, open after the lead-capture change (2026-11-12)
+
+- GA: mark `contact_submit_success` (source=calculator) as a key event in GA4; `calc_pilot_click` now means "scrolled to the form", not "left for /contact".
+- No-JS and AI crawlers: the site is a client-rendered SPA with no prerender and no noscript block, so a crawler that skips JS sees an empty page. The plan's fallback (static answer block or prerender for this route) is still open.
+- Pilot leads land in the contact inbox (`ikan2_contact_messages`, source "website"), the same table the contact form already used. No notification email exists on this side; someone has to watch that inbox.
+
 ## A. Blocked on you (external — cannot be done from code)
 
 - **`wrappers_fdw_stats` RLS** → Supabase dashboard → Security Advisor → **"Resolve issue"** button.

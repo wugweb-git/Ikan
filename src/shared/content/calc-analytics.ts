@@ -18,6 +18,8 @@ export interface CalcEvents {
   calc_source_click: { source_id: string };
   calc_link_copy: { sector: string };
   calc_pilot_click: { location: 'dock' | 'inline'; sector: string; headcount_band: Band };
+  pilot_form_start: { sector: string };
+  pilot_submit_error: { reason: 'validation' | 'offline' | 'network' | 'server' };
   contact_submit_success: { source: 'calculator' };
 }
 

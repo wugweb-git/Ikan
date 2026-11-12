@@ -9,6 +9,15 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12, burnout calculator: lead capture on the page
+
+- The pilot request is now a form inside the dark band (name, work email, company, optional role and note), posted through the existing contact pipeline (`submitContactMessage`, source "website"). The estimate, sector, team size and any own numbers go into the message. Before, the button sent people to /contact, which opens with the crisis card.
+- States: inline per-field errors (aria-invalid, describedby, focus on the first bad field, announced), sending (disabled, spinner, no double posts), success (focused thank-you, reply time and address), server error and offline (details kept, "Try again", email fallback to support@), honeypot (silent success, nothing sent).
+- Headcount errors now say why: "whole number" vs "between 5 and 1,000". 16px inputs so iOS does not zoom; enterkeyhint, autocomplete and inputmode set.
+- Phone dock is app style: the live figure (tap for the breakdown) and "Request a pilot" (scrolls to the form). Shown whenever the result and the form are both off screen, once the visitor has reached the calculator.
+- Photo fallback when the workplace image fails; pastel hero background; "Link copied" announced.
+- New events: pilot_form_start, pilot_submit_error (reason). contact_submit_success now fires from the page.
+
 ## 2026-11-12, burnout calculator redesign
 
 - /burnout-cost-calculator rebuilt as six bands: hero with picture, calculator (dark result panel), cost drivers as cards plus "if burnout fell", a dark pilot band, method (formula steps, sources on demand), FAQ. Canvas and white bands alternate.

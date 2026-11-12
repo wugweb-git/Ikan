@@ -7311,16 +7311,17 @@ select {
 
 .ikan2-theme .calc-pilot {
   display: grid;
-  gap: 32px;
-  overflow: hidden;
-  padding: 28px 22px 0;
+  gap: 28px;
+  padding: 28px 20px 20px;
   border-radius: var(--radius-4xl);
-  background: var(--foreground);
+  background:
+    radial-gradient(120% 80% at 0% 100%, color-mix(in oklab, var(--brand-teal) 22%, transparent), transparent 60%),
+    var(--foreground);
   color: var(--background);
 }
 
 @media (min-width: 900px) {
-  .ikan2-theme .calc-pilot { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 40px; padding: 48px 0 48px 48px; }
+  .ikan2-theme .calc-pilot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 48px; padding: 48px; }
 }
 
 .ikan2-theme .calc-pilot__title {
@@ -7379,22 +7380,27 @@ select {
 
 .ikan2-theme .calc-pilot__art {
   position: relative;
-  min-height: 300px;
-  align-self: stretch;
+  height: 300px;
+  margin-top: 28px;
+}
+
+.ikan2-theme .calc-pilot__art[data-photo='failed'] {
+  border-radius: var(--radius-3xl);
+  background: color-mix(in oklab, var(--background) 8%, transparent);
 }
 
 .ikan2-theme .calc-pilot__photo {
   position: absolute;
-  inset: 0 0 0 18%;
-  width: 82%;
+  inset: 0 0 0 22%;
+  width: 78%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  border-radius: var(--radius-3xl);
 }
 
-@media (min-width: 900px) {
-  .ikan2-theme .calc-pilot__art { min-height: 420px; margin: -48px 0; }
-  .ikan2-theme .calc-pilot__photo { border-radius: 0; inset: 0 0 0 22%; width: 78%; }
+@media (max-width: 599px) {
+  /* On a phone the form matters more than the picture. */
+  .ikan2-theme .calc-pilot__art { display: none; }
 }
 
 .ikan2-theme .calc-phone {
@@ -7412,9 +7418,7 @@ select {
   transform: rotate(-4deg);
 }
 
-@media (min-width: 900px) {
-  .ikan2-theme .calc-phone { bottom: 24px; left: 0; width: 210px; height: 390px; }
-}
+.ikan2-theme .calc-phone { bottom: -12px; width: 170px; height: 320px; }
 
 .ikan2-theme .calc-phone__notch {
   display: block;
@@ -7520,4 +7524,225 @@ select {
   .ikan2-theme .calc-savings__pct { grid-area: pct; }
   .ikan2-theme .calc-savings__per { grid-area: per; }
   .ikan2-theme .calc-savings__list strong { grid-area: value; white-space: nowrap; }
+}
+
+/* ── Hero background: the app's soft pastel shapes, on tokens ── */
+.ikan2-theme .calc-hero {
+  background:
+    radial-gradient(40% 55% at 92% 8%, color-mix(in oklab, var(--rest-soft) 90%, transparent), transparent 70%),
+    radial-gradient(35% 50% at 4% 96%, color-mix(in oklab, var(--calm-soft) 90%, transparent), transparent 70%),
+    var(--canvas);
+}
+
+/* ── The pilot form (lead capture), a white card on the dark band ── */
+.ikan2-theme .calc-lead {
+  border-radius: var(--radius-3xl);
+  background: var(--card);
+  color: var(--foreground);
+  padding: 22px 18px;
+  box-shadow: var(--shadow-dock);
+}
+
+@media (min-width: 768px) {
+  .ikan2-theme .calc-lead { padding: 28px; }
+}
+
+.ikan2-theme .calc-lead__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 600px) {
+  .ikan2-theme .calc-lead__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ikan2-theme .calc-lead__form > .calc-lead__title,
+  .ikan2-theme .calc-lead__form > .calc-lead__summary,
+  .ikan2-theme .calc-lead__field--wide,
+  .ikan2-theme .calc-lead__alert,
+  .ikan2-theme .calc-lead__submit,
+  .ikan2-theme .calc-lead__privacy { grid-column: 1 / -1; }
+}
+
+.ikan2-theme .calc-lead__title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ikan2-theme .calc-lead__title:focus { outline: none; }
+.ikan2-theme .calc-lead__title:focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; border-radius: 4px; }
+
+.ikan2-theme .calc-lead__summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--calm-soft);
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .calc-lead__summary svg { flex: 0 0 auto; margin-top: 1px; color: var(--brand-teal-ink); }
+
+.ikan2-theme .calc-lead__field { display: grid; gap: 6px; align-content: start; }
+
+.ikan2-theme .calc-lead__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* 16px text so iOS does not zoom the page when a field is focused. */
+.ikan2-theme .calc-lead input,
+.ikan2-theme .calc-lead textarea,
+.ikan2-theme .calc-field .contact-field input {
+  font-size: 16px;
+}
+
+.ikan2-theme .calc-lead input,
+.ikan2-theme .calc-lead textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 22px;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.ikan2-theme .calc-lead textarea { resize: vertical; min-height: 88px; }
+
+.ikan2-theme .calc-lead input:focus-visible,
+.ikan2-theme .calc-lead textarea:focus-visible {
+  outline: none;
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+.ikan2-theme .calc-lead input[aria-invalid='true'] {
+  border-color: var(--brand-coral-ink);
+  background: var(--alert-soft);
+}
+
+.ikan2-theme .calc-lead input:disabled,
+.ikan2-theme .calc-lead textarea:disabled { opacity: 0.6; }
+
+.ikan2-theme .calc-lead__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--brand-coral-ink);
+}
+
+.ikan2-theme .calc-lead__count {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
+.ikan2-theme .calc-optional--dark { background: var(--muted); }
+
+.ikan2-theme .calc-lead__alert {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  background: var(--alert-soft);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--foreground);
+}
+
+.ikan2-theme .calc-lead__alert svg { flex: 0 0 auto; margin-top: 1px; color: var(--brand-coral-ink); }
+.ikan2-theme .calc-lead__alert p + p { margin-top: 4px; }
+.ikan2-theme .calc-lead__alert a,
+.ikan2-theme .calc-lead__privacy a { color: var(--foreground); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.ikan2-theme .calc-lead__submit {
+  width: 100%;
+  justify-content: center;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.ikan2-theme .calc-lead__submit:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.ikan2-theme .calc-lead__submit:disabled { opacity: 0.7; cursor: progress; transform: none; }
+
+.ikan2-theme .calc-lead__privacy svg { display: inline; vertical-align: -2px; margin-right: 4px; }
+
+.ikan2-theme .calc-lead__privacy {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted-foreground);
+}
+
+.ikan2-theme .calc-lead__done {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.ikan2-theme .calc-lead__done-icon { color: var(--brand-teal-ink); }
+.ikan2-theme .calc-lead__text { font-size: 15px; line-height: 23px; color: var(--muted-foreground); }
+.ikan2-theme .calc-lead__text strong { color: var(--foreground); }
+
+/* The honeypot: off screen, not display:none (some bots skip hidden fields). */
+.ikan2-theme .calc-hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.ikan2-theme .calc-spin { animation: calc-spin 0.9s linear infinite; }
+@keyframes calc-spin { to { transform: rotate(360deg); } }
+
+/* ── The phone dock, app style ── */
+.ikan2-theme .calc-dock { gap: 10px; padding-top: 8px; }
+
+.ikan2-theme .calc-dock__figure {
+  display: grid;
+  min-height: 44px;
+  align-content: center;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.ikan2-theme .calc-dock__figure small { display: inline-flex; align-items: center; gap: 2px; font-family: var(--font-sans); }
+.ikan2-theme .calc-dock__figure:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; border-radius: 8px; }
+
+/* Room so the dock never covers the last lines of the page on a phone. */
+@media (max-width: 767px) {
+  .ikan2-theme.calc-page { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ikan2-theme .calc-spin { animation: none; }
+  .ikan2-theme .calc-lead input,
+  .ikan2-theme .calc-lead textarea { transition: none; }
 }

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  ArrowDown, ArrowRight, BadgeIndianRupee, BatteryLow, BookOpen, CalendarDays, Check, ClipboardCheck,
-  Link2, Lock, MessagesSquare, RotateCcw, Sparkles, Thermometer, UserMinus, Users,
+  AlertCircle, ArrowDown, ArrowRight, BadgeIndianRupee, BatteryLow, BookOpen, CalendarDays, Check, CheckCircle2,
+  ChevronUp, ClipboardCheck, Link2, Loader2, Lock, MessagesSquare, RotateCcw, Sparkles, Thermometer,
+  UserMinus, Users,
 } from 'lucide-react';
 import { useSeo } from '../ui/hooks/useSeo';
 import {
@@ -12,9 +13,8 @@ import {
   type CalcState, type Estimate, type Evidence, type SectorId, type StressLevel,
 } from '../../../shared/content/burnout-cost-model';
 import { SOURCES, JUDGEMENTS, EXCLUDED } from '../../../shared/content/burnout-sources';
-import {
-  trackCalc, CALC_STATE_KEY, PILOT_PREFILL_KEY, type PilotPrefill,
-} from '../../../shared/content/calc-analytics';
+import { submitContactMessage, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
+import { trackCalc, CALC_STATE_KEY } from '../../../shared/content/calc-analytics';
 
 /**
  * /burnout-cost-calculator: the public front door for employers.
@@ -52,6 +52,32 @@ const EVIDENCE_MEANING: Record<Evidence, string> = {
 const STRESS_LABEL: Record<StressLevel, string> = { low: 'Low', medium: 'Medium', high: 'High' };
 
 const QUICK_HEADCOUNTS = [25, 50, 100, 250];
+
+/* The pilot form. It posts through the site's existing contact pipeline
+   (submitContactMessage → the contact inbox), so there is no new table or
+   endpoint; what is new is that the request is made here, beside the number,
+   instead of on a contact page that opens with a crisis card. */
+const SUPPORT_EMAIL = 'support@ikanhealth.in';
+const NOTE_MAX = 600;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+type LeadField = 'name' | 'email' | 'company' | 'role' | 'note';
+type Lead = Record<LeadField, string>;
+type LeadStatus = 'idle' | 'sending' | 'sent' | 'error';
+const EMPTY_LEAD: Lead = { name: '', email: '', company: '', role: '', note: '' };
+
+function validateLead(l: Lead): Partial<Record<LeadField, string>> {
+  const e: Partial<Record<LeadField, string>> = {};
+  if (!l.name.trim()) e.name = 'Enter your name.';
+  if (!l.email.trim()) e.email = 'Enter your work email.';
+  else if (!EMAIL_RE.test(l.email.trim())) e.email = 'Enter an email address like name@company.com.';
+  if (!l.company.trim()) e.company = 'Enter your company name.';
+  return e;
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
 
 const REVIEWED = new Date(`${RESEARCH_DATE}T00:00:00`).toLocaleDateString('en-IN', {
   day: 'numeric', month: 'short', year: 'numeric',
@@ -117,11 +143,20 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const [copied, setCopied] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [showDock, setShowDock] = useState(false);
+  const [lead, setLead] = useState<Lead>(EMPTY_LEAD);
+  const [leadErrors, setLeadErrors] = useState<Partial<Record<LeadField, string>>>({});
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>('idle');
+  const [leadError, setLeadError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const formStarted = useRef(false);
+  const leadRefs = useRef<Partial<Record<LeadField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
+  const sentRef = useRef<HTMLHeadingElement>(null);
 
   const started = useRef(false);
   const resultSeen = useRef(false);
   const resultRef = useRef<HTMLElement>(null);
   const pilotRef = useRef<HTMLElement>(null);
+  const calcRef = useRef<HTMLDivElement>(null);
   const ids = useId();
 
   const sector = sectorById(state.sector)!;
@@ -251,13 +286,13 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     if (typeof IntersectionObserver === 'undefined') return;
     let resultVisible = true;
     let pilotVisible = false;
-    let resultAbove = false;
-    const sync = () => setShowDock(!resultVisible && resultAbove && !pilotVisible);
+    let reached = false; // the visitor has scrolled to the calculator at least once
+    const sync = () => setShowDock(reached && !resultVisible && !pilotVisible);
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
         if (e.target === resultRef.current) {
           resultVisible = e.isIntersecting;
-          resultAbove = !e.isIntersecting && e.boundingClientRect.top < 0;
+          if (e.isIntersecting || e.boundingClientRect.top < 0) reached = true;
           if (e.isIntersecting && !resultSeen.current) {
             resultSeen.current = true;
             trackCalc('calc_result_view', {
@@ -268,10 +303,12 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
             });
           }
         }
+        if (e.target === calcRef.current && e.isIntersecting) reached = true;
         if (e.target === pilotRef.current) pilotVisible = e.isIntersecting;
       }
       sync();
     });
+    if (calcRef.current) io.observe(calcRef.current);
     if (resultRef.current) io.observe(resultRef.current);
     if (pilotRef.current) io.observe(pilotRef.current);
     return () => io.disconnect();
@@ -284,34 +321,106 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      setAnnouncement('Link copied. Anyone who opens it sees this estimate.');
     } catch {
       window.prompt('Copy this link', url);
     }
     trackCalc('calc_link_copy', { sector: state.sector });
   };
 
-  const askForPilot = (location: 'dock' | 'inline') => {
-    const est = current ?? shown;
-    const n = current && inputs ? inputs.headcount : shownHeadcount;
+  const scrollToEl = (el: HTMLElement | null, focus?: HTMLElement | null) => {
+    if (!el) return;
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    if (focus) window.setTimeout(() => focus.focus({ preventScroll: true }), prefersReducedMotion() ? 0 : 450);
+  };
+
+  const goToPilot = (location: 'dock' | 'inline') => {
+    trackCalc('calc_pilot_click', { location, sector: state.sector, headcount_band: headcountBand(shownHeadcount) });
+    scrollToEl(pilotRef.current, leadStatus === 'sent' ? sentRef.current : leadRefs.current.name ?? null);
+  };
+
+  const setLeadField = (k: LeadField) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setLead((l) => ({ ...l, [k]: v }));
+    // Clear a field's error as soon as it is fixed, never add one while typing.
+    if (leadErrors[k]) setLeadErrors((errs) => ({ ...errs, [k]: validateLead({ ...lead, [k]: v })[k] }));
+    if (!formStarted.current) {
+      formStarted.current = true;
+      trackCalc('pilot_form_start', { sector: state.sector });
+    }
+  };
+
+  const onLeadBlur = (k: LeadField) => () => {
+    if (!lead[k].trim()) return; // an untouched empty field is not an error until submit
+    setLeadErrors((errs) => ({ ...errs, [k]: validateLead(lead)[k] }));
+  };
+
+  const buildLeadMessage = () => {
+    const est = shown;
+    const n = shownHeadcount;
     const u = unitFor(est.base.total);
     const changed = [
       overridden.ctc && ctcValue !== null ? `average CTC ₹${ctcValue} lakh` : '',
       overridden.attr && attrValue !== null ? `voluntary attrition ${attrValue}%` : '',
       overridden.stress && state.stress ? `stress level ${STRESS_LABEL[state.stress].toLowerCase()}` : '',
     ].filter(Boolean);
-    const prefill: PilotPrefill = {
-      subject: `Pilot enquiry, ${sector.label}, ${n} people`,
-      message:
-        `We used the burnout cost calculator (model ${MODEL_VERSION}).\n\n` +
-        `${sector.label}, ${n} people: about ${formatLakh(est.base.total, u)} a year, ` +
-        `scenario range ₹${formatAmount(est.low.total, u)} to ${formatAmount(est.high.total, u)} ${u}, ` +
-        `${formatPercent(est.base.shareOfPayroll)} of payroll.` +
-        (changed.length ? `\nOur own numbers: ${changed.join(', ')}.` : '') +
-        `\n\nWe would like to talk about a pilot.`,
-    };
-    try { window.sessionStorage.setItem(PILOT_PREFILL_KEY, JSON.stringify(prefill)); } catch { /* the form still works empty */ }
-    trackCalc('calc_pilot_click', { location, sector: state.sector, headcount_band: headcountBand(n) });
-    onNavigate?.('/contact?topic=pilot');
+    const lines = [
+      `Pilot request from the burnout cost calculator (model ${MODEL_VERSION}).`,
+      '',
+      `Company: ${lead.company.trim()}`,
+      lead.role.trim() ? `Role: ${lead.role.trim()}` : '',
+      `Sector: ${sector.label}`,
+      `Team size: ${n.toLocaleString('en-IN')} people`,
+      '',
+      `Estimate: about ${formatLakh(est.base.total, u)} a year, scenario range ₹${formatAmount(est.low.total, u)} to ${formatAmount(est.high.total, u)} ${u}, ${formatPercent(est.base.shareOfPayroll)} of payroll.`,
+      changed.length ? `Their own numbers: ${changed.join(', ')}.` : '',
+      lead.note.trim() ? `Note: ${lead.note.trim()}` : '',
+    ].filter((l, i, arr) => l !== '' || (arr[i - 1] ?? '') !== '');
+    return lines.join('\n').slice(0, CONTACT_LIMITS.message);
+  };
+
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (leadStatus === 'sending') return; // no double posts
+
+    const errs = validateLead(lead);
+    setLeadErrors(errs);
+    const firstBad = (['name', 'email', 'company'] as LeadField[]).find((k) => errs[k]);
+    if (firstBad) {
+      leadRefs.current[firstBad]?.focus();
+      setAnnouncement(`Please check the form. ${Object.values(errs).join(' ')}`);
+      trackCalc('pilot_submit_error', { reason: 'validation' });
+      return;
+    }
+
+    // A bot filled the hidden field: show success, send nothing.
+    if (honeypot) { setLeadStatus('sent'); return; }
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setLeadStatus('error');
+      setLeadError('You seem to be offline. Your details are still here, so try again once you are connected.');
+      trackCalc('pilot_submit_error', { reason: 'offline' });
+      return;
+    }
+
+    setLeadStatus('sending');
+    setLeadError('');
+    const result = await submitContactMessage({
+      name: lead.name.trim().slice(0, CONTACT_LIMITS.name),
+      email: lead.email.trim(),
+      subject: `Pilot enquiry, ${lead.company.trim()}, ${shownHeadcount.toLocaleString('en-IN')} people`.slice(0, CONTACT_LIMITS.subject),
+      message: buildLeadMessage(),
+    });
+
+    if (result.ok) {
+      setLeadStatus('sent');
+      trackCalc('contact_submit_success', { source: 'calculator' });
+      window.setTimeout(() => sentRef.current?.focus(), 50);
+    } else {
+      setLeadStatus('error');
+      setLeadError(result.error || 'Something went wrong on our side. Please try again in a moment.');
+      trackCalc('pilot_submit_error', { reason: result.error?.startsWith('Network') ? 'network' : 'server' });
+    }
   };
 
   const resetOverrides = () => update({ ctc: '', attr: '', stress: '' });
@@ -319,6 +428,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const headcountMsg = !headcountTouched && !empty ? null
     : headcountCheck.ok ? null
     : empty ? 'Enter your headcount to see your estimate.'
+    : headcountCheck.reason === 'not-a-number' ? 'Enter a whole number of people, such as 75.'
     : `Enter a headcount between ${LIMITS.headcount.min} and ${LIMITS.headcount.max.toLocaleString('en-IN')}.`;
   const headcountWarn = headcountCheck.ok && headcountCheck.warning;
 
@@ -372,7 +482,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
           <div className="calc-layout">
             {/* ── Inputs ── */}
-            <div className="calc-inputs">
+            <div className="calc-inputs" ref={calcRef}>
               <fieldset className="calc-fieldset">
                 <legend className="calc-step"><span className="calc-step__num" aria-hidden="true">1</span> Your sector</legend>
                 <div className="calc-chips calc-chips--sectors">
@@ -400,6 +510,9 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                     id={`${ids}-n`}
                     type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    enterKeyHint="done"
+                    maxLength={6}
                     autoComplete="off"
                     value={state.headcount}
                     onChange={(e) => update({ headcount: e.target.value })}
@@ -641,8 +754,8 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
         </div>
       </section>
 
-      {/* ── 4. The ask ── */}
-      <div className="calc-band calc-band--tight">
+      {/* ── 4. The ask: the lead is captured here, beside the number ── */}
+      <div className="calc-band calc-band--tight" id="pilot">
         <div className="info-band__inner">
           <section ref={pilotRef} className="calc-pilot" aria-labelledby={`${ids}-pilot-h`}>
             <div className="calc-pilot__copy">
@@ -650,21 +763,128 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
               <h2 className="calc-pilot__title" id={`${ids}-pilot-h`}>Talk to us about a pilot</h2>
               <p className="calc-pilot__lead">
                 Tell us about your team and we will talk through what a pilot of iKAN would look like. Your estimate
-                goes into the message, and you can edit it before sending.
+                is sent with your request, so you do not have to explain it again.
               </p>
               <ul className="calc-pilot__list">
                 <li><ClipboardCheck aria-hidden="true" size={18} /> Assessments people take privately</li>
                 <li><Sparkles aria-hidden="true" size={18} /> Self-paced programmes and daily habits</li>
                 <li><MessagesSquare aria-hidden="true" size={18} /> Access to qualified professionals</li>
               </ul>
-              <div className="calc-pilot__actions">
-                <button type="button" className="info-button calc-pilot__cta" onClick={() => askForPilot('inline')}>
-                  Talk to us about a pilot <ArrowRight aria-hidden="true" size={16} />
-                </button>
-                <p className="calc-pilot__estimate">Your estimate: about {formatLakh(shown.base.total, unit)} a year</p>
-              </div>
+              <PilotArt />
             </div>
-            <PilotArt />
+
+            <div className="calc-lead">
+              {leadStatus === 'sent' ? (
+                <div className="calc-lead__done" role="status">
+                  <CheckCircle2 aria-hidden="true" size={40} className="calc-lead__done-icon" />
+                  <h3 className="calc-lead__title" ref={sentRef} tabIndex={-1}>
+                    Thanks{lead.name.trim() ? `, ${lead.name.trim().split(/\s+/)[0]}` : ''}. Your request is with us.
+                  </h3>
+                  <p className="calc-lead__text">
+                    We reply within 24 hours{lead.email.trim() ? <>, to <strong>{lead.email.trim()}</strong></> : null}. Your
+                    estimate of about {formatLakh(shown.base.total, unit)} a year went with it.
+                  </p>
+                  <button type="button" className="calc-copy" onClick={copyLink}>
+                    {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy a link to share with your team'}
+                  </button>
+                </div>
+              ) : (
+                <form className="calc-lead__form" onSubmit={submitLead} noValidate aria-describedby={`${ids}-lead-sum`}>
+                  <h3 className="calc-lead__title">Request a pilot call</h3>
+                  <p className="calc-lead__summary" id={`${ids}-lead-sum`}>
+                    <BadgeIndianRupee aria-hidden="true" size={16} />
+                    <span>Sent with your request: {sector.label}, {shownHeadcount.toLocaleString('en-IN')} people, about {formatLakh(shown.base.total, unit)} a year</span>
+                  </p>
+
+                  {(['name', 'email', 'company', 'role'] as const).map((k) => {
+                    const meta = {
+                      name: { label: 'Your name', type: 'text', ac: 'name', req: true, max: CONTACT_LIMITS.name },
+                      email: { label: 'Work email', type: 'email', ac: 'email', req: true, max: 254 },
+                      company: { label: 'Company', type: 'text', ac: 'organization', req: true, max: 120 },
+                      role: { label: 'Your role', type: 'text', ac: 'organization-title', req: false, max: 80 },
+                    }[k];
+                    const err = leadErrors[k];
+                    return (
+                      <div key={k} className="calc-lead__field">
+                        <label className="calc-lead__label" htmlFor={`${ids}-lead-${k}`}>
+                          {meta.label}{meta.req ? null : <span className="calc-optional calc-optional--dark">Optional</span>}
+                        </label>
+                        <input
+                          ref={(el) => { leadRefs.current[k] = el; }}
+                          id={`${ids}-lead-${k}`}
+                          name={k}
+                          type={meta.type}
+                          inputMode={k === 'email' ? 'email' : undefined}
+                          autoComplete={meta.ac}
+                          autoCapitalize={k === 'email' ? 'off' : 'words'}
+                          spellCheck={k === 'email' ? false : undefined}
+                          enterKeyHint="next"
+                          maxLength={meta.max}
+                          required={meta.req}
+                          aria-required={meta.req || undefined}
+                          aria-invalid={err ? true : undefined}
+                          aria-describedby={err ? `${ids}-lead-${k}-err` : undefined}
+                          value={lead[k]}
+                          onChange={setLeadField(k)}
+                          onBlur={onLeadBlur(k)}
+                          disabled={leadStatus === 'sending'}
+                        />
+                        {err ? <p className="calc-lead__error" id={`${ids}-lead-${k}-err`}><AlertCircle aria-hidden="true" size={14} /> {err}</p> : null}
+                      </div>
+                    );
+                  })}
+
+                  <div className="calc-lead__field calc-lead__field--wide">
+                    <label className="calc-lead__label" htmlFor={`${ids}-lead-note`}>
+                      Anything we should know? <span className="calc-optional calc-optional--dark">Optional</span>
+                    </label>
+                    <textarea
+                      ref={(el) => { leadRefs.current.note = el; }}
+                      id={`${ids}-lead-note`}
+                      name="note"
+                      rows={3}
+                      maxLength={NOTE_MAX}
+                      value={lead.note}
+                      onChange={setLeadField('note')}
+                      disabled={leadStatus === 'sending'}
+                      aria-describedby={`${ids}-lead-note-count`}
+                    />
+                    <p className="calc-lead__count" id={`${ids}-lead-note-count`}>{lead.note.length} of {NOTE_MAX} characters</p>
+                  </div>
+
+                  {/* Hidden from people and screen readers; bots fill it in. */}
+                  <div className="calc-hp" aria-hidden="true">
+                    <label htmlFor={`${ids}-lead-website`}>Website</label>
+                    <input id={`${ids}-lead-website`} name="website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
+                  </div>
+
+                  {leadStatus === 'error' ? (
+                    <div className="calc-lead__alert" role="alert">
+                      <AlertCircle aria-hidden="true" size={18} />
+                      <div>
+                        <p>{leadError}</p>
+                        <p>
+                          Or email us at{' '}
+                          <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pilot enquiry')}`}>{SUPPORT_EMAIL}</a>.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <button type="submit" className="info-button calc-pilot__cta calc-lead__submit" disabled={leadStatus === 'sending'} aria-busy={leadStatus === 'sending' || undefined}>
+                    {leadStatus === 'sending'
+                      ? <><Loader2 aria-hidden="true" size={16} className="calc-spin" /> Sending</>
+                      : leadStatus === 'error'
+                        ? <>Try again <ArrowRight aria-hidden="true" size={16} /></>
+                        : <>Request a pilot call <ArrowRight aria-hidden="true" size={16} /></>}
+                  </button>
+                  <p className="calc-lead__privacy">
+                    <Lock aria-hidden="true" size={13} /> We use these details only to reply about a pilot. We reply within 24 hours.{' '}
+                    <a href="/privacy-policy" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('/privacy-policy'); } }}>Privacy policy</a>
+                  </p>
+                </form>
+              )}
+            </div>
           </section>
         </div>
       </div>
@@ -778,11 +998,22 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
         </div>
       </section>
 
-      {/* Phones only (CSS). Never on screen together with the inline pilot button. */}
+      {/* Phones only (CSS). An app-style bar: the live figure (tap to see the
+          breakdown) and the one ask. Hidden while the result or the pilot form
+          is on screen, so the same action is never shown twice. */}
       <div className="calc-dock" data-visible={showDock || undefined} aria-hidden={!showDock}>
-        <p className="calc-dock__figure"><small>Your estimate</small>about {formatLakh(shown.base.total, unit)} a year</p>
-        <button type="button" className="info-button" tabIndex={showDock ? 0 : -1} onClick={() => askForPilot('dock')}>
-          Talk to us about a pilot
+        <button
+          type="button"
+          className="calc-dock__figure"
+          tabIndex={showDock ? 0 : -1}
+          onClick={() => scrollToEl(resultRef.current)}
+          aria-label={`Your estimate, about ${formatLakh(shown.base.total, unit)} a year. Show the breakdown.`}
+        >
+          <small>Your estimate <ChevronUp aria-hidden="true" size={12} /></small>
+          about {formatLakh(shown.base.total, unit)} a year
+        </button>
+        <button type="button" className="info-button" tabIndex={showDock ? 0 : -1} onClick={() => goToPilot('dock')}>
+          Request a pilot
         </button>
       </div>
 
@@ -853,9 +1084,23 @@ const WORKPLACE_PHOTO =
   'https://images.unsplash.com/photo-1758691737182-d42aefd6dee8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900';
 
 function PilotArt() {
+  // If the photo cannot load (offline, blocked CDN), the phone stands alone on
+  // a soft panel instead of beside a broken image.
+  const [photoFailed, setPhotoFailed] = useState(false);
   return (
-    <div className="calc-pilot__art" aria-hidden="true">
-      <img className="calc-pilot__photo" src={WORKPLACE_PHOTO} alt="" loading="lazy" decoding="async" width={900} height={600} />
+    <div className="calc-pilot__art" data-photo={photoFailed ? 'failed' : undefined} aria-hidden="true">
+      {photoFailed ? null : (
+        <img
+          className="calc-pilot__photo"
+          src={WORKPLACE_PHOTO}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={900}
+          height={600}
+          onError={() => setPhotoFailed(true)}
+        />
+      )}
       <div className="calc-phone">
         <span className="calc-phone__notch" />
         <div className="app-screen">
