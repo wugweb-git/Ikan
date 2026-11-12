@@ -9,6 +9,17 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12 — Burnout calculator: motion and touch
+
+App-like feel without a library (globals.css, "MOTION AND TOUCH (v3)"): press
+feedback on every tappable element, the figure slides in when the estimate
+changes, the range strip and split bar glide, hero copy rises in on load,
+sections rise in on scroll and the hero art drifts (native scroll-driven
+animations, compositor only, skipped where unsupported), the dock arrives on
+Material 3's emphasized-decelerate curve, and a short vibration on Android when
+a sector, headcount or stress chip is picked and when a pilot request is sent.
+prefers-reduced-motion turns all of it off.
+
 ## 2026-11-12 — Burnout calculator: its own head tags for crawlers that skip JavaScript
 
 The live page served index.html's homepage title, description, PWA icon and a

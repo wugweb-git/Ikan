@@ -80,6 +80,15 @@ function validateLead(l: Lead): Partial<Record<LeadField, string>> {
   return e;
 }
 
+/** A short tick on Android (and any browser with the Vibration API); a no-op
+    elsewhere and when the visitor asks for reduced motion. */
+function haptic(ms = 8): void {
+  try {
+    if (prefersReducedMotion()) return;
+    (navigator as Navigator & { vibrate?: (p: number) => boolean }).vibrate?.(ms);
+  } catch { /* not supported */ }
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
@@ -352,6 +361,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     });
 
     if (result.ok) {
+      haptic(18);
       setLeadStatus('sent');
       trackCalc('contact_submit_success', { source: 'calculator' });
       window.setTimeout(() => sentRef.current?.focus(), 50);
@@ -432,7 +442,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                         name={`${ids}-sector`}
                         value={s.id}
                         checked={state.sector === s.id}
-                        onChange={() => update({ sector: s.id as SectorId })}
+                        onChange={() => { haptic(); update({ sector: s.id as SectorId }); }}
                       />
                       <span>{s.label}</span>
                     </label>
@@ -473,7 +483,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                       type="button"
                       className="calc-quick"
                       aria-pressed={state.headcount === String(n)}
-                      onClick={() => { setHeadcountTouched(false); update({ headcount: String(n) }); }}
+                      onClick={() => { haptic(); setHeadcountTouched(false); update({ headcount: String(n) }); }}
                     >
                       {n}
                     </button>
@@ -546,7 +556,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                             name={`${ids}-stress`}
                             value={lvl}
                             checked={(state.stress || sector.stress) === lvl}
-                            onChange={() => { update({ stress: lvl }); trackCalc('calc_assumption_change', { field: 'stress' }); }}
+                            onChange={() => { haptic(); update({ stress: lvl }); trackCalc('calc_assumption_change', { field: 'stress' }); }}
                           />
                           <span>{STRESS_LABEL[lvl]}</span>
                         </label>
@@ -592,7 +602,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
                 <p className="calc-figure">
                   <span className="calc-figure__about">about</span>{' '}
-                  <span className="calc-figure__num">{formatLakh(shown.base.total, unit)}</span>
+                  <span className="calc-figure__num" key={formatLakh(shown.base.total, unit)}>{formatLakh(shown.base.total, unit)}</span>
                   {' '}<span className="calc-figure__per">a year</span>
                 </p>
                 <p className="calc-result__caption">
@@ -949,7 +959,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
           aria-label={`Your estimate, about ${formatLakh(shown.base.total, unit)} a year. Show the breakdown.`}
         >
           <small>Your estimate <ChevronUp aria-hidden="true" size={12} /></small>
-          about {formatLakh(shown.base.total, unit)} a year
+          <span className="calc-dock__num" key={formatLakh(shown.base.total, unit)}>about {formatLakh(shown.base.total, unit)} a year</span>
         </button>
         <button type="button" className="info-button" tabIndex={showDock ? 0 : -1} onClick={() => goToPilot('dock')}>
           Request a pilot
