@@ -584,6 +584,7 @@ Site page copy lives in code: pages import `DEFAULT_CMS_CONTENT` from `src/produ
 | Health Connect / Google Fit | `src/product/app/integrations/GoogleFitContext.tsx`, `src/product/app/integrations/google-fit.ts` |
 | Design system tokens | `src/product/site/ui/styles/globals.css` (product) · `src/admin/ui/styles/globals.css` (admin — a fork, may drift) |
 | Edge function entry | `src/supabase/functions/server/index.tsx` |
+| Burnout cost calculator (public, `/burnout-cost-calculator`) | page `src/product/site/pages/BurnoutCostCalculator.tsx`; model + tests `src/shared/content/burnout-cost-model.ts`; sources `burnout-sources.ts`; claims `docs/burnout-calculator-proof-ledger.md` |
 | Brand docs | `docs/BRAND.md` |
 | Build/deploy steps | `docs/BUILD.md` |
 | Architecture deep-dive | `docs/ARCHITECTURE.md` |

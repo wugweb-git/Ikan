@@ -129,6 +129,21 @@ rules and the admin flows work. What follows is everything that does not.
 
 ---
 
+## P. Burnout cost calculator — open, as of 2026-11-12
+
+- **GA and the share-link fragment.** Share links use `#sector=…&n=…`, stripped from the address
+  after load. Check once in production that GA page views do not record the fragment.
+- **Decisions for Vedanshu:** is this the "third surface"; contextual links from burnout articles
+  in Resources; an OG image (currently the site default); keyword-research credits to validate the
+  query hypotheses.
+- **Workbook fixes (the page already applies them):** Sources tab J1/J2/J5 describe old bands; S11
+  "medium share not stated" is wrong; the burnout-share row should read Judgement; data validations
+  lack error messages.
+- **Noticed in passing, not fixed:** `security.tsx` `checkRateLimit` has no callers and expires by
+  `setTimeout`; `/public/partner-application` has no rate limit or honeypot.
+- **Mark as GA key events:** `calc_pilot_click`, `contact_submit_success`. Read conversion by
+  device and channel; no target rate until 30 days of baseline.
+
 ## A. Blocked on you (external — cannot be done from code)
 
 - **`wrappers_fdw_stats` RLS** → Supabase dashboard → Security Advisor → **"Resolve issue"** button.

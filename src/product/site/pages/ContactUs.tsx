@@ -4,6 +4,26 @@ import { DEFAULT_CMS_CONTENT } from '../content/cms-defaults';
 import { submitContactMessage, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
 import { useNotifications } from '../../../shared/state/NotificationContext';
 import { useSeo } from '../ui/hooks/useSeo';
+import { PILOT_PREFILL_KEY, trackCalc, type PilotPrefill } from '../../../shared/content/calc-analytics';
+
+/*
+ * A pilot request from /burnout-cost-calculator arrives as `?topic=pilot`,
+ * with the estimate in sessionStorage rather than the URL: the address is
+ * sent to analytics on every page view, and the estimate should not be.
+ * Both fields stay editable, and are clipped to the inbox's limits.
+ */
+function readPilotPrefill(): PilotPrefill | null {
+  if (typeof window === 'undefined') return null;
+  if (new URLSearchParams(window.location.search).get('topic') !== 'pilot') return null;
+  try {
+    const raw = window.sessionStorage.getItem(PILOT_PREFILL_KEY);
+    const p = raw ? JSON.parse(raw) : null;
+    if (p && typeof p.subject === 'string' && typeof p.message === 'string') {
+      return { subject: p.subject.slice(0, CONTACT_LIMITS.subject), message: p.message.slice(0, CONTACT_LIMITS.message) };
+    }
+  } catch { /* fall through */ }
+  return { subject: 'Pilot enquiry', message: '' };
+}
 
 /**
  * Contact, rebuilt as iKAN 2's `/contact`.
@@ -49,7 +69,8 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
     type: 'website',
   });
 
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const pilot = useMemo(readPilotPrefill, []);
+  const [form, setForm] = useState({ name: '', email: '', subject: pilot?.subject ?? '', message: pilot?.message ?? '' });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -73,6 +94,10 @@ export function ContactUs({ className, onNavigate }: ContactUsProps) {
       const result = await submitContactMessage(form);
       if (result.ok) {
         showToast('success', 'Message Sent', 'We will get back to you soon.');
+        if (pilot) {
+          trackCalc('contact_submit_success', { source: 'calculator' });
+          try { window.sessionStorage.removeItem(PILOT_PREFILL_KEY); } catch { /* fine */ }
+        }
         setSent(true);
         setForm({ name: '', email: '', subject: '', message: '' });
       } else {

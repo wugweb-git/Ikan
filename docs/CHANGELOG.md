@@ -9,6 +9,27 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12 — public burnout cost calculator at /burnout-cost-calculator
+
+A mobile-first employer tool page: pick a sector and headcount, get a yearly burnout cost as a
+low / base / high scenario range in rupees, the split (people leaving, working below par, extra
+sick days), the method, the sources and the claims deliberately excluded. One ask, "Talk to us
+about a pilot", which reuses the contact pipeline: the estimate travels in sessionStorage and
+prefills the contact form; only `?topic=pilot` is in the URL, so nothing reaches GA page views.
+
+- Model v2.1 (`src/shared/content/burnout-cost-model.ts`), corrected from the workbook: presenteeism
+  is 3 / 3.5 / 4 times absenteeism (the workbook's drag term ran at 8.3x); voluntary attrition only;
+  the burnout share of attrition is labelled Judgement. `workbook-drag` mode keeps the spreadsheet
+  as a regression check (14 tests).
+- Built from the site's own parts: info band, info-button, contact fields, FAQ rows, main nav and
+  footer (link appended to Quick Links). New CSS is the `calc-*` block in `globals.css`, tokens only.
+- Head: title, meta, canonical, JSON-LD (WebApplication, WebPage, BreadcrumbList, FAQPage mirroring
+  the visible FAQ). Sitemap entry added.
+- Typed GA events (`src/shared/content/calc-analytics.ts`): sector and a headcount band only.
+- Every claim checked in `docs/burnout-calculator-proof-ledger.md`.
+
+---
+
 ## 2026-10-12 — partner form: one control per kind of question; availability reworked
 
 **Choose-one and choose-any no longer look alike.** iKAN 2's rule, now applied everywhere: pills

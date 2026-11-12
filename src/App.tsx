@@ -125,6 +125,7 @@ const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resource
 const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
 const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
 const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
+const BurnoutCostCalculator = lazy(() => lazyRetry(() => import('./product/site/pages/BurnoutCostCalculator').then(m => ({ default: m.BurnoutCostCalculator })), 'BurnoutCostCalculator'));
 const WorkplacePrivacy = lazy(() => lazyRetry(() => import('./product/site/pages/WorkplacePrivacy').then(m => ({ default: m.WorkplacePrivacy })), 'WorkplacePrivacy'));
 // The invitee's door. Routed here rather than inside OrgPortal: the portal's
 // shell runs hooks before it knows the route, so branching to Join inside it
@@ -177,6 +178,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/consultation', '/join/partner',
   '/resource', '/resource-detail',
   '/workplace-privacy',
+  '/burnout-cost-calculator',
 ]);
 
 // --- Suspense fallback ---
@@ -365,7 +367,8 @@ function AppContent() {
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
         '/org', '/org/insights', '/org/people', '/org/settings', '/org/join',
-        '/workplace-privacy'
+        '/workplace-privacy',
+        '/burnout-cost-calculator'
       ];
       
       if (path.startsWith('/join/partner/')) {
@@ -708,6 +711,8 @@ function AppContent() {
           return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
         case '/contact':
           return withSuspense(<ContactUs onNavigate={handleNavigate} />);
+        case '/burnout-cost-calculator':
+          return withSuspense(<BurnoutCostCalculator onNavigate={handleNavigate} />);
         case '/return-policy':
           return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':

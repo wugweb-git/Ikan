@@ -1,6 +1,6 @@
 import {
   House, Info, Mail, ClipboardCheck, BookOpen, Stethoscope, UserCircle,
-  CircleHelp, Shield, FileText, Ban, RotateCcw,
+  CircleHelp, Shield, FileText, Ban, RotateCcw, Calculator,
 } from 'lucide-react';
 
 /** Icons for the keys used in content/nav.ts. Unknown keys fall back to a page icon. */
@@ -17,6 +17,7 @@ const ICONS = {
   'file-text': FileText,
   ban: Ban,
   'rotate-ccw': RotateCcw,
+  calculator: Calculator,
 } as const;
 
 export function NavIcon({ name, size = 18, style }: { name?: string; size?: number; style?: React.CSSProperties }) {

@@ -46,6 +46,7 @@ const LINKS = {
   assessments: { label: 'Assessments', to: '/assessment', icon: 'clipboard-check', description: 'Clinically validated mental health screenings' },
   equip: { label: 'Equip Programs', to: '/equip', icon: 'book-open', description: 'Self-paced CBT-based wellness programs', badge: 'beta' },
   consultation: { label: 'Consultation', to: '/consultation', icon: 'stethoscope', description: 'Book sessions with licensed professionals', badge: 'coming soon' },
+  costCalculator: { label: 'Burnout cost calculator', to: '/burnout-cost-calculator', icon: 'calculator', description: 'What burnout costs your team each year, in rupees' },
   joinPartner: { label: 'Become a Partner', to: '/join/partner', icon: 'stethoscope', description: 'Apply to join iKAN as a therapist or other practitioner' },
   about: MENU_ABOUT,
   faq: MENU_FAQ,
@@ -81,7 +82,12 @@ export const SUPPORT_NAV: NavLink[] = MENU_SUPPORT;
 export const LEGAL_NAV: NavLink[] = [LINKS.privacy, LINKS.terms, LINKS.returns, LINKS.cancellation];
 
 export const FOOTER_GROUPS: NavGroup[] = [
-  { title: 'Quick Links', links: PRIMARY_NAV },
+  /*
+   * The calculator is footer-only on purpose: the menu is shared data (see
+   * MENU_NAV below) and a tool for employers does not belong in the member
+   * menu. Appended here rather than added to MENU_PRIMARY for that reason.
+   */
+  { title: 'Quick Links', links: [...PRIMARY_NAV, LINKS.costCalculator] },
   { title: 'Support', links: SUPPORT_NAV },
 ];
 
@@ -108,7 +114,7 @@ export const MENU_NAV: NavLink[] = MENU;
 
 export const SITEMAP_SECTIONS: NavGroup[] = [
   { title: 'Main Pages', links: [LINKS.home, LINKS.about, LINKS.contact] },
-  { title: 'Mental Health Services', links: [LINKS.services, LINKS.assessments, LINKS.equip, LINKS.consultation, LINKS.joinPartner] },
+  { title: 'Mental Health Services', links: [LINKS.services, LINKS.assessments, LINKS.equip, LINKS.consultation, LINKS.joinPartner, LINKS.costCalculator] },
   { title: 'Your Account', links: [LINKS.login] },
   { title: 'Legal & Help', links: [LINKS.faq, LINKS.privacy, LINKS.terms, LINKS.cancellation, LINKS.returns] },
 ];
