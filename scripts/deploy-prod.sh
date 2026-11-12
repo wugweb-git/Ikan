@@ -19,7 +19,7 @@ LOCAL_INDEX=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -
 
 echo "→ deploying"
 LOG=$(mktemp /tmp/ikan-vercel-deploy.XXXXXX)
-npx vercel@latest deploy --prod --yes >"$LOG" 2>&1
+npx --yes vercel@latest deploy --prod --yes >"$LOG" 2>&1
 
 # Track THIS deployment by its own URL, not "the newest in the list". The CLI
 # can return while the build is still running, and with more than one session
@@ -33,7 +33,7 @@ echo "  deployment: $DEPLOY_URL"
 
 STATE=""
 for _ in $(seq 1 36); do            # up to 6 minutes
-  STATE=$(npx vercel@latest ls --prod 2>&1 | grep -F "$DEPLOY_URL" | grep -m1 -oE '● (Ready|Error|Building|Canceled|Queued|Initializing)')
+  STATE=$(npx --yes vercel@latest ls --prod 2>&1 | grep -F "$DEPLOY_URL" | grep -m1 -oE '● (Ready|Error|Building|Canceled|Queued|Initializing)')
   case "$STATE" in
     "● Ready") break ;;
     "● Error"|"● Canceled") echo "✗ $DEPLOY_URL ended '$STATE' — see $LOG" >&2; exit 1 ;;
