@@ -18,7 +18,7 @@ npm run build >/dev/null 2>&1 || { echo "✗ local build failed" >&2; exit 1; }
 LOCAL_INDEX=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
 
 echo "→ deploying"
-LOG=$(mktemp /tmp/ikan-vercel-deploy-XXXXXX.log)
+LOG=$(mktemp /tmp/ikan-vercel-deploy.XXXXXX)
 npx vercel@latest deploy --prod --yes >"$LOG" 2>&1
 
 # Track THIS deployment by its own URL, not "the newest in the list". The CLI
