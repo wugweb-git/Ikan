@@ -18,7 +18,7 @@ import {
 } from '../../../shared/content/burnout-calc-seo';
 
 const CALC_JSON_LD = calcJsonLd();
-import { submitContactMessage, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
+import { submitContactMessage, subscribeToNewsletter, CONTACT_LIMITS } from '../../../shared/api/ikan2-forms';
 import { trackCalc, CALC_STATE_KEY } from '../../../shared/content/calc-analytics';
 
 /**
@@ -133,6 +133,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const [leadStatus, setLeadStatus] = useState<LeadStatus>('idle');
   const [leadError, setLeadError] = useState('');
   const [honeypot, setHoneypot] = useState('');
+  const [newsletter, setNewsletter] = useState(false);
   const formStarted = useRef(false);
   const leadRefs = useRef<Partial<Record<LeadField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
   const sentRef = useRef<HTMLHeadingElement>(null);
@@ -361,6 +362,13 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     });
 
     if (result.ok) {
+      // Opt-in only, and never a reason to fail the request: the pilot
+      // message is already in. A repeat address is a 409, which is fine.
+      if (newsletter) {
+        void subscribeToNewsletter(lead.email.trim(), lead.name.trim().slice(0, CONTACT_LIMITS.name))
+          .then((r) => { if (r.ok) trackCalc('newsletter_optin', { source: 'calculator' }); })
+          .catch(() => { /* the pilot request already succeeded */ });
+      }
       haptic(18);
       setLeadStatus('sent');
       trackCalc('contact_submit_success', { source: 'calculator' });
@@ -801,6 +809,16 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                     <p className="calc-lead__count" id={`${ids}-lead-note-count`}>{lead.note.length} of {NOTE_MAX} characters</p>
                   </div>
 
+                  <label className="calc-lead__check calc-lead__field--wide">
+                    <input
+                      type="checkbox"
+                      checked={newsletter}
+                      onChange={(e) => setNewsletter(e.target.checked)}
+                      disabled={leadStatus === 'sending'}
+                    />
+                    <span>Also add me to iKAN’s newsletter.</span>
+                  </label>
+
                   {/* Hidden from people and screen readers; bots fill it in. */}
                   <div className="calc-hp" aria-hidden="true">
                     <label htmlFor={`${ids}-lead-website`}>Website</label>
@@ -828,7 +846,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                         : <>Request a pilot call <ArrowRight aria-hidden="true" size={16} /></>}
                   </button>
                   <p className="calc-lead__privacy">
-                    <Lock aria-hidden="true" size={13} /> We use these details only to reply about a pilot. We reply within 24 hours.{' '}
+                    <Lock aria-hidden="true" size={13} /> We use these details to reply about a pilot{newsletter ? ', and to send the newsletter you asked for' : ''}. We reply within 24 hours.{' '}
                     <a href="/privacy-policy" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('/privacy-policy'); } }}>Privacy policy</a>
                   </p>
                 </form>

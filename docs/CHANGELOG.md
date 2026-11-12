@@ -9,6 +9,15 @@ undated under their original session number.
 
 ---
 
+## 2026-11-12 — Burnout calculator: newsletter opt-in on the pilot form
+
+An unticked "Also add me to iKAN's newsletter" box. When ticked, after the pilot
+request is accepted the address and name also go to ikan2_newsletter_subscribers
+(source "website", same insert-only path as the site's newsletter form; a repeat
+address is a 409 and is fine). It never blocks or fails the pilot request. The
+privacy line names the newsletter only when the box is ticked. GA event
+newsletter_optin {source: calculator}. No schema change.
+
 ## 2026-11-12 — Burnout calculator: motion and touch
 
 App-like feel without a library (globals.css, "MOTION AND TOUCH (v3)"): press

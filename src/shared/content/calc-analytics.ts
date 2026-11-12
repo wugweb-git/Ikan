@@ -21,6 +21,7 @@ export interface CalcEvents {
   pilot_form_start: { sector: string };
   pilot_submit_error: { reason: 'validation' | 'offline' | 'network' | 'server' };
   contact_submit_success: { source: 'calculator' };
+  newsletter_optin: { source: 'calculator' };
 }
 
 export function trackCalc<K extends keyof CalcEvents>(event: K, params: CalcEvents[K]): void {

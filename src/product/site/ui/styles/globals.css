@@ -7702,6 +7702,29 @@ select {
 .ikan2-theme .calc-lead__text { font-size: 15px; line-height: 23px; color: var(--muted-foreground); }
 .ikan2-theme .calc-lead__text strong { color: var(--foreground); }
 
+/* Newsletter opt-in: unticked by default, so a tick is real consent. */
+.ikan2-theme .calc-lead__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.ikan2-theme .calc-lead__check input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--foreground);
+  cursor: pointer;
+}
+
+.ikan2-theme .calc-lead__check input:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+
 /* The honeypot: off screen, not display:none (some bots skip hidden fields). */
 .ikan2-theme .calc-hp {
   position: absolute;
