@@ -57,7 +57,7 @@ export const CALC_FAQ: readonly { q: string; a: string }[] = [
   },
   {
     q: 'How is it calculated?',
-    a: 'Three costs are added up. People who leave because of burnout, times what it costs to replace them. Extra sick days taken by people in burnout. And presenteeism, people at work but working below their usual level, estimated at 3 to 4 times the sick-day cost, the method Deloitte India used.',
+    a: 'Three costs are added up. People who leave because of burnout, times what it costs to replace them. Extra sick days taken by people in burnout. And presenteeism, people at work but working below their usual level, estimated as 4 to 8% of their pay for each person in burnout who stays.',
   },
   {
     q: 'Is this an audit of my company?',

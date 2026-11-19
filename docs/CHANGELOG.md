@@ -9,6 +9,16 @@ undated under their original session number.
 
 ---
 
+## 2026-11-19 — Burnout calculator: the workbook's formula, and direct contact lines
+
+- **Model = the sales workbook (v2.1), by decision.** Presenteeism is now (people in burnout who
+  stay) × 4/6/8% of pay, and attrition is total attrition ("Other" 18%). The page, the workbook and
+  Kartik's report backend now give the same figures: SaaS at 75 is about ₹40 lakh a year (4.5% of
+  payroll), range ₹20-70 lakh. The Deloitte-style multiplier stays in the code as a tested
+  alternative, not shown. Method copy, FAQ, judgements and the attrition label updated to match.
+- **Contact.** WhatsApp and phone lines in the pilot block and the downloaded report, with a
+  `calc_contact_click` event (channel only).
+
 ## 2026-11-19 — Burnout calculator: the result as a report, model v2.2
 
 - **Result as a report.** The result follows the sales team's report template: headline, three

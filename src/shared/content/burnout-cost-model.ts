@@ -4,25 +4,18 @@
  * Pure and import-free so it runs under `node --test` and in the browser alike.
  *
  * Source: `India Burnout Cost.xlsx`, the sales team's workbook (updated 13 Nov
- * 2026, which it also calls v2.1). `presenteeism: 'workbook-drag'` reproduces
- * it exactly and exists so the tests keep it as a regression anchor.
+ * 2026, v2.1), and its server twin in Kartik's report backend (`app/model.py`).
+ * The page uses the workbook's formula as it stands, by decision on 19 Nov
+ * 2026, so the page and the emailed PDF give the same figures:
+ *   - attrition is the sector's annual attrition, voluntary and involuntary
+ *     ("Other" 18%, Aon's overall rate)
+ *   - presenteeism = (people in burnout - burnout leavers) x productivity drag
+ *     4 / 6 / 8% x CTC
+ *   - prevalence factor 0.75 / 1 / 1.25, replacement scalar 0.6 / 1 / 1.5
  *
- * v2.2 takes the updated workbook's bands, which its Assumptions tab sources
- * and which outside evidence supports (research notes, 19 Nov 2026):
- *   - prevalence factor 0.75 / 1 / 1.25 (was 0.9 / 1 / 1.1)
- *   - replacement-cost scalar 0.6 / 1 / 1.5 (was 0.8 / 1 / 1.25)
- *   - productivity drag 4 / 6 / 8% (workbook-drag mode only; was 6 / 8 / 10%)
- * The base case is unchanged; only the low and high scenarios widen.
- *
- * Two workbook choices are NOT taken, and are the ones to revisit together:
- *
- * 1. Presenteeism. The workbook's drag still lands at 6.2x absenteeism, and its
- *    own cross-check calls anything well above 3-4x aggressive. Every Deloitte
- *    UK and India report sits at 2-4.5x. The page keeps Deloitte India's method:
- *    presenteeism = absenteeism x 3.0 / 3.5 / 4.0.
- * 2. Attrition is VOLUNTARY attrition. Burnout exits are resignations, and the
- *    surveys behind the 20-30% share count people who chose to leave. "Other"
- *    stays at ~14% (Aon's total 18% less ~4% involuntary, from EY via S4/S5).
+ * The drag works out to about 6.2x absenteeism; Deloitte's India and UK
+ * reports sit at 2-4.5x. `presenteeism: 'multiplier'` (absenteeism x 3 / 3.5 /
+ * 4) is kept as the alternative, tested but not shown.
  *
  * "Low / High" is a scenario range — every assumption low or high together —
  * not a confidence interval. The UI must never call it one. No ROI multiple
@@ -30,7 +23,7 @@
  * 3-8% has no published benchmark; it says so itself).
  */
 
-export const MODEL_VERSION = 'v2.2';
+export const MODEL_VERSION = 'v2.1';
 export const RESEARCH_DATE = '2026-10-28';
 
 /** Working days a year: 260 weekdays less 10-15 public holidays (S24). */
@@ -56,7 +49,7 @@ export const STRESS_PREVALENCE: Record<StressLevel, number> = {
 };
 
 interface ScenarioParams {
-  /** Share of voluntary leavers whose exit is burnout-related. Judgement. */
+  /** Share of leavers whose exit is burnout-related. Judgement. */
   burnoutShareOfAttrition: number;
   /** Uncertainty multiplier on replacement cost. Judgement. */
   replacementScalar: number;
@@ -64,9 +57,9 @@ interface ScenarioParams {
   prevalenceFactor: number;
   /** Extra sick days a year per person in burnout. Judgement, bounded by 6-12 statutory days (S23). */
   extraSickDays: number;
-  /** Workbook only: productivity drag as a share of CTC. */
+  /** Productivity drag as a share of CTC, for each person in burnout who stays (workbook). */
   productivityDrag: number;
-  /** v2.1+: presenteeism as a multiple of absenteeism (Deloitte India, S9). */
+  /** Alternative method only: presenteeism as a multiple of absenteeism (Deloitte India, S9). */
   presenteeismMultiple: number;
 }
 
@@ -85,14 +78,12 @@ export interface Sector {
   label: string;
   /** Average CTC, Rs lakh a year. */
   ctcLakh: number;
-  /** Annual voluntary attrition, 0-1. */
+  /** Annual attrition, 0-1, as the workbook sets it. */
   attrition: number;
   stress: StressLevel;
   /** Replacement cost as a share of CTC, kept at or below published ranges (S15). */
   replacement: number;
   evidence: { ctc: Evidence; attrition: Evidence; stress: Evidence };
-  /** Workbook value where v2.1 differs, for the parity test. */
-  workbookAttrition?: number;
 }
 
 export const SECTORS: readonly Sector[] = [
@@ -103,7 +94,7 @@ export const SECTORS: readonly Sector[] = [
   { id: 'agency', label: 'Agency / creative', ctcLakh: 7, attrition: 0.33, stress: 'high', replacement: 0.4, evidence: { ctc: 'judgement', attrition: 'judgement', stress: 'judgement' } },
   { id: 'it-services', label: 'IT services', ctcLakh: 7, attrition: 0.16, stress: 'medium', replacement: 0.5, evidence: { ctc: 'judgement', attrition: 'derived', stress: 'judgement' } },
   { id: 'bpm', label: 'BPM / customer support', ctcLakh: 4, attrition: 0.32, stress: 'high', replacement: 0.4, evidence: { ctc: 'derived', attrition: 'sourced', stress: 'judgement' } },
-  { id: 'other', label: 'Other', ctcLakh: 9, attrition: 0.14, stress: 'medium', replacement: 0.5, evidence: { ctc: 'judgement', attrition: 'derived', stress: 'judgement' }, workbookAttrition: 0.18 },
+  { id: 'other', label: 'Other', ctcLakh: 9, attrition: 0.18, stress: 'medium', replacement: 0.5, evidence: { ctc: 'judgement', attrition: 'sourced', stress: 'judgement' } },
 ];
 
 export const DEFAULT_SECTOR: SectorId = 'saas';
@@ -173,7 +164,7 @@ export type PresenteeismMethod = 'workbook-drag' | 'multiplier';
 export function computeScenario(
   inp: Inputs,
   scenario: Scenario,
-  method: PresenteeismMethod = 'multiplier',
+  method: PresenteeismMethod = 'workbook-drag',
 ): Breakdown {
   const p = SCENARIO_PARAMS[scenario];
   const leavers = inp.headcount * inp.attrition * p.burnoutShareOfAttrition;
@@ -199,7 +190,7 @@ export function computeScenario(
 
 export type Estimate = Record<Scenario, Breakdown>;
 
-export function estimate(inp: Inputs, method: PresenteeismMethod = 'multiplier'): Estimate {
+export function estimate(inp: Inputs, method: PresenteeismMethod = 'workbook-drag'): Estimate {
   return {
     low: computeScenario(inp, 'low', method),
     base: computeScenario(inp, 'base', method),

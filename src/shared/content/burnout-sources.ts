@@ -34,7 +34,7 @@ export interface Source {
 
 export const SOURCES: readonly Source[] = [
   {
-    id: 'S9', usedFor: 'Prevalence at high stress, the presenteeism multiple, the cross-check',
+    id: 'S9', usedFor: 'Prevalence at high stress, the cross-check',
     finding: 'Survey of 3,995 corporate employees. More than half of those with a symptom reported burnout. Poor mental health was estimated to cost Indian employers about ₹1.1 lakh crore a year, with presenteeism assumed at 3 to 4 times absenteeism.',
     title: 'Mental health and well-being in the workplace', publisher: 'Deloitte India', date: 'Sep 2022', tier: 'A',
     url: 'https://www.deloitte.com/content/dam/assets-shared/legacy/docs/perspectives/2022/gx-mental-health-2022-report-noexp.pdf',
@@ -100,9 +100,9 @@ export const SOURCES: readonly Source[] = [
 
 /** Inputs with no source, and what bounds each. */
 export const JUDGEMENTS: readonly { item: string; bound: string }[] = [
-  { item: 'Share of voluntary exits that are burnout-related: 20 / 25 / 30%', bound: 'No study gives a share of all exits. Deloitte and Indeed report shares of respondents only.' },
+  { item: 'Share of exits that are burnout-related: 20 / 25 / 30%', bound: 'No study gives a share of all exits. Deloitte and Indeed report shares of respondents only.' },
   { item: 'Extra sick days for a person in burnout: 1.5 / 2 / 2.5 a year', bound: 'No India figure exists. Kept well under the 6 to 12 sick days most private employers give (S23).' },
-  { item: 'Presenteeism at 3 / 3.5 / 4 times absenteeism', bound: "Inside the 3 to 4 times range Deloitte India assumed (S9). No India measurement exists." },
+  { item: 'Output lost while working in burnout: 4 / 6 / 8% of pay', bound: 'No India measurement exists. At the base this is about 6 times the sick-day cost; Deloitte India assumed 3 to 4 times (S9).' },
   { item: 'Low and high widen burnout prevalence by a quarter (0.75 / 1 / 1.25)', bound: 'Published burnout shares vary widely with the definition used and the year surveyed. This covers that spread around the base.' },
   { item: 'Low and high scale the cost of replacing a leaver by 0.6 / 1 / 1.5', bound: 'Published replacement costs vary widely by role (S15). This keeps the range at 24 to 90% of a year\'s CTC.' },
   { item: 'Average pay, and the default stress level, for each sector', bound: 'No published blended average exists for 20 to 150 person startups. Change them to your own.' },

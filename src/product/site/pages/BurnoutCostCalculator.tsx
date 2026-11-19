@@ -77,11 +77,11 @@ const PROVENANCE_LABEL: Record<Provenance, string> = {
 /* The method, in one place for the page and the downloaded report. */
 const FORMULA = [
   { key: 'turnover', title: 'People leaving',
-    text: 'Headcount × voluntary attrition × the burnout share of exits (20, 25 or 30%) × average pay × the cost of replacing someone.' },
+    text: 'Headcount × attrition × the burnout share of exits (20, 25 or 30%) × average pay × the cost of replacing someone.' },
   { key: 'absenteeism', title: 'Extra sick days',
     text: `The share of people in burnout (13% at low stress to 45% at high) × 1.5 to 2.5 extra sick days × a day's pay over ${WORKING_DAYS} working days.` },
   { key: 'presenteeism', title: 'Working below par',
-    text: '3, 3.5 or 4 times the sick-day cost, inside the 3 to 4 times range Deloitte India assumed.' },
+    text: 'People in burnout who stay × 4, 6 or 8% of average pay, the output lost while working below their usual level.' },
 ] as const;
 
 const SCOPE_NOTE = 'Covers burnout-related attrition, absenteeism and presenteeism. Not all mental health costs, and no direct medical costs.';
@@ -381,7 +381,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
     const u = unitFor(est.base.total);
     const changed = [
       overridden.ctc && ctcValue !== null ? `average CTC ₹${ctcValue} lakh` : '',
-      overridden.attr && attrValue !== null ? `voluntary attrition ${attrValue}%` : '',
+      overridden.attr && attrValue !== null ? `attrition ${attrValue}%` : '',
       overridden.stress && state.stress ? `stress level ${STRESS_LABEL[state.stress].toLowerCase()}` : '',
     ].filter(Boolean);
     const lines = [
@@ -482,7 +482,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const drivers: { label: string; value: string; from: Provenance }[] = [
     { label: 'Team size', value: `${peopleLabel} people`, from: isDefault ? 'example' : 'entered' },
     { label: 'Average yearly CTC', value: `₹${fmtOne(shownInputs.ctcLakh)} lakh`, from: own.ctc ? 'own' : 'sector' },
-    { label: 'Voluntary attrition', value: `${fmtOne(shownInputs.attrition * 100)}% a year`, from: own.attr ? 'own' : 'sector' },
+    { label: 'Attrition', value: `${fmtOne(shownInputs.attrition * 100)}% a year`, from: own.attr ? 'own' : 'sector' },
     { label: 'Work intensity', value: `${STRESS_LABEL[shownInputs.stress]}, ${Math.round(STRESS_PREVALENCE[shownInputs.stress] * 100)}% of people in burnout`, from: own.stress ? 'own' : 'sector' },
     { label: 'Cost of replacing a leaver', value: `${Math.round(shownInputs.replacement * 100)}% of a year's CTC`, from: 'sector' },
     { label: 'Leavers linked to burnout', value: `${fmtOne(burnoutLeavers)} a year`, from: 'modelled' },
@@ -763,7 +763,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
                   <div className="calc-field">
                     <div className="calc-label-row">
-                      <label className="calc-label" htmlFor={`${ids}-attr`}>Voluntary attrition (% a year)</label>
+                      <label className="calc-label" htmlFor={`${ids}-attr`}>Attrition (% a year)</label>
                       <EvidenceBadge evidence={sector.evidence.attrition} own={overridden.attr} />
                     </div>
                     <div className="contact-field">

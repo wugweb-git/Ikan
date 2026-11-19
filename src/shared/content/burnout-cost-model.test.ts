@@ -3,9 +3,9 @@
  *
  * Two anchors. The WORKBOOK figures come from `India Burnout Cost.xlsx`
  * (updated 13 Nov 2026, Calculator and Sector Comparison tabs) and pin
- * `workbook-drag` mode to it, so the spreadsheet stays a regression check. The
- * v2.2 figures are recomputed by hand below, independently of the engine, from
- * the formulas written out in each test.
+ * the default (`workbook-drag`) to it, so the page matches the spreadsheet and
+ * Kartik's backend. The base case is also recomputed by hand below. The
+ * `multiplier` alternative keeps its own hand-checked tests.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,7 +21,7 @@ const close = (a: number, b: number, tol = 1e-6) =>
 const saas75 = sectorInputs(sectorById('saas')!, 75);
 
 test('workbook parity: SaaS at 75 reproduces 19.638 / 40.221 / 70.416 lakh', () => {
-  const e = estimate(saas75, 'workbook-drag');
+  const e = estimate(saas75);
   close(e.low.total, 19.638);
   close(e.base.total, 40.221);
   close(e.high.total, 70.416);
@@ -33,20 +33,30 @@ test('workbook parity: every sector base total at 75', () => {
     agency: 30.79125, 'it-services': 19.236, bpm: 17.34, other: 26.217,
   };
   for (const s of SECTORS) {
-    const inp = { ...sectorInputs(s, 75), attrition: s.workbookAttrition ?? s.attrition };
-    close(computeScenario(inp, 'base', 'workbook-drag').total, expected[s.id]);
+    close(computeScenario(sectorInputs(s, 75), 'base').total, expected[s.id]);
   }
 });
 
-test('workbook presenteeism runs at ~6.2x absenteeism, which the page does not adopt', () => {
-  const b = computeScenario(saas75, 'base', 'workbook-drag');
+test('workbook presenteeism runs at ~6.2x absenteeism', () => {
+  const b = computeScenario(saas75, 'base');
   close(b.presenteeism / b.absenteeism, 6.2277, 1e-3);
 });
 
-test('v2.2 SaaS at 75, recomputed by hand', () => {
+test('default SaaS at 75, recomputed by hand', () => {
+  // leavers 75 x .19 x .25 = 3.5625; turnover x 12 x .6 = 25.65
+  // affected 75 x .28 = 21; absenteeism 21 x 2 x 12 / 250 = 2.016
+  // presenteeism (21 - 3.5625) x .06 x 12 = 12.555
+  const d = computeScenario(saas75, 'base');
+  close(d.turnover, 25.65);
+  close(d.absenteeism, 2.016);
+  close(d.presenteeism, 12.555);
+  close(d.total, 40.221);
+});
+
+test('multiplier alternative: SaaS at 75, recomputed by hand', () => {
   // leavers 75 x .19 x .25 = 3.5625; turnover x 12 x .6 = 25.65
   // affected 75 x .28 = 21; absenteeism 21 x 2 x 12 / 250 = 2.016; presenteeism x 3.5 = 7.056
-  const b = computeScenario(saas75, 'base');
+  const b = computeScenario(saas75, 'base', 'multiplier');
   close(b.turnover, 25.65);
   close(b.absenteeism, 2.016);
   close(b.presenteeism, 7.056);
@@ -55,8 +65,8 @@ test('v2.2 SaaS at 75, recomputed by hand', () => {
   close(b.perEmployee, 46296, 1);
 });
 
-test('v2.2 SaaS low and high: 1.87% and 6.88% of payroll', () => {
-  const e = estimate(saas75);
+test('multiplier alternative: SaaS low and high, 1.87% and 6.88% of payroll', () => {
+  const e = estimate(saas75, 'multiplier');
   // low: turnover 75x.19x.2x12x.6x.6 = 12.312; abs 21x.75x1.5x12/250 = 1.134; x(1+3)
   close(e.low.total, 12.312 + 1.134 * 4);
   // high: turnover 75x.19x.3x12x.6x1.5 = 46.17; abs 21x1.25x2.5x12/250 = 3.15; x(1+4)
@@ -65,12 +75,12 @@ test('v2.2 SaaS low and high: 1.87% and 6.88% of payroll', () => {
   assert.equal(formatPercent(e.high.shareOfPayroll), '6.9%');
 });
 
-test('v2.2 sector base totals at 75', () => {
+test('multiplier alternative: sector base totals at 75', () => {
   const expected: Record<string, number> = {
     saas: 34.722, fintech: 48.33, d2c: 26.298, edtech: 33.716,
-    agency: 25.83, 'it-services': 15.792, bpm: 14.46, other: 18.6165,
+    agency: 25.83, 'it-services': 15.792, bpm: 14.46, other: 21.9915,
   };
-  for (const s of SECTORS) close(computeScenario(sectorInputs(s, 75), 'base').total, expected[s.id], 1e-3);
+  for (const s of SECTORS) close(computeScenario(sectorInputs(s, 75), 'base', 'multiplier').total, expected[s.id], 1e-3);
 });
 
 test('high-stress prevalence is Deloitte arithmetic rounded as the workbook does', () => {
