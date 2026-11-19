@@ -82,7 +82,15 @@ BEFORE=$(smoke)
 echo "  smoke before: $BEFORE"
 
 echo "→ deploying"
-( cd "$STAGE" && npx supabase@latest functions deploy "$FN" --project-ref "$PROJECT_REF" --use-api 2>&1 | tail -1 )
+# --yes: running this script is the confirmation. Newer CLIs refuse a hosted deploy without it
+# when they detect a non-interactive (agent) run, print an error and change nothing.
+DEPLOY_OUT=$( cd "$STAGE" && npx --yes supabase@latest functions deploy "$FN" --project-ref "$PROJECT_REF" --use-api --yes 2>&1 )
+DEPLOY_RC=$?
+echo "$DEPLOY_OUT" | tail -1
+if [ $DEPLOY_RC -ne 0 ] || echo "$DEPLOY_OUT" | grep -q '"_tag":"Error"'; then
+  echo "✗ the CLI did not deploy (exit $DEPLOY_RC). Nothing to roll back." >&2
+  exit 1
+fi
 
 AFTER=$(smoke)
 echo "  smoke after : $AFTER"
