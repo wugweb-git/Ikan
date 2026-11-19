@@ -20,6 +20,7 @@ export interface CalcEvents {
   calc_report_download: { sector: string };
   calc_report_email: { sector: string };
   calc_report_share: { sector: string };
+  calc_contact_click: { channel: 'whatsapp' | 'phone' | 'email' };
   calc_pilot_click: { location: 'dock' | 'inline'; sector: string; headcount_band: Band };
   pilot_form_start: { sector: string };
   pilot_submit_error: { reason: 'validation' | 'offline' | 'network' | 'server' };

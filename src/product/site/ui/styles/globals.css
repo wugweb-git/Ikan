@@ -8121,3 +8121,37 @@ select {
 
   .calc-print__foot { margin-top: 14pt; padding-top: 8pt; border-top: 1px solid var(--border); font-size: 8.5pt; color: var(--muted-foreground); }
 }
+
+/* Burnout calculator: direct contact lines in the pilot block. */
+.ikan2-theme .calc-pilot__contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ikan2-theme .calc-pilot__contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ikan2-theme .calc-pilot__contact a:hover { border-color: var(--brand-teal); }
+.ikan2-theme .calc-pilot__contact a:focus-visible { outline: 2px solid var(--brand-teal); outline-offset: 2px; }
+.ikan2-theme .calc-pilot__contact svg { flex: 0 0 auto; color: var(--brand-teal); }
+
+@media (max-width: 559px) {
+  .ikan2-theme .calc-pilot__contact { display: grid; }
+  .ikan2-theme .calc-pilot__contact a { width: 100%; }
+}

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { createPortal } from 'react-dom';
 import {
   AlertCircle, ArrowDown, ArrowRight, BadgeIndianRupee, BatteryLow, BookOpen, CalendarDays, Check, CheckCircle2,
-  ChevronUp, ClipboardCheck, Download, Link2, Loader2, Lock, Mail, MessagesSquare, RotateCcw, Share2, Sparkles,
+  ChevronUp, ClipboardCheck, Download, Link2, Loader2, Lock, Mail, MessageCircle, MessagesSquare, Phone, RotateCcw, Share2, Sparkles,
   Thermometer, UserMinus, Users,
 } from 'lucide-react';
 import { useSeo } from '../ui/hooks/useSeo';
@@ -105,6 +105,9 @@ const fmtOne = (n: number) => n.toLocaleString('en-IN', { maximumFractionDigits:
    endpoint; what is new is that the request is made here, beside the number,
    instead of on a contact page that opens with a crisis card. */
 const SUPPORT_EMAIL = 'support@ikanhealth.in';
+/* Direct lines for a pilot conversation, from Kartik's landing page. */
+const WHATSAPP = { label: '+91 98998 43330', href: 'https://wa.me/919899843330' };
+const PHONE = { label: '+91 85275 45503', href: 'tel:+918527545503' };
 const NOTE_MAX = 600;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -616,8 +619,8 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
       <section className="calc-print__cta">
         <h2>See it with your real numbers</h2>
         <p>
-          Request a pilot call at ikanhealth.in/burnout-cost-calculator#pilot, or write to {SUPPORT_EMAIL}. We reply
-          within 24 hours.
+          Request a pilot call at ikanhealth.in/burnout-cost-calculator#pilot, write to {SUPPORT_EMAIL}, WhatsApp{' '}
+          {WHATSAPP.label} or call {PHONE.label}. We reply within 24 hours.
         </p>
       </section>
 
@@ -993,6 +996,23 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                 <li><ClipboardCheck aria-hidden="true" size={18} /> Assessments people take privately</li>
                 <li><Sparkles aria-hidden="true" size={18} /> Self-paced programmes and daily habits</li>
                 <li><MessagesSquare aria-hidden="true" size={18} /> Access to qualified professionals</li>
+              </ul>
+              <ul className="calc-pilot__contact" aria-label="Talk to us directly">
+                <li>
+                  <a href={WHATSAPP.href} target="_blank" rel="noopener noreferrer" onClick={() => trackCalc('calc_contact_click', { channel: 'whatsapp' })}>
+                    <MessageCircle aria-hidden="true" size={18} /> WhatsApp {WHATSAPP.label}
+                  </a>
+                </li>
+                <li>
+                  <a href={PHONE.href} onClick={() => trackCalc('calc_contact_click', { channel: 'phone' })}>
+                    <Phone aria-hidden="true" size={18} /> Call {PHONE.label}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Pilot enquiry')}`} onClick={() => trackCalc('calc_contact_click', { channel: 'email' })}>
+                    <Mail aria-hidden="true" size={18} /> {SUPPORT_EMAIL}
+                  </a>
+                </li>
               </ul>
               <PilotArt />
             </div>
