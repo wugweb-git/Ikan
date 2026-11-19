@@ -9,6 +9,19 @@ undated under their original session number.
 
 ---
 
+## 2026-11-19 — Partner applications also land in `ikan2_partner_applications`
+
+- **New table, in ikan2's family.** `ikan2_partner_applications` (created on the live project,
+  migration in wugweb-git/ikan2 `supabase/migrations/20261119120000_partner_applications.sql`) sits
+  next to `ikan2_contact_messages` and `ikan2_newsletter_subscribers`. RLS on, no policies: rows
+  hold verification details, so only the service role reads them. The two applications already in
+  KV (both 12 Oct) were copied in.
+- **The edge function writes it.** `/public/partner-application` writes one row per application
+  after the KV records; approve and reject set `status` and `reviewed_at`. KV stays the working copy
+  for review and approval. A failed table write is logged and never fails the submission.
+- **CI re-enabled.** The CI workflow had been disabled manually since 12 Oct, which left every
+  later commit undeployable through the guarded scripts.
+
 ## 2026-11-19 — Burnout calculator: the workbook's formula, and direct contact lines
 
 - **Model = the sales workbook (v2.1), by decision.** Presenteeism is now (people in burnout who
