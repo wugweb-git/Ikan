@@ -1,10 +1,11 @@
 /**
  * Run with:  npm test
  *
- * Two anchors. The WORKBOOK figures come from India_Burnout_Cost_Model_v2.xlsx
- * and pin `workbook-drag` mode to it, so the spreadsheet stays a regression
- * check. The v2.1 figures are recomputed by hand below, independently of the
- * engine, from the formulas written out in each test.
+ * Two anchors. The WORKBOOK figures come from `India Burnout Cost.xlsx`
+ * (updated 13 Nov 2026, Calculator and Sector Comparison tabs) and pin
+ * `workbook-drag` mode to it, so the spreadsheet stays a regression check. The
+ * v2.2 figures are recomputed by hand below, independently of the engine, from
+ * the formulas written out in each test.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,17 +20,17 @@ const close = (a: number, b: number, tol = 1e-6) =>
 
 const saas75 = sectorInputs(sectorById('saas')!, 75);
 
-test('workbook parity: SaaS at 75 reproduces 29.3328 / 44.406 / 63.837 lakh', () => {
+test('workbook parity: SaaS at 75 reproduces 19.638 / 40.221 / 70.416 lakh', () => {
   const e = estimate(saas75, 'workbook-drag');
-  close(e.low.total, 29.3328);
-  close(e.base.total, 44.406);
-  close(e.high.total, 63.837);
+  close(e.low.total, 19.638);
+  close(e.base.total, 40.221);
+  close(e.high.total, 70.416);
 });
 
 test('workbook parity: every sector base total at 75', () => {
   const expected: Record<string, number> = {
-    saas: 44.406, fintech: 64.89, d2c: 31.434, edtech: 45.46125,
-    agency: 34.65, 'it-services': 21.756, bpm: 19.56, other: 29.3895,
+    saas: 40.221, fintech: 57.915, d2c: 28.974, edtech: 40.39875,
+    agency: 30.79125, 'it-services': 19.236, bpm: 17.34, other: 26.217,
   };
   for (const s of SECTORS) {
     const inp = { ...sectorInputs(s, 75), attrition: s.workbookAttrition ?? s.attrition };
@@ -37,12 +38,12 @@ test('workbook parity: every sector base total at 75', () => {
   }
 });
 
-test('workbook presenteeism runs at ~8.3x absenteeism, the figure v2.1 corrects', () => {
+test('workbook presenteeism runs at ~6.2x absenteeism, which the page does not adopt', () => {
   const b = computeScenario(saas75, 'base', 'workbook-drag');
-  close(b.presenteeism / b.absenteeism, 8.3036, 1e-3);
+  close(b.presenteeism / b.absenteeism, 6.2277, 1e-3);
 });
 
-test('v2.1 SaaS at 75, recomputed by hand', () => {
+test('v2.2 SaaS at 75, recomputed by hand', () => {
   // leavers 75 x .19 x .25 = 3.5625; turnover x 12 x .6 = 25.65
   // affected 75 x .28 = 21; absenteeism 21 x 2 x 12 / 250 = 2.016; presenteeism x 3.5 = 7.056
   const b = computeScenario(saas75, 'base');
@@ -54,17 +55,17 @@ test('v2.1 SaaS at 75, recomputed by hand', () => {
   close(b.perEmployee, 46296, 1);
 });
 
-test('v2.1 SaaS low and high: 2.43% and 5.82% of payroll', () => {
+test('v2.2 SaaS low and high: 1.87% and 6.88% of payroll', () => {
   const e = estimate(saas75);
-  // low: turnover 75x.19x.2x12x.6x.8 = 16.416; abs 21x.9x1.5x12/250 = 1.36080; x4
-  close(e.low.total, 16.416 + 1.3608 * 4);
-  // high: turnover 75x.19x.3x12x.6x1.25 = 38.475; abs 21x1.1x2.5x12/250 = 2.772; x5
-  close(e.high.total, 38.475 + 2.772 * 5);
-  assert.equal(formatPercent(e.low.shareOfPayroll), '2.4%');
-  assert.equal(formatPercent(e.high.shareOfPayroll), '5.8%');
+  // low: turnover 75x.19x.2x12x.6x.6 = 12.312; abs 21x.75x1.5x12/250 = 1.134; x(1+3)
+  close(e.low.total, 12.312 + 1.134 * 4);
+  // high: turnover 75x.19x.3x12x.6x1.5 = 46.17; abs 21x1.25x2.5x12/250 = 3.15; x(1+4)
+  close(e.high.total, 46.17 + 3.15 * 5);
+  assert.equal(formatPercent(e.low.shareOfPayroll), '1.9%');
+  assert.equal(formatPercent(e.high.shareOfPayroll), '6.9%');
 });
 
-test('v2.1 sector base totals at 75', () => {
+test('v2.2 sector base totals at 75', () => {
   const expected: Record<string, number> = {
     saas: 34.722, fintech: 48.33, d2c: 26.298, edtech: 33.716,
     agency: 25.83, 'it-services': 15.792, bpm: 14.46, other: 18.6165,

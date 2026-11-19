@@ -3,31 +3,34 @@
  *
  * Pure and import-free so it runs under `node --test` and in the browser alike.
  *
- * Source: `India_Burnout_Cost_Model_v2.xlsx` (research date 28 Oct 2026),
- * corrected to v2.1 after an audit. The workbook's ARITHMETIC is right — every
- * sector total reproduces to 1e-9 — but some inputs are weaker than labelled.
- * The page runs v2.1; `presenteeism: 'workbook-drag'` reproduces the workbook
- * exactly and exists so the tests keep it as a regression anchor.
+ * Source: `India Burnout Cost.xlsx`, the sales team's workbook (updated 13 Nov
+ * 2026, which it also calls v2.1). `presenteeism: 'workbook-drag'` reproduces
+ * it exactly and exists so the tests keep it as a regression anchor.
  *
- * What v2.1 changes, and why:
+ * v2.2 takes the updated workbook's bands, which its Assumptions tab sources
+ * and which outside evidence supports (research notes, 19 Nov 2026):
+ *   - prevalence factor 0.75 / 1 / 1.25 (was 0.9 / 1 / 1.1)
+ *   - replacement-cost scalar 0.6 / 1 / 1.5 (was 0.8 / 1 / 1.25)
+ *   - productivity drag 4 / 6 / 8% (workbook-drag mode only; was 6 / 8 / 10%)
+ * The base case is unchanged; only the low and high scenarios widen.
  *
- * 1. Presenteeism. The workbook models it independently, as a productivity
- *    drag of 6 / 8 / 10% of CTC on affected non-leavers. That lands at 8.3x
- *    absenteeism, against Deloitte India's own stated assumption of 3-4x.
- *    v2.1 uses Deloitte's method: presenteeism = absenteeism x 3.0 / 3.5 / 4.0.
- * 2. Attrition is VOLUNTARY attrition. "Other" used Aon's TOTAL 18%; v2.1 uses
- *    ~14% (18% less ~4% involuntary, from EY via S4/S5). Derived, and labelled so.
- * 3. "Low / High" is a scenario range — every assumption low or high together —
- *    not a confidence interval. The UI must never call it one.
- * 4. No ROI multiple and no "sanity band": the price was a placeholder and the
- *    3-10% band was circular (J6 in the workbook admits no benchmark exists).
+ * Two workbook choices are NOT taken, and are the ones to revisit together:
  *
- * The workbook's own J1/J2/J5 notes describe older bands (5/8/12% drag,
- * 1/2/3 extra days, 0.8/1/1.2 and 0.67/1/1.5 multipliers). The values below
- * are the ones its formulas actually use, recovered from its outputs.
+ * 1. Presenteeism. The workbook's drag still lands at 6.2x absenteeism, and its
+ *    own cross-check calls anything well above 3-4x aggressive. Every Deloitte
+ *    UK and India report sits at 2-4.5x. The page keeps Deloitte India's method:
+ *    presenteeism = absenteeism x 3.0 / 3.5 / 4.0.
+ * 2. Attrition is VOLUNTARY attrition. Burnout exits are resignations, and the
+ *    surveys behind the 20-30% share count people who chose to leave. "Other"
+ *    stays at ~14% (Aon's total 18% less ~4% involuntary, from EY via S4/S5).
+ *
+ * "Low / High" is a scenario range — every assumption low or high together —
+ * not a confidence interval. The UI must never call it one. No ROI multiple
+ * (the programme price is a placeholder) and no "sanity band" (the workbook's
+ * 3-8% has no published benchmark; it says so itself).
  */
 
-export const MODEL_VERSION = 'v2.1';
+export const MODEL_VERSION = 'v2.2';
 export const RESEARCH_DATE = '2026-10-28';
 
 /** Working days a year: 260 weekdays less 10-15 public holidays (S24). */
@@ -63,14 +66,14 @@ interface ScenarioParams {
   extraSickDays: number;
   /** Workbook only: productivity drag as a share of CTC. */
   productivityDrag: number;
-  /** v2.1: presenteeism as a multiple of absenteeism (Deloitte India, S9). */
+  /** v2.1+: presenteeism as a multiple of absenteeism (Deloitte India, S9). */
   presenteeismMultiple: number;
 }
 
 export const SCENARIO_PARAMS: Record<Scenario, ScenarioParams> = {
-  low: { burnoutShareOfAttrition: 0.2, replacementScalar: 0.8, prevalenceFactor: 0.9, extraSickDays: 1.5, productivityDrag: 0.06, presenteeismMultiple: 3.0 },
-  base: { burnoutShareOfAttrition: 0.25, replacementScalar: 1, prevalenceFactor: 1, extraSickDays: 2, productivityDrag: 0.08, presenteeismMultiple: 3.5 },
-  high: { burnoutShareOfAttrition: 0.3, replacementScalar: 1.25, prevalenceFactor: 1.1, extraSickDays: 2.5, productivityDrag: 0.1, presenteeismMultiple: 4.0 },
+  low: { burnoutShareOfAttrition: 0.2, replacementScalar: 0.6, prevalenceFactor: 0.75, extraSickDays: 1.5, productivityDrag: 0.04, presenteeismMultiple: 3.0 },
+  base: { burnoutShareOfAttrition: 0.25, replacementScalar: 1, prevalenceFactor: 1, extraSickDays: 2, productivityDrag: 0.06, presenteeismMultiple: 3.5 },
+  high: { burnoutShareOfAttrition: 0.3, replacementScalar: 1.5, prevalenceFactor: 1.25, extraSickDays: 2.5, productivityDrag: 0.08, presenteeismMultiple: 4.0 },
 };
 
 export type Evidence = 'sourced' | 'derived' | 'judgement';

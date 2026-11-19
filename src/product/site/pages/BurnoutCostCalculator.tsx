@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertCircle, ArrowDown, ArrowRight, BadgeIndianRupee, BatteryLow, BookOpen, CalendarDays, Check, CheckCircle2,
-  ChevronUp, ClipboardCheck, Link2, Loader2, Lock, MessagesSquare, RotateCcw, Sparkles, Thermometer,
-  UserMinus, Users,
+  ChevronUp, ClipboardCheck, Download, Link2, Loader2, Lock, Mail, MessagesSquare, RotateCcw, Share2, Sparkles,
+  Thermometer, UserMinus, Users,
 } from 'lucide-react';
 import { useSeo } from '../ui/hooks/useSeo';
 import {
   SECTORS, STRESS_LEVELS, LIMITS, WORKING_DAYS, REDUCTIONS, RESEARCH_DATE, MODEL_VERSION,
-  DEFAULT_STATE, DEFAULT_HEADCOUNT, sectorById, estimate, checkHeadcount, checkNumber,
-  resolveInputs, parseState, serializeState, headcountBand, unitFor, formatLakh, formatAmount,
-  formatRupees, formatPercent,
-  type CalcState, type Estimate, type Evidence, type SectorId, type StressLevel,
+  DEFAULT_STATE, DEFAULT_HEADCOUNT, SCENARIO_PARAMS, STRESS_PREVALENCE, sectorById, sectorInputs, estimate,
+  checkHeadcount, checkNumber, resolveInputs, parseState, serializeState, headcountBand, unitFor, formatLakh,
+  formatAmount, formatRupees, formatPercent,
+  type CalcState, type Estimate, type Evidence, type Inputs, type SectorId, type StressLevel,
 } from '../../../shared/content/burnout-cost-model';
 import { SOURCES, JUDGEMENTS, EXCLUDED } from '../../../shared/content/burnout-sources';
 import {
@@ -57,6 +58,47 @@ const EVIDENCE_MEANING: Record<Evidence, string> = {
 const STRESS_LABEL: Record<StressLevel, string> = { low: 'Low', medium: 'Medium', high: 'High' };
 
 const QUICK_HEADCOUNTS = [25, 50, 100, 250];
+
+/* Sections a link can open at, such as ikanhealth.in/burnout-cost-calculator#pilot. */
+const SECTION_IDS: readonly string[] = ['calculator', 'pilot', 'method'];
+
+const EXAMPLE_INPUTS: Inputs = sectorInputs(sectorById(DEFAULT_STATE.sector)!, DEFAULT_HEADCOUNT);
+
+/* Where each input on the report came from. */
+type Provenance = 'sector' | 'own' | 'modelled' | 'entered' | 'example';
+const PROVENANCE_LABEL: Record<Provenance, string> = {
+  sector: 'Sector default',
+  own: 'Your number',
+  modelled: 'Worked out',
+  entered: 'You entered',
+  example: 'Example',
+};
+
+/* The method, in one place for the page and the downloaded report. */
+const FORMULA = [
+  { key: 'turnover', title: 'People leaving',
+    text: 'Headcount × voluntary attrition × the burnout share of exits (20, 25 or 30%) × average pay × the cost of replacing someone.' },
+  { key: 'absenteeism', title: 'Extra sick days',
+    text: `The share of people in burnout (13% at low stress to 45% at high) × 1.5 to 2.5 extra sick days × a day's pay over ${WORKING_DAYS} working days.` },
+  { key: 'presenteeism', title: 'Working below par',
+    text: '3, 3.5 or 4 times the sick-day cost, inside the 3 to 4 times range Deloitte India assumed.' },
+] as const;
+
+const SCOPE_NOTE = 'Covers burnout-related attrition, absenteeism and presenteeism. Not all mental health costs, and no direct medical costs.';
+
+/* What the visitor sees after Download, Email or Share. None of the three is
+   ours to confirm (the print dialog, the email app and the share sheet belong
+   to the phone), so each says what should have happened and what to do if it
+   did not, rather than claiming success. */
+type ShareNote = 'download' | 'email' | 'share-failed';
+const SHARE_NOTE: Record<ShareNote, string> = {
+  download: 'Choose “Save as PDF” in the print window. Nothing opened? Some in-app browsers block it: open this page in Chrome or Safari, or use Email it.',
+  email: 'Your email app should open with the estimate filled in. If it did not, use Copy link and paste it into a message.',
+  'share-failed': 'Sharing did not work here. Use Copy link, or Email it.',
+};
+
+const fmtOne = (n: number) => n.toLocaleString('en-IN', { maximumFractionDigits: 1 });
+
 
 /* The pilot form. It posts through the site's existing contact pipeline
    (submitContactMessage → the contact inbox), so there is no new table or
@@ -134,6 +176,7 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const [leadError, setLeadError] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [newsletter, setNewsletter] = useState(false);
+  const [shareNote, setShareNote] = useState<ShareNote | null>(null);
   const formStarted = useRef(false);
   const leadRefs = useRef<Partial<Record<LeadField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
   const sentRef = useRef<HTMLHeadingElement>(null);
@@ -152,10 +195,13 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   const current: Estimate | null = useMemo(() => (inputs ? estimate(inputs) : null), [inputs]);
 
   // The last good estimate stays on screen, marked stale, while a field is invalid.
-  const lastGood = useRef<{ est: Estimate; headcount: number }>({ est: EXAMPLE, headcount: DEFAULT_HEADCOUNT });
-  if (current && inputs) lastGood.current = { est: current, headcount: inputs.headcount };
+  const lastGood = useRef<{ est: Estimate; headcount: number; inputs: Inputs }>({
+    est: EXAMPLE, headcount: DEFAULT_HEADCOUNT, inputs: EXAMPLE_INPUTS,
+  });
+  if (current && inputs) lastGood.current = { est: current, headcount: inputs.headcount, inputs };
   const shown = lastGood.current.est;
   const shownHeadcount = lastGood.current.headcount;
+  const shownInputs = lastGood.current.inputs;
   const stale = !current;
   const empty = state.headcount.trim() === '';
   const unit = unitFor(shown.base.total);
@@ -180,14 +226,29 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
      the fragment would otherwise keep describing an estimate the visitor has
      since changed. */
   useEffect(() => {
+    /* A section fragment (#pilot, #calculator, #method) is a place, not an
+       estimate. The page is lazy-loaded, so the browser's own jump to it has
+       already missed by the time the section exists; make it here, once the
+       page is laid out. */
+    const goToSection = (hash: string): boolean => {
+      const id = hash.replace(/^#/, '');
+      if (!SECTION_IDS.includes(id)) return false;
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ block: 'start' });
+      }, 60);
+      return true;
+    };
     if (typeof window !== 'undefined' && (window.location.hash || window.location.search)) {
+      goToSection(window.location.hash);
       window.history.replaceState(window.history.state, '', PATH);
     }
     // A shared link opened while the page is already showing changes only the
     // hash, which does not remount the page, so read it here too.
     const onHash = () => {
-      const parsed = parseState(window.location.hash);
-      if (parsed.fromUrl) setState(parsed.state);
+      if (!goToSection(window.location.hash)) {
+        const parsed = parseState(window.location.hash);
+        if (parsed.fromUrl) setState(parsed.state);
+      }
       window.history.replaceState(window.history.state, '', PATH);
     };
     window.addEventListener('hashchange', onHash);
@@ -197,6 +258,13 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
   useEffect(() => {
     try { window.sessionStorage.setItem(CALC_STATE_KEY, serializeState(state)); } catch { /* fine */ }
   }, [state]);
+
+  /* While this page is open, printing (the Download button or the browser's
+     own Print) produces the report below instead of the web page. */
+  useEffect(() => {
+    document.documentElement.classList.add('has-calc-report');
+    return () => document.documentElement.classList.remove('has-calc-report');
+  }, []);
 
   const update = useCallback((patch: Partial<CalcState>) => {
     setCopied(false);
@@ -399,6 +467,166 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
       explain: 'Paid days off taken by people in burnout, over and above the usual.' },
   ];
   const pos = (v: number) => `${Math.max(0, Math.min(100, (v / (shown.high.total || 1)) * 100))}%`;
+
+  /* ── The report: the result as a document, on screen and as a PDF ──
+     People counts are the base case, from the same parameters the model uses. */
+  const baseParams = SCENARIO_PARAMS.base;
+  const affected = shownInputs.headcount * STRESS_PREVALENCE[shownInputs.stress] * baseParams.prevalenceFactor;
+  const burnoutLeavers = shownInputs.headcount * shownInputs.attrition * baseParams.burnoutShareOfAttrition;
+  const peopleLabel = shownHeadcount.toLocaleString('en-IN');
+  const own = { ctc: overridden.ctc && ctcValue !== null, attr: overridden.attr && attrValue !== null, stress: overridden.stress };
+  const avoided20 = shown.base.total * 0.2;
+  const drivers: { label: string; value: string; from: Provenance }[] = [
+    { label: 'Team size', value: `${peopleLabel} people`, from: isDefault ? 'example' : 'entered' },
+    { label: 'Average yearly CTC', value: `₹${fmtOne(shownInputs.ctcLakh)} lakh`, from: own.ctc ? 'own' : 'sector' },
+    { label: 'Voluntary attrition', value: `${fmtOne(shownInputs.attrition * 100)}% a year`, from: own.attr ? 'own' : 'sector' },
+    { label: 'Work intensity', value: `${STRESS_LABEL[shownInputs.stress]}, ${Math.round(STRESS_PREVALENCE[shownInputs.stress] * 100)}% of people in burnout`, from: own.stress ? 'own' : 'sector' },
+    { label: 'Cost of replacing a leaver', value: `${Math.round(shownInputs.replacement * 100)}% of a year's CTC`, from: 'sector' },
+    { label: 'Leavers linked to burnout', value: `${fmtOne(burnoutLeavers)} a year`, from: 'modelled' },
+    { label: 'People in burnout', value: `about ${Math.round(affected).toLocaleString('en-IN')} of ${peopleLabel}`, from: 'modelled' },
+  ];
+
+  const reportSubject = `Burnout cost estimate: ${sector.label}, ${peopleLabel} people`;
+  const reportLink = () => `${window.location.origin}${PATH}#${serializeState(state)}`;
+  const reportText = (withLink: boolean) => [
+    reportSubject,
+    '',
+    `About ${formatLakh(shown.base.total, unit)} a year: at least ${formatLakh(shown.low.total, unitFor(shown.low.total))} on cautious assumptions, up to ${formatLakh(shown.high.total, unitFor(shown.high.total))}.`,
+    `${formatPercent(shown.base.shareOfPayroll)} of payroll, ${formatRupees(shown.base.perEmployee)} per employee, about ${Math.round(affected).toLocaleString('en-IN')} of ${peopleLabel} people in burnout.`,
+    '',
+    'Where it comes from:',
+    ...parts.map((p) => `- ${p.label}: ${formatLakh(p.value, unitFor(p.value))} (${Math.round((p.value / total) * 100)}%)`),
+    '',
+    `If burnout fell by 20%: about ${formatLakh(avoided20, unitFor(avoided20))} a year avoided.`,
+    ...(withLink ? ['', `The estimate and the method: ${reportLink()}`] : []),
+    '',
+    'A ballpark from sector averages, not an audit. From the iKAN Health burnout cost calculator.',
+  ].join('\n');
+
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const downloadReport = () => {
+    trackCalc('calc_report_download', { sector: state.sector });
+    haptic();
+    setShareNote('download');
+    window.print();
+  };
+
+  const emailReport = () => {
+    trackCalc('calc_report_email', { sector: state.sector });
+    haptic();
+    setShareNote('email');
+    window.location.href = `mailto:?subject=${encodeURIComponent(reportSubject)}&body=${encodeURIComponent(reportText(true))}`;
+  };
+
+  const shareReport = async () => {
+    trackCalc('calc_report_share', { sector: state.sector });
+    haptic();
+    setShareNote(null);
+    try {
+      await navigator.share({ title: reportSubject, text: reportText(false), url: reportLink() });
+    } catch (err) {
+      // Closing the sheet is a choice, not a failure.
+      if (!(err instanceof DOMException && err.name === 'AbortError')) setShareNote('share-failed');
+    }
+  };
+
+  /* The downloadable report. Hidden on screen; printing swaps the page for it
+     (print rules in globals.css), so "Download PDF" is the browser's own
+     Save as PDF, as in the app. Laid out from the sales team's report template. */
+  const prepared = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const printReport = (
+    <div className="ikan2-theme calc-print" aria-hidden="true">
+      <header className="calc-print__head">
+        <span className="calc-print__brand"><img src="/favicon.svg" alt="" width={26} height={26} /> iKAN Health</span>
+        <span>Burnout cost estimate</span>
+      </header>
+
+      <h1 className="calc-print__title">What burnout may be costing your team</h1>
+      <p className="calc-print__meta">
+        {sector.label}, {peopleLabel} people. <CalendarDays aria-hidden="true" size={13} /> Prepared {prepared}
+      </p>
+
+      <section className="calc-print__hero">
+        <p className="calc-print__label">Estimated yearly cost of burnout</p>
+        <p className="calc-print__figure">about {formatLakh(shown.base.total, unit)} a year</p>
+        <p>
+          At least {formatLakh(shown.low.total, unitFor(shown.low.total))} a year on cautious assumptions, and up to{' '}
+          {formatLakh(shown.high.total, unitFor(shown.high.total))} on high ones.
+        </p>
+      </section>
+
+      <dl className="calc-print__stats">
+        <div><dt>Share of payroll</dt><dd>{formatPercent(shown.base.shareOfPayroll)}</dd></div>
+        <div><dt>Per employee, a year</dt><dd>{formatRupees(shown.base.perEmployee)}</dd></div>
+        <div><dt>People in burnout</dt><dd>about {Math.round(affected).toLocaleString('en-IN')} of {peopleLabel}</dd></div>
+      </dl>
+
+      <h2>What this means</h2>
+      <p>
+        A ballpark of what burnout may cost a team of this size and sector each year, built from published Indian
+        benchmarks and the numbers entered. It is a starting point for a conversation, not an audit of your company.
+      </p>
+
+      <h2>Where the cost comes from</h2>
+      <table className="calc-print__table">
+        <tbody>
+          {parts.map((p) => (
+            <tr key={p.key}>
+              <th scope="row">
+                <span className={`calc-swatch calc-split__seg--${p.key}`} /> {p.label}
+                <small>{p.explain}</small>
+              </th>
+              <td>{formatLakh(p.value, unitFor(p.value))}</td>
+              <td>{Math.round((p.value / total) * 100)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="calc-print__callout">
+        If burnout fell by 20%, about {formatLakh(avoided20, unitFor(avoided20))} a year would be avoided. This assumes
+        every cost falls in proportion; it is not a forecast of what any programme achieves.
+      </p>
+
+      <h2>What drove your numbers</h2>
+      <table className="calc-print__table">
+        <tbody>
+          {drivers.map((d) => (
+            <tr key={d.label}>
+              <th scope="row">{d.label}</th>
+              <td>{d.value}</td>
+              <td>{PROVENANCE_LABEL[d.from]}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>How it is estimated</h2>
+      <ul>
+        {FORMULA.map((f) => <li key={f.key}><strong>{f.title}:</strong> {f.text}</li>)}
+        <li>The low figure sets every uncertain input low, and the high figure sets them all high.</li>
+      </ul>
+      <p>{SCOPE_NOTE}</p>
+
+      <h2>Sources</h2>
+      <ol className="calc-print__sources">
+        {SOURCES.map((s) => <li key={s.id}>{s.title}. {s.publisher}, {s.date}.</li>)}
+      </ol>
+
+      <section className="calc-print__cta">
+        <h2>See it with your real numbers</h2>
+        <p>
+          Request a pilot call at ikanhealth.in/burnout-cost-calculator#pilot, or write to {SUPPORT_EMAIL}. We reply
+          within 24 hours.
+        </p>
+      </section>
+
+      <footer className="calc-print__foot">
+        Model {MODEL_VERSION}, last reviewed {REVIEWED}. A directional estimate from published benchmarks and the
+        numbers entered, not financial advice or an audit. ikanhealth.in
+      </footer>
+    </div>
+  );
 
   return (
     <div className={['ikan2-theme', 'info-page', 'site-page-below-nav', 'calc-page', className].filter(Boolean).join(' ')}>
@@ -634,10 +862,11 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
               </div>
 
               <div className="calc-result__body">
-                <ul className="calc-pills">
-                  <li><strong>{formatPercent(shown.base.shareOfPayroll)}</strong> of payroll</li>
-                  <li><strong>{formatRupees(shown.base.perEmployee)}</strong> per employee</li>
-                </ul>
+                <dl className="calc-stats">
+                  <div><dt>Share of payroll</dt><dd>{formatPercent(shown.base.shareOfPayroll)}</dd></div>
+                  <div><dt>Per employee, a year</dt><dd>{formatRupees(shown.base.perEmployee)}</dd></div>
+                  <div><dt>People in burnout</dt><dd>about {Math.round(affected).toLocaleString('en-IN')} <span>of {peopleLabel}</span></dd></div>
+                </dl>
 
                 <h4 className="calc-split__title">Where it comes from</h4>
                 <div className="calc-split" aria-hidden="true">
@@ -656,11 +885,31 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                 </ul>
 
                 <div className="calc-result__actions">
-                  <button type="button" className="calc-copy" onClick={copyLink}>
-                    {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy link to this estimate'}
-                  </button>
+                  <h4 className="calc-split__title">Keep a copy</h4>
+                  <div className="calc-share">
+                    <button type="button" className="calc-share__btn" onClick={downloadReport} disabled={stale}>
+                      <Download aria-hidden="true" size={16} /> Download PDF
+                    </button>
+                    <button type="button" className="calc-share__btn" onClick={emailReport} disabled={stale}>
+                      <Mail aria-hidden="true" size={16} /> Email it
+                    </button>
+                    {canShare ? (
+                      <button type="button" className="calc-share__btn" onClick={() => { void shareReport(); }} disabled={stale}>
+                        <Share2 aria-hidden="true" size={16} /> Share
+                      </button>
+                    ) : null}
+                    <button type="button" className="calc-share__btn" onClick={() => { setShareNote(null); void copyLink(); }}>
+                      {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy link'}
+                    </button>
+                  </div>
+                  {shareNote ? (
+                    <p className={`calc-share__note${shareNote === 'share-failed' ? ' calc-share__note--warn' : ''}`} role="status">
+                      {shareNote === 'share-failed' ? <AlertCircle aria-hidden="true" size={15} /> : <CheckCircle2 aria-hidden="true" size={15} />}
+                      <span>{SHARE_NOTE[shareNote]}</span>
+                    </p>
+                  ) : null}
                 </div>
-                <p className="calc-help">A ballpark from sector averages, not an audit of your company.</p>
+                <p className="calc-help">A ballpark from sector averages, not an audit of your company. The PDF and the email carry the breakdown, the inputs and the method.</p>
               </div>
             </section>
           </div>
@@ -692,6 +941,24 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
               );
             })}
           </ul>
+
+          <div className="calc-drove">
+            <div className="calc-drove__head">
+              <h3 className="calc-savings__title">What drove your numbers</h3>
+              <p className="calc-help">Change any of these under “Use your own numbers” above.</p>
+            </div>
+            <dl className="calc-drove__list">
+              {drivers.map((d) => (
+                <div key={d.label}>
+                  <dt>{d.label}</dt>
+                  <dd>
+                    <span className="calc-drove__value">{d.value}</span>
+                    <span className={`calc-drove__from calc-drove__from--${d.from}`}>{PROVENANCE_LABEL[d.from]}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
 
           <div className="calc-savings">
             <div className="calc-savings__head">
@@ -741,9 +1008,14 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
                     We reply within 24 hours{lead.email.trim() ? <>, to <strong>{lead.email.trim()}</strong></> : null}. Your
                     estimate of about {formatLakh(shown.base.total, unit)} a year went with it.
                   </p>
-                  <button type="button" className="calc-copy" onClick={copyLink}>
-                    {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy a link to share with your team'}
-                  </button>
+                  <div className="calc-share calc-share--done">
+                    <button type="button" className="calc-share__btn" onClick={downloadReport}>
+                      <Download aria-hidden="true" size={16} /> Download your estimate
+                    </button>
+                    <button type="button" className="calc-share__btn" onClick={copyLink}>
+                      {copied ? <Check aria-hidden="true" size={16} /> : <Link2 aria-hidden="true" size={16} />} {copied ? 'Link copied' : 'Copy a link for your team'}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form className="calc-lead__form" onSubmit={submitLead} noValidate aria-describedby={`${ids}-lead-sum`}>
@@ -874,36 +1146,21 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
 
           <div>
             <ol className="calc-formula">
-              <li>
-                <span className="calc-formula__num calc-split__seg--turnover" aria-hidden="true">1</span>
-                <div>
-                  <h3>People leaving</h3>
-                  <p>Headcount × voluntary attrition × the burnout share of exits (20, 25 or 30%) × average pay × the cost of replacing someone.</p>
-                </div>
-              </li>
-              <li>
-                <span className="calc-formula__num calc-split__seg--absenteeism" aria-hidden="true">2</span>
-                <div>
-                  <h3>Extra sick days</h3>
-                  <p>The share of people in burnout (13% at low stress to 45% at high) × 1.5 to 2.5 extra sick days × a day&apos;s pay over {WORKING_DAYS} working days.</p>
-                </div>
-              </li>
-              <li>
-                <span className="calc-formula__num calc-split__seg--presenteeism" aria-hidden="true">3</span>
-                <div>
-                  <h3>Working below par</h3>
-                  <p>3, 3.5 or 4 times the sick-day cost, inside the 3 to 4 times range Deloitte India assumed.</p>
-                </div>
-              </li>
+              {FORMULA.map((f, i) => (
+                <li key={f.key}>
+                  <span className={`calc-formula__num calc-split__seg--${f.key}`} aria-hidden="true">{i + 1}</span>
+                  <div>
+                    <h3>{f.title}</h3>
+                    <p>{f.text}</p>
+                  </div>
+                </li>
+              ))}
             </ol>
 
             <details className="faq-item" onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) trackCalc('calc_method_open', {}); }}>
               <summary>Scope, cross-check and our assumptions</summary>
               <div className="calc-method">
-                <p>
-                  Covers burnout-related attrition, absenteeism and presenteeism. Not all mental health costs, and no
-                  direct medical costs.
-                </p>
+                <p>{SCOPE_NOTE}</p>
                 <p>
                   Deloitte India estimated in 2022 that poor mental health, which is broader than burnout, costs Indian
                   employers about ₹1.1 lakh crore a year. That is a cross-check on the shape of the costs, not a like-for-like comparison.
@@ -985,6 +1242,8 @@ export function BurnoutCostCalculator({ className, onNavigate }: Props) {
       </div>
 
       <p className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</p>
+
+      {typeof document !== 'undefined' ? createPortal(printReport, document.body) : null}
     </div>
   );
 }

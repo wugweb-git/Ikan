@@ -9,6 +9,23 @@ undated under their original session number.
 
 ---
 
+## 2026-11-19 — Burnout calculator: the result as a report, model v2.2
+
+- **Result as a report.** The result follows the sales team's report template: headline, three
+  figures (share of payroll, per employee, people in burnout), where the cost comes from, and a new
+  "What drove your numbers" list that tags each input as a sector default, your number or worked out.
+- **Keep a copy.** Download PDF (the browser's print to PDF, as the app's results do), Email it (the
+  visitor's own email app, prefilled), Share (where the phone has a share sheet) and Copy link.
+  Printing while the page is open produces the report, not the web page. Nothing is sent to iKAN.
+  Each action says what should happen and what to do if it does not (in-app browsers that block print,
+  no email app, a failed share). The pilot success screen offers the download too.
+- **Model v2.2.** Takes the updated workbook's wider low and high bands (prevalence ×0.75/1.25,
+  replacement ×0.6/1.5). The base is unchanged; SaaS at 75 is still about ₹35 lakh, and the range goes
+  from ₹22-52 lakh to ₹17-62 lakh. The workbook's 4/6/8% productivity drag (6.2× absenteeism) and its
+  total attrition are not adopted; see the model header and the research report of 19 Nov.
+- **Fix.** Links to `#pilot`, `#calculator` and `#method` now open at that section. The page is
+  lazy-loaded, so the browser's own jump missed, and the fragment was then cleared.
+
 ## 2026-11-12 — Burnout calculator: newsletter opt-in on the pilot form
 
 An unticked "Also add me to iKAN's newsletter" box. When ticked, after the pilot

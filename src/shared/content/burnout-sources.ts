@@ -103,6 +103,8 @@ export const JUDGEMENTS: readonly { item: string; bound: string }[] = [
   { item: 'Share of voluntary exits that are burnout-related: 20 / 25 / 30%', bound: 'No study gives a share of all exits. Deloitte and Indeed report shares of respondents only.' },
   { item: 'Extra sick days for a person in burnout: 1.5 / 2 / 2.5 a year', bound: 'No India figure exists. Kept well under the 6 to 12 sick days most private employers give (S23).' },
   { item: 'Presenteeism at 3 / 3.5 / 4 times absenteeism', bound: "Inside the 3 to 4 times range Deloitte India assumed (S9). No India measurement exists." },
+  { item: 'Low and high widen burnout prevalence by a quarter (0.75 / 1 / 1.25)', bound: 'Published burnout shares vary widely with the definition used and the year surveyed. This covers that spread around the base.' },
+  { item: 'Low and high scale the cost of replacing a leaver by 0.6 / 1 / 1.5', bound: 'Published replacement costs vary widely by role (S15). This keeps the range at 24 to 90% of a year\'s CTC.' },
   { item: 'Average pay, and the default stress level, for each sector', bound: 'No published blended average exists for 20 to 150 person startups. Change them to your own.' },
   { item: 'Attrition for fintech, D2C, edtech and agencies', bound: 'No current sector figures exist. Set above the 18% overall rate (S1).' },
 ];
