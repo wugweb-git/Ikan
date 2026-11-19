@@ -4810,6 +4810,24 @@ const PUBLIC_PROFILE_KEYS = [
   'details', 'clientFAQs', 'testimonials', 'certificates', 'willingToShareArticles',
 ] as const;
 
+/**
+ * Partner applications are also written to ikan2's `ikan2_partner_applications`, next to the
+ * contact and newsletter tables, so every form iKAN collects is in one family of tables. The KV
+ * records stay the working copy for review and approval. A failed write here is logged and never
+ * fails the applicant's submission.
+ */
+const recordPartnerApplication = async (row: Record<string, unknown>) => {
+  const { error } = await supabase.from('ikan2_partner_applications').insert(row);
+  if (error) console.error('ikan2_partner_applications insert failed:', error.message);
+};
+const setPartnerApplicationStatus = async (applicationId: string, status: 'approved' | 'rejected', rejectionReason?: string) => {
+  const { error } = await supabase
+    .from('ikan2_partner_applications')
+    .update({ status, reviewed_at: new Date().toISOString(), rejection_reason: status === 'rejected' ? (rejectionReason || null) : null })
+    .eq('application_id', applicationId);
+  if (error) console.error('ikan2_partner_applications status update failed:', error.message);
+};
+
 // Served on its own path. The new form posts here, so against a server that
 // predates it the request 404s and nothing is stored; on the old path such a
 // server would have spread contact and verification onto the record the
@@ -4891,6 +4909,22 @@ const submitPartnerApplication = async (c: any) => {
       status: 'pending_review',
       submitted_at: now,
     });
+    const pincode = (profile.details && typeof profile.details === 'object' ? (profile.details as Record<string, unknown>).pincode : undefined);
+    await recordPartnerApplication({
+      application_id: applicationId,
+      created_at: now,
+      name,
+      email,
+      phone,
+      category,
+      credentials,
+      location: location || null,
+      pincode: typeof pincode === 'string' && pincode ? pincode : null,
+      years_experience: yearsExperience || null,
+      languages,
+      answers: { contact: { email, phone }, verification, profile },
+      source: 'website',
+    });
 
     // Queue admin notification about new application
     const notifId = `notif-${Date.now()}`;
@@ -4966,6 +5000,7 @@ app.post("/admin/professional-applications/:id/approve", requireAdmin, async (c)
 
     const tracker = await kv.get(`professional_application:${appId}`);
     if (tracker) await kv.set(`professional_application:${appId}`, { ...tracker, status: 'approved' });
+    await setPartnerApplicationStatus(appId, 'approved');
 
     console.log(`✅ Application approved: ${pendingData.name}`);
     return c.json({ success: true, professional: activeProfessional });
@@ -4987,6 +5022,7 @@ app.post("/admin/professional-applications/:id/reject", requireAdmin, async (c) 
 
     const tracker = await kv.get(`professional_application:${appId}`);
     if (tracker) await kv.set(`professional_application:${appId}`, { ...tracker, status: 'rejected', rejection_reason: reason || 'Not specified' });
+    await setPartnerApplicationStatus(appId, 'rejected', reason);
 
     console.log(`❌ Application rejected: ${pendingData.name}`);
     return c.json({ success: true });
