@@ -79,10 +79,23 @@
     }
     @media (max-width: 1023px) {
       :root, .ikan2-theme {
-        --nav-clearance: 84px;
+        --nav-clearance: calc(84px + env(safe-area-inset-top, 0px));
       }
       .nav-fixed-wrapper { display: none !important; }
-      .mnav { display: block !important; }
+      .mnav {
+        display: block !important;
+        padding-top: max(10px, env(safe-area-inset-top, 10px)) !important;
+      }
+      .mnav__menu {
+        width: calc(min(100% - (var(--page-gutter, 16px)*2), var(--page-max, 1100px)) + (var(--nav-outset, 0px)*2));
+        margin-inline: auto;
+        max-height: calc(100dvh - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      .mnav__talk, .mnav__signin {
+        min-height: 44px;
+      }
     }
     @media (min-width: 1024px) {
       .nav-fixed-wrapper { display: flex !important; }

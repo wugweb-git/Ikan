@@ -111,7 +111,7 @@ if ( file_exists( $consultants_file ) ) {
               <span class="text-[11px] text-gray-500">/session</span>
             </div>
             <button type="button" onclick="openConsultantBooking('<?php echo esc_js( $c['name'] ); ?>', '<?php echo esc_js( $c['credentials'] ); ?>')"
-              class="px-4 py-2 bg-black text-white text-xs font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center gap-1.5">
+              class="px-4 py-2.5 min-h-[44px] bg-black text-white text-xs font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center gap-1.5 touch-manipulation">
               <span>Book Session</span>
               <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </button>
