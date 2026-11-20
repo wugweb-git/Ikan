@@ -1,0 +1,322 @@
+{
+  "about": {
+    "hero": {
+      "title": "To us, mental health matters.",
+      "subtitle": "At iKan, we believe mental health is for everyone."
+    },
+    "story": {
+      "label": "Our Story",
+      "heading": "Born from <personal> experience",
+      "headingHighlightColor": "var(--ikan-brand-teal)",
+      "paragraphs": [
+        "At some point everyone has struggled. Decades old friends Sachin, Vedanshu and Kartik have also faced their share of struggles, each one of us embarking on a personal journey to understand what we were going through. All of us witnessed first hand the barriers and gaps in mental healthcare in India and realised that the system is broken.",
+        "Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created <iKan>."
+      ],
+      "image": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "imageAlt": "Founders collaborating on iKan"
+    },
+    "mission": {
+      "label": "Mission",
+      "title": "Making mental health care accessible, affordable, and stigma-free for every individual in India.",
+      "description": "We are on a mission to bridge the gap between people and quality mental health support — through technology, compassion, and transparency."
+    },
+    "vision": {
+      "label": "Vision",
+      "title": "A world where seeking mental health support is as natural as visiting a doctor.",
+      "description": "We envision a future where mental wellness is normalised, people have the tools they need at their fingertips, and no one suffers in silence."
+    },
+    "values": [
+      {
+        "iconName": "heart",
+        "title": "People Centric",
+        "description": "At iKan we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.",
+        "color": "var(--ikan-brand-teal)"
+      },
+      {
+        "iconName": "shield",
+        "title": "Secure",
+        "description": "We value your privacy very highly, we are committed to ensuring your data is always safe and secure.",
+        "color": "var(--ikan-brand-amber)"
+      },
+      {
+        "iconName": "flask-conical",
+        "title": "Science Backed",
+        "description": "Everything we do is backed by research and validated by practising psychologists.",
+        "color": "var(--ikan-brand-coral)"
+      },
+      {
+        "iconName": "handshake",
+        "title": "Our Promise",
+        "description": "We believe mental health care is for everyone and we are eager to make it a reality.",
+        "color": "var(--ikan-brand-slate)"
+      }
+    ],
+    "valuesHeading": "Why you'll love iKan",
+    "teamHeading": "Our Team",
+    "teamDescription": "The people behind iKan, driven by personal experience and a shared belief that mental health care should be better.",
+    "founders": [
+      {
+        "name": "Kartik Chandra",
+        "role": "Co-Founder and CEO",
+        "bio": "Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.",
+        "image": "/team/kartik.jpg"
+      },
+      {
+        "name": "Vedanshu Srivastava",
+        "role": "Co-Founder and Product Head",
+        "bio": "Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKan for growth and long term success.",
+        "image": "/team/vedanshu.jpg"
+      },
+      {
+        "name": "Sachin Vaishampayan",
+        "role": "Co-Founder and CTO",
+        "bio": "Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKan.",
+        "image": "/team/sachin.jpg"
+      }
+    ],
+    "team": [
+      {
+        "name": "Vaibhav Shukla",
+        "role": "System Architect",
+        "image": "/team/vaibhav.jpg"
+      },
+      {
+        "name": "Amitabh Bhatnagar",
+        "role": "Dev Engineer",
+        "image": "/team/amitabh.jpg"
+      },
+      {
+        "name": "Divyanshu Pundir",
+        "role": "UX Designer",
+        "image": "/team/divyanshu.jpg"
+      }
+    ],
+    "howItWorks": {
+      "heading": "How it works",
+      "steps": [
+        {
+          "title": "Take an Assessment",
+          "tagline": "Understand where you are.",
+          "description": "Answer a few simple, clinically backed questions. Our assessments help you understand your emotional well-being — privately, at your own pace."
+        },
+        {
+          "title": "Connect with a Professional",
+          "tagline": "Find the right support for you.",
+          "description": "Browse therapists, psychiatrists, and counselors. Pick your preferred language, session mode, and availability — we handle the rest."
+        },
+        {
+          "title": "Build Daily Habits",
+          "tagline": "Make wellness your ritual.",
+          "description": "Join an Equip program with self-paced modules. Track your mood, practice mindfulness, and build lasting habits — one day at a time."
+        }
+      ]
+    },
+    "whoFor": {
+      "heading": "Who is it for",
+      "groups": [
+        {
+          "title": "For Individuals",
+          "tagline": "Your mental wellness, your pace.",
+          "description": "Access self-guided programs, mood journaling, and professional consultations — all in a private, stigma-free space designed around your comfort."
+        },
+        {
+          "title": "For Organizations",
+          "tagline": "Invest in your people.",
+          "description": "Bring mental wellness into the workplace. Equip your teams with assessments, curated programs, and professional support that scales with your organization."
+        },
+        {
+          "title": "For Healthcare Providers",
+          "tagline": "Extend care beyond the clinic.",
+          "description": "Use clinically validated assessments, track patient progress, and recommend structured programs — all on a platform built with privacy at its core."
+        }
+      ]
+    }
+  },
+  "faq": {
+    "heroTitle": "FAQs & Help Center",
+    "heroSubtitle": "Find answers to common questions about iKan, your account, programs, and more.",
+    "searchPlaceholder": "Search for answers...",
+    "noResultsText": "No results found. Try a different search term.",
+    "ctaTitle": "Still have questions?",
+    "ctaDescription": "We are here to help you on your mental health journey. Submit a ticket and our team will get back to you.",
+    "ctaButtonText": "Contact Support",
+    "ctaButtonRoute": "/contact",
+    "categories": [
+      {
+        "id": "about",
+        "title": "About iKan",
+        "items": [
+          {
+            "question": "What is iKan and how does it support mental health?",
+            "answer": "iKan is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free."
+          },
+          {
+            "question": "Is iKan a replacement for therapy?",
+            "answer": "No. iKan is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step."
+          },
+          {
+            "question": "How is iKan different from other mental health apps?",
+            "answer": "iKan combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow \"Calm Tech\" design principles."
+          }
+        ]
+      },
+      {
+        "id": "getting-started",
+        "title": "Signing Up & Getting Started",
+        "items": [
+          {
+            "question": "How do I create an account?",
+            "answer": "Tap \"Get Started\" on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically."
+          },
+          {
+            "question": "Is iKan free to use?",
+            "answer": "Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services."
+          },
+          {
+            "question": "Can I use iKan without signing in?",
+            "answer": "Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account."
+          }
+        ]
+      },
+      {
+        "id": "account",
+        "title": "Managing Your Account",
+        "items": [
+          {
+            "question": "How do I update my profile information?",
+            "answer": "Navigate to your Account page. You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details."
+          },
+          {
+            "question": "How do I change my password or email?",
+            "answer": "Go to Account → Security section. You can change your password by entering your current and new password."
+          },
+          {
+            "question": "Can I export or delete my data?",
+            "answer": "Yes. Under Account → Data & Privacy, you can export all your data as a JSON file. You can also permanently delete your account."
+          }
+        ]
+      },
+      {
+        "id": "subscriptions",
+        "title": "Subscriptions & Billing",
+        "items": [
+          {
+            "question": "What payment methods do you accept?",
+            "answer": "We accept all major credit and debit cards, UPI, and net banking through our secure Razorpay integration."
+          },
+          {
+            "question": "How do I view my payment history?",
+            "answer": "Go to Account → Payment History to see a complete record of your transactions."
+          },
+          {
+            "question": "What is your refund policy?",
+            "answer": "We offer refunds on a case-by-case basis. Contact our support team within 7 days of purchase."
+          }
+        ]
+      },
+      {
+        "id": "sessions",
+        "title": "Sessions & Programs",
+        "items": [
+          {
+            "question": "How do I book a consultation with a therapist?",
+            "answer": "Navigate to the Consultation page, browse our verified professionals by category, and select a time slot."
+          },
+          {
+            "question": "Are the Equip programs self-paced?",
+            "answer": "Yes. Equip programs are structured into daily modules you can complete at your own pace."
+          },
+          {
+            "question": "What mental health assessments are available?",
+            "answer": "We offer assessments for anxiety (GAD-7), depression, stress, well-being, and more."
+          },
+          {
+            "question": "How does mood journaling work?",
+            "answer": "The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections."
+          }
+        ]
+      },
+      {
+        "id": "trust-safety",
+        "title": "Trust, Safety & Privacy",
+        "items": [
+          {
+            "question": "Is my data private and secure?",
+            "answer": "Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we never share it with third parties."
+          },
+          {
+            "question": "What should I do in a mental health emergency?",
+            "answer": "Call your local emergency services (112) or the iCALL Psychosocial Helpline at 9152987821."
+          },
+          {
+            "question": "How are consultants verified?",
+            "answer": "All consultants on iKan are licensed professionals. We verify their credentials and experience before they join."
+          }
+        ]
+      }
+    ]
+  },
+  "contact": {
+    "heroTitle": "We're Here to Help",
+    "heroSubtitle": "Your mental health journey matters to us. Reach out for support, questions, or just to connect.",
+    "supportEmail": "support@ikanhealth.in",
+    "crisisPhone": "9152987821",
+    "crisisLabel": "iCALL Suicide Prevention Helpline",
+    "contactMethods": [
+      {
+        "icon": "mail",
+        "title": "Email Support",
+        "description": "Get help with your account and services",
+        "value": "support@ikanhealth.in",
+        "action": "mailto:support@ikanhealth.in"
+      },
+      {
+        "icon": "phone",
+        "title": "Crisis Support",
+        "description": "iCALL Suicide Prevention Helpline",
+        "value": "9152987821",
+        "action": "tel:9152987821"
+      }
+    ],
+    "formTitle": "Send us a Message",
+    "formSubtitle": "We typically respond within 24 hours during business days.",
+    "crisisCard": {
+      "title": "Need Immediate Help?",
+      "description": "If you're having thoughts of self-harm or suicide, please reach out for immediate support.",
+      "buttons": [
+        {
+          "label": "Call iCALL - 9152987821",
+          "action": "tel:9152987821"
+        }
+      ]
+    },
+    "faqCard": {
+      "title": "Looking for Quick Answers?",
+      "description": "Check our FAQ section for instant answers to common questions.",
+      "buttonText": "Visit FAQ Section",
+      "buttonRoute": "/faq"
+    }
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "subtitle": "Important legal terms governing your use of iKan's mental health platform and services.",
+      "html": "<h2>📋 Terms of Service</h2><p>By accessing and using iKan's mental health platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. Last updated: 9/14/2026</p><h3>🎯 Scope of Services</h3><p>Our platform is designed to support your mental health journey through evidence-based assessments, personalized programs, and curated resources.</p><ul><li>• Mental health assessments and progress tracking</li><li>• Personalized equip programs and interventions</li><li>• Resource library and educational content</li><li>• Professional consultation matching</li></ul><h3>👤 Your Responsibilities</h3><h3>Account Security</h3><p>Maintain the confidentiality of your account credentials and notify us immediately of any unauthorized access.</p><h3>Accurate Information</h3><p>Provide accurate and honest information in assessments to ensure effective recommendations.</p><h3>Appropriate Use</h3><p>Use our services for their intended purpose and respect other users and mental health professionals.</p><h3>⚠️ Important Medical Disclaimer</h3><p>Our services are NOT a substitute for professional medical care.</p><ul><li>• Always consult qualified healthcare providers for medical advice</li><li>• Do not use our platform for emergency mental health situations</li><li>Seek immediate help if you're experiencing thoughts of self-harm</li></ul><p>🚨 Crisis Resources:</p><p>• KIRAN Mental Health Helpline: 1800-599-0019 (24x7)</p><p>• iCALL Psychosocial Helpline: 9152987821</p><p>• Emergency: 112</p><p>• International: befrienders.org</p><h3>Questions About These Terms?</h3><p>Our legal team is available to clarify any aspect of our Terms of Service.</p><a href=\"mailto:legal@ikanhealth.in\"> Contact Legal Team </a>"
+    },
+    "privacy-policy": {
+      "title": "Privacy Policy",
+      "subtitle": "Your privacy and data security are fundamental to our mission.",
+      "html": "<h2>🔒 Your Privacy Matters</h2><p>At iKan, we are committed to protecting your privacy and ensuring the security of your personal information. This policy explains how we collect, use, and safeguard your data when you use our mental health services.</p><h3>📝 Information We Collect</h3><h3>Personal Information</h3><p>Information you provide directly, including name, email, and assessment responses when you create an account or use our services.</p><h3>Usage Information</h3><p>Automatically collected data about your platform interactions, session duration, and device information to improve our services.</p><h3>Analytics</h3><p>We use Google Analytics to understand which parts of iKAN people use, so we can improve them. It records the type of screen you opened — for example an assessment screen or a programme day — never which assessment, which result, or which programme. Your answers, scores, journal entries and anything you write are never sent to Google. You can block analytics with your browser's or phone's tracking controls without affecting how iKAN works.</p><h3>Health Data</h3><p>Mental health assessment responses and mood tracking data, which receive the highest level of protection.</p><h3>🎯 How We Use Your Information</h3><ul><li>✓ Provide personalized mental health support and recommendations</li><li>✓ Improve our services and develop new features</li><li>✓ Ensure platform security and prevent fraud</li><li>✗ We never sell your personal data to third parties</li></ul><h3>🛡️ Data Security &amp; Protection</h3><h3>Encryption</h3><p>Your data is sent over an encrypted connection and stored in an encrypted, access-controlled database.</p><h3>Access Control</h3><p>Access to production data is restricted to authorised team members.</p><h3>Ongoing Review</h3><p>We review our security configuration on an ongoing basis and act on advisories from our infrastructure provider.</p><h3>Data Minimization</h3><p>We collect only the data necessary to provide our services effectively.</p><h3>⚖️ Your Rights</h3><p><strong>You have full control over your data.</strong> You can access, update, or delete your personal information at any time through your account settings.</p><ul><li>• Request a copy of your data</li><li>• Correct inaccurate information</li><li>• Delete your account and associated data</li><li>• Opt out of non-essential communications</li></ul><h3>📞 Questions? We're Here to Help</h3><p>If you have any questions about this Privacy Policy or how we handle your data, our privacy team is ready to assist you.</p><a href=\"mailto:privacy@ikanhealth.in\"> Email: privacy@ikanhealth.in </a> Response within 24 hours"
+    },
+    "cancellation-policy": {
+      "title": "Cancellation Policy",
+      "subtitle": "We understand plans change. Cancel anytime with no penalties or hidden fees.",
+      "html": "<h2>Account Cancellation</h2><p>You may cancel your iKan account at any time.</p><h2>Subscription Cancellation</h2><p>For subscription services, cancel anytime before your next billing date.</p>"
+    },
+    "return-policy": {
+      "title": "Return Policy",
+      "subtitle": "Understanding our refund and return policy for iKan services.",
+      "html": "<h2>💚 Our Satisfaction Guarantee</h2><p>At iKan, we're committed to your satisfaction. If you're not completely satisfied with your purchase, we offer a comprehensive and fair return policy.</p><p>Please contact billing@ikanhealth.in for all refund requests.</p>"
+    }
+  }
+}

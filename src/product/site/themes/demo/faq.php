@@ -2,159 +2,153 @@
 /**
  * Template Name: FAQ
  * Template Post Type: page
+ * Description: Exact replica of iKAN mobile & responsive FAQ page
  */
 
-get_header(); ?>
+get_header();
 
-<main class="ikan2-theme">
+// Fetch FAQ data from pages.json
+$faq_json_path = get_template_directory() . '/assets/pages.json';
+$faq_data = [];
+if ( file_exists( $faq_json_path ) ) {
+  $raw = file_get_contents( $faq_json_path );
+  $decoded = json_decode( $raw, true );
+  $faq_data = $decoded['faq'] ?? [];
+}
 
-  <?php
-  // Get CMS content for the FAQ page
-  $cms_content = get_post_meta( get_the_ID(), 'page-faq', true );
-  $faq = [];
-  if ( $cms_content ) {
-    try { $faq = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
-  }
-  ?>
-  
-  <?php
-  // Get FAQ data from CMS
-  $faq_data = $faq ?? [];
-  $hero_title = $faq_data['heroTitle'] ?? 'FAQs & Help Center';
-  $hero_subtitle = $faq_data['heroSubtitle'] ?? '';
-  $search_placeholder = $faq_data['searchPlaceholder'] ?? 'Search for answers...';
-  $no_results_text = $faq_data['noResultsText'] ?? 'No results found.';
-  $cta_title = $faq_data['ctaTitle'] ?? 'Need More Help?';
-  $cta_description = $faq_data['ctaDescription'] ?? '';
-  $cta_button_text = $faq_data['ctaButtonText'] ?? 'Contact Support';
-  $cta_button_route = $faq_data['ctaButtonRoute'] ?? '/contact';
-  ?>
+$hero_title = $faq_data['heroTitle'] ?? 'Frequently Asked Questions';
+$hero_subtitle = $faq_data['heroSubtitle'] ?? 'Everything you need to know about iKAN, our clinical assessments, and how we keep your privacy secure.';
+$categories = $faq_data['categories'] ?? [];
+?>
 
-  <!-- Hero Section -->
-  <section class="py-16">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h1 class="text-4xl font-bold text-gray-900 mb-2">
-            <?php echo esc_html( $hero_title ); ?>
-          </h1>
-          <?php if ( $hero_subtitle ): ?>
-            <p class="text-lg text-gray-600">
-              <?php echo esc_html( $hero_subtitle ); ?>
-            </p>
-          <?php endif; ?>
-        </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-gray-400" aria-hidden="true" focusable="false">
-            <use href="#icon-search" />
-          </svg>
-          <input type="search"
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary w-64"
-            placeholder="<?php echo esc_attr( $search_placeholder ); ?>"
-            />
-        </div>
+<main class="ikan2-theme bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
+
+  <!-- Header -->
+  <header class="max-w-[760px] mx-auto px-5 pt-8 md:pt-14">
+    <h1 class="font-display text-3xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-gray-900">
+      <?php echo esc_html( $hero_title ); ?>
+    </h1>
+    <p class="text-base md:text-lg mt-3 text-gray-600 leading-relaxed">
+      <?php echo esc_html( $hero_subtitle ); ?>
+    </p>
+  </header>
+
+  <div class="max-w-[760px] mx-auto">
+
+    <!-- Search Input -->
+    <div class="px-5 mt-6">
+      <div class="relative">
+        <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text" id="faq-search" placeholder="Search questions about privacy, programs, or tests..." class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm focus:border-blue-600 focus:outline-none shadow-xs" />
       </div>
     </div>
-  </section>
 
-  <!-- Topics/Tabs -->
-  <section class="py-8 border-b border-gray-100">
-    <div class="max-w-[1600px] mx-auto px-4 flex gap-2">
-      <div class="flex">
-        <button type="button"
-          class="relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary border-b-2 border-transparent transition-colors"
-          data-category="all"
-          <?php echo ( !isset( $_GET['category'] ) || $_GET['category'] === 'all' ) ? 'aria-current="page"' : ''; ?>>
-          All
+    <!-- Category Pills Tabs -->
+    <div class="mt-4 flex gap-2 overflow-x-auto px-5 no-scrollbar" role="tablist" id="faq-tabs">
+      <button type="button" class="faq-tab active px-4 py-2 rounded-xl text-xs font-semibold bg-gray-900 text-white whitespace-nowrap transition-colors" data-cat="all">
+        All
+      </button>
+      <?php foreach ( $categories as $cat ) : ?>
+        <button type="button" class="faq-tab px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap transition-colors" data-cat="<?php echo esc_attr( $cat['id'] ); ?>">
+          <?php echo esc_html( $cat['title'] ); ?>
         </button>
-        <?php 
-        // Get categories from FAQ data
-        $categories = $faq_data['categories'] ?? [];
-        $seen = [];
-        foreach ( $categories as $cat ): 
-          $cat_id = $cat['id'] ?? '';
-          if ( !in_array( $cat_id, $seen ) ): 
-            $seen[] = $cat_id;
-        ?>
-          <button type="button"
-            class="relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary border-b-2 border-transparent transition-colors"
-            data-category="<?php echo esc_attr( $cat_id ); ?>"
-            <?php echo ( isset( $_GET['category'] ) && $_GET['category'] === $cat_id ) ? 'aria-current="page"' : ''; ?>>
-            <?php echo esc_html( $cat['title'] ?? $cat_id ); ?>
-          </button>
-        <?php endif; endforeach; ?>
-      </div>
+      <?php endforeach; ?>
     </div>
-  </section>
 
-  <!-- FAQ Groups -->
-  <section class="py-8">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <?php 
-      $groups = $faq_data['categories'] ?? [];
-      $query = strtolower( $_GET['q'] ?? '' );
-      ?>
-      
-      <?php if ( empty( $groups ) ): ?>
-        <p class="text-gray-500">
-          <?php echo esc_html( $no_results_text ); ?>
-        </p>
-      <?php else: ?>
-        <?php foreach ( $groups as $group ): 
-          $group_id = $group['id'] ?? '';
-          $items = $group['items'] ?? [];
-          // Filter items based on search query
-          $filtered_items = $items;
-          if ( $query ): 
-            $filtered_items = array_filter( $items, function( $item ) use ( $query ) {
-              return stripos( $item['question'], $query ) !== false || 
-                     stripos( $item['answer'], $query ) !== false;
-            } );
-          endif;
-        ?>
-          <?php if ( count( $filtered_items ) > 0 ): ?>
-            <section class="faq-group">
-              <h2 class="faq-group__title text-xl font-medium text-gray-900 mb-4">
-                <?php echo esc_html( $group['title'] ?? '' ); ?>
-              </h2>
-              <div class="faq-list">
-                <?php foreach ( $filtered_items as $item ): 
-                  $question = $item['question'] ?? '';
-                  $answer = $item['answer'] ?? '';
-                ?>
-                  <details key="<?php echo esc_attr( $question ); ?>"
-                    class="faq-item"
-                    <?php echo ( $query ) ? 'open' : ''; ?>>
-                    <summary><?php echo esc_html( $question ); ?></summary>
-                    <p><?php echo wp_kses_post( $answer ); ?></p>
-                  </details>
-                <?php endforeach; ?>
-              </div>
-            </section>
-          <?php endif; endforeach; ?>
-      <?php endif; ?>
+    <!-- FAQ Accordion List -->
+    <div class="px-5 mt-8 space-y-6" id="faq-content">
+      <?php foreach ( $categories as $cat ) : ?>
+        <section class="faq-group" data-cat="<?php echo esc_attr( $cat['id'] ); ?>">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 px-1"><?php echo esc_html( $cat['title'] ); ?></h2>
+          <div class="space-y-2.5">
+            <?php foreach ( $cat['items'] as $item ) : ?>
+              <details class="faq-item group rounded-2xl bg-white border border-gray-200/90 overflow-hidden shadow-xs">
+                <summary class="flex items-center justify-between p-4 md:p-5 cursor-pointer font-bold text-sm md:text-base text-gray-900 list-none select-none group-open:bg-gray-50/50 transition-colors">
+                  <span class="faq-q"><?php echo esc_html( $item['question'] ); ?></span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-3"></i>
+                </summary>
+                <div class="px-4 pb-4 md:px-5 md:pb-5 pt-1 text-sm text-gray-600 leading-relaxed border-t border-gray-100/60 faq-a">
+                  <?php echo wp_kses_post( $item['answer'] ); ?>
+                </div>
+              </details>
+            <?php endforeach; ?>
+          </div>
+        </section>
+      <?php endforeach; ?>
+      <p id="faq-no-results" class="hidden text-center py-10 text-gray-500 text-sm">No matching questions found. Try searching with different keywords.</p>
     </div>
-  </section>
 
-  <!-- CTA Section -->
-  <section class="py-8 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <div class="border rounded-lg p-6">
-        <p class="text-lg mb-2">
-          <?php echo esc_html( $cta_title ); ?>
-        </p>
-        <p class="text-gray-600">
-          <?php echo esc_html( $cta_description ); ?>
-        </p>
-        <button type="button"
-          class="info-button mt-4 w-full"
-          onClick="window.location.href='<?php echo esc_url( $cta_button_route ); ?>'">
-          <?php echo esc_html( $cta_button_text ); ?>
-        </button>
+    <!-- Bottom CTA Card -->
+    <section class="px-5 mt-10">
+      <div class="rounded-[24px] bg-gray-100 p-6 md:p-8">
+        <h3 class="text-xl font-bold text-gray-900">Still have questions?</h3>
+        <p class="text-sm text-gray-600 mt-1">Our care team is always here to help you navigate your mental wellness journey.</p>
+        <a href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="mt-4 inline-flex items-center gap-2 rounded-full bg-gray-900 hover:bg-gray-800 px-6 py-3 text-xs font-bold text-white transition-colors">
+          <span>Contact our team</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
       </div>
-    </div>
-  </section>
+    </section>
+
+  </div>
 
 </main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('faq-search');
+    const tabs = document.querySelectorAll('.faq-tab');
+    const groups = document.querySelectorAll('.faq-group');
+    const items = document.querySelectorAll('.faq-item');
+    const noResults = document.getElementById('faq-no-results');
+    let activeCat = 'all';
+
+    function filterFAQ() {
+      const q = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      groups.forEach(group => {
+        const cat = group.getAttribute('data-cat');
+        const matchCat = (activeCat === 'all' || activeCat === cat);
+        let groupVisibleCount = 0;
+
+        const groupItems = group.querySelectorAll('.faq-item');
+        groupItems.forEach(item => {
+          const question = item.querySelector('.faq-q').textContent.toLowerCase();
+          const answer = item.querySelector('.faq-a').textContent.toLowerCase();
+          const matchQuery = !q || question.includes(q) || answer.includes(q);
+
+          if (matchCat && matchQuery) {
+            item.style.display = '';
+            groupVisibleCount++;
+            visibleCount++;
+            if (q) item.open = true;
+          } else {
+            item.style.display = 'none';
+          }
+        });
+
+        group.style.display = (groupVisibleCount > 0) ? '' : 'none';
+      });
+
+      noResults.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    searchInput.addEventListener('input', filterFAQ);
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        tabs.forEach(t => {
+          t.classList.remove('bg-gray-900', 'text-white', 'active');
+          t.classList.add('bg-gray-100', 'text-gray-700');
+        });
+        tab.classList.remove('bg-gray-100', 'text-gray-700');
+        tab.classList.add('bg-gray-900', 'text-white', 'active');
+        activeCat = tab.getAttribute('data-cat');
+        filterFAQ();
+      });
+    });
+  });
+</script>
 
 <?php get_footer(); ?>
