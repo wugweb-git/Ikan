@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-consultation', true );
   $consultation = [];
   if ( $cms_content ) {
-    try { $consultation = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $consultation = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   

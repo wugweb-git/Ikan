@@ -16,7 +16,7 @@ get_header(); ?>
   if ( $cms_content ) {
     try {
       $hero = json_decode( $cms_content, true );
-    } catch ( $e ) {
+    } catch ( Throwable $e ) {
       // fall through to empty
     }
   }

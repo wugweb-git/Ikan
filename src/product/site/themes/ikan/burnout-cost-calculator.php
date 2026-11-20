@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'burnout-cost-calculator', true );
   $calculator = [];
   if ( $cms_content ) {
-    try { $calculator = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $calculator = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   

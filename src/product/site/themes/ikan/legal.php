@@ -22,7 +22,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), $cms_key, true );
   $legal = [];
   if ( $cms_content ) {
-    try { $legal = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $legal = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
@@ -35,7 +35,7 @@ get_header(); ?>
     ],
     'terms' => [
       'title' => 'Terms of Service',
-      'subtitle' => 'Important legal terms governing your use of iKAN's platform and services.',
+      'subtitle' => "Important legal terms governing your use of iKAN's platform and services.",
     ],
     'return-policy' => [
       'title' => 'Return & Refund Policy',

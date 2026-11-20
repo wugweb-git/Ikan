@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'professional-application', true );
   $application = [];
   if ( $cms_content ) {
-    try { $application = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $application = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
