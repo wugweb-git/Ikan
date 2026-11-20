@@ -10,6 +10,11 @@
 <!-- Mobile Navigation Drawer & Scripts -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+  // Initialize Lucide Icons
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
+
   // Mobile nav toggle matching PublicBottomNavMobile.tsx
   var mnavToggle = document.querySelector(".mnav__toggle");
   var mnavMenu = document.querySelector(".mnav__menu");
@@ -59,6 +64,28 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   });
+
+  // Authentic Scroll Reveal IntersectionObserver
+  var revealElements = document.querySelectorAll(".reveal, .about-reveal, [data-reveal], .services-band, .services-visual, .services-copy, .info-band, .calc-band");
+  if ("IntersectionObserver" in window) {
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("reveal-in", "is-in");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+
+    revealElements.forEach(function(el) {
+      el.classList.add("reveal");
+      revealObserver.observe(el);
+    });
+  } else {
+    revealElements.forEach(function(el) {
+      el.classList.add("reveal-in", "is-in");
+    });
+  }
 });
 </script>
 

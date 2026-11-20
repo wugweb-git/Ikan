@@ -1897,3 +1897,102 @@ Text Domain: demo
   right: 0;
   z-index: 50;
 }
+
+/* ── Authentic Scroll Reveal & Micro-Interactions ─────────────── */
+:root, .ikan2-theme {
+  --nav-clearance: 112px;
+}
+@media (max-width: 1023px) {
+  :root, .ikan2-theme {
+    --nav-clearance: 84px;
+  }
+}
+
+.site-page-below-nav {
+  padding-top: var(--nav-clearance, 112px) !important;
+}
+
+.site-container,
+.ikan-container {
+  width: 100%;
+  max-width: 1100px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+@media (min-width: 768px) {
+  .site-container,
+  .ikan-container {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+}
+
+/* Scroll reveal initial state and active state */
+.reveal, .about-reveal, [data-reveal] {
+  opacity: 0;
+  transform: translateY(22px) scale(0.985);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.reveal-in,
+.about-reveal.is-in,
+[data-reveal].reveal-in {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .about-reveal, [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Card hover and interactive transforms */
+.interactive-card,
+.service-card,
+.assessment-card,
+.program-card,
+.team-card,
+.calc-band,
+.site-card,
+.about-story-card,
+.about-stat {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
+}
+
+.interactive-card:hover,
+.service-card:hover,
+.assessment-card:hover,
+.program-card:hover,
+.team-card:hover,
+.about-story-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Buttons active/press state */
+button,
+.btn,
+.btn-nav-primary,
+.btn-nav-secondary,
+.info-button,
+.calc-hero__cta,
+.motion-press {
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+button:active,
+.btn:active,
+.btn-nav-primary:active,
+.btn-nav-secondary:active,
+.info-button:active,
+.calc-hero__cta:active,
+.motion-press:active {
+  transform: scale(0.97) !important;
+}
+

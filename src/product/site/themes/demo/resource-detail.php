@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme">
+<main class="ikan2-theme site-page-below-nav">
 
   <?php
   // Get CMS content for resource detail
@@ -19,7 +19,7 @@ get_header(); ?>
   
   <!-- Hero Section -->
   <section class="py-16 bg-gradient-to-b from-blue-50 to-indigo-100">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="relative z-10">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
           Resource Detail
@@ -33,7 +33,7 @@ get_header(); ?>
 
   <!-- Resource Content -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="prose prose-in max-w-prose">
         <?php if ( $resource ): ?>
           <?php echo wp_kses_post( $resource['content'] ?? '' ); ?>
@@ -48,7 +48,7 @@ get_header(); ?>
 
   <!-- Related Resources -->
   <section class="py-12 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Related Resources</h2>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div class="p-4 border rounded-lg">
@@ -72,7 +72,7 @@ get_header(); ?>
 
   <!-- Resource Metadata -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <p class="text-gray-500">Author</p>

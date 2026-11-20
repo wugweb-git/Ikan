@@ -19,7 +19,7 @@ get_header(); ?>
   
   <!-- Hero Section -->
   <section class="py-16 bg-gradient-to-b from-gray-50 to-gray-100">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="relative z-10">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
           Mental Health Assessments
@@ -33,7 +33,7 @@ get_header(); ?>
 
   <!-- Available Assessments -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <?php 
         // Common assessments - would typically come from CMS or a custom post type
@@ -64,7 +64,7 @@ get_header(); ?>
 
   <!-- Assessment Process -->
   <section class="py-12 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-medium mb-3">
@@ -93,7 +93,7 @@ get_header(); ?>
 
   <!-- Related Resources -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Related Resources</h2>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div class="p-4 border rounded-lg">
