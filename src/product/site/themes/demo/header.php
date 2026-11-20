@@ -106,12 +106,6 @@
       }
     }
   </style>
-  <!-- Cross-Domain Linking for Google Site Kit GA4 between ikanhealth.in and app.ikanhealth.in -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('set', 'linker', { 'domains': ['ikanhealth.in', 'app.ikanhealth.in'] });
-  </script>
   <?php wp_head(); ?>
 </head>
 <body <?php body_class( "antialiased" ); ?>>
