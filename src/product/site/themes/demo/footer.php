@@ -10,14 +10,32 @@
 <!-- Mobile Navigation Drawer & Scripts -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // Mobile nav toggle
+  // Mobile nav toggle matching PublicBottomNavMobile.tsx
   var mnavToggle = document.querySelector(".mnav__toggle");
   var mnavMenu = document.querySelector(".mnav__menu");
+  var mnav = document.querySelector(".mnav");
   if (mnavToggle && mnavMenu) {
-    mnavToggle.addEventListener("click", function() {
+    mnavToggle.addEventListener("click", function(e) {
+      e.stopPropagation();
       var isHidden = mnavMenu.style.display === "none";
-      mnavMenu.style.display = isHidden ? "flex" : "none";
+      mnavMenu.style.display = isHidden ? "grid" : "none";
       mnavToggle.setAttribute("aria-expanded", isHidden ? "true" : "false");
+    });
+
+    // Close on click outside
+    document.addEventListener("click", function(e) {
+      if (mnav && !mnav.contains(e.target) && mnavMenu.style.display !== "none") {
+        mnavMenu.style.display = "none";
+        mnavToggle.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape" && mnavMenu.style.display !== "none") {
+        mnavMenu.style.display = "none";
+        mnavToggle.setAttribute("aria-expanded", "false");
+      }
     });
   }
 
