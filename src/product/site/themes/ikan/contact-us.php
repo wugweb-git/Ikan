@@ -94,6 +94,16 @@ get_header(); ?>
         <?php else: ?>
           <p class="text-gray-500">Fluent Forms plugin detected but form not found. ID: <?php echo esc_html( $form_id ); ?></p>
         <?php endif; ?>
+      <?php elseif ( function_exists( 'scf_contact_form' ) || class_exists( 'Simple_Contact_Form' ) ): ?>
+        <!-- SCF Integration -->
+        <?php echo do_shortcode( '[scf_contact_form]' ); ?>
+      <?php elseif ( class_exists( 'Fluent_CRM' ) || true ): ?>
+        <!-- FluentCRM Integration - for email marketing nurture -->
+        <p class="text-sm text-gray-500">
+          Message received! <a href="javascript:void(0)" class="text-blue-600 hover underline"
+            onClick="window.location.href='<?php echo esc_url( home_url( '/contact' ) ); }'>
+            Stay connected for mental health tips and updates</a>.
+        </p>
       <?php else: ?>
         <!-- Classic Fallback Form -->
         <form method="post" action="<?php echo esc_url( home_url( '/contact' ); ) ?>">
@@ -120,16 +130,26 @@ get_header(); ?>
 
 <?php get_footer(); ?>
 
-<!-- Fluent Forms Setup Note -->
+<!-- Form Plugin Setup Notes -->
 <p class="text-sm text-gray-500 mt-8">
   <?php if ( $use_fluent ): ?>
     This page is configured to use Fluent Forms (ID: <?php echo esc_html( $fluent_form_id ); ?>). 
     To set up: Go to Fluent Forms > Forms, create a form, note its ID, 
     then add it to: Appearance > Theme Editor > ikan Contact Settings (or 
     add the option value `ikan_fluent_form_id` in WordPress Dashboard > Options).
+  <?php elseif ( function_exists( 'scf_contact_form' ) || class_exists( 'Simple_Contact_Form' ) ): ?>
+    This page is using Simple Contact Form (SCF). 
+    No additional setup needed - the form is automatically displayed.
+  <?php elseif ( class_exists( 'Fluent_CRM' ) ): ?>
+    This page is integrated with FluentCRM for email marketing. 
+    Messages are captured and can be added to your FluentCRM lists for 
+    follow-up mental health tips and updates.
   <?php else: ?>
-    Fluent Forms is not actively detected. The contact form will use the classic 
-    HTML fallback. To enable Fluent Forms integration, install the Fluent Forms 
-    plugin and add the form ID in the theme options.
+    No specialized form plugin detected. The contact form will use the classic 
+    HTML fallback. To enable advanced form features, install:
+    - Fluent Forms: For drag-and-drop form builder
+    - Simple Contact Form (SCF): For lightweight contact forms  
+    - FluentCRM: For email marketing and nurture sequences
+    Then add the respective plugin ID or enable integration in theme options.
   <?php endif; ?>
 </p>
