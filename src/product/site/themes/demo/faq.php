@@ -59,4 +59,166 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<!-- FAQPage Schema.org Structured Data for Rich Search Results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is iKAN and how does it support mental health?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "iKAN is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is iKAN a replacement for therapy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. iKAN is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is iKAN different from other mental health apps?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "iKAN combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow Calm Tech design principles."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I create an account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tap Get Started on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is iKAN free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use iKAN without signing in?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I update my profile information?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Navigate to your Account page. You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I change my password or email?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Go to Account → Security section. You can change your password by entering your current and new password."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I export or delete my data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Under Account → Data & Privacy, you can export all your data as a JSON file. You can also permanently delete your account."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What payment methods do you accept?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We accept all major credit and debit cards, UPI, and net banking through our secure Razorpay integration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I view my payment history?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Go to Account → Payment History to see a complete record of your transactions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is your refund policy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We offer refunds on a case-by-case basis. Contact our support team within 7 days of purchase."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I book a consultation with a therapist?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Navigate to the Consultation page, browse our verified professionals by category, and select a time slot."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the Equip programs self-paced?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Equip programs are structured into daily modules you can complete at your own pace."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What mental health assessments are available?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We offer assessments for anxiety (GAD-7), depression (PHQ-9), stress (PSS-10), well-being (WHO-5), sleep (SCI), and burnout (BAT-23)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does mood journaling work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data private and secure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we never share it with third parties."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What should I do in a mental health emergency?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Call your local emergency services (112), the National Helpline at 1800-599-0019, or the iCALL Psychosocial Helpline at 9152987821."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How are consultants verified?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "All consultants on iKAN are licensed professionals. We verify their credentials and experience before they join."
+      }
+    }
+  ]
+}
+</script>
+
 <?php get_footer(); ?>
