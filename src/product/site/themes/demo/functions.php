@@ -566,6 +566,25 @@ add_action( 'wp_ajax_nopriv_ikan_user_login', 'ikan_handle_ajax_user_login' );
 // ── CORS & App API Bridge for ikan2 (https://app.ikanhealth.in) ─────────────
 
 /**
+ * Microsoft Clarity analytics integration (if configured in wp_options)
+ */
+add_action( 'wp_head', function() {
+  $clarity_id = get_option( 'ikan_clarity_id' );
+  if ( ! empty( $clarity_id ) ) {
+    ?>
+    <!-- Microsoft Clarity snippet -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "<?php echo esc_js( $clarity_id ); ?>");
+    </script>
+    <?php
+  }
+}, 3 );
+
+/**
  * Configure Google Site Kit GA4 tag options:
  * - Enables cross-domain linker between ikanhealth.in and app.ikanhealth.in
  * - Prevents duplicate gtag snippets by letting Site Kit own the single tag
