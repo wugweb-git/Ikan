@@ -1,0 +1,112 @@
+{
+ "snapshotAt": "2026-09-21T13:30:07.753Z",
+ "rows": [
+  {
+   "id": "33eae2e2-e0e5-4e09-a423-5d450607bb75",
+   "slug": "productivity-reset",
+   "title": "Productivity Reset",
+   "description": "This 7-day challenge helps you reset focus, reduce procrastination, and rebuild productive momentum — without burnout.",
+   "category": "focus",
+   "published": true,
+   "is_paid": false,
+   "price": 50,
+   "currency": "INR",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767525959578-3r7lzcn.jpeg",
+   "image_url": "https://images.unsplash.com/photo-1705417272217-490f4511abeb?w=800",
+   "cover_image": "https://images.unsplash.com/photo-1705417272217-490f4511abeb?w=800",
+   "dayCount": 9,
+   "activityCount": 35,
+   "metadata": {
+    "tile2_content": "yes",
+    "tile3_content": "yes",
+    "tile4_content": "yes",
+    "eligibility_intro": "",
+    "eligibility_point_1": "",
+    "eligibility_point_2": "yes",
+    "eligibility_point_3": "",
+    "eligibility_point_4": ""
+   }
+  },
+  {
+   "id": "416feb50-e73f-4898-a996-f8a4695a708e",
+   "slug": "burnout-reset",
+   "title": "Unburn",
+   "description": "A comprehensive 30-day program to understand, manage, and recover from burnout.",
+   "category": "burnout",
+   "published": true,
+   "is_paid": false,
+   "price": 499,
+   "currency": "INR",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767525779578-fxn595n.webp",
+   "image_url": "https://images.unsplash.com/photo-1758876022104-368b0f3fb6c9?w=800",
+   "cover_image": "https://images.unsplash.com/photo-1758876022104-368b0f3fb6c9?w=800",
+   "dayCount": 31,
+   "activityCount": 112,
+   "metadata": {
+    "tile1_content": "Don't let burnout drain your spark. With our Bite-sized daily steps reclaim your energy and peace of mind in 35 days.",
+    "tile2_content": "Daily micro-lessons (5-10 minutes)\nEvidence-based CBT techniques\nProgress tracking & insights\nPractical and useful tips",
+    "tile3_content": "Complete your daily lessons at your own pace\nTrack your patterns and progress\nPractice new techniques each day\nReview your insights and adjust your plan",
+    "tile4_content": "Restored Mental & Physical Energy. Overcome chronic exhaustion and feel genuinely recharged\nClear Mental Boundaries. Protect your mental bandwidth and stop taking stress home\nSustainable Work Habits. Create a pace of life you can maintain without burning out\nRenewed Passion & Focus. Feel engaged, present, and motivated in your day-to-day",
+    "eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+    "eligibility_point_1": "Evidence-based CBT techniques",
+    "eligibility_point_2": "Progress tracking & insights",
+    "eligibility_point_3": "Real world ways to challenge burnout  ",
+    "eligibility_point_4": "No pills"
+   }
+  },
+  {
+   "id": "68970d31-0ff3-4d73-b137-80e98228d399",
+   "slug": "sleep-tight",
+   "title": "Sleep Tight",
+   "description": "A gentle, guided program to help you understand and improve your sleep. There’s nothing to “fix” immediately \n. We’ll start by noticing patterns and building consistency.",
+   "category": "sleep",
+   "published": true,
+   "is_paid": false,
+   "price": 499,
+   "currency": "INR",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767525926677-8tjhdzj.webp",
+   "image_url": "https://images.unsplash.com/photo-1531353826977-0941b4779a1c?w=800",
+   "cover_image": "https://images.unsplash.com/photo-1531353826977-0941b4779a1c?w=800",
+   "dayCount": 31,
+   "activityCount": 156,
+   "metadata": {
+    "tile1_content": "Having trouble sleeping? I-Kan's Sleep Tight module is here. We know quality sleep is essential for your well-being. Over the next  31 days, we'll work together to address your sleep troubles and help you achieve restful nights, improving your health, focus, and mood.",
+    "tile2_content": "Daily micro-lessons (5-10 minutes)\nEvidence-based CBT techniques\nProgress tracking & insights\nPersonalized sleep plan",
+    "tile3_content": "Complete your daily lessons at your own pace\nTrack your sleep patterns and progress\nPractice new techniques each day\nReview your insights and adjust your plan",
+    "tile4_content": "Better Sleep Quality. Fall asleep faster and wake up refreshed\nReduced Sleep Anxiety. Stop worrying about sleep and feel more in control\nSustainable Habits. Build routines that last beyond the program\nImproved Daily Energy. Feel more alert and energized during the day",
+    "eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+    "eligibility_point_1": "Evidence-based CBT techniques",
+    "eligibility_point_2": "Progress tracking & insights",
+    "eligibility_point_3": "Personalized sleep plan",
+    "eligibility_point_4": "No pills"
+   }
+  },
+  {
+   "id": "9117b308-ff8a-4613-90ef-007841ef0b79",
+   "slug": "stress-buster",
+   "title": "Stress Buster",
+   "description": "A 30-day guided program to understand, manage, and reduce everyday stress.",
+   "category": "stress",
+   "published": true,
+   "is_paid": false,
+   "price": 0,
+   "currency": "INR",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767522974909-3m9s93q.jpeg",
+   "image_url": "https://images.unsplash.com/photo-1758876201548-ade1eff8b169?w=800",
+   "cover_image": "https://images.unsplash.com/photo-1758876201548-ade1eff8b169?w=800",
+   "dayCount": 28,
+   "activityCount": 117,
+   "metadata": {
+    "tile1_content": "Don't let stress get the better of you. Understanding and learning to manage your stress has never been easier. Simple modules over the next 30 days will teach you how.",
+    "tile2_content": "Daily micro-lessons (5-10 minutes)\nEvidence-based CBT techniques\nProgress tracking & insights\nPractical and useful tips",
+    "tile3_content": "Complete your daily lessons at your own pace\nTrack your patterns and progress\nPractice new techniques each day\nReview your insights and adjust your plan",
+    "tile4_content": "Lower daily stress. Stay calm under pressure and regain control over your life\nReduced Mental Overwhelm. Clear mental clutter and stop feeling constantly overloaded\nSustainable Habits. Build routines that last beyond the program\nImproved Daily Energy. Feel more alert and energized during the day",
+    "eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+    "eligibility_point_1": "Evidence-based CBT techniques",
+    "eligibility_point_2": "Progress tracking & insights",
+    "eligibility_point_3": "Practical stress management ",
+    "eligibility_point_4": "No pills"
+   }
+  }
+ ]
+}

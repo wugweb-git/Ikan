@@ -1,0 +1,451 @@
+{
+ "snapshotAt": "2026-09-21T13:30:07.753Z",
+ "rows": [
+  {
+   "id": "asm_1767129926263_ru3v6dozh",
+   "assessment_id": "asm_1767129926263_ru3v6dozh",
+   "slug": "feeling-worried-and-stressed",
+   "title": "Feeling worried and stressed",
+   "description": "Gauge how overwhelmed or in control you’ve felt over the last month to understand your stress levels.",
+   "category": "stress",
+   "published": true,
+   "duration": 4,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767129922242-zsn1eiv.jpg",
+   "hero_image": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you understand how stressed or overwhelmed you’ve been feeling lately, and whether life has felt manageable or out of control.\n\nIt focuses on how you’ve been responding to everyday pressures at work, at home, or personally.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Perceived stress and overwhelm",
+    "Sense of control vs pressure",
+    "How demanding life has felt"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Answer based on the past month",
+     "description": ""
+    },
+    {
+     "title": "Choose the option that fits best",
+     "description": ""
+    },
+    {
+     "title": "There are no right or wrong answers",
+     "description": ""
+    },
+    {
+     "title": "Go with your first instinct",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 10,
+   "metadata": {
+    "important_note_1": "This is a self-awareness tool, not a diagnosis",
+    "important_note_2": "Not intended for emergency or crisis situations",
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A summary of how frequently stress has affected you</p>\n</li>\n<li>\n<p>Explanation of what your stress level may indicate</p>\n</li>\n<li>\n<p>Insight into whether stress feels situational or ongoing</p>\n</li>\n<li>\n<p>Suggested next steps such as Equip programs, resources, or further assessments</p>\n</li>\n</ul>\n<p>No labels. No judgments. Just clarity.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-help and awareness tool</strong>, not a medical diagnosis</p>\n</li>\n<li>\n<p>Not intended for emergency or crisis situations</p>\n</li>\n<li>\n<p>If stress feels overwhelming or unmanageable, consider reaching out to a mental health professional</p>\n</li>\n<li>\n<p>You may choose to share your results with a professional if helpful</p></li></ul>"
+   }
+  },
+  {
+   "id": "asm_1767130043662_wc4qpivfl",
+   "assessment_id": "asm_1767130043662_wc4qpivfl",
+   "slug": "struggling-to-balance-life",
+   "title": "Struggling to balance life",
+   "description": "Pinpoint workplace stressors like workload, support, and control that may be disrupting work-life balance.",
+   "category": "balance",
+   "published": true,
+   "duration": 10,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767130036789-b1y8hti.jpeg",
+   "hero_image": "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you understand how your time and energy are divided between work, rest, and the people and activities that matter to you.\n\nIt focuses on whether everyday demands have been leaving room for the rest of your life.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [],
+   "notes": [],
+   "questionCount": 8,
+   "metadata": {
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A summary of work-related stress and balance indicators</p>\n</li>\n<li>\n<p>Insight into which factors (workload, control, support) feel most challenging</p>\n</li>\n<li>\n<p>Explanation of what your results may suggest</p>\n</li>\n<li>\n<p>Suggested next steps such as Equip programs, resources, or reflection tools</p>\n</li>\n</ul>\n<p>No labels. No judgments. Just clarity.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-help and awareness tool</strong>, not a medical or workplace diagnosis</p>\n</li>\n<li>\n<p>Not intended for emergency or crisis situations</p>\n</li>\n<li>\n<p>If work stress is significantly affecting your health or functioning, consider speaking with a mental health professional or trusted workplace support</p>\n</li>\n<li>\n<p>You may choose to share your results with a professional if helpful</p></li></ul>"
+   }
+  },
+  {
+   "id": "asm_1767130007889_mewy939gi",
+   "assessment_id": "asm_1767130007889_mewy939gi",
+   "slug": "struggling-with-quality-sleep",
+   "title": "Struggling with quality sleep",
+   "description": "An 8-question assessment to understand sleep quality, night-time patterns, and possible insomnia symptoms.",
+   "category": "sleep",
+   "published": true,
+   "duration": 10,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767130003681-cwlfnls.webp",
+   "hero_image": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you understand your sleep patterns and how restful or disrupted your sleep has been.\n\nIt looks at both sleep quality and how sleep affects your day.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Difficulty falling or staying asleep",
+    "Sleep quality and restfulness",
+    "Daytime energy and alertness"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Think about your recent sleep habits",
+     "description": ""
+    },
+    {
+     "title": "Answer based on typical nights",
+     "description": ""
+    },
+    {
+     "title": "There are no correct answers",
+     "description": ""
+    },
+    {
+     "title": "Be as accurate as possible",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 8,
+   "metadata": {
+    "important_note_1": "Sleep issues can have many causes",
+    "important_note_2": "This is a self-help assessment, not a diagnosis",
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A summary of your sleep quality and patterns</p>\n</li>\n<li>\n<p>Explanation of whether sleep issues appear occasional or persistent</p>\n</li>\n<li>\n<p>Insight into how sleep may be affecting your daily life</p>\n</li>\n<li>\n<p>Suggested next steps such as self-guided tools, Equip programs, or resources</p>\n</li>\n</ul>\n<p>No labels. No diagnoses. Just clarity.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-help and awareness tool</strong>, not a medical diagnosis</p>\n</li>\n<li>\n<p>Not intended for emergency or crisis situations</p>\n</li>\n<li>\n<p>If sleep problems are severe or ongoing, consider speaking with a healthcare professional</p>\n</li>\n<li>\n<p>You may choose to share your results with a professional if helpful</p></li></ul>"
+   }
+  },
+  {
+   "id": "asm_1767129718791_zj1t8hx3c",
+   "assessment_id": "asm_1767129718791_zj1t8hx3c",
+   "slug": "unsure-or-general-concern",
+   "title": "Unsure or general concern",
+   "description": "A quick, holistic snapshot combining anxiety, depression, well-being, resilience, and self-efficacy.",
+   "category": "general",
+   "published": true,
+   "duration": 10,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767129713929-ukrpxcj.jpg",
+   "hero_image": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767132627870-0pje8uz.jpg",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you reflect on your overall emotional state and how balanced or strained you’ve been feeling.\n\nIt focuses on emotional awareness and everyday wellbeing.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Emotional balance and stability",
+    "Ability to cope with feelings",
+    "Overall sense of wellbeing"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Answer honestly and intuitively",
+     "description": ""
+    },
+    {
+     "title": "Focus on how you’ve felt lately",
+     "description": ""
+    },
+    {
+     "title": "No judgment or scoring pressure",
+     "description": ""
+    },
+    {
+     "title": "Results appear after completion",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 24,
+   "metadata": {
+    "important_note_1": "This tool supports self-reflection",
+    "important_note_2": "Not intended for crisis situations",
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A simple summary of your responses</p>\n</li>\n<li>\n<p>An overview of areas that seem <strong>stable</strong> and areas that may need <strong>attention</strong></p>\n</li>\n<li>\n<p>Clear explanations of what your results may indicate</p>\n</li>\n<li>\n<p>Suggested next steps such as self-guided tools, Equip programs, or external support resources</p>\n</li>\n</ul>\n<p>No labels. No diagnoses. Just clarity.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-reflection tool</strong>, not a medical or clinical diagnosis</p>\n</li>\n<li>\n<p>Not intended for crisis or emergency situations</p>\n</li>\n<li>\n<p>If you’re feeling overwhelmed, distressed, or unsafe, please seek support from a mental health professional or local emergency services</p>\n</li>\n<li>\n<p>You’re encouraged to share your results with a qualified professional if helpful</p></li></ul>"
+   }
+  },
+  {
+   "id": "asm_1767129765741_wse9aeprv",
+   "assessment_id": "asm_1767129765741_wse9aeprv",
+   "slug": "feeling-overwhelmed-and-anxious",
+   "title": "Feeling overwhelmed and anxious",
+   "description": "Measure how often anxiety symptoms have affected you over the last two weeks to better understand your current stress response",
+   "category": "anxiety",
+   "published": true,
+   "duration": 4,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767129762157-sitlyk2.jpeg",
+   "hero_image": "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you understand how frequently anxiety has been present in your life recently, including excessive worry, nervousness, and restlessness.\n\nIt focuses on how anxiety has affected your thoughts, physical sensations, and ability to manage everyday situations.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Frequency of anxious thoughts",
+    "Physical and mental tension",
+    "Impact of worry on daily functioning"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Answer based on the past 2 weeks",
+     "description": ""
+    },
+    {
+     "title": "Choose whAnswer based on how you’ve felt recently",
+     "description": ""
+    },
+    {
+     "title": "Choose what best reflects your experience",
+     "description": ""
+    },
+    {
+     "title": "Results are shown after completion",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 10,
+   "metadata": {
+    "important_note_1": "This assessment supports self-reflection only",
+    "important_note_2": "It does not replace professional care",
+    "tile4_content": "<p>What you’ll see</p>\n<p>Once completed, you’ll receive:</p>\n<ul>\n<li>\n<p>A summary of how frequently anxiety symptoms have appeared</p>\n</li>\n<li>\n<p>Clear explanation of what your score range means</p>\n</li>\n<li>\n<p>Insight into whether anxiety seems situational or more consistent</p>\n</li>\n<li>\n<p>Optional next steps such as self-guided tools, Equip programs, or further assessments</p>\n</li>\n</ul>\n<p>No labels. No judgments. Just information.</p>",
+    "tile5_content": "<p>How it works</p>\n<ul>\n<li>\n<p>Answer based on how you’ve felt over the <strong>past 2 weeks</strong></p>\n</li>\n<li>\n<p>Choose the option that fits best—there are no right or wrong answers</p>\n</li>\n<li>\n<p>Progress is saved automatically</p>\n</li>\n<li>\n<p>You can pause and return anytime</p>\n</li>\n<li>\n<p>Results appear immediately after completion</p></li></ul>"
+   }
+  },
+  {
+   "id": "asm_1767129862254_frzeigbdb",
+   "assessment_id": "asm_1767129862254_frzeigbdb",
+   "slug": "feeling-depressed-and-hopeless",
+   "title": "Feeling depressed and hopeless",
+   "description": "Reflect on how frequently depressive symptoms have impacted your mood, energy, and daily functioning recently.",
+   "category": "depression",
+   "published": true,
+   "duration": 3,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767129859805-f65d8ih.jpg",
+   "hero_image": "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you reflect on how often low mood, emotional heaviness, or loss of interest has affected you.\n\nIt focuses on emotional wellbeing and daily functioning.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Mood and emotional state",
+    "Interest and motivation",
+    "Energy levels and engagement"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Think about recent weeks",
+     "description": ""
+    },
+    {
+     "title": "Choose what best describes your experience",
+     "description": ""
+    },
+    {
+     "title": "There’s no need to overthink",
+     "description": ""
+    },
+    {
+     "title": "Results appear after completion",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 12,
+   "metadata": {
+    "important_note_1": "This is not a medical diagnosis",
+    "important_note_2": "If you feel distressed, seek professional support",
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A summary of how often depressive symptoms have appeared</p>\n</li>\n<li>\n<p>Clear explanation of what your results may suggest</p>\n</li>\n<li>\n<p>Insight into whether symptoms seem occasional or persistent</p>\n</li>\n<li>\n<p>Optional next steps such as Equip programs, resources, or professional support</p>\n</li>\n</ul>\n<p>No diagnoses. No labels. Just information to help you decide what to do next.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-help and awareness tool</strong>, not a medical diagnosis</p>\n</li>\n<li>\n<p>Not intended for emergency or crisis situations</p>\n</li>\n<li>\n<p>If you’re feeling unsafe, hopeless, or at risk of harming yourself, seek immediate help from local emergency services or a mental health professional</p>\n</li>\n<li>\n<p>You’re encouraged to discuss your results with a qualified professional if helpful</p>\n</li>\n</ul>"
+   }
+  },
+  {
+   "id": "asm_1767129964930_bv8cqgm16",
+   "assessment_id": "asm_1767129964930_bv8cqgm16",
+   "slug": "feeling-drained-and-burned-out",
+   "title": "Feeling drained and burned out",
+   "description": "Identify emotional exhaustion and mental distance related to work stress as a first step toward recovery.",
+   "category": "burnout",
+   "published": true,
+   "duration": 10,
+   "difficulty": "beginner",
+   "cta_button_text": "Take Assessment",
+   "thumbnail": "https://jpfvoevxegnknxoqmwye.supabase.co/storage/v1/object/public/make-cc205da9-images/assessments/1767129962269-7trk53v.jpg",
+   "hero_image": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1600&q=80",
+   "section1_title": "How it works",
+   "section1_eligibility_title": "What to expect:",
+   "section1_eligibility_points": [
+    "Answer honestly",
+    "Takes about 5 minutes",
+    "Instant results"
+   ],
+   "section1_who_title": "Who can take this?",
+   "section1_who_content": "This assessment is designed for adults 18+.",
+   "section2_title": "What is this assessment?",
+   "about_title": "",
+   "section2_content": "This assessment helps you identify signs of burnout, including exhaustion, detachment, and reduced motivation.\n\nIt focuses on how prolonged stress may be affecting your work and personal life.",
+   "about_content": "",
+   "section2_image": "",
+   "about_image": "",
+   "section2_bullets": [
+    "Emotional and physical exhaustion",
+    "Sense of detachment or cynicism",
+    "Reduced sense of effectiveness"
+   ],
+   "section3_title": "What you'll see",
+   "highlights_title": "Assessment Highlights",
+   "section3_subtitle": "Understanding your mental health is the first step.",
+   "section3_content": [],
+   "highlights": [],
+   "section4_notes_title": "Things to remember",
+   "notes_title": "Things to keep in mind",
+   "section4_notes": [
+    {
+     "title": "Reflect on sustained patterns, not one bad day",
+     "description": ""
+    },
+    {
+     "title": "Answer based on your typical experience",
+     "description": ""
+    },
+    {
+     "title": "Be honest with yourself",
+     "description": ""
+    },
+    {
+     "title": "Results are shown immediately",
+     "description": ""
+    }
+   ],
+   "notes": [],
+   "questionCount": 23,
+   "metadata": {
+    "important_note_1": "Burnout can build gradually over time",
+    "important_note_2": "This assessment is for awareness, not diagnosis",
+    "tile4_content": "<p>What you’ll see</p>\n<p>After completing the assessment, you’ll see:</p>\n<ul>\n<li>\n<p>A summary of burnout-related signals</p>\n</li>\n<li>\n<p>Insight into which dimensions (energy, motivation, mental distance) feel most affected</p>\n</li>\n<li>\n<p>Explanation of what your results may suggest</p>\n</li>\n<li>\n<p>Optional next steps such as Equip programs, resources, or professional support</p>\n</li>\n</ul>\n<p>No labels. No judgments. Just perspective.</p>",
+    "tile5_content": "<p>Important notes</p>\n<ul>\n<li>\n<p>This is a <strong>self-help and awareness tool</strong>, not a medical diagnosis</p>\n</li>\n<li>\n<p>Not intended for emergency or crisis situations</p>\n</li>\n<li>\n<p>If burnout feels severe, persistent, or is affecting your ability to function, consider speaking with a mental health professional</p>\n</li>\n<li>\n<p>You may choose to share your results with a professional if helpful</p></li></ul>"
+   }
+  }
+ ]
+}

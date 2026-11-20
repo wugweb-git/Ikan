@@ -1,0 +1,201 @@
+{
+ "snapshotAt": "2026-09-21T13:30:07.753Z",
+ "rows": [
+  {
+   "name": "Dr. Emily Rodriguez",
+   "credentials": "Ph.D., LMFT",
+   "category": "family-therapist",
+   "photo": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop",
+   "yearsExperience": 12,
+   "languages": [
+    "English",
+    "Spanish",
+    "Hindi"
+   ],
+   "location": "Delhi NCR, India",
+   "sessionModes": [
+    "online",
+    "offline",
+    "video"
+   ],
+   "expertises": [
+    "Relationship Skills",
+    "Communication Skills",
+    "Parenting Concerns",
+    "Life Transitions",
+    "Couples Therapy"
+   ],
+   "topExpertises": [
+    "Couples Therapy",
+    "Family Counseling",
+    "Communication"
+   ],
+   "pricing": {
+    "call": 1500,
+    "video": 2000,
+    "offline": 2500
+   },
+   "nextAvailableSlot": "Oct 19, 2:00 PM",
+   "rating": 4.9,
+   "reviewCount": 156,
+   "bio": "Dr. Rodriguez specializes in helping couples and families improve their relationships and communication. She uses evidence-based approaches like EFT and Gottman Method to address attachment issues and relationship challenges.",
+   "available": true
+  },
+  {
+   "name": "Dr. Priya Sharma",
+   "credentials": "M.Phil, RCI Registered",
+   "category": "therapist",
+   "photo": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
+   "yearsExperience": 8,
+   "languages": [
+    "English",
+    "Hindi",
+    "Marathi"
+   ],
+   "location": "Pune, India",
+   "sessionModes": [
+    "online",
+    "chat",
+    "call"
+   ],
+   "expertises": [
+    "LGBTQIA+ Concerns",
+    "Identity Issues",
+    "Anxiety Disorders",
+    "Self-Esteem",
+    "Young Adults"
+   ],
+   "topExpertises": [
+    "LGBTQIA+ Concerns",
+    "Identity",
+    "Young Adults"
+   ],
+   "pricing": {
+    "call": 1100,
+    "chat": 900,
+    "video": 1300
+   },
+   "nextAvailableSlot": "Today, 6:00 PM",
+   "rating": 4.9,
+   "reviewCount": 67,
+   "bio": "Dr. Sharma provides LGBTQIA+ affirmative therapy, helping individuals with identity exploration, coming out processes, and dealing with discrimination. She creates a safe, affirming space for all clients and is passionate about queer mental health.",
+   "available": true
+  },
+  {
+   "name": "Dr. Sarah Johnson",
+   "credentials": "M.Phil (Clinical Psychology), M.Sc",
+   "category": "therapist",
+   "photo": "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
+   "yearsExperience": 15,
+   "languages": [
+    "English",
+    "Hindi"
+   ],
+   "location": "Mumbai, India",
+   "sessionModes": [
+    "online",
+    "offline",
+    "call",
+    "chat"
+   ],
+   "expertises": [
+    "Anxiety Disorders",
+    "Depressive Disorders",
+    "Trauma",
+    "PTSD",
+    "Stress Management",
+    "Cognitive Behavioral Therapy"
+   ],
+   "topExpertises": [
+    "Anxiety Disorders",
+    "Trauma",
+    "CBT"
+   ],
+   "pricing": {
+    "call": 1200,
+    "chat": 800,
+    "video": 1500,
+    "offline": 2000
+   },
+   "nextAvailableSlot": "Today, 4:00 PM",
+   "rating": 4.8,
+   "reviewCount": 142,
+   "bio": "Dr. Johnson has over 15 years of experience helping individuals overcome anxiety, depression, and trauma. She specializes in cognitive behavioral therapy and trauma-informed care, creating a safe and supportive environment for healing.",
+   "available": true
+  },
+  {
+   "name": "Dr. James Thompson",
+   "credentials": "MD, Psychiatrist",
+   "category": "psychiatrist",
+   "photo": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+   "yearsExperience": 18,
+   "languages": [
+    "English"
+   ],
+   "location": "Chennai, India",
+   "sessionModes": [
+    "online",
+    "offline"
+   ],
+   "expertises": [
+    "Bipolar Disorder",
+    "Schizophrenia",
+    "Depressive Disorders",
+    "Anxiety Disorders",
+    "Medication Management"
+   ],
+   "topExpertises": [
+    "Bipolar Disorder",
+    "Medication Management",
+    "Mood Disorders"
+   ],
+   "pricing": {
+    "video": 2500,
+    "offline": 3000
+   },
+   "nextAvailableSlot": "Oct 20, 11:00 AM",
+   "rating": 4.7,
+   "reviewCount": 203,
+   "bio": "Dr. Thompson is a board-certified psychiatrist with expertise in medication management for complex mental health conditions. He takes a collaborative approach to treatment planning, working closely with patients to find the right medication and dosage.",
+   "available": true
+  },
+  {
+   "name": "Dr. Michael Chen",
+   "credentials": "M.Phil, LCSW",
+   "category": "counselor",
+   "photo": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
+   "yearsExperience": 10,
+   "languages": [
+    "English",
+    "Mandarin"
+   ],
+   "location": "Bangalore, India",
+   "sessionModes": [
+    "online",
+    "call"
+   ],
+   "expertises": [
+    "Stress Management",
+    "Work-Related Concerns",
+    "Communication Skills",
+    "Relationship Skills",
+    "Mindfulness"
+   ],
+   "topExpertises": [
+    "Stress Management",
+    "Work Burnout",
+    "Mindfulness"
+   ],
+   "pricing": {
+    "call": 1000,
+    "chat": 700,
+    "video": 1200
+   },
+   "nextAvailableSlot": "Tomorrow, 10:00 AM",
+   "rating": 4.6,
+   "reviewCount": 89,
+   "bio": "Dr. Chen focuses on helping professionals manage stress and prevent burnout through evidence-based interventions and mindfulness practices. He has extensive experience in workplace mental health and corporate wellness programs.",
+   "available": true
+  }
+ ]
+}

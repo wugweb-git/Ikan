@@ -425,3 +425,142 @@ function ikan_handle_ajax_partner_application() {
 add_action( 'wp_ajax_ikan_submit_partner_application', 'ikan_handle_ajax_partner_application' );
 add_action( 'wp_ajax_nopriv_ikan_submit_partner_application', 'ikan_handle_ajax_partner_application' );
 
+// ── User Registration & Onboarding Submission Handler ───────────────
+function ikan_handle_ajax_user_register() {
+  $name = trim( sanitize_text_field( $_POST['full_name'] ?? '' ) );
+  $email = trim( sanitize_email( $_POST['email'] ?? '' ) );
+  $password = $_POST['password'] ?? '';
+  $phone = trim( sanitize_text_field( $_POST['phone'] ?? '' ) );
+  $focus_areas = isset( $_POST['focus_areas'] ) ? (array) $_POST['focus_areas'] : [];
+  $focus_areas = array_map( 'sanitize_text_field', $focus_areas );
+
+  if ( empty( $name ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter your full name.' ] );
+    return;
+  }
+  if ( empty( $email ) || ! is_email( $email ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter a valid email address.' ] );
+    return;
+  }
+  if ( empty( $password ) || strlen( $password ) < 8 ) {
+    wp_send_json_error( [ 'message' => 'Password must be at least 8 characters long.' ] );
+    return;
+  }
+
+  if ( email_exists( $email ) || username_exists( $email ) ) {
+    wp_send_json_error( [ 'message' => 'An account with this email already exists. Please sign in.' ] );
+    return;
+  }
+
+  // 1. Create WordPress User
+  $username = sanitize_user( current( explode( '@', $email ) ) );
+  if ( username_exists( $username ) ) {
+    $username .= '_' . wp_rand( 100, 999 );
+  }
+
+  $user_id = wp_create_user( $username, $password, $email );
+  if ( is_wp_error( $user_id ) ) {
+    wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
+    return;
+  }
+
+  // Update display name and metadata
+  $parts = explode( ' ', $name, 2 );
+  wp_update_user([
+    'ID'           => $user_id,
+    'display_name' => $name,
+    'first_name'   => $parts[0] ?? $name,
+    'last_name'    => $parts[1] ?? '',
+  ]);
+  if ( ! empty( $phone ) ) update_user_meta( $user_id, 'phone', $phone );
+  if ( ! empty( $focus_areas ) ) update_user_meta( $user_id, 'focus_areas', $focus_areas );
+
+  // 2. Insert into Fluent Forms Submissions (Form ID 5)
+  $payload = [
+    'full_name'   => $name,
+    'email'       => $email,
+    'phone'       => $phone,
+    'focus_areas' => implode( ', ', $focus_areas ),
+  ];
+
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 5,
+        'response'   => json_encode( $payload ),
+        'source_url' => home_url( '/signup/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
+  }
+
+  // 3. Insert / Update into FluentCRM
+  ikan_record_lead_in_fluentcrm( [
+    'email'      => $email,
+    'name'       => $name,
+    'list_slug'  => 'members',
+    'list_title' => 'iKAN Members',
+    'tag_slug'   => 'onboarding',
+    'tag_title'  => 'Onboarding Completed',
+    'note_title' => 'New User Onboarding Registered',
+    'note_desc'  => sprintf( "Phone: %s\nFocus Areas: %s", $phone, implode( ', ', $focus_areas ) ),
+  ] );
+
+  // 4. Log in the new user automatically
+  wp_set_current_user( $user_id );
+  wp_set_auth_cookie( $user_id, true );
+
+  wp_send_json_success([
+    'message'  => 'Account created successfully! Welcome to iKAN.',
+    'redirect' => home_url( '/assessments/' ),
+    'user_id'  => $user_id,
+  ]);
+}
+add_action( 'wp_ajax_ikan_user_register', 'ikan_handle_ajax_user_register' );
+add_action( 'wp_ajax_nopriv_ikan_user_register', 'ikan_handle_ajax_user_register' );
+
+// ── User Login Submission Handler ──────────────────────────────────
+function ikan_handle_ajax_user_login() {
+  $email = trim( sanitize_email( $_POST['email'] ?? '' ) );
+  $password = $_POST['password'] ?? '';
+  $remember = ! empty( $_POST['remember'] );
+
+  if ( empty( $email ) || ! is_email( $email ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter a valid email address.' ] );
+    return;
+  }
+  if ( empty( $password ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter your password.' ] );
+    return;
+  }
+
+  $user = get_user_by( 'email', $email );
+  if ( ! $user ) {
+    wp_send_json_error( [ 'message' => 'No account found with this email address.' ] );
+    return;
+  }
+
+  $creds = [
+    'user_login'    => $user->user_login,
+    'user_password' => $password,
+    'remember'      => $remember,
+  ];
+
+  $signon = wp_signon( $creds, is_ssl() );
+
+  if ( is_wp_error( $signon ) ) {
+    wp_send_json_error( [ 'message' => 'Incorrect password. Please try again or reset your password.' ] );
+    return;
+  }
+
+  wp_send_json_success([
+    'message'  => 'Welcome back, ' . esc_html( $signon->first_name ?: $signon->display_name ) . '!',
+    'redirect' => home_url( '/assessments/' ),
+  ]);
+}
+add_action( 'wp_ajax_ikan_user_login', 'ikan_handle_ajax_user_login' );
+add_action( 'wp_ajax_nopriv_ikan_user_login', 'ikan_handle_ajax_user_login' );
+
+
