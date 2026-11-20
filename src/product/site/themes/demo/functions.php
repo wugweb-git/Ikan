@@ -565,6 +565,18 @@ add_action( 'wp_ajax_nopriv_ikan_user_login', 'ikan_handle_ajax_user_login' );
 
 // ── CORS & App API Bridge for ikan2 (https://app.ikanhealth.in) ─────────────
 
+/**
+ * Configure Google Site Kit GA4 tag options:
+ * - Enables cross-domain linker between ikanhealth.in and app.ikanhealth.in
+ * - Prevents duplicate gtag snippets by letting Site Kit own the single tag
+ */
+add_filter( 'googlesitekit_gtag_opt', function( $gtag_opt ) {
+  $gtag_opt['linker'] = [
+    'domains' => [ 'ikanhealth.in', 'app.ikanhealth.in' ],
+  ];
+  return $gtag_opt;
+} );
+
 add_action( 'init', function() {
   $allowed_origins = [
     'https://app.ikanhealth.in',
