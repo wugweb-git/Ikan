@@ -1,0 +1,12 @@
+/*
+Theme Name: iKAN Health
+Theme URI: https://ikanhealth.in
+Description: iKAN Mental Health Platform - WordPress Theme
+Version: 1.0.0
+Author: iKAN Team
+Text Domain: ikan
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
