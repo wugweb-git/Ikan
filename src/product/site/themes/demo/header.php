@@ -1,239 +1,148 @@
 <?php
 /**
  * The header for iKAN Health WordPress theme
- * Mapped to iKAN 2 Design System and authentic capsule navigation
+ * 1:1 authentic Vercel build design system
  */
 ?><!DOCTYPE html>
-<html <?php language_attributes(); ?> class="ikan2-theme">
+<html <?php language_attributes(); ?> style="--root-scrollbar: 8px; --ikan-color-primary-default: #2A2A2A; --ikan-color-primary-on: #FFFFFF; --ikan-color-accent-default: #E9EBEF; --ikan-color-accent-on: #2A2A2A; --ikan-color-background-page: #F5F5F5; --ikan-color-background-card: #FFFFFF; --ikan-color-background-muted: #F0F0F0; --ikan-color-background-input: #F3F3F5; --ikan-color-text-primary: #151515; --ikan-color-text-muted: #717182; --ikan-color-text-inverse: #FFFFFF; --ikan-color-border-default: #0000001A; --ikan-color-border-light: #0000000D; --ikan-color-status-success: #22C55E; --ikan-color-status-success-light: #DCFCE7; --ikan-color-status-danger: #D4183D; --ikan-color-status-danger-light: #FEECEE; --ikan-color-status-warning: #EAB308; --ikan-color-status-warning-light: #FFF7D6; --ikan-color-status-info: #8B5CF6; --ikan-color-status-info-light: #F3F4F6; --ikan-color-grey-0: #FFFFFF; --ikan-color-grey-1: #F5F5F5; --ikan-color-grey-2: #E4E4E4; --ikan-color-grey-3: #D9D9D9; --ikan-color-grey-4: #BDBDBD; --ikan-color-grey-5: #9E9E9E; --ikan-color-grey-6: #757575; --ikan-color-grey-7: #545454; --ikan-color-grey-8: #333333; --ikan-color-grey-9: #1A1A1A; --ikan-color-grey-10: #0D0D0D; --ikan-color-neutral-100: #FAFAFA; --ikan-color-neutral-200: #F5F5F5; --ikan-color-neutral-300: #E5E5E5; --ikan-color-neutral-400: #8B8B8B; --ikan-color-neutral-500: #4A4A4A; --ikan-color-neutral-600: #2A2A2A; --ikan-color-neutral-700: #1A1A1A; --ikan-color-charts: #2A2A2A,#4A4A4A,#6A6A6A,#8A8A8A,#AAAAAA; --ikan-type-fontfamily-base: Inter, system-ui, -apple-system, \x27Segoe UI\x27, Roboto, \x27Helvetica Neue\x27, Arial, sans-serif; --ikan-type-fontfamily-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, \x27Courier New\x27, monospace; --ikan-type-size-xs: 12px; --ikan-type-size-sm: 14px; --ikan-type-size-md: 16px; --ikan-type-size-lg: 18px; --ikan-type-size-xl: 20px; --ikan-type-size-2xl: 24px; --ikan-type-size-3xl: 32px; --ikan-type-size-4xl: 48px; --ikan-type-lineheight-xs: 1.2; --ikan-type-lineheight-sm: 1.4; --ikan-type-lineheight-md: 1.5; --ikan-type-lineheight-lg: 1.6; --ikan-type-weight-regular: 400; --ikan-type-weight-medium: 500; --ikan-type-letterspacing-tight: -0.025em; --ikan-type-letterspacing-normal: 0; --ikan-type-letterspacing-wide: 0.06em; --ikan-space-0: 0px; --ikan-space-1: 4px; --ikan-space-2: 8px; --ikan-space-3: 12px; --ikan-space-4: 16px; --ikan-space-5: 20px; --ikan-space-6: 24px; --ikan-space-7: 28px; --ikan-space-8: 32px; --ikan-space-unit: 4; --ikan-radius-xs: 2px; --ikan-radius-sm: 6px; --ikan-radius-md: 12px; --ikan-radius-lg: 16px; --ikan-radius-pill: 9999px; --ikan-shadow-xs: 0 1px 2px rgba(0,0,0,0.04); --ikan-shadow-sm: 0 2px 6px rgba(0,0,0,0.06); --ikan-shadow-md: 0 6px 20px rgba(0,0,0,0.08); --ikan-shadow-lg: 0 20px 40px rgba(0,0,0,0.12); --ikan-motion-fast: 150ms; --ikan-motion-normal: 300ms; --ikan-motion-slow: 500ms; --ikan-z-nav: 50; --ikan-z-sticky: 60; --ikan-z-modal: 100; --ikan-z-tooltip: 200; --ikan-z-toast: 40; --ikan-z-overlay: 20;">
 <head>
-  <meta charset="<?php bloginfo( 'charset' ); ?>">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
-  <link rel="icon" type="image/svg+xml" href="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>">
-  <link rel="apple-touch-icon" href="<?php echo esc_url( get_theme_file_uri( 'assets/img/apple-touch-icon.png' ) ); ?>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/tailwind.css' ) ); ?>">
-  <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/app.css' ) ); ?>">
+  <meta charset="<?php bloginfo( "charset" ); ?>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap">
+  <link rel="icon" type="image/svg+xml" href="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>">
+  <link rel="apple-touch-icon" href="<?php echo esc_url( get_theme_file_uri( "assets/img/apple-touch-icon.png" ) ); ?>">
+  <link rel="stylesheet" crossorigin="" href="<?php echo esc_url( get_theme_file_uri( "assets/css/index-C1zkq2-P.css" ) ); ?>">
+  <style id="ikan-keyframes">
+    @keyframes ikan-fadeIn { 0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)} }
+    @keyframes ikan-fadeOut { 0%{opacity:1}100%{opacity:0} }
+    @keyframes ikan-slideUp { 0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)} }
+    @keyframes ikan-slideDown { 0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:translateY(0)} }
+    @keyframes ikan-slideLeft { 0%{opacity:0;transform:translateX(8px)}100%{opacity:1;transform:translateX(0)} }
+    @keyframes ikan-slideRight { 0%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:translateX(0)} }
+    @keyframes ikan-scaleIn { 0%{opacity:0;transform:scale(.96)}100%{opacity:1;transform:scale(1)} }
+    @keyframes ikan-pulse { 0%{transform:scale(1);opacity:1}50%{transform:scale(1.03);opacity:.95}100%{transform:scale(1);opacity:1} }
+    @keyframes ikan-bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)} }
+    @keyframes ikan-wiggle { 0%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}100%{transform:rotate(0)} }
+    @keyframes ikan-spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
+    @keyframes ikan-ripple { 0%{transform:scale(.6);opacity:.35}100%{transform:scale(1.6);opacity:0} }
+  </style>
+  <style id="ikan-hero-marquee-style">
+    @keyframes ikan-marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ikan-marquee-track {
+      display: flex;
+      width: max-content;
+      animation: ikan-marquee-scroll var(--marquee-duration, 40s) linear infinite;
+    }
+    .ikan-marquee-track:hover,
+    .ikan-marquee-track.paused {
+      animation-play-state: paused;
+    }
+    .ikan-marquee-container {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+    }
+    .ikan-marquee-container::before,
+    .ikan-marquee-container::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 60px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .ikan-marquee-container::before {
+      left: 0;
+      background: linear-gradient(to right, var(--canvas, #f5f5f5), transparent);
+    }
+    .ikan-marquee-container::after {
+      right: 0;
+      background: linear-gradient(to left, var(--canvas, #f5f5f5), transparent);
+    }
+  </style>
+  <style id="ikan-logo-carousel-keyframes">
+    @keyframes ikan-logo-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+  </style>
+  <style>
+    /* Responsive Navigation Controls */
+    @media (max-width: 767px) {
+      .nav-fixed-wrapper { display: none !important; }
+      .mnav { display: block !important; }
+    }
+    @media (min-width: 768px) {
+      .nav-fixed-wrapper { display: flex !important; }
+      .mnav { display: none !important; }
+    }
+  </style>
   <?php wp_head(); ?>
 </head>
-<body <?php body_class( 'ikan2-theme antialiased' ); ?> style="background-color: var(--canvas); color: var(--foreground); font-family: var(--font-sans); min-height: 100vh; display: flex; flex-direction: column;">
-
-  <!-- Desktop Floating Capsule Navigation -->
-  <header class="nav-fixed-wrapper w-full fixed top-0 left-0 z-50 pointer-events-none" role="banner" style="padding: 16px 20px;">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <nav 
-        class="ikan-capsule-nav pointer-events-auto flex items-center justify-between w-full px-5 py-3 shadow-app transition-all"
-        style="
-          background: rgba(255, 255, 255, 0.92);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 9999px;
-          min-height: 56px;
-        "
-        aria-label="Primary navigation"
-      >
-        <!-- Brand Squircle + Wordmark -->
-        <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="nav-brand flex items-center gap-2.5 shrink-0" aria-label="iKAN home">
-          <img 
-            src="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>" 
-            alt="iKAN" 
-            width="28" 
-            height="28" 
-            class="w-7 h-7 rounded-[9px] object-contain shadow-xs"
-          />
-          <span class="type-subhead font-semibold text-lg tracking-tight" style="font-family: var(--font-display); color: var(--foreground);">iKAN</span>
-        </a>
-
-        <!-- Center Menu Links (Desktop) -->
-        <div class="hidden lg:flex items-center gap-6 text-sm font-medium" style="color: var(--muted-foreground);">
-          <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="hover:text-black transition-colors">Home</a>
-          <a href="<?php echo esc_url( home_url( '/services' ) ); ?>" class="hover:text-black transition-colors">Services</a>
-          <a href="<?php echo esc_url( home_url( '/assessments' ) ); ?>" class="hover:text-black transition-colors">Assessments</a>
-          <a href="<?php echo esc_url( home_url( '/equip-programs' ) ); ?>" class="hover:text-black transition-colors">Programs</a>
-          <a href="<?php echo esc_url( home_url( '/resources' ) ); ?>" class="hover:text-black transition-colors">Resources</a>
-          <a href="<?php echo esc_url( home_url( '/about-us' ) ); ?>" class="hover:text-black transition-colors">About Us</a>
-          <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="hover:text-black transition-colors">FAQ</a>
-          <a href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="hover:text-black transition-colors">Contact</a>
-        </div>
-
-        <!-- Right Action Button (Desktop) -->
-        <div class="hidden sm:flex items-center gap-3 shrink-0">
-          <a 
-            href="<?php echo esc_url( home_url( '/burnout-cost-calculator' ) ); ?>" 
-            class="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 hover:border-gray-400 text-gray-700 transition-colors hidden xl:inline-block"
-          >
-            Burnout Calculator
+<body <?php body_class( "antialiased" ); ?>>
+  <div id="root">
+    <div class="flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground">
+      <a href="#main-content" class="skip-to-main" style="position: absolute; left: -9999px; z-index: 9999; padding: var(--spacing-2) var(--spacing-4); background-color: var(--color-primary-default); color: var(--color-primary-on); border-radius: var(--radius-sm); font-weight: var(--font-weight-medium); text-decoration: none;">Skip to main content</a>
+      
+      <!-- Desktop Capsule Nav -->
+      <header class="ikan2-theme nav-fixed-wrapper" role="banner">
+        <nav class="ikan-capsule-nav px-[16px] py-[24px] m-[0px]" aria-label="Primary navigation" style="border-radius: 9999px;">
+          <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="nav-brand no-underline" aria-label="iKAN home">
+            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
+            <span class="type-subhead">iKAN</span>
           </a>
-          <a 
-            href="<?php echo esc_url( home_url( '/org' ) ); ?>" 
-            class="text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors hidden xl:inline-block"
-          >
-            For Organizations
-          </a>
-          <a 
-            href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" 
-            class="text-xs font-semibold px-4 py-2 rounded-full text-white shadow-xs hover:opacity-90 transition-opacity"
-            style="background-color: var(--foreground);"
-          >
-            Talk to Us
-          </a>
-        </div>
+          <div class="hidden md:flex items-center gap-2">
+            <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="nav-link no-underline <?php echo is_front_page() ? "active" : ""; ?>">Home</a>
+            <a href="<?php echo esc_url( home_url( "/services" ) ); ?>" class="nav-link no-underline <?php echo is_page( "services" ) ? "active" : ""; ?>">Services</a>
+            <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "resources" ) || is_home()) ? "active" : ""; ?>">Resources</a>
+            <a href="<?php echo esc_url( home_url( "/about-us" ) ); ?>" class="nav-link no-underline <?php echo is_page( "about-us" ) ? "active" : ""; ?>">About Us</a>
+            <a href="<?php echo esc_url( home_url( "/faq" ) ); ?>" class="nav-link no-underline <?php echo is_page( "faq" ) ? "active" : ""; ?>">FAQ</a>
+          </div>
+          <div class="flex items-center gap-4">
+            <a href="<?php echo esc_url( home_url( "/contact-us" ) ); ?>" class="btn-nav-secondary gap-2 no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+              Let\x27s Talk
+            </a>
+            <a href="https://app.ikanhealth.in/login" class="btn-nav-primary gap-2 no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" x2="3" y1="12" y2="12"></line></svg>
+              Sign in
+            </a>
+          </div>
+        </nav>
+      </header>
 
-        <!-- Mobile Trigger Button in Capsule -->
-        <div class="flex lg:hidden items-center gap-2">
-          <button 
-            type="button" 
-            id="mobile-menu-trigger" 
-            class="p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors"
-            aria-label="Open mobile navigation menu"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
+      <!-- Mobile Public Capsule Navigation Bar -->
+      <nav class="ikan2-theme mnav" aria-label="Public navigation">
+        <div class="mnav__bar">
+          <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__brand" aria-label="iKAN home">
+            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
+            <span class="type-subhead">iKAN</span>
+          </a>
+          <button type="button" class="mnav__toggle" aria-label="Open navigation menu" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
           </button>
         </div>
+        <div class="mnav__menu" style="display: none;">
+          <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__item type-label-lg <?php echo is_front_page() ? "is-active" : ""; ?>">Home</a>
+          <a href="<?php echo esc_url( home_url( "/services" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "services" ) ? "is-active" : ""; ?>">Services</a>
+          <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="mnav__item type-label-lg <?php echo (is_page( "resources" ) || is_home()) ? "is-active" : ""; ?>">Resources</a>
+          <a href="<?php echo esc_url( home_url( "/about-us" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "about-us" ) ? "is-active" : ""; ?>">About Us</a>
+          <a href="<?php echo esc_url( home_url( "/faq" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "faq" ) ? "is-active" : ""; ?>">FAQ</a>
+          <div class="mnav__actions">
+            <a href="<?php echo esc_url( home_url( "/contact-us" ) ); ?>" class="mnav__talk type-label-lg no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+              Let\x27s Talk
+            </a>
+            <a href="https://app.ikanhealth.in/login" class="mnav__signin type-label-lg no-underline">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" x2="3" y1="12" y2="12"></line></svg>
+              Sign in
+            </a>
+          </div>
+        </div>
       </nav>
-    </div>
-  </header>
-
-  <!-- Mobile Floating Bottom Navigation Bar (PublicBottomNavMobile) -->
-  <div class="block lg:hidden fixed bottom-4 left-4 right-4 z-50 pointer-events-none max-w-sm mx-auto">
-    <div 
-      class="pointer-events-auto flex items-center justify-between px-5 py-3 shadow-dock rounded-full border border-black/10 bg-white/95 backdrop-blur-md"
-      style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);"
-    >
-      <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center gap-2" aria-label="iKAN home">
-        <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>" alt="iKAN" width="24" height="24" class="w-6 h-6 rounded-[7px]">
-        <span class="font-bold text-sm" style="font-family: var(--font-display); color: var(--foreground);">iKAN</span>
-      </a>
-
-      <div class="flex items-center gap-2">
-        <a 
-          href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" 
-          class="text-xs font-semibold px-3 py-1.5 rounded-full text-white"
-          style="background-color: var(--foreground);"
-        >
-          Talk to Us
-        </a>
-        <button 
-          type="button" 
-          id="mobile-bottom-menu-trigger" 
-          class="p-2 rounded-full hover:bg-gray-100 text-gray-800 transition-colors"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mobile Drawer / Bottom Sheet Modal -->
-  <div id="mobile-drawer" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity duration-300 opacity-0 pointer-events-none" aria-hidden="true">
-    <div 
-      id="mobile-drawer-sheet" 
-      class="fixed bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto bg-white rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 transform translate-y-full"
-    >
-      <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
-        <div class="flex items-center gap-2.5">
-          <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>" alt="iKAN" width="28" height="28" class="w-7 h-7 rounded-[8px]">
-          <span class="font-bold text-base" style="font-family: var(--font-display);">iKAN Menu</span>
-        </div>
-        <button type="button" id="mobile-drawer-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-500" aria-label="Close menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <div class="space-y-6">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Main Pages</p>
-          <div class="grid grid-cols-2 gap-2 text-sm font-medium text-gray-800">
-            <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Home</a>
-            <a href="<?php echo esc_url( home_url( '/services' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Services</a>
-            <a href="<?php echo esc_url( home_url( '/assessments' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Assessments</a>
-            <a href="<?php echo esc_url( home_url( '/equip-programs' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Equip Programs</a>
-            <a href="<?php echo esc_url( home_url( '/resources' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Resources & Blog</a>
-            <a href="<?php echo esc_url( home_url( '/about-us' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">About Us</a>
-            <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">FAQ</a>
-            <a href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-2">Contact Us</a>
-          </div>
-        </div>
-
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Workplace & Tools</p>
-          <div class="space-y-2 text-sm font-medium">
-            <a href="<?php echo esc_url( home_url( '/burnout-cost-calculator' ) ); ?>" class="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-gray-900">
-              <span>Burnout Cost Calculator</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Free</span>
-            </a>
-            <a href="<?php echo esc_url( home_url( '/org' ) ); ?>" class="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 flex items-center justify-between text-emerald-900">
-              <span>Organisation Portal</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">Teams</span>
-            </a>
-            <a href="<?php echo esc_url( home_url( '/consultation' ) ); ?>" class="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-gray-900">
-              <span>Book Consultation</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Therapists</span>
-            </a>
-            <a href="<?php echo esc_url( home_url( '/professional-application' ) ); ?>" class="p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-gray-900">
-              <span>Become a Partner</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">Apply</span>
-            </a>
-          </div>
-        </div>
-
-        <div class="pt-4 border-t border-gray-100 flex flex-col gap-3">
-          <a 
-            href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" 
-            class="w-full py-3 rounded-xl text-center text-sm font-semibold text-white shadow-xs"
-            style="background-color: var(--foreground);"
-          >
-            Get In Touch
-          </a>
-          <a 
-            href="tel:+918527545503" 
-            class="w-full py-3 rounded-xl text-center text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50"
-          >
-            Call: +91 85275 45503
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    (function() {
-      const drawer = document.getElementById('mobile-drawer');
-      const sheet = document.getElementById('mobile-drawer-sheet');
-      const triggers = [document.getElementById('mobile-menu-trigger'), document.getElementById('mobile-bottom-menu-trigger')];
-      const closeBtn = document.getElementById('mobile-drawer-close');
-
-      function openDrawer() {
-        if (!drawer || !sheet) return;
-        drawer.classList.remove('pointer-events-none', 'opacity-0');
-        drawer.classList.add('opacity-100');
-        sheet.classList.remove('translate-y-full');
-        sheet.classList.add('translate-y-0');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeDrawer() {
-        if (!drawer || !sheet) return;
-        drawer.classList.remove('opacity-100');
-        drawer.classList.add('opacity-0', 'pointer-events-none');
-        sheet.classList.remove('translate-y-0');
-        sheet.classList.add('translate-y-full');
-        document.body.style.overflow = '';
-      }
-
-      triggers.forEach(t => { if (t) t.addEventListener('click', openDrawer); });
-      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-      if (drawer) {
-        drawer.addEventListener('click', function(e) {
-          if (e.target === drawer) closeDrawer();
-        });
-      }
-    })();
-  </script>

@@ -2,153 +2,61 @@
 /**
  * Template Name: FAQ
  * Template Post Type: page
- * Description: Exact replica of iKAN mobile & responsive FAQ page
+ * Description: Authentic iKAN Health FAQ & Help Center template
  */
 
-get_header();
+get_header(); ?>
 
-// Fetch FAQ data from pages.json
-$faq_json_path = get_template_directory() . '/assets/pages.json';
-$faq_data = [];
-if ( file_exists( $faq_json_path ) ) {
-  $raw = file_get_contents( $faq_json_path );
-  $decoded = json_decode( $raw, true );
-  $faq_data = $decoded['faq'] ?? [];
-}
-
-$hero_title = $faq_data['heroTitle'] ?? 'Frequently Asked Questions';
-$hero_subtitle = $faq_data['heroSubtitle'] ?? 'Everything you need to know about iKAN, our clinical assessments, and how we keep your privacy secure.';
-$categories = $faq_data['categories'] ?? [];
-?>
-
-<main class="ikan2-theme bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
-
-  <!-- Header -->
-  <header class="max-w-[760px] mx-auto px-5 pt-8 md:pt-14">
-    <h1 class="font-display text-3xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-gray-900">
-      <?php echo esc_html( $hero_title ); ?>
-    </h1>
-    <p class="text-base md:text-lg mt-3 text-gray-600 leading-relaxed">
-      <?php echo esc_html( $hero_subtitle ); ?>
-    </p>
-  </header>
-
-  <div class="max-w-[760px] mx-auto">
-
-    <!-- Search Input -->
-    <div class="px-5 mt-6">
-      <div class="relative">
-        <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-        <input type="text" id="faq-search" placeholder="Search questions about privacy, programs, or tests..." class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm focus:border-blue-600 focus:outline-none shadow-xs" />
-      </div>
-    </div>
-
-    <!-- Category Pills Tabs -->
-    <div class="mt-4 flex gap-2 overflow-x-auto px-5 no-scrollbar" role="tablist" id="faq-tabs">
-      <button type="button" class="faq-tab active px-4 py-2 rounded-xl text-xs font-semibold bg-gray-900 text-white whitespace-nowrap transition-colors" data-cat="all">
-        All
-      </button>
-      <?php foreach ( $categories as $cat ) : ?>
-        <button type="button" class="faq-tab px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap transition-colors" data-cat="<?php echo esc_attr( $cat['id'] ); ?>">
-          <?php echo esc_html( $cat['title'] ); ?>
-        </button>
-      <?php endforeach; ?>
-    </div>
-
-    <!-- FAQ Accordion List -->
-    <div class="px-5 mt-8 space-y-6" id="faq-content">
-      <?php foreach ( $categories as $cat ) : ?>
-        <section class="faq-group" data-cat="<?php echo esc_attr( $cat['id'] ); ?>">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 px-1"><?php echo esc_html( $cat['title'] ); ?></h2>
-          <div class="space-y-2.5">
-            <?php foreach ( $cat['items'] as $item ) : ?>
-              <details class="faq-item group rounded-2xl bg-white border border-gray-200/90 overflow-hidden shadow-xs">
-                <summary class="flex items-center justify-between p-4 md:p-5 cursor-pointer font-bold text-sm md:text-base text-gray-900 list-none select-none group-open:bg-gray-50/50 transition-colors">
-                  <span class="faq-q"><?php echo esc_html( $item['question'] ); ?></span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-3"></i>
-                </summary>
-                <div class="px-4 pb-4 md:px-5 md:pb-5 pt-1 text-sm text-gray-600 leading-relaxed border-t border-gray-100/60 faq-a">
-                  <?php echo wp_kses_post( $item['answer'] ); ?>
-                </div>
-              </details>
-            <?php endforeach; ?>
-          </div>
-        </section>
-      <?php endforeach; ?>
-      <p id="faq-no-results" class="hidden text-center py-10 text-gray-500 text-sm">No matching questions found. Try searching with different keywords.</p>
-    </div>
-
-    <!-- Bottom CTA Card -->
-    <section class="px-5 mt-10">
-      <div class="rounded-[24px] bg-gray-100 p-6 md:p-8">
-        <h3 class="text-xl font-bold text-gray-900">Still have questions?</h3>
-        <p class="text-sm text-gray-600 mt-1">Our care team is always here to help you navigate your mental wellness journey.</p>
-        <a href="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="mt-4 inline-flex items-center gap-2 rounded-full bg-gray-900 hover:bg-gray-800 px-6 py-3 text-xs font-bold text-white transition-colors">
-          <span>Contact our team</span>
-          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-        </a>
-      </div>
-    </section>
-
-  </div>
-
-</main>
+<main id="main-content" tabindex="-1" class="flex-1 w-full relative outline-none p-[0px]" role="main" aria-label="Page content"><div class="w-full h-full"><div class="w-full h-full" style="opacity: 1; transform: none;"><div class="ikan2-theme info-page site-page-below-nav"><section class="info-band"><div class="info-band__inner"><p class="info-eyebrow">Help</p><h1 class="info-title">FAQs &amp; Help Center</h1><p class="info-subtitle">Find answers to common questions about iKAN, your account, programs, and more.</p><div class="faq-search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search faq-search__icon" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><input type="search" placeholder="Search for answers..." aria-label="Search for answers..." value=""></div><div class="info-tabs faq-topics" role="tablist" aria-label="Topics"><button type="button" role="tab" aria-selected="true" aria-current="page" class="info-tab">All</button><button type="button" role="tab" aria-selected="false" class="info-tab">About iKAN</button><button type="button" role="tab" aria-selected="false" class="info-tab">Signing Up &amp; Getting Started</button><button type="button" role="tab" aria-selected="false" class="info-tab">Managing Your Account</button><button type="button" role="tab" aria-selected="false" class="info-tab">Subscriptions &amp; Billing</button><button type="button" role="tab" aria-selected="false" class="info-tab">Sessions &amp; Programs</button><button type="button" role="tab" aria-selected="false" class="info-tab">Trust, Safety &amp; Privacy</button></div><section class="faq-group"><h2 class="faq-group__title">About iKAN</h2><div class="faq-list"><details class="faq-item"><summary>What is iKAN and how does it support mental health?</summary><p>iKAN is a mental health progressive web app (PWA) that provides access to professional consultants, self-guided programs, mood journaling, and clinically validated assessments — all in one place. Our goal is to make mental wellness accessible, private, and stigma-free.</p></details><details class="faq-item"><summary>Is iKAN a replacement for therapy?</summary><p>No. iKAN is a complement to professional care, not a replacement. Our Equip programs, mood tracking, and resources are designed to support your wellbeing between sessions or as a first step.</p></details><details class="faq-item"><summary>How is iKAN different from other mental health apps?</summary><p>iKAN combines self-paced CBT-based programs, professional consultations, mood journaling, and a resource library into a single platform. We follow "Calm Tech" design principles.</p></details></div></section><section class="faq-group"><h2 class="faq-group__title">Signing Up &amp; Getting Started</h2><div class="faq-list"><details class="faq-item"><summary>How do I create an account?</summary><p>Tap "Get Started" on the homepage, enter your name, email, and a secure password. Your account will be confirmed automatically.</p></details><details class="faq-item"><summary>Is iKAN free to use?</summary><p>Browsing resources, assessments, and our library is free. Individual Equip programs and professional consultations are paid services.</p></details><details class="faq-item"><summary>Can I use iKAN without signing in?</summary><p>Yes. Public pages like Resources, Assessments, Equip listings, and informational content are accessible without an account.</p></details></div></section><section class="faq-group"><h2 class="faq-group__title">Managing Your Account</h2><div class="faq-list"><details class="faq-item"><summary>How do I update my profile information?</summary><p>Navigate to your Account page. You can update your name, phone number, bio, date of birth, gender, location, and emergency contact details.</p></details><details class="faq-item"><summary>How do I change my password or email?</summary><p>Go to Account → Security section. You can change your password by entering your current and new password.</p></details><details class="faq-item"><summary>Can I export or delete my data?</summary><p>Yes. Under Account → Data &amp; Privacy, you can export all your data as a JSON file. You can also permanently delete your account.</p></details></div></section><section class="faq-group"><h2 class="faq-group__title">Subscriptions &amp; Billing</h2><div class="faq-list"><details class="faq-item"><summary>What payment methods do you accept?</summary><p>We accept all major credit and debit cards, UPI, and net banking through our secure Razorpay integration.</p></details><details class="faq-item"><summary>How do I view my payment history?</summary><p>Go to Account → Payment History to see a complete record of your transactions.</p></details><details class="faq-item"><summary>What is your refund policy?</summary><p>We offer refunds on a case-by-case basis. Contact our support team within 7 days of purchase.</p></details></div></section><section class="faq-group"><h2 class="faq-group__title">Sessions &amp; Programs</h2><div class="faq-list"><details class="faq-item"><summary>How do I book a consultation with a therapist?</summary><p>Navigate to the Consultation page, browse our verified professionals by category, and select a time slot.</p></details><details class="faq-item"><summary>Are the Equip programs self-paced?</summary><p>Yes. Equip programs are structured into daily modules you can complete at your own pace.</p></details><details class="faq-item"><summary>What mental health assessments are available?</summary><p>We offer assessments for anxiety (GAD-7), depression, stress, well-being, and more.</p></details><details class="faq-item"><summary>How does mood journaling work?</summary><p>The Mood Journal lets you log your mood daily with a rating, emotions, energy level, and free-text reflections.</p></details></div></section><section class="faq-group"><h2 class="faq-group__title">Trust, Safety &amp; Privacy</h2><div class="faq-list"><details class="faq-item"><summary>Is my data private and secure?</summary><p>Your data is treated as highly sensitive. It is sent over an encrypted connection and stored in an access-controlled database, and we never share it with third parties.</p></details><details class="faq-item"><summary>What should I do in a mental health emergency?</summary><p>Call your local emergency services (112) or the iCALL Psychosocial Helpline at 9152987821.</p></details><details class="faq-item"><summary>How are consultants verified?</summary><p>All consultants on iKAN are licensed professionals. We verify their credentials and experience before they join.</p></details></div></section><section class="faq-cta"><p class="faq-cta__title">Still have questions?</p><p class="faq-cta__body">We are here to help you on your mental health journey. Submit a ticket and our team will get back to you.</p><button type="button" class="info-button">Contact Support</button></section></div></section></div></div></div></main>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('faq-search');
-    const tabs = document.querySelectorAll('.faq-tab');
-    const groups = document.querySelectorAll('.faq-group');
-    const items = document.querySelectorAll('.faq-item');
-    const noResults = document.getElementById('faq-no-results');
-    let activeCat = 'all';
+document.addEventListener("DOMContentLoaded", function() {
+  var searchInput = document.querySelector(".faq-search input");
+  var tabs = document.querySelectorAll(".faq-topics button.info-tab");
+  var items = document.querySelectorAll(".faq-item");
+  var groups = document.querySelectorAll(".faq-group");
 
-    function filterFAQ() {
-      const q = searchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
-
-      groups.forEach(group => {
-        const cat = group.getAttribute('data-cat');
-        const matchCat = (activeCat === 'all' || activeCat === cat);
-        let groupVisibleCount = 0;
-
-        const groupItems = group.querySelectorAll('.faq-item');
-        groupItems.forEach(item => {
-          const question = item.querySelector('.faq-q').textContent.toLowerCase();
-          const answer = item.querySelector('.faq-a').textContent.toLowerCase();
-          const matchQuery = !q || question.includes(q) || answer.includes(q);
-
-          if (matchCat && matchQuery) {
-            item.style.display = '';
-            groupVisibleCount++;
-            visibleCount++;
-            if (q) item.open = true;
-          } else {
-            item.style.display = 'none';
-          }
-        });
-
-        group.style.display = (groupVisibleCount > 0) ? '' : 'none';
+  if (searchInput) {
+    searchInput.addEventListener("input", function() {
+      var query = this.value.toLowerCase().trim();
+      items.forEach(function(item) {
+        var text = item.textContent.toLowerCase();
+        if (!query || text.indexOf(query) !== -1) {
+          item.style.display = "";
+          if (query) item.setAttribute("open", "");
+        } else {
+          item.style.display = "none";
+        }
       });
+      groups.forEach(function(grp) {
+        var visible = grp.querySelectorAll(".faq-item:not([style*='display: none'])");
+        grp.style.display = visible.length ? "" : "none";
+      });
+    });
+  }
 
-      noResults.classList.toggle('hidden', visibleCount > 0);
-    }
+  tabs.forEach(function(tab) {
+    tab.addEventListener("click", function() {
+      tabs.forEach(function(t) {
+        t.setAttribute("aria-selected", "false");
+        t.removeAttribute("aria-current");
+      });
+      tab.setAttribute("aria-selected", "true");
+      tab.setAttribute("aria-current", "page");
 
-    searchInput.addEventListener('input', filterFAQ);
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', function() {
-        tabs.forEach(t => {
-          t.classList.remove('bg-gray-900', 'text-white', 'active');
-          t.classList.add('bg-gray-100', 'text-gray-700');
-        });
-        tab.classList.remove('bg-gray-100', 'text-gray-700');
-        tab.classList.add('bg-gray-900', 'text-white', 'active');
-        activeCat = tab.getAttribute('data-cat');
-        filterFAQ();
+      var cat = tab.textContent.trim();
+      groups.forEach(function(grp) {
+        var title = grp.querySelector(".faq-group__title");
+        var titleText = title ? title.textContent.trim() : "";
+        if (cat === "All" || titleText === cat) {
+          grp.style.display = "";
+        } else {
+          grp.style.display = "none";
+        }
       });
     });
   });
+});
 </script>
 
 <?php get_footer(); ?>
