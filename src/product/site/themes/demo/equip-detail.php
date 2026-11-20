@@ -41,38 +41,54 @@ $duration = $program['duration'] ?? '14 Days';
 <main class="ikan2-theme site-page-below-nav" style="font-family: var(--font-sans);">
 
   <!-- Hero Section -->
+  <?php
+  $cover_map = [
+    'sleep-tight' => 'equip-sleep-tight.jpg',
+    'unburn' => 'res-burnout.jpg',
+    'stress-buster' => 'res-anxiety.jpg',
+    'productivity-reset' => 'equip-productivity-reset.jpg',
+  ];
+  $cover_img = $cover_map[$slug] ?? 'program-cover.jpg';
+  ?>
   <section class="py-14 md:py-20 bg-gradient-to-b from-[#F2F7F4] via-[#E5EFE9] to-white border-b border-gray-100">
     <div class="site-container">
-      <div class="max-w-3xl">
-        <a href="<?php echo esc_url( home_url( '/equip-programs/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-black font-medium mb-4">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-          Back to all Equip Programs
-        </a>
-
-        <div class="flex items-center gap-2 mb-3">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-800">
-            <?php echo esc_html( $category ); ?>
-          </span>
-          <span class="text-xs text-gray-500 font-medium">
-            &bull; <?php echo esc_html( $duration ); ?>
-          </span>
-        </div>
-
-        <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
-          <?php echo esc_html( $title ); ?>
-        </h1>
-
-        <p class="text-base md:text-lg text-gray-600 leading-relaxed mb-6">
-          <?php echo esc_html( $desc ); ?>
-        </p>
-
-        <div class="flex items-center gap-4">
-          <a href="<?php echo esc_url( home_url( '/signup/?program=' . urlencode( $slug ) ) ); ?>"
-            class="px-8 py-3.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
-            <span>Enroll &amp; Start Day 1</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <a href="<?php echo esc_url( home_url( '/equip-programs/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-black font-medium mb-4">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            Back to all Equip Programs
           </a>
-          <span class="text-xs text-gray-400">Included free in iKAN membership</span>
+
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-800">
+              <?php echo esc_html( $category ); ?>
+            </span>
+            <span class="text-xs text-gray-500 font-medium">
+              &bull; <?php echo esc_html( $duration ); ?>
+            </span>
+          </div>
+
+          <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
+            <?php echo esc_html( $title ); ?>
+          </h1>
+
+          <p class="text-base md:text-lg text-gray-600 leading-relaxed mb-6">
+            <?php echo esc_html( $desc ); ?>
+          </p>
+
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="<?php echo esc_url( home_url( '/signup/?program=' . urlencode( $slug ) ) ); ?>"
+              class="px-8 py-3.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
+              <span>Enroll &amp; Start Day 1</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            <span class="text-xs text-gray-400">Included free in iKAN membership</span>
+          </div>
+        </div>
+        <div class="lg:col-span-5">
+          <div class="rounded-3xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3] bg-gray-100">
+            <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' . $cover_img ) ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="w-full h-full object-cover" loading="eager" decoding="async">
+          </div>
         </div>
       </div>
     </div>

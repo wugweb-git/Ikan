@@ -86,6 +86,49 @@ add_filter( 'template_include', function( $template ) {
   return $template;
 }, 99 );
 
+/**
+ * Resolves authentic cover image URL for a resource post.
+ * Checks post thumbnail, poster metadata, title-matched cover in assets/resources/covers,
+ * and audio/video posters in assets/resources.
+ */
+function ikan_get_resource_cover_url( $post_id ) {
+  if ( has_post_thumbnail( $post_id ) ) {
+    $thumb = get_the_post_thumbnail_url( $post_id, 'large' );
+    if ( $thumb ) return $thumb;
+  }
+
+  $poster = get_post_meta( $post_id, 'poster', true );
+  if ( $poster ) {
+    $theme_poster = 'assets/' . ltrim( $poster, '/' );
+    if ( file_exists( get_template_directory() . '/' . $theme_poster ) ) {
+      return get_theme_file_uri( $theme_poster );
+    }
+  }
+
+  $title = get_the_title( $post_id );
+  $words = preg_split( '/[^a-zA-Z0-9]+/', strtolower( $title ), -1, PREG_SPLIT_NO_EMPTY );
+  $covers_dir = get_template_directory() . '/assets/resources/covers';
+  if ( is_dir( $covers_dir ) ) {
+    $best_match = null;
+    $best_score = 0;
+    foreach ( scandir( $covers_dir ) as $f ) {
+      if ( $f === '.' || $f === '..' ) continue;
+      $f_words = preg_split( '/[^a-zA-Z0-9]+/', strtolower( $f ), -1, PREG_SPLIT_NO_EMPTY );
+      $intersect = array_intersect( $words, $f_words );
+      $score = count( $intersect );
+      if ( $score > $best_score && $score >= 2 ) {
+        $best_score = $score;
+        $best_match = $f;
+      }
+    }
+    if ( $best_match ) {
+      return get_theme_file_uri( 'assets/resources/covers/' . $best_match );
+    }
+  }
+
+  return get_theme_file_uri( 'assets/img/photo-1758272422634-e8ed8e252a14' );
+}
+
 // ── FluentCRM Profiling & Data Collection Engine (NO SUPABASE) ───────────────
 
 /**

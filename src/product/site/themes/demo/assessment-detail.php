@@ -41,40 +41,61 @@ $duration = $assessment['duration'] ?? 5;
 <main class="ikan2-theme site-page-below-nav" style="font-family: var(--font-sans);">
 
   <!-- Hero Section -->
+  <?php
+  $cover_map = [
+    'who-5' => 'what-is-the-who-5-well-being-index-a.webp',
+    'bat-23' => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+    'gad-7' => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+    'phq-9' => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+    'sci' => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+    'pss-10' => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+    'workplace' => 'what-is-the-workplace-stress-scale-explained.webp',
+  ];
+  $cover_file = $cover_map[$slug] ?? null;
+  ?>
   <section class="py-14 md:py-20 bg-gradient-to-b from-[#F5F8F7] via-[#EBF3EF] to-white border-b border-gray-100">
     <div class="site-container">
-      <div class="max-w-3xl">
-        <a href="<?php echo esc_url( home_url( '/assessments/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-black font-medium mb-4">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-          Back to all Assessments
-        </a>
-
-        <div class="flex items-center gap-2 mb-3">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-800">
-            <?php echo esc_html( $category ); ?>
-          </span>
-          <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
-            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-            <?php echo esc_html( $duration ); ?> mins to complete
-          </span>
-        </div>
-
-        <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
-          <?php echo esc_html( $title ); ?>
-        </h1>
-
-        <p class="text-base md:text-lg text-gray-600 leading-relaxed mb-6">
-          <?php echo esc_html( $desc ); ?>
-        </p>
-
-        <div class="flex items-center gap-4">
-          <a href="<?php echo esc_url( home_url( '/signup/?focus=' . urlencode( $category ) ) ); ?>"
-            class="px-8 py-3.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
-            <span>Begin Assessment</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <a href="<?php echo esc_url( home_url( '/assessments/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-black font-medium mb-4">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            Back to all Assessments
           </a>
-          <span class="text-xs text-gray-400">100% Free &amp; Anonymous</span>
+
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-800">
+              <?php echo esc_html( $category ); ?>
+            </span>
+            <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
+              <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              <?php echo esc_html( $duration ); ?> mins to complete
+            </span>
+          </div>
+
+          <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
+            <?php echo esc_html( $title ); ?>
+          </h1>
+
+          <p class="text-base md:text-lg text-gray-600 leading-relaxed mb-6">
+            <?php echo esc_html( $desc ); ?>
+          </p>
+
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="<?php echo esc_url( home_url( '/signup/?focus=' . urlencode( $category ) ) ); ?>"
+              class="px-8 py-3.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all flex items-center gap-2 shadow-sm">
+              <span>Begin Assessment</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            <span class="text-xs text-gray-400">100% Free &amp; Anonymous</span>
+          </div>
         </div>
+        <?php if ( $cover_file ) : ?>
+          <div class="lg:col-span-5">
+            <div class="rounded-3xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3] bg-gray-100">
+              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/resources/covers/' . $cover_file ) ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="w-full h-full object-cover" loading="eager" decoding="async">
+            </div>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
   </section>

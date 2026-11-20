@@ -84,13 +84,13 @@ get_header(); ?>
           <div>
             <!-- Thumbnail / Cover -->
             <a href="<?php echo esc_url( $post_link ); ?>" class="block relative aspect-[16/10] overflow-hidden bg-gray-100">
-              <?php if ( has_post_thumbnail() ) : ?>
-                <?php the_post_thumbnail( 'medium_large', [ 'class' => 'w-full h-full object-cover transition-transform duration-300 hover:scale-105' ] ); ?>
-              <?php else : ?>
-                <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-                  <span class="text-xs font-semibold text-gray-500 uppercase">iKAN Health</span>
-                </div>
-              <?php endif; ?>
+              <?php 
+              $cover_url = function_exists('ikan_get_resource_cover_url') ? ikan_get_resource_cover_url( $post_id ) : ( has_post_thumbnail() ? get_the_post_thumbnail_url( $post_id, 'medium_large' ) : '' );
+              if ( ! $cover_url ) {
+                $cover_url = get_theme_file_uri( 'assets/img/photo-1758272422634-e8ed8e252a14' );
+              }
+              ?>
+              <img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" decoding="async">
 
               <!-- Format Badge (Video / Audio / Article) -->
               <div class="absolute top-3 left-3">
