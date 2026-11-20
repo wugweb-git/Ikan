@@ -63,22 +63,51 @@ if ( file_exists( $assessments_file ) ) {
           $category = $a['category'] ?? 'Wellbeing';
           $bg_colors = [ 'bg-blue-50 text-blue-700', 'bg-emerald-50 text-emerald-700', 'bg-purple-50 text-purple-700', 'bg-amber-50 text-amber-700', 'bg-rose-50 text-rose-700' ];
           $badge_color = $bg_colors[ $idx % count( $bg_colors ) ];
+
+          $cover_map = [
+            'who-5' => 'what-is-the-who-5-well-being-index-a.webp',
+            'bat-23' => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+            'gad-7' => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+            'phq-9' => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+            'sci' => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+            'pss-10' => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+            'workplace' => 'what-is-the-workplace-stress-scale-explained.webp',
+          ];
+          $cover_file = $cover_map[$slug] ?? null;
         ?>
-        <div class="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col justify-between group">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider <?php echo esc_attr( $badge_color ); ?>">
-                <?php echo esc_html( $category ); ?>
-              </span>
-              <span class="text-xs text-gray-400 flex items-center gap-1">
+        <div class="bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col justify-between group">
+          <?php if ( $cover_file ) : ?>
+            <div class="relative h-44 w-full overflow-hidden bg-gray-100">
+              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/resources/covers/' . $cover_file ) ); ?>" alt="<?php echo esc_attr( $a['title'] ); ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+              <div class="absolute top-3 left-3">
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-white/95 backdrop-blur-xs text-gray-800 shadow-xs">
+                  <?php echo esc_html( $category ); ?>
+                </span>
+              </div>
+              <div class="absolute bottom-2.5 right-3 text-xs text-white font-medium flex items-center gap-1 drop-shadow-xs">
                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
                 <?php echo esc_html( $duration ); ?> mins
-              </span>
+              </div>
             </div>
+          <?php endif; ?>
+          <div class="p-6 flex-1 flex flex-col justify-between">
+            <div>
+              <?php if ( ! $cover_file ) : ?>
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider <?php echo esc_attr( $badge_color ); ?>">
+                    <?php echo esc_html( $category ); ?>
+                  </span>
+                  <span class="text-xs text-gray-400 flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                    <?php echo esc_html( $duration ); ?> mins
+                  </span>
+                </div>
+              <?php endif; ?>
 
-            <h3 class="font-bold text-gray-900 text-lg mb-2 group-hover:text-black">
-              <?php echo esc_html( $a['title'] ); ?>
-            </h3>
+              <h3 class="font-bold text-gray-900 text-lg mb-2 group-hover:text-black">
+                <?php echo esc_html( $a['title'] ); ?>
+              </h3>
 
             <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed mb-4">
               <?php echo esc_html( $a['description'] ?? 'Evidence-based clinical screening to identify patterns and gauge severity over time.' ); ?>

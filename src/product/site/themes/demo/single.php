@@ -122,9 +122,14 @@ get_header(); ?>
       <?php endif; ?>
 
       <!-- Featured Image (for standard articles or when no video embed) -->
-      <?php if ( $medium !== 'video' && has_post_thumbnail() ) : ?>
+      <?php if ( $medium !== 'video' ) : 
+        $cover_url = function_exists('ikan_get_resource_cover_url') ? ikan_get_resource_cover_url( $post_id ) : ( has_post_thumbnail() ? get_the_post_thumbnail_url( $post_id, 'full' ) : '' );
+        if ( ! $cover_url ) {
+          $cover_url = get_theme_file_uri( 'assets/img/photo-1758272422634-e8ed8e252a14' );
+        }
+      ?>
         <div class="mb-10 rounded-3xl overflow-hidden shadow-xs border border-gray-100">
-          <?php the_post_thumbnail( 'full', [ 'class' => 'w-full h-auto object-cover max-h-[500px]' ] ); ?>
+          <img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-auto object-cover max-h-[500px]" loading="eager" decoding="async">
         </div>
       <?php endif; ?>
 

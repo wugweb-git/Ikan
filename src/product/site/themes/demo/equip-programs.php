@@ -61,22 +61,35 @@ if ( file_exists( $equip_file ) ) {
           $slug = $p['slug'] ?? $p['id'] ?? 'program';
           $duration = $p['duration'] ?? '14 Days';
           $category = $p['category'] ?? 'Wellbeing';
+          $cover_map = [
+            'sleep-tight' => 'equip-sleep-tight.jpg',
+            'unburn' => 'res-burnout.jpg',
+            'stress-buster' => 'res-anxiety.jpg',
+            'productivity-reset' => 'equip-productivity-reset.jpg',
+          ];
+          $cover_img = $cover_map[$slug] ?? 'program-cover.jpg';
         ?>
-        <div class="bg-white border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-4">
-              <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-100">
+        <div class="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col justify-between group">
+          <div class="relative h-52 w-full overflow-hidden bg-gray-100">
+            <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' . $cover_img ) ); ?>" alt="<?php echo esc_attr( $p['title'] ); ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            <div class="absolute top-4 left-4">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/95 backdrop-blur-xs text-emerald-800 shadow-xs">
                 <?php echo esc_html( $category ); ?>
               </span>
-              <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
+            </div>
+            <div class="absolute bottom-3 right-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-black/75 backdrop-blur-xs text-white flex items-center gap-1 shadow-xs">
                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                 <?php echo esc_html( $duration ); ?>
               </span>
             </div>
-
-            <h3 class="font-extrabold text-gray-900 text-2xl mb-3">
-              <?php echo esc_html( $p['title'] ); ?>
-            </h3>
+          </div>
+          <div class="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 class="font-extrabold text-gray-900 text-2xl mb-3">
+                <?php echo esc_html( $p['title'] ); ?>
+              </h3>
 
             <p class="text-sm text-gray-600 leading-relaxed mb-6">
               <?php echo esc_html( $p['description'] ?? 'Targeted, daily cognitive strategies and habit-building exercises created by psychologists.' ); ?>

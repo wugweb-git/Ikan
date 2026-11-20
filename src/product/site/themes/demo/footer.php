@@ -65,8 +65,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // Authentic Scroll Reveal IntersectionObserver
-  var revealElements = document.querySelectorAll(".reveal, .about-reveal, [data-reveal], .services-band, .services-visual, .services-copy, .info-band, .calc-band");
+  // Authentic Scroll Reveal IntersectionObserver (matching ikan2)
+  var revealElements = document.querySelectorAll(".reveal, .about-reveal, [data-reveal]");
   if ("IntersectionObserver" in window) {
     var revealObserver = new IntersectionObserver(function(entries) {
       entries.forEach(function(entry) {
@@ -75,12 +75,20 @@ document.addEventListener("DOMContentLoaded", function() {
           revealObserver.unobserve(entry.target);
         }
       });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    }, { rootMargin: "0px 0px -4% 0px", threshold: 0.05 });
 
     revealElements.forEach(function(el) {
-      el.classList.add("reveal");
-      revealObserver.observe(el);
+      if (!el.classList.contains("reveal-in") && !el.classList.contains("is-in")) {
+        revealObserver.observe(el);
+      }
     });
+
+    // Safety fallback: reveal all elements after 1s so content is never hidden on mobile
+    setTimeout(function() {
+      revealElements.forEach(function(el) {
+        el.classList.add("reveal-in", "is-in");
+      });
+    }, 1000);
   } else {
     revealElements.forEach(function(el) {
       el.classList.add("reveal-in", "is-in");
