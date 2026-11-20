@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 # Deploy guard — refuses a production deploy from the wrong place.
 #
-# Sourced by scripts/deploy-prod.sh and scripts/deploy-edge.sh. Both deploy
-# tools ship the WORKING TREE, not a branch:
-#
-#   - `vercel deploy --prod` uploads whatever is checked out.
-#   - `supabase functions deploy` uploads whatever is in the staging copy.
+# Sourced by scripts/deploy-prod.sh. Guard ensures production deploys
+# ship only verified, clean working state.
 #
 # Neither checks the branch, and a stale branch still builds, passes every
 # ratchet and reports "● Ready". On 2026-09-15 a session opened on
