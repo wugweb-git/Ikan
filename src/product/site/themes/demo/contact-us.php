@@ -2,7 +2,7 @@
 /**
  * Template Name: Contact Us
  * Template Post Type: page
- * Description: Matches iKAN 2 mobile PWA & responsive contact layout
+ * Description: Exact replica of iKAN mobile PWA & responsive contact layout with full validation, success, and failure states
  */
 
 get_header(); ?>
@@ -21,12 +21,12 @@ get_header(); ?>
   ?>
 
   <!-- Header -->
-  <header class="max-w-[760px] mx-auto px-5 pt-10 md:pt-16 pb-4">
-    <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900"><?php echo esc_html( $hero_title ); ?></h1>
-    <p class="mt-2 text-base leading-relaxed text-gray-600"><?php echo esc_html( $hero_subtitle ); ?></p>
+  <header class="max-w-[760px] mx-auto px-5 pt-8 md:pt-14 pb-2">
+    <h1 class="font-display text-3xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-gray-900"><?php echo esc_html( $hero_title ); ?></h1>
+    <p class="mt-2 text-base md:text-lg leading-relaxed text-gray-600"><?php echo esc_html( $hero_subtitle ); ?></p>
   </header>
 
-  <div class="max-w-[760px] mx-auto px-5 space-y-6">
+  <div class="max-w-[760px] mx-auto px-5 space-y-6 mt-4">
 
     <!-- Crisis Card (Matches ikan2 ShieldAlert styling) -->
     <section class="overflow-hidden rounded-[24px] bg-[#FDF2F2] border border-[#F8B4B4] text-[#9B1C1C] p-5 shadow-sm">
@@ -36,7 +36,7 @@ get_header(); ?>
         </div>
         <div class="flex-1">
           <h2 class="text-base font-bold text-[#9B1C1C]">Need urgent support?</h2>
-          <p class="text-sm mt-1 text-[#771D1D] leading-relaxed">
+          <p class="text-xs md:text-sm mt-1 text-[#771D1D] leading-relaxed">
             If you or someone you know is in distress or thinking about self-harm, please reach out immediately. Help is free, confidential, and available 24/7.
           </p>
           <div class="mt-4 flex flex-wrap gap-2.5">
@@ -56,87 +56,123 @@ get_header(); ?>
 
     <!-- Contact Methods Grid (Matches ikan2 2-col cards) -->
     <section>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div class="grid grid-cols-2 gap-3 md:gap-4">
         <!-- Method 1: Email -->
         <a href="mailto:support@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
-            <i data-lucide="mail" class="w-5 h-5"></i>
+          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
+            <i data-lucide="mail" class="w-4 h-4"></i>
           </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Email Support</p>
-          <p class="text-xs text-gray-500 mt-0.5">We usually reply within 24 hours</p>
-          <p class="text-sm font-bold text-gray-900 mt-2 break-all">support@ikanhealth.in</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Email</p>
+          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Replies within 24h</p>
+          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5 break-all">support@ikanhealth.in</p>
         </a>
 
         <!-- Method 2: Phone -->
         <a href="tel:+918527545503" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
-            <i data-lucide="phone" class="w-5 h-5"></i>
+          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
+            <i data-lucide="phone" class="w-4 h-4"></i>
           </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Phone & WhatsApp</p>
-          <p class="text-xs text-gray-500 mt-0.5">Mon–Fri, 9am–6pm IST</p>
-          <p class="text-sm font-bold text-gray-900 mt-2">+91 85275 45503</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Phone</p>
+          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Mon–Fri, 9am–6pm</p>
+          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5">+91 85275 45503</p>
         </a>
 
         <!-- Method 3: Clinical Care -->
         <a href="tel:+919899843330" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
-            <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
+            <i data-lucide="heart-handshake" class="w-4 h-4"></i>
           </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Care Coordination</p>
-          <p class="text-xs text-gray-500 mt-0.5">Psychologist & session inquiries</p>
-          <p class="text-sm font-bold text-gray-900 mt-2">+91 98998 43330</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Clinical Care</p>
+          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Counselor inquiries</p>
+          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5">+91 98998 43330</p>
         </a>
 
         <!-- Method 4: Organizations -->
         <a href="mailto:partners@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
-            <i data-lucide="building" class="w-5 h-5"></i>
+          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
+            <i data-lucide="building" class="w-4 h-4"></i>
           </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Organisations & Partners</p>
-          <p class="text-xs text-gray-500 mt-0.5">Workplace pilots & therapist network</p>
-          <p class="text-sm font-bold text-gray-900 mt-2 break-all">partners@ikanhealth.in</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Organisations</p>
+          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Workplace pilots</p>
+          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5 break-all">partners@ikanhealth.in</p>
         </a>
       </div>
     </section>
 
-    <!-- Message Form Section -->
-    <section class="rounded-[24px] bg-white border border-gray-200 p-6 md:p-8 shadow-sm">
+    <!-- Message Form Section with Validation, Success, and Failure states -->
+    <section class="rounded-[24px] bg-white border border-gray-200 p-6 md:p-8 shadow-sm" id="contact-form-container">
       <h2 class="text-xl font-bold text-gray-900 mb-1">Send us a message</h2>
       <p class="text-sm text-gray-500 mb-6">Drop us a line and our care team will get back to you promptly.</p>
 
-      <?php if ( shortcode_exists( 'fluentform' ) ): ?>
-        <div class="fluentform-wrapper">
-          <?php echo do_shortcode( '[fluentform id="1"]' ); ?>
+      <!-- Success Scenario Card -->
+      <div id="contact-success" class="hidden overflow-hidden rounded-[24px] bg-[#DFF0E8] text-[#173D2F] border border-[#B3DEC9] p-6 mb-6">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#B3DEC9] flex items-center justify-center text-[#173D2F] shrink-0 mt-0.5">
+            <i data-lucide="check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold">Message sent successfully</h3>
+            <p class="text-sm mt-1 text-[#285743]" id="contact-success-msg">
+              We’ve received your message and will reply to you within 24 hours.
+            </p>
+          </div>
         </div>
-      <?php else: ?>
-        <form method="post" action="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="space-y-4">
-          <input type="hidden" name="contact_submit" value="1" />
-          
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Name</label>
-            <input type="text" name="name" required placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
-          </div>
+      </div>
 
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Email</label>
-            <input type="email" name="email" required placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
-          </div>
+      <!-- Failure Alert Scenario Banner -->
+      <div id="contact-failure" class="hidden rounded-xl bg-red-50 border border-red-200 text-red-800 p-4 mb-6 text-sm flex items-center gap-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 shrink-0"></i>
+        <span id="contact-failure-msg">Your message didn’t send. Check your connection and try again, or email us directly at support@ikanhealth.in.</span>
+      </div>
 
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Subject (optional)</label>
-            <input type="text" name="subject" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
-          </div>
+      <form id="contact-form" noValidate class="space-y-4">
+        <!-- Name Field -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+            Name <span class="text-red-500">*</span>
+          </label>
+          <input type="text" id="contact-name" name="name" required maxlength="60" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+          <span class="text-xs text-red-500 mt-1 hidden" id="err-name"></span>
+        </div>
 
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Message</label>
-            <textarea name="message" rows="5" required placeholder="Write a little more so we can help..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none resize-none"></textarea>
-          </div>
+        <!-- Email Field -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+            Email <span class="text-red-500">*</span>
+          </label>
+          <input type="email" id="contact-email" name="email" required maxlength="254" placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+          <span class="text-xs text-red-500 mt-1 hidden" id="err-email"></span>
+        </div>
 
-          <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-sm">
-            Send message
-          </button>
-        </form>
-      <?php endif; ?>
+        <!-- Subject Field -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+            Subject (optional)
+          </label>
+          <input type="text" id="contact-subject" name="subject" maxlength="120" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+        </div>
+
+        <!-- Message Field with length counter -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700">
+              Message <span class="text-red-500">*</span>
+            </label>
+            <span class="text-xs text-gray-400 tabular-nums" id="msg-counter">0/2000</span>
+          </div>
+          <textarea id="contact-message" name="message" rows="5" required maxlength="2000" placeholder="Write a little more so we can help (10 characters or more)..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none resize-none transition-colors"></textarea>
+          <span class="text-xs text-red-500 mt-1 hidden" id="err-message"></span>
+        </div>
+
+        <!-- Submit Button with Busy Spinner -->
+        <button type="submit" id="contact-submit-btn" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
+          <span id="btn-text">Send message</span>
+          <svg id="btn-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
     </section>
 
     <!-- FAQ Banner Link -->
@@ -155,5 +191,124 @@ get_header(); ?>
   </div>
 
 </main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+
+    const nameInput = document.getElementById('contact-name');
+    const emailInput = document.getElementById('contact-email');
+    const subjectInput = document.getElementById('contact-subject');
+    const messageInput = document.getElementById('contact-message');
+    const counter = document.getElementById('msg-counter');
+    const submitBtn = document.getElementById('contact-submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const successCard = document.getElementById('contact-success');
+    const successMsg = document.getElementById('contact-success-msg');
+    const failureBanner = document.getElementById('contact-failure');
+    const failureMsg = document.getElementById('contact-failure-msg');
+
+    const errName = document.getElementById('err-name');
+    const errEmail = document.getElementById('err-email');
+    const errMessage = document.getElementById('err-message');
+
+    // Live message character counter
+    messageInput.addEventListener('input', function() {
+      counter.textContent = `${this.value.length}/2000`;
+    });
+
+    function validate() {
+      let valid = true;
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const message = messageInput.value.trim();
+
+      // Name validation
+      if (!name || name.length < 2) {
+        errName.textContent = 'Please enter your full name.';
+        errName.classList.remove('hidden');
+        nameInput.classList.add('border-red-500');
+        valid = false;
+      } else {
+        errName.classList.add('hidden');
+        nameInput.classList.remove('border-red-500');
+      }
+
+      // Email validation
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRe.test(email)) {
+        errEmail.textContent = 'Please enter a valid email address.';
+        errEmail.classList.remove('hidden');
+        emailInput.classList.add('border-red-500');
+        valid = false;
+      } else {
+        errEmail.classList.add('hidden');
+        emailInput.classList.remove('border-red-500');
+      }
+
+      // Message validation
+      if (!message || message.length < 10) {
+        errMessage.textContent = 'Write a little more so we can help (10 characters or more).';
+        errMessage.classList.remove('hidden');
+        messageInput.classList.add('border-red-500');
+        valid = false;
+      } else {
+        errMessage.classList.add('hidden');
+        messageInput.classList.remove('border-red-500');
+      }
+
+      return valid;
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      failureBanner.classList.add('hidden');
+
+      if (!validate()) return;
+
+      // Set busy state
+      submitBtn.disabled = true;
+      btnSpinner.classList.remove('hidden');
+      btnText.textContent = 'Sending message...';
+
+      const formData = new FormData();
+      formData.append('action', 'ikan_contact_submit');
+      formData.append('nonce', window.ikanAjax ? window.ikanAjax.nonce : '');
+      formData.append('name', nameInput.value.trim());
+      formData.append('email', emailInput.value.trim());
+      formData.append('subject', subjectInput.value.trim());
+      formData.append('message', messageInput.value.trim());
+
+      try {
+        const ajaxUrl = window.ikanAjax ? window.ikanAjax.ajax_url : '/wp-admin/admin-ajax.php';
+        const res = await fetch(ajaxUrl, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          form.classList.add('hidden');
+          successMsg.textContent = data.data && data.data.message ? data.data.message : 'Message sent. We will reply to your email.';
+          successCard.classList.remove('hidden');
+          successCard.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          const errMsg = data.data && data.data.errors ? Object.values(data.data.errors).join(' ') : (data.data && data.data.message ? data.data.message : 'Your message could not be sent. Please try again.');
+          failureMsg.textContent = errMsg;
+          failureBanner.classList.remove('hidden');
+        }
+      } catch (err) {
+        failureMsg.textContent = 'Network error. Please check your connection or write directly to support@ikanhealth.in.';
+        failureBanner.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        btnSpinner.classList.add('hidden');
+        btnText.textContent = 'Send message';
+      }
+    });
+  });
+</script>
 
 <?php get_footer(); ?>
