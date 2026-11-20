@@ -69,20 +69,46 @@ function demo_register_sidebars() {
 }
 add_action( 'widgets_init', 'demo_register_sidebars' );
 
-// Route blog archive and single post requests to dedicated PHP templates
+// Route blog archive, single post, and custom page requests to dedicated PHP templates
 add_filter( 'template_include', function( $template ) {
+  if ( is_front_page() ) {
+    $front = get_template_directory() . '/front-page.php';
+    if ( file_exists( $front ) ) {
+      return $front;
+    }
+  }
+
   if ( is_home() || is_page( 'resources' ) ) {
     $php_file = get_template_directory() . '/resources.php';
     if ( file_exists( $php_file ) ) {
       return $php_file;
     }
   }
+
   if ( is_singular( 'post' ) ) {
     $php_file = get_template_directory() . '/single.php';
     if ( file_exists( $php_file ) ) {
       return $php_file;
     }
   }
+
+  if ( is_page() ) {
+    $post_slug = get_post_field( 'post_name', get_post() );
+    $page_file = get_template_directory() . '/' . $post_slug . '.php';
+    if ( $post_slug && file_exists( $page_file ) ) {
+      return $page_file;
+    }
+  }
+
+  // Fallback for direct path match to template file (e.g. /assessments, /services, /equip-programs)
+  $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+  if ( $req_path && ! str_contains( $req_path, '/' ) ) {
+    $direct_file = get_template_directory() . '/' . $req_path . '.php';
+    if ( file_exists( $direct_file ) ) {
+      return $direct_file;
+    }
+  }
+
   return $template;
 }, 99 );
 
