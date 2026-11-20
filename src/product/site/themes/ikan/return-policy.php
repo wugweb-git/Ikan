@@ -12,7 +12,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-return', true );
   $return = [];
   if ( $cms_content ) {
-    try { $return = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $return = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
 

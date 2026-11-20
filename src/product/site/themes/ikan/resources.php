@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-resources', true );
   $resources_cms = [];
   if ( $cms_content ) {
-    try { $resources_cms = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $resources_cms = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
@@ -37,9 +37,9 @@ get_header(); ?>
       <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <?php 
         $resource_categories = [
-          'Read' => ['count': 15, 'description': 'Articles and e-books'],
-          'Watch' => ['count': 10, 'description': 'Video content and webinars'],
-          'Listen' => ['count': 20, 'description': 'Podcasts and audio guides'],
+          'Read' => ['count' => 15, 'description' => 'Articles and e-books'],
+          'Watch' => ['count' => 10, 'description' => 'Video content and webinars'],
+          'Listen' => ['count' => 20, 'description' => 'Podcasts and audio guides'],
         ];
         
         foreach ( $resource_categories as $category => $details ): 

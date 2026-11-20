@@ -12,7 +12,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-terms', true );
   $terms = [];
   if ( $cms_content ) {
-    try { $terms = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $terms = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
 

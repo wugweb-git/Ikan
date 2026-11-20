@@ -12,7 +12,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-contact', true );
   $contact = [];
   if ( $cms_content ) {
-    try { $contact = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $contact = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
 
@@ -77,50 +77,31 @@ get_header(); ?>
   <!-- Form -->
   <section class="py-8">
     <div class="max-w-[1600px] mx-auto px-4">
-      <?php if ( $contact['sent'] ): ?>
+      <?php if ( ! empty( $contact['sent'] ) ): ?>
         <p class="text-gray-600">Thanks — your message is with us.</p>
-      <?php elseif ( $use_fluent ): ?>
-        <!-- Fluent Forms Integration -->
-        <?php 
-        $form_id = empty( $fluent_form_id ) ? '1' : $fluent_form_id;
-        // Try to get form data if available
-        $form = null;
-        if ( function_exists( 'ff_forms' ) ) {
-          $form = ff_forms( $form_id );
-        }
-        ?>
-        <?php if ( $form ): ?>
-          <?php echo do_shortcode( '[fluentform id="' . esc_attr( $form_id ) . '"]' ); ?>
-        <?php else: ?>
-          <p class="text-gray-500">Fluent Forms plugin detected but form not found. ID: <?php echo esc_html( $form_id ); ?></p>
-        <?php endif; ?>
-      <?php elseif ( function_exists( 'scf_contact_form' ) || class_exists( 'Simple_Contact_Form' ) ): ?>
-        <!-- SCF Integration -->
-        <?php echo do_shortcode( '[scf_contact_form]' ); ?>
-      <?php elseif ( class_exists( 'Fluent_CRM' ) || true ): ?>
-        <!-- FluentCRM Integration - for email marketing nurture -->
-        <p class="text-sm text-gray-500">
-          Message received! <a href="javascript:void(0)" class="text-blue-600 hover underline"
-            onClick="window.location.href='<?php echo esc_url( home_url( '/contact' ) ); }'>
-            Stay connected for mental health tips and updates</a>.
-        </p>
+      <?php elseif ( shortcode_exists( 'fluentform' ) ): ?>
+        <?php echo do_shortcode( '[fluentform id="1"]' ); ?>
       <?php else: ?>
         <!-- Classic Fallback Form -->
-        <form method="post" action="<?php echo esc_url( home_url( '/contact' ); ) ?>">
+        <form method="post" action="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="space-y-4 max-w-xl">
           <input type="hidden" name="contact_submit" value="1" />
           <div>
-            <input type="text" name="name" required class="w-full px-4 py-2 border rounded" placeholder="Your name" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+            <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg" placeholder="Your name" />
           </div>
           <div>
-            <input type="email" name="email" required class="w-full px-4 py-2 border rounded" placeholder="Email" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg" placeholder="Email" />
           </div>
           <div>
-            <input type="text" name="subject" placeholder="General enquiry" class="w-full px-4 py-2 border rounded" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+            <input type="text" name="subject" placeholder="General enquiry" class="w-full px-4 py-2 border rounded-lg" />
           </div>
           <div>
-            <textarea name="message" rows="6" class="w-full px-4 py-2 border rounded resize-none"></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <textarea name="message" rows="6" class="w-full px-4 py-2 border rounded-lg resize-none"></textarea>
           </div>
-          <button type="submit" class="w-full py-3 px-6 bg-primary text-white font-medium">Send message</button>
+          <button type="submit" class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">Send message</button>
         </form>
       <?php endif; ?>
     </div>

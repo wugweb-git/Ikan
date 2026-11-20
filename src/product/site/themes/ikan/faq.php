@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-faq', true );
   $faq = [];
   if ( $cms_content ) {
-    try { $faq = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $faq = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   

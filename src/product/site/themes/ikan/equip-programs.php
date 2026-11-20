@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-equip-programs', true );
   $equip_cms = [];
   if ( $cms_content ) {
-    try { $equip_cms = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $equip_cms = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
@@ -37,12 +37,12 @@ get_header(); ?>
       <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <?php 
         $program_categories = [
-          'Sleep' => ['description': 'Better sleep, better mental health'],
-          'Stress' => ['description': 'Stress management techniques'],
-          'Anxiety' => ['description': 'Anxiety reduction strategies'],
-          'Burnout' => ['description': 'Recover from workplace burnout'],
-          'Work-Life' => ['description': 'Balancing work and life'],
-          'Wellness' => ['description': ' holistic wellness programs'],
+          'Sleep' => ['description' => 'Better sleep, better mental health'],
+          'Stress' => ['description' => 'Stress management techniques'],
+          'Anxiety' => ['description' => 'Anxiety reduction strategies'],
+          'Burnout' => ['description' => 'Recover from workplace burnout'],
+          'Work-Life' => ['description' => 'Balancing work and life'],
+          'Wellness' => ['description' => ' holistic wellness programs'],
         ];
         
         foreach ( $program_categories as $category => $details ): 

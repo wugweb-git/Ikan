@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-not-found', true );
   $notfound = [];
   if ( $cms_content ) {
-    try { $notfound = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $notfound = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
@@ -63,7 +63,7 @@ get_header(); ?>
     
     <div class="flex flex-col sm:flex-row gap-3">
       <button 
-        onClick="window.location.href='<?php echo esc_url( home_url( '/' ); ) ?>'"
+        onClick="window.location.href='<?php echo esc_url( home_url( '/' ) ) ?>'"
         class="ikan2-theme-btn text-white"
         style="
           font-family: var(--font-sans);

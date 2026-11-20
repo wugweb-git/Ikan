@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'resource-detail', true );
   $resource = [];
   if ( $cms_content ) {
-    try { $resource = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $resource = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   

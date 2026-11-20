@@ -46,7 +46,7 @@ get_header(); ?>
         <?php echo esc_html( $maintenance_time ); ?>
       </p>
       
-      <a href="<?php echo esc_url( home_url( '/' ); ) ?>"
+      <a href="<?php echo esc_url( home_url( '/' ) ) ?>"
          class="ikan2-theme-btn text-white mt-6"
          style="
            font-family: var(--font-sans);

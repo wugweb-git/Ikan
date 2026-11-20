@@ -13,7 +13,7 @@ get_header(); ?>
   $cms_content = get_post_meta( get_the_ID(), 'page-services', true );
   $services = [];
   if ( $cms_content ) {
-    try { $services = json_decode( $cms_content, true ); } catch ( $e ) {}
+    try { $services = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
   ?>
   
