@@ -67,6 +67,8 @@ get_header(); ?>
               <a href="<?php the_permalink(); ?>" class="block overflow-hidden h-52 bg-gray-100 relative">
                 <?php if ( has_post_thumbnail() ) : ?>
                   <?php the_post_thumbnail( 'medium_large', [ 'class' => 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300' ] ); ?>
+                <?php elseif ( $ext_thumb = get_post_meta( get_the_ID(), 'external_thumbnail', true ) ) : ?>
+                  <img src="<?php echo esc_url( $ext_thumb ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <?php else : ?>
                   <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-400">
                     <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +92,7 @@ get_header(); ?>
                   <div class="flex items-center gap-2 text-xs text-gray-400 mb-2">
                     <span><?php echo get_the_date( 'M j, Y' ); ?></span>
                     <span>·</span>
-                    <span>5 min read</span>
+                    <span><?php echo esc_html( get_post_meta( get_the_ID(), 'read_time', true ) ?: '5 min read' ); ?></span>
                   </div>
                   <h2 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 leading-snug">
                     <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>

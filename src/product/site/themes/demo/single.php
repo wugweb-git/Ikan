@@ -54,6 +54,10 @@ get_header(); ?>
           <div class="mb-10 rounded-2xl overflow-hidden shadow-sm">
             <?php the_post_thumbnail( 'large', [ 'class' => 'w-full h-auto object-cover max-h-[480px]' ] ); ?>
           </div>
+        <?php elseif ( $ext_thumb = get_post_meta( get_the_ID(), 'external_thumbnail', true ) ) : ?>
+          <div class="mb-10 rounded-2xl overflow-hidden shadow-sm">
+            <img src="<?php echo esc_url( $ext_thumb ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-auto object-cover max-h-[480px]" />
+          </div>
         <?php endif; ?>
 
         <!-- Post Body -->
