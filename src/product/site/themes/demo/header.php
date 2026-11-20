@@ -108,7 +108,7 @@
   </style>
   <?php wp_head(); ?>
 </head>
-<body <?php body_class( "antialiased" ); ?>>
+<body <?php body_class( "antialiased ikan2-theme" ); ?>>
   <?php
   // Query WordPress Primary menu or provide fallback items
   $primary_items = [];

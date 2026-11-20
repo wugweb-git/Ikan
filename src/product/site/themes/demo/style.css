@@ -944,6 +944,7 @@ Text Domain: demo
  * Generated from iKAN 2's own declarations; do not hand-edit the values.
  * ───────────────────────────────────────────────────────────────── */
 
+.type-display-lg,
 .ikan2-theme .type-display-lg {
   font-family: var(--font-display);
   font-size: 52px;
@@ -952,6 +953,7 @@ Text Domain: demo
   letter-spacing: -0.02em;
 }
 
+.type-display-md,
 .ikan2-theme .type-display-md {
   font-family: var(--font-display);
   font-size: 42px;
@@ -960,6 +962,7 @@ Text Domain: demo
   letter-spacing: -0.015em;
 }
 
+.type-display-sm,
 .ikan2-theme .type-display-sm {
   font-family: var(--font-display);
   font-size: 34px;
@@ -968,6 +971,7 @@ Text Domain: demo
   letter-spacing: -0.01em;
 }
 
+.type-headline-lg,
 .ikan2-theme .type-headline-lg {
   font-family: var(--font-display);
   font-size: 32px;
@@ -976,6 +980,7 @@ Text Domain: demo
   letter-spacing: -0.01em;
 }
 
+.type-headline-md,
 .ikan2-theme .type-headline-md {
   font-family: var(--font-display);
   font-size: 28px;
@@ -984,16 +989,16 @@ Text Domain: demo
   letter-spacing: -0.01em;
 }
 
+.type-headline-sm,
 .ikan2-theme .type-headline-sm {
   font-family: var(--font-display);
   font-size: 24px;
   line-height: 32px;
   font-weight: 600;
-  /* declared, not omitted: letter-spacing inherits, so a role that
-  leaves it out picks up whatever an ancestor set. */
   letter-spacing: normal;
 }
 
+.type-subhead,
 .ikan2-theme .type-subhead {
   font-family: var(--font-display);
   font-size: 18px;
@@ -1002,23 +1007,16 @@ Text Domain: demo
   letter-spacing: normal;
 }
 
+.type-title-lg,
 .ikan2-theme .type-title-lg {
   font-family: var(--font-display);
-  /* 22, which is M3's own Title Large and the size the screens settled on. It was briefly 20
-  * to put distance between this and Headline S (24) — but 20 and 22 were both already in
-  * use, 2px apart, doing the same job, so that created a third near-duplicate instead of
-  * removing one. They are now one role at 22.
-  *
-  * 600, not M3's 400/500: of the 18 call sites, 17 overrode the weight to semibold. When
-  * every use fights the role, the role is wrong. The one exception — the article standfirst
-  * — now carries font-medium instead, so the override is on the rare case, not the common
-  * one. */
   font-size: 22px;
   line-height: 28px;
   font-weight: 600;
   letter-spacing: normal;
 }
 
+.type-title-md,
 .ikan2-theme .type-title-md {
   font-family: var(--font-display);
   font-size: 16px;
@@ -1027,62 +1025,72 @@ Text Domain: demo
   letter-spacing: 0.01em;
 }
 
+.type-body,
 .ikan2-theme .type-body {
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 24px;
   font-weight: 400;
   letter-spacing: normal;
 }
 
+.type-body-lg,
 .ikan2-theme .type-body-lg {
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 26px;
   font-weight: 400;
-  /* declared, not omitted: letter-spacing inherits, so a role that
-  leaves it out picks up whatever an ancestor set. */
   letter-spacing: normal;
 }
 
+.type-body-md,
 .ikan2-theme .type-body-md {
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 21px;
   font-weight: 400;
-  /* declared, not omitted: letter-spacing inherits, so a role that
-  leaves it out picks up whatever an ancestor set. */
   letter-spacing: normal;
 }
 
+.type-body-xl,
 .ikan2-theme .type-body-xl {
+  font-family: var(--font-sans);
   font-size: 17px;
   line-height: 28px;
   font-weight: 400;
   letter-spacing: normal;
 }
 
+.type-body-sm,
 .ikan2-theme .type-body-sm {
+  font-family: var(--font-sans);
   font-size: 13px;
   line-height: 20px;
   font-weight: 400;
   letter-spacing: normal;
 }
 
+.type-action,
 .ikan2-theme .type-action {
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 22px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
+.type-label-lg,
 .ikan2-theme .type-label-lg {
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
-  /* declared, not omitted: letter-spacing inherits, so a role that
-  leaves it out picks up whatever an ancestor set. */
   letter-spacing: normal;
 }
 
+.type-label-md,
 .ikan2-theme .type-label-md {
+  font-family: var(--font-sans);
   font-size: 12px;
   line-height: 16px;
   font-weight: 500;
