@@ -21,7 +21,7 @@ import { LandingCopyForm, linesField, type LandingCopyConfig } from '../ui/kit/L
 import { DayEditor as DailyBuilder } from '../block-builder/DayComposer';
 import { UnifiedBasicInfoForm } from '../ui/kit/UnifiedBasicInfoForm';
 import { useMetadata } from '../ui/hooks/useMetadata';
-import { ProgramPlayer } from '../../product/app/programs/ProgramPlayer';
+import { ProgramPlayer } from './ProgramPlayer';
 import { seedDayFromTemplate } from '../block-builder/model/day-policy';
 /* §21 item 5 (2026-09-09): the wizard's stepper chrome became a two-screen
    builder shell. The record logic below — persistWizard, handlePublishToggle,

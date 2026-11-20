@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CALC_PATH, calcHeadHtml, calcBodyHtml } from './src/shared/content/burnout-calc-seo';
 
@@ -23,7 +23,11 @@ function calcPrerender(): Plugin {
       outDir = resolve(cfg.root, cfg.build.outDir);
     },
     closeBundle() {
-      const shell = readFileSync(resolve(outDir, 'index.html'), 'utf8');
+      const idxPath = resolve(outDir, 'index.html');
+      const srcIdx = resolve('index.html');
+      const shellPath = existsSync(idxPath) ? idxPath : (existsSync(srcIdx) ? srcIdx : null);
+      if (!shellPath) return;
+      const shell = readFileSync(shellPath, 'utf8');
       const stripped = shell
         .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
         .replace(/<meta\s+name="description"[\s\S]*?\/>\s*/i, '')

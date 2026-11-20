@@ -70,13 +70,6 @@ export function preloadChunk(importFn: () => Promise<unknown>): void {
   });
 }
 
-// ── Screen-specific preloaders ──────────────────────────────────
-// These are stable references that can be imported without circular deps.
-
-let _moodJournalPreloaded = false;
-
 export function preloadMoodJournal(): void {
-  if (_moodJournalPreloaded) return;
-  _moodJournalPreloaded = true;
-  preloadChunk(() => import('../journal/MoodJournal'));
+  // No-op
 }
