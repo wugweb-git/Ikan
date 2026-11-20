@@ -99,15 +99,23 @@ get_header(); ?>
               <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             </div>
             <div>
-              <h3 class="text-base font-bold text-gray-900">Guided Audio Exercise</h3>
-              <p class="text-xs text-gray-600">Diana Winston, UCLA Mindful Awareness Research Center (MARC)</p>
+              <h3 class="text-base font-bold text-gray-900">Audio Experience & Guided Practice</h3>
+              <p class="text-xs text-gray-600">Clinical Mindfulness & Psychological Guidance</p>
             </div>
           </div>
 
-          <audio controls class="w-full mt-2 rounded-xl focus:outline-none">
-            <source src="<?php echo esc_url( $audio_url ); ?>" type="audio/mpeg">
-            Your browser does not support the audio element.
-          </audio>
+          <?php if ( strpos( $audio_url, "spotify.com" ) !== false ) : 
+            $spotify_embed = str_replace( "open.spotify.com/episode/", "open.spotify.com/embed/episode/", $audio_url );
+          ?>
+            <div class="rounded-2xl overflow-hidden shadow-xs">
+              <iframe src="<?php echo esc_url( $spotify_embed ); ?>" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            </div>
+          <?php else : ?>
+            <audio controls class="w-full mt-2 rounded-xl focus:outline-none">
+              <source src="<?php echo esc_url( $audio_url ); ?>" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+          <?php endif; ?>
           
           <p class="text-[11px] text-gray-400">Headphones recommended. Best practiced in a quiet, undisturbed posture.</p>
         </div>
