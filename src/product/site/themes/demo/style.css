@@ -1798,3 +1798,41 @@ Text Domain: demo
     animation: none;
   }
 }
+
+
+/* ── Mobile PWA Navigation Dock & Utilities ────────────────────── */
+.shadow-dock {
+  box-shadow: 0 12px 35px rgba(20, 24, 33, 0.14);
+}
+
+.nav-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 0;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav-icon {
+  display: grid;
+  width: 40px;
+  height: 28px;
+  place-items: center;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}

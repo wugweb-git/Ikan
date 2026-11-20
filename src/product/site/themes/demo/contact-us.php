@@ -2,11 +2,12 @@
 /**
  * Template Name: Contact Us
  * Template Post Type: page
+ * Description: Matches iKAN 2 mobile PWA & responsive contact layout
  */
 
 get_header(); ?>
 
-<main class="ikan2-theme">
+<main class="ikan2-theme bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
 
   <?php
   $cms_content = get_post_meta( get_the_ID(), 'page-contact', true );
@@ -14,123 +15,145 @@ get_header(); ?>
   if ( $cms_content ) {
     try { $contact = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
   }
+  
+  $hero_title = ! empty( $contact['heroTitle'] ) ? $contact['heroTitle'] : 'Contact us';
+  $hero_subtitle = ! empty( $contact['heroSubtitle'] ) ? $contact['heroSubtitle'] : "We’re here to help. Reach out with questions, feedback, or to learn more about iKAN.";
   ?>
 
-  <!-- Hero -->
-  <section class="py-16 bg-gradient-to-b from-blue-50 to-indigo-100">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <div class="relative z-10">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">
-          <?php echo esc_html( $contact['heroTitle'] ?? 'Contact Us' ); ?>
-        </h1>
-        <?php if ( $contact['heroSubtitle'] ): ?>
-          <p class="text-lg text-gray-600 mb-8">
-            <?php echo esc_html( $contact['heroSubtitle'] ); ?>
-          </p>
-        <?php endif; ?>
-      </div>
-    </div>
-  </section>
+  <!-- Header -->
+  <header class="max-w-[760px] mx-auto px-5 pt-10 md:pt-16 pb-4">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900"><?php echo esc_html( $hero_title ); ?></h1>
+    <p class="mt-2 text-base leading-relaxed text-gray-600"><?php echo esc_html( $hero_subtitle ); ?></p>
+  </header>
 
-  <!-- Crisis Card -->
-  <section class="py-8">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <?php if ( $contact['crisisCard'] ): ?>
-        <div class="bg-red-50 p-6 rounded-lg border border-red-200">
-          <h3 class="text-lg font-medium text-red-900 mb-3">
-            <?php echo esc_html( $contact['crisisCard']['title'] ?? '' ); ?>
-          </h3>
-          <p class="text-red-800">
-            <?php echo esc_html( $contact['crisisCard']['description'] ?? '' ); ?>
-          </p>
+  <div class="max-w-[760px] mx-auto px-5 space-y-6">
+
+    <!-- Crisis Card (Matches ikan2 ShieldAlert styling) -->
+    <section class="overflow-hidden rounded-[24px] bg-[#FDF2F2] border border-[#F8B4B4] text-[#9B1C1C] p-5 shadow-sm">
+      <div class="flex items-start gap-3.5">
+        <div class="w-8 h-8 rounded-full bg-[#FDE8E8] flex items-center justify-center shrink-0 text-[#E02424] mt-0.5">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
         </div>
-      <?php endif; ?>
-    </div>
-  </section>
-
-  <!-- Contact Methods -->
-  <section class="py-8">
-    <div class="max-w-[1600px] mx-auto px-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <?php 
-      $methods = $contact['contactMethods'] ?? [];
-      $icon_map = ['mail' => 'Mail', 'phone' => 'Phone'];
-      foreach ( $methods as $method ): 
-      $icon = $method['icon'] ?? 'mail';
-      ?>
-        <div>
-          <h2 class="text-xl font-medium text-gray-900 mb-3">
-            <?php echo esc_html( $method['title'] ?? '' ); ?>
-          </h2>
-          <p class="text-gray-600">
-            <?php echo esc_html( $method['description'] ?? '' ); ?>
+        <div class="flex-1">
+          <h2 class="text-base font-bold text-[#9B1C1C]">Need urgent support?</h2>
+          <p class="text-sm mt-1 text-[#771D1D] leading-relaxed">
+            If you or someone you know is in distress or thinking about self-harm, please reach out immediately. Help is free, confidential, and available 24/7.
           </p>
-          <?php if ( $method['value'] ): ?>
-            <a href="<?php echo esc_attr( $method['action'] ?? '' ); ?>" class="underline text-blue-600">
-              <?php echo esc_html( $method['value'] ?? '' ); ?>
+          <div class="mt-4 flex flex-wrap gap-2.5">
+            <a href="tel:18005990019" class="inline-flex items-center gap-2 rounded-full bg-[#9B1C1C] hover:bg-[#771D1D] px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm">
+              <i data-lucide="phone" class="w-3.5 h-3.5"></i> 1800-599-0019 (KIRAN)
             </a>
-          <?php endif; ?>
+            <a href="tel:9152987821" class="inline-flex items-center gap-2 rounded-full bg-[#9B1C1C] hover:bg-[#771D1D] px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm">
+              <i data-lucide="phone" class="w-3.5 h-3.5"></i> 9152987821 (iCALL)
+            </a>
+            <a href="<?php echo esc_url( home_url( '/faq#helplines' ) ); ?>" class="inline-flex items-center rounded-full border border-[#9B1C1C]/40 px-4 py-2 text-xs font-semibold text-[#9B1C1C] hover:bg-[#FDE8E8] transition-colors">
+              More helplines &rarr;
+            </a>
+          </div>
         </div>
-      <?php endforeach; ?>
-    </div>
-  </section>
+      </div>
+    </section>
 
-  <!-- Form -->
-  <section class="py-8">
-    <div class="max-w-[1600px] mx-auto px-4">
-      <?php if ( ! empty( $contact['sent'] ) ): ?>
-        <p class="text-gray-600">Thanks — your message is with us.</p>
-      <?php elseif ( shortcode_exists( 'fluentform' ) ): ?>
-        <?php echo do_shortcode( '[fluentform id="1"]' ); ?>
+    <!-- Contact Methods Grid (Matches ikan2 2-col cards) -->
+    <section>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <!-- Method 1: Email -->
+        <a href="mailto:support@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
+            <i data-lucide="mail" class="w-5 h-5"></i>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Email Support</p>
+          <p class="text-xs text-gray-500 mt-0.5">We usually reply within 24 hours</p>
+          <p class="text-sm font-bold text-gray-900 mt-2 break-all">support@ikanhealth.in</p>
+        </a>
+
+        <!-- Method 2: Phone -->
+        <a href="tel:+918527545503" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
+            <i data-lucide="phone" class="w-5 h-5"></i>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Phone & WhatsApp</p>
+          <p class="text-xs text-gray-500 mt-0.5">Mon–Fri, 9am–6pm IST</p>
+          <p class="text-sm font-bold text-gray-900 mt-2">+91 85275 45503</p>
+        </a>
+
+        <!-- Method 3: Clinical Care -->
+        <a href="tel:+919899843330" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
+            <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Care Coordination</p>
+          <p class="text-xs text-gray-500 mt-0.5">Psychologist & session inquiries</p>
+          <p class="text-sm font-bold text-gray-900 mt-2">+91 98998 43330</p>
+        </a>
+
+        <!-- Method 4: Organizations -->
+        <a href="mailto:partners@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
+          <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-3">
+            <i data-lucide="building" class="w-5 h-5"></i>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Organisations & Partners</p>
+          <p class="text-xs text-gray-500 mt-0.5">Workplace pilots & therapist network</p>
+          <p class="text-sm font-bold text-gray-900 mt-2 break-all">partners@ikanhealth.in</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Message Form Section -->
+    <section class="rounded-[24px] bg-white border border-gray-200 p-6 md:p-8 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900 mb-1">Send us a message</h2>
+      <p class="text-sm text-gray-500 mb-6">Drop us a line and our care team will get back to you promptly.</p>
+
+      <?php if ( shortcode_exists( 'fluentform' ) ): ?>
+        <div class="fluentform-wrapper">
+          <?php echo do_shortcode( '[fluentform id="1"]' ); ?>
+        </div>
       <?php else: ?>
-        <!-- Classic Fallback Form -->
-        <form method="post" action="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="space-y-4 max-w-xl">
+        <form method="post" action="<?php echo esc_url( home_url( '/contact-us' ) ); ?>" class="space-y-4">
           <input type="hidden" name="contact_submit" value="1" />
+          
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-            <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg" placeholder="Your name" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Name</label>
+            <input type="text" name="name" required placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg" placeholder="Email" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Email</label>
+            <input type="email" name="email" required placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-            <input type="text" name="subject" placeholder="General enquiry" class="w-full px-4 py-2 border rounded-lg" />
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Subject (optional)</label>
+            <input type="text" name="subject" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none" />
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
-            <textarea name="message" rows="6" class="w-full px-4 py-2 border rounded-lg resize-none"></textarea>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Message</label>
+            <textarea name="message" rows="5" required placeholder="Write a little more so we can help..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none resize-none"></textarea>
           </div>
-          <button type="submit" class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg">Send message</button>
+
+          <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-sm">
+            Send message
+          </button>
         </form>
       <?php endif; ?>
-    </div>
-  </section>
+    </section>
+
+    <!-- FAQ Banner Link -->
+    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="block rounded-[24px] border border-gray-200 bg-gray-50/70 p-5 hover:bg-gray-100 transition-colors">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-gray-900">Looking for immediate answers?</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Explore our frequently asked questions about assessments, privacy, and therapy.</p>
+        </div>
+        <span class="text-xs font-bold text-blue-600 underline whitespace-nowrap ml-4">
+          Visit FAQ &rarr;
+        </span>
+      </div>
+    </a>
+
+  </div>
 
 </main>
 
 <?php get_footer(); ?>
-
-<!-- Form Plugin Setup Notes -->
-<p class="text-sm text-gray-500 mt-8">
-  <?php if ( $use_fluent ): ?>
-    This page is configured to use Fluent Forms (ID: <?php echo esc_html( $fluent_form_id ); ?>). 
-    To set up: Go to Fluent Forms > Forms, create a form, note its ID, 
-    then add it to: Appearance > Theme Editor > ikan Contact Settings (or 
-    add the option value `ikan_fluent_form_id` in WordPress Dashboard > Options).
-  <?php elseif ( function_exists( 'scf_contact_form' ) || class_exists( 'Simple_Contact_Form' ) ): ?>
-    This page is using Simple Contact Form (SCF). 
-    No additional setup needed - the form is automatically displayed.
-  <?php elseif ( class_exists( 'Fluent_CRM' ) ): ?>
-    This page is integrated with FluentCRM for email marketing. 
-    Messages are captured and can be added to your FluentCRM lists for 
-    follow-up mental health tips and updates.
-  <?php else: ?>
-    No specialized form plugin detected. The contact form will use the classic 
-    HTML fallback. To enable advanced form features, install:
-    - Fluent Forms: For drag-and-drop form builder
-    - Simple Contact Form (SCF): For lightweight contact forms  
-    - FluentCRM: For email marketing and nurture sequences
-    Then add the respective plugin ID or enable integration in theme options.
-  <?php endif; ?>
-</p>
