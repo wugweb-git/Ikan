@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, startTransition } from 'react';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useTokens } from './product/app/shell/react-tokens';
 import { crossHostSignInUrl } from './product/app/shell/app-host';
@@ -953,8 +951,6 @@ export default function App() {
               <GoogleFitProvider>
                 <SecurityProvider>
                   <AppContent />
-                  <Analytics />
-                  <SpeedInsights />
                 </SecurityProvider>
               </GoogleFitProvider>
             </JourneyProvider>

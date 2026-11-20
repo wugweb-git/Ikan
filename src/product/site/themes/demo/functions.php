@@ -563,4 +563,188 @@ function ikan_handle_ajax_user_login() {
 add_action( 'wp_ajax_ikan_user_login', 'ikan_handle_ajax_user_login' );
 add_action( 'wp_ajax_nopriv_ikan_user_login', 'ikan_handle_ajax_user_login' );
 
+// ── CORS & App API Bridge for ikan2 (https://app.ikanhealth.in) ─────────────
+
+add_action( 'init', function() {
+  $allowed_origins = [
+    'https://app.ikanhealth.in',
+    'https://ikanhealth.in',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'capacitor://localhost',
+  ];
+  $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+  if ( in_array( $origin, $allowed_origins, true ) ) {
+    header( "Access-Control-Allow-Origin: $origin" );
+    header( 'Access-Control-Allow-Credentials: true' );
+    header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE' );
+    header( 'Access-Control-Allow-Headers: Authorization, X-WP-Nonce, Content-Type, X-Requested-With' );
+    if ( 'OPTIONS' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+      status_header( 200 );
+      exit;
+    }
+  }
+} );
+
+// ── Rank Math & Search Engine Sitemaps Bridge for ikan2 ─────────────────────
+
+/**
+ * Hook into Rank Math's sitemap index to add ikan2 app sitemap
+ */
+add_filter( 'rank_math/sitemap/index', function( $xml ) {
+  $app_sitemap = "\n\t<sitemap>\n\t\t<loc>https://app.ikanhealth.in/sitemap.xml</loc>\n\t\t<lastmod>" . date( 'c' ) . "</lastmod>\n\t</sitemap>";
+  if ( strpos( $xml, '</sitemapindex>' ) !== false ) {
+    return str_replace( '</sitemapindex>', $app_sitemap . "\n</sitemapindex>", $xml );
+  }
+  return $xml;
+} );
+
+/**
+ * Add ikan2 sitemap to robots.txt output
+ */
+add_filter( 'robots_txt', function( $output, $public ) {
+  if ( '1' == $public ) {
+    $output .= "\n# iKAN Health Member App Sitemap\n";
+    $output .= "Sitemap: https://app.ikanhealth.in/sitemap.xml\n";
+  }
+  return $output;
+}, 99, 2 );
+
+// ── iKAN REST API for ikan2 App & SEO Integration ──────────────────────────
+
+add_action( 'rest_api_init', function() {
+  // 1. App Configuration & SEO Settings
+  register_rest_route( 'ikan/v1', '/app-config', [
+    'methods'             => 'GET',
+    'callback'            => function() {
+      return rest_ensure_response([
+        'brand'     => [
+          'name'        => 'iKAN Health',
+          'description' => 'Clinical Wellbeing & Burnout Prevention Architecture',
+          'web_origin'  => 'https://ikanhealth.in',
+          'app_origin'  => 'https://app.ikanhealth.in',
+        ],
+        'analytics' => [
+          'google_tag_id'        => 'GT-MJJ5RG2N',
+          'ga4_measurement_id'   => 'G-ZD4D5LZBQG',
+          'cross_domain_domains' => [ 'ikanhealth.in', 'app.ikanhealth.in' ],
+          'use_snippet'          => true,
+        ],
+        'seo'       => [
+          'title_separator' => '-',
+          'default_title'   => 'iKAN Health | Clinically Validated Wellbeing & Burnout Prevention',
+          'sitemaps'        => [
+            'portal' => 'https://ikanhealth.in/sitemap_index.xml',
+            'app'    => 'https://app.ikanhealth.in/sitemap.xml',
+          ],
+        ],
+        'theme'     => [
+          'typography' => [
+            'display'  => 'Sora',
+            'headings' => 'Sora',
+            'body'     => 'Manrope',
+          ],
+          'colors'     => [
+            'primary'    => '#1B4D3E',
+            'secondary'  => '#2A2A2A',
+            'background' => '#F8FAF9',
+            'surface'    => '#FFFFFF',
+            'border'     => '#E5E7EB',
+          ],
+          'tokens'     => [
+            'content_max' => '1100px',
+            'radius_card' => '12px',
+            'radius_pill' => '9999px',
+          ],
+        ],
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 2. Assessments Catalog API
+  register_rest_route( 'ikan/v1', '/assessments', [
+    'methods'             => 'GET',
+    'callback'            => function() {
+      $file = get_template_directory() . '/assets/data/assessments.json';
+      if ( file_exists( $file ) ) {
+        $json = json_decode( file_get_contents( $file ), true );
+        return rest_ensure_response( $json ?: [] );
+      }
+      return rest_ensure_response( [] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 3. Equip Programs Catalog API
+  register_rest_route( 'ikan/v1', '/equip-programs', [
+    'methods'             => 'GET',
+    'callback'            => function() {
+      $file = get_template_directory() . '/assets/data/equip-programs.json';
+      if ( file_exists( $file ) ) {
+        $json = json_decode( file_get_contents( $file ), true );
+        return rest_ensure_response( $json ?: [] );
+      }
+      return rest_ensure_response( [] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 4. Consultants Directory API
+  register_rest_route( 'ikan/v1', '/consultants', [
+    'methods'             => 'GET',
+    'callback'            => function() {
+      $file = get_template_directory() . '/assets/data/consultants.json';
+      if ( file_exists( $file ) ) {
+        $json = json_decode( file_get_contents( $file ), true );
+        return rest_ensure_response( $json ?: [] );
+      }
+      return rest_ensure_response( [] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 5. Telemetry & Lead Ingestion from ikan2
+  register_rest_route( 'ikan/v1', '/telemetry', [
+    'methods'             => 'POST',
+    'callback'            => function( WP_REST_Request $request ) {
+      $data = $request->get_json_params();
+      if ( empty( $data ) ) {
+        $data = $request->get_params();
+      }
+
+      $email = sanitize_email( $data['email'] ?? '' );
+      if ( ! is_email( $email ) ) {
+        return new WP_Error( 'invalid_email', 'Valid email required', [ 'status' => 400 ] );
+      }
+
+      $name = sanitize_text_field( $data['name'] ?? '' );
+      $event = sanitize_text_field( $data['event'] ?? 'app_telemetry' );
+      $tag = sanitize_text_field( $data['tag'] ?? 'app-user' );
+      $metadata = $data['metadata'] ?? [];
+
+      $note_title = sprintf( 'iKAN App Event: %s (%s)', $event, current_time( 'Y-m-d H:i' ) );
+      $note_desc  = is_array( $metadata ) ? json_encode( $metadata, JSON_PRETTY_PRINT ) : (string) $metadata;
+
+      $recorded = ikan_record_lead_in_fluentcrm([
+        'email'      => $email,
+        'name'       => $name,
+        'list_slug'  => 'members',
+        'list_title' => 'iKAN Members',
+        'tag_slug'   => $tag,
+        'tag_title'  => ucwords( str_replace( '-', ' ', $tag ) ),
+        'note_title' => $note_title,
+        'note_desc'  => $note_desc,
+      ]);
+
+      return rest_ensure_response([
+        'success' => true,
+        'message' => 'Event ingested into FluentCRM',
+        'email'   => $email,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ] );
+} );
+
 
