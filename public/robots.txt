@@ -2,16 +2,20 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /login
 Disallow: /org
 Disallow: /org/
 
-# AI crawlers are welcome to read public content
+# AI search crawlers
 User-agent: GPTBot
 Allow: /
 User-agent: ClaudeBot
 Allow: /
 User-agent: PerplexityBot
 Allow: /
+User-agent: Google-Extended
+Allow: /
 
+# Primary WordPress Portal & Member App Sitemaps
+Sitemap: https://ikanhealth.in/sitemap_index.xml
 Sitemap: https://ikanhealth.in/sitemap.xml
+Sitemap: https://app.ikanhealth.in/sitemap.xml
