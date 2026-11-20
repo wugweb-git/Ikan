@@ -555,9 +555,12 @@ function ikan_handle_ajax_user_login() {
     return;
   }
 
+  $is_admin = user_can( $signon, 'manage_options' );
+  $redirect = $is_admin ? admin_url() : home_url( '/assessments/' );
+
   wp_send_json_success([
     'message'  => 'Welcome back, ' . esc_html( $signon->first_name ?: $signon->display_name ) . '!',
-    'redirect' => home_url( '/assessments/' ),
+    'redirect' => $redirect,
   ]);
 }
 add_action( 'wp_ajax_ikan_user_login', 'ikan_handle_ajax_user_login' );
@@ -585,6 +588,20 @@ add_action( 'wp_head', function() {
 }, 3 );
 
 /**
+ * Centralized Webmaster & Search Engine Verifications (Google, Bing)
+ */
+add_action( 'wp_head', function() {
+  $gsc = get_option( 'ikan_google_verification' );
+  if ( ! empty( $gsc ) ) {
+    echo '<meta name="google-site-verification" content="' . esc_attr( $gsc ) . "\" />\n";
+  }
+  $bing = get_option( 'ikan_bing_verification' );
+  if ( ! empty( $bing ) ) {
+    echo '<meta name="msvalidate.01" content="' . esc_attr( $bing ) . "\" />\n";
+  }
+}, 1 );
+
+/**
  * Configure Google Site Kit GA4 tag options:
  * - Enables cross-domain linker between ikanhealth.in and app.ikanhealth.in
  * - Prevents duplicate gtag snippets by letting Site Kit own the single tag
@@ -597,6 +614,9 @@ add_filter( 'googlesitekit_gtag_opt', function( $gtag_opt ) {
 } );
 
 add_action( 'init', function() {
+  // Professional Admin URL alias: /portal -> WordPress Admin / Login
+  add_rewrite_rule( '^portal/?$', 'index.php?ikan_portal=1', 'top' );
+
   $allowed_origins = [
     'https://app.ikanhealth.in',
     'https://ikanhealth.in',
@@ -617,6 +637,22 @@ add_action( 'init', function() {
   }
 } );
 
+add_filter( 'query_vars', function( $vars ) {
+  $vars[] = 'ikan_portal';
+  return $vars;
+} );
+
+add_action( 'template_redirect', function() {
+  if ( get_query_var( 'ikan_portal' ) ) {
+    if ( is_user_logged_in() && current_user_can( 'read' ) ) {
+      wp_safe_redirect( admin_url() );
+    } else {
+      wp_safe_redirect( wp_login_url( admin_url() ) );
+    }
+    exit;
+  }
+} );
+
 // ── Rank Math & Search Engine Sitemaps Bridge for ikan2 ─────────────────────
 
 /**
@@ -631,15 +667,159 @@ add_filter( 'rank_math/sitemap/index', function( $xml ) {
 } );
 
 /**
- * Add ikan2 sitemap to robots.txt output
+ * Clean Crawler & Robots Rules:
+ * Disallow wp-admin, wp-login.php, and portal from search indexation.
  */
 add_filter( 'robots_txt', function( $output, $public ) {
   if ( '1' == $public ) {
-    $output .= "\n# iKAN Health Member App Sitemap\n";
+    $output = "User-agent: *\n";
+    $output .= "Disallow: /wp-admin/\n";
+    $output .= "Disallow: /wp-login.php\n";
+    $output .= "Disallow: /portal\n";
+    $output .= "Allow: /wp-admin/admin-ajax.php\n\n";
+    $output .= "Sitemap: " . esc_url( home_url( '/sitemap_index.xml' ) ) . "\n";
+    $output .= "# iKAN Health Member App Sitemap\n";
     $output .= "Sitemap: https://app.ikanhealth.in/sitemap.xml\n";
   }
   return $output;
 }, 99, 2 );
+
+/**
+ * Never index WordPress Login or Admin endpoints
+ */
+add_action( 'login_head', function() {
+  echo "<meta name=\"robots\" content=\"noindex, nofollow, noarchive\" />\n";
+} );
+
+// ── Custom iKAN Admin & Login Screen Branding ──────────────────────────────
+
+add_action( 'login_enqueue_scripts', function() {
+  $logo_url = get_theme_file_uri( 'assets/img/favicon.svg' );
+  ?>
+  <style type="text/css">
+    body.login {
+      background-color: #F8FAFC !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Sora", "Manrope", "Segoe UI", Roboto, sans-serif !important;
+      color: #0F172A !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-height: 100vh !important;
+      padding: 24px !important;
+      box-sizing: border-box !important;
+    }
+    #login {
+      padding: 0 !important;
+      width: 100% !important;
+      max-width: 420px !important;
+      margin: auto !important;
+    }
+    #login h1 {
+      margin-bottom: 24px !important;
+    }
+    #login h1 a {
+      background-image: url('<?php echo esc_url( $logo_url ); ?>') !important;
+      background-size: 56px 56px !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      width: 56px !important;
+      height: 56px !important;
+      border-radius: 14px !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+      margin: 0 auto !important;
+    }
+    .login form {
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
+      border-radius: 20px !important;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.03) !important;
+      padding: 32px !important;
+      margin-top: 0 !important;
+    }
+    .login label {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.04em !important;
+      color: #475569 !important;
+      margin-bottom: 6px !important;
+    }
+    .login input[type="text"],
+    .login input[type="password"] {
+      border: 1px solid #CBD5E1 !important;
+      border-radius: 12px !important;
+      padding: 10px 14px !important;
+      font-size: 15px !important;
+      background: #F8FAFC !important;
+      color: #0F172A !important;
+      transition: all 0.2s ease !important;
+    }
+    .login input[type="text"]:focus,
+    .login input[type="password"]:focus {
+      border-color: #0F172A !important;
+      background: #FFFFFF !important;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.15) !important;
+      outline: none !important;
+    }
+    .login .button-primary {
+      background: #0F172A !important;
+      border-color: #0F172A !important;
+      border-radius: 12px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      padding: 8px 20px !important;
+      height: auto !important;
+      line-height: 24px !important;
+      color: #FFFFFF !important;
+      text-shadow: none !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+      transition: all 0.2s ease !important;
+      width: 100% !important;
+      margin-top: 12px !important;
+    }
+    .login .button-primary:hover,
+    .login .button-primary:focus {
+      background: #1E293B !important;
+      border-color: #1E293B !important;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25) !important;
+    }
+    .login #nav,
+    .login #backtoblog {
+      text-align: center !important;
+      font-size: 13px !important;
+      padding: 8px 16px 0 !important;
+    }
+    .login #nav a,
+    .login #backtoblog a {
+      color: #64748B !important;
+      text-decoration: none !important;
+      transition: color 0.2s ease !important;
+    }
+    .login #nav a:hover,
+    .login #backtoblog a:hover {
+      color: #0F172A !important;
+      text-decoration: underline !important;
+    }
+    .login .message,
+    .login .notice,
+    .login #login_error {
+      border-radius: 12px !important;
+      border-left-width: 4px !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+      font-size: 13px !important;
+      margin-bottom: 20px !important;
+    }
+  </style>
+  <?php
+} );
+
+add_filter( 'login_headerurl', function() {
+  return home_url( '/' );
+} );
+
+add_filter( 'login_headertext', function() {
+  return 'iKAN Health — Clinical Wellbeing &amp; Burnout Prevention Architecture';
+} );
 
 // ── iKAN REST API for ikan2 App & SEO Integration ──────────────────────────
 
