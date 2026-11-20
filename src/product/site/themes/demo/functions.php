@@ -288,6 +288,31 @@ function ikan_handle_ajax_contact() {
   }
 
   $note_desc = "<strong>Subject:</strong> " . esc_html( $subject ) . "<br><br><strong>Message:</strong><br>" . nl2br( esc_html( $message ) );
+
+  // 1. Insert into Fluent Forms Submissions (Form ID 1)
+  $parts = explode( ' ', $name, 2 );
+  $ff_payload = [
+    'names' => [
+      'first_name' => $parts[0] ?? $name,
+      'last_name'  => $parts[1] ?? '',
+    ],
+    'email'   => $email,
+    'subject' => $subject,
+    'message' => $message,
+  ];
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 1,
+        'response'   => json_encode( $ff_payload ),
+        'source_url' => home_url( '/contact-us/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
+  }
+
   $recorded = ikan_record_lead_in_fluentcrm( [
     'email'      => $email,
     'name'       => $name,
@@ -334,6 +359,31 @@ function ikan_handle_ajax_org_inquiry() {
   }
 
   $note_desc = "<strong>Company:</strong> " . esc_html( $company ) . "<br><strong>Team Size:</strong> " . esc_html( $team_size ) . "<br><br><strong>Goals / Requirements:</strong><br>" . nl2br( esc_html( $message ) );
+
+  // Insert into Fluent Forms Submissions (Form ID 1 - Contact Form / Org demo)
+  $parts = explode( ' ', $name, 2 );
+  $ff_payload = [
+    'names' => [
+      'first_name' => $parts[0] ?? $name,
+      'last_name'  => $parts[1] ?? '',
+    ],
+    'email'   => $email,
+    'subject' => 'Org Demo Request: ' . $company . ' (' . $team_size . ' members)',
+    'message' => $message ?: 'Requested pilot/demo for ' . $company,
+  ];
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 1,
+        'response'   => json_encode( $ff_payload ),
+        'source_url' => home_url( '/org/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
+  }
+
   ikan_record_lead_in_fluentcrm( [
     'email'      => $email,
     'name'       => $name,
@@ -361,6 +411,20 @@ function ikan_handle_ajax_newsletter() {
   if ( empty( $email ) || ! is_email( $email ) ) {
     wp_send_json_error( [ 'message' => 'Please enter a valid email address.' ] );
     return;
+  }
+
+  // Insert into Fluent Forms Submissions (Form ID 2 - Subscription Form)
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 2,
+        'response'   => json_encode( [ 'email' => $email ] ),
+        'source_url' => home_url( '/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
   }
 
   ikan_record_lead_in_fluentcrm( [

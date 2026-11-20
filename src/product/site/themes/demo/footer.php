@@ -94,6 +94,47 @@ document.addEventListener("DOMContentLoaded", function() {
       el.classList.add("reveal-in", "is-in");
     });
   }
+
+  // Universal Newsletter Subscription Handler
+  document.querySelectorAll("form").forEach(function(nForm) {
+    var emailInput = nForm.querySelector("#newsletter-email") || nForm.querySelector("input[name='email']");
+    var submitBtn = nForm.querySelector("button[type='submit']");
+    if (!emailInput || !submitBtn || nForm.id === "form-user-login" || nForm.id === "form-user-register" || nForm.id === "contact-form") {
+      return;
+    }
+
+    nForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      var emailVal = emailInput.value.trim();
+      if (!emailVal || emailVal.indexOf("@") === -1) return;
+
+      var origHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Subscribing...";
+
+      var fd = new FormData();
+      fd.append("action", "ikan_newsletter_submit");
+      fd.append("nonce", window.ikanAjax ? window.ikanAjax.nonce : "");
+      fd.append("email", emailVal);
+
+      try {
+        var ajaxUrl = window.ikanAjax ? window.ikanAjax.ajax_url : "/wp-admin/admin-ajax.php";
+        var res = await fetch(ajaxUrl, { method: "POST", body: fd });
+        var data = await res.json();
+        if (data && data.success) {
+          nForm.innerHTML = '<div class="p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-semibold text-center">' + (data.data && data.data.message ? data.data.message : "Thank you! You are subscribed.") + '</div>';
+        } else {
+          alert(data && data.data && data.data.message ? data.data.message : "Subscription error. Please try again.");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origHtml;
+        }
+      } catch (err) {
+        alert("Network error. Please try again.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origHtml;
+      }
+    });
+  });
 });
 </script>
 
