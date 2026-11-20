@@ -7,7 +7,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
+<main class="ikan2-theme site-page-below-nav bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
 
   <?php
   $cms_content = get_post_meta( get_the_ID(), 'page-contact', true );

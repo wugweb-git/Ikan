@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme">
+<main class="ikan2-theme site-page-below-nav">
 
   <?php
   // Get CMS content for the equip programs page

@@ -74,11 +74,11 @@
   </style>
   <style>
     /* Responsive Navigation Controls */
-    @media (max-width: 767px) {
+    @media (max-width: 1023px) {
       .nav-fixed-wrapper { display: none !important; }
       .mnav { display: block !important; }
     }
-    @media (min-width: 768px) {
+    @media (min-width: 1024px) {
       .nav-fixed-wrapper { display: flex !important; }
       .mnav { display: none !important; }
     }
@@ -129,11 +129,26 @@
           </button>
         </div>
         <div class="mnav__menu" style="display: none;">
-          <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__item type-label-lg <?php echo is_front_page() ? "is-active" : ""; ?>">Home</a>
-          <a href="<?php echo esc_url( home_url( "/services" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "services" ) ? "is-active" : ""; ?>">Services</a>
-          <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="mnav__item type-label-lg <?php echo (is_page( "resources" ) || is_home()) ? "is-active" : ""; ?>">Resources</a>
-          <a href="<?php echo esc_url( home_url( "/about-us" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "about-us" ) ? "is-active" : ""; ?>">About Us</a>
-          <a href="<?php echo esc_url( home_url( "/faq" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "faq" ) ? "is-active" : ""; ?>">FAQ</a>
+          <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__item type-label-lg <?php echo is_front_page() ? "is-active" : ""; ?>" style="text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            Home
+          </a>
+          <a href="<?php echo esc_url( home_url( "/services" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "services" ) ? "is-active" : ""; ?>" style="text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-check" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg>
+            Services
+          </a>
+          <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="mnav__item type-label-lg <?php echo (is_page( "resources" ) || is_home()) ? "is-active" : ""; ?>" style="text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            Resources
+          </a>
+          <a href="<?php echo esc_url( home_url( "/about-us" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "about-us" ) ? "is-active" : ""; ?>" style="text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+            About Us
+          </a>
+          <a href="<?php echo esc_url( home_url( "/faq" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "faq" ) ? "is-active" : ""; ?>" style="text-decoration:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-help" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+            FAQ
+          </a>
           <div class="mnav__actions">
             <a href="<?php echo esc_url( home_url( "/contact-us" ) ); ?>" class="mnav__talk type-label-lg no-underline">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>

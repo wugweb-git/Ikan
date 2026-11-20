@@ -7,7 +7,7 @@
 
 get_header(); ?>
 
-<main class="w-full flex-1 pt-28 pb-24" style="background-color: var(--canvas); font-family: var(--font-sans);">
+<main class="site-page-below-nav w-full flex-1 pt-28 pb-24" style="background-color: var(--canvas); font-family: var(--font-sans);">
 
   <!-- Hero Section -->
   <section class="max-w-4xl mx-auto px-6 text-center mb-10">

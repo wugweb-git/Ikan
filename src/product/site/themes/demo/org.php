@@ -7,7 +7,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme bg-gray-50 pb-24 md:pb-16 min-h-screen">
+<main class="ikan2-theme site-page-below-nav bg-gray-50 pb-24 md:pb-16 min-h-screen">
 
   <?php
   $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWxtJTIwc3Vuc2V0JTIwbGFrZSUyMG5hdHVyZSUyMG1pbmRmdWxuZXNzJTIwcGVhY2VmdWx8ZW58MXx8fHwxNzczNjY4MjU5fDA&ixlib=rb-4.1.0&q=80&w=1080';

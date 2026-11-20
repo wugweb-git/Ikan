@@ -44,7 +44,7 @@ $sections = $current_item['sections'] ?? [];
 $summary = $current_item['summary'] ?? '';
 ?>
 
-<main class="w-full flex-1 pt-28 pb-20" style="background-color: var(--canvas); font-family: var(--font-sans);">
+<main class="site-page-below-nav w-full flex-1 pt-28 pb-20" style="background-color: var(--canvas); font-family: var(--font-sans);">
   
   <div class="max-w-4xl mx-auto px-6">
     
