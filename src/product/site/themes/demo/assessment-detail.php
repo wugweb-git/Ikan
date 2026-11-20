@@ -43,15 +43,31 @@ $duration = $assessment['duration'] ?? 5;
   <!-- Hero Section -->
   <?php
   $cover_map = [
-    'who-5' => 'what-is-the-who-5-well-being-index-a.webp',
-    'bat-23' => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
-    'gad-7' => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
-    'phq-9' => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
-    'sci' => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
-    'pss-10' => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
-    'workplace' => 'what-is-the-workplace-stress-scale-explained.webp',
+    'feeling-worried-and-stressed'     => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+    'struggling-to-balance-life'       => 'what-is-the-workplace-stress-scale-explained.webp',
+    'struggling-with-quality-sleep'     => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+    'unsure-or-general-concern'        => 'what-is-the-who-5-well-being-index-a.webp',
+    'feeling-overwhelmed-and-anxious'   => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+    'feeling-depressed-and-hopeless'    => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+    'feeling-drained-and-burned-out'    => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+    'who-5'                             => 'what-is-the-who-5-well-being-index-a.webp',
+    'bat-23'                            => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+    'gad-7'                             => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+    'phq-9'                             => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+    'sci'                               => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+    'pss-10'                            => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+    'workplace'                         => 'what-is-the-workplace-stress-scale-explained.webp',
   ];
   $cover_file = $cover_map[$slug] ?? null;
+  if ( $cover_file ) {
+    $detail_cover = get_theme_file_uri( 'assets/resources/covers/' . $cover_file );
+  } elseif ( ! empty( $assessment['hero_image'] ) ) {
+    $detail_cover = $assessment['hero_image'];
+  } elseif ( ! empty( $assessment['thumbnail'] ) ) {
+    $detail_cover = $assessment['thumbnail'];
+  } else {
+    $detail_cover = get_theme_file_uri( 'assets/img/res-burnout.jpg' );
+  }
   ?>
   <section class="py-14 md:py-20 bg-gradient-to-b from-[#F5F8F7] via-[#EBF3EF] to-white border-b border-gray-100">
     <div class="site-container">
@@ -89,10 +105,10 @@ $duration = $assessment['duration'] ?? 5;
             <span class="text-xs text-gray-400">100% Free &amp; Anonymous</span>
           </div>
         </div>
-        <?php if ( $cover_file ) : ?>
+        <?php if ( ! empty( $detail_cover ) ) : ?>
           <div class="lg:col-span-5">
             <div class="rounded-3xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3] bg-gray-100">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/resources/covers/' . $cover_file ) ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="w-full h-full object-cover" loading="eager" decoding="async">
+              <img src="<?php echo esc_url( $detail_cover ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="w-full h-full object-cover" loading="eager" decoding="async">
             </div>
           </div>
         <?php endif; ?>

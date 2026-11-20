@@ -65,32 +65,46 @@ if ( file_exists( $assessments_file ) ) {
           $badge_color = $bg_colors[ $idx % count( $bg_colors ) ];
 
           $cover_map = [
-            'who-5' => 'what-is-the-who-5-well-being-index-a.webp',
-            'bat-23' => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
-            'gad-7' => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
-            'phq-9' => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
-            'sci' => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
-            'pss-10' => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
-            'workplace' => 'what-is-the-workplace-stress-scale-explained.webp',
+            'feeling-worried-and-stressed'     => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+            'struggling-to-balance-life'       => 'what-is-the-workplace-stress-scale-explained.webp',
+            'struggling-with-quality-sleep'     => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+            'unsure-or-general-concern'        => 'what-is-the-who-5-well-being-index-a.webp',
+            'feeling-overwhelmed-and-anxious'   => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+            'feeling-depressed-and-hopeless'    => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+            'feeling-drained-and-burned-out'    => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+            'who-5'                             => 'what-is-the-who-5-well-being-index-a.webp',
+            'bat-23'                            => 'what-is-the-burnout-assessment-tool-an-easy-guide.webp',
+            'gad-7'                             => 'what-is-generalized-anxiety-disorder-7-a-simple-guide.webp',
+            'phq-9'                             => 'what-is-patient-health-questionnaire-9-a-quick-depression.webp',
+            'sci'                               => 'what-is-the-sleep-condition-indicator-wake-up-to.webp',
+            'pss-10'                            => 'what-is-the-perceived-stress-scale-understand-the-stress.webp',
+            'workplace'                         => 'what-is-the-workplace-stress-scale-explained.webp',
           ];
           $cover_file = $cover_map[$slug] ?? null;
+          if ( $cover_file ) {
+            $cover_url = get_theme_file_uri( 'assets/resources/covers/' . $cover_file );
+          } elseif ( ! empty( $a['hero_image'] ) ) {
+            $cover_url = $a['hero_image'];
+          } elseif ( ! empty( $a['thumbnail'] ) ) {
+            $cover_url = $a['thumbnail'];
+          } else {
+            $cover_url = get_theme_file_uri( 'assets/img/res-burnout.jpg' );
+          }
         ?>
         <div class="bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-300 transition-all flex flex-col justify-between group">
-          <?php if ( $cover_file ) : ?>
-            <div class="relative h-44 w-full overflow-hidden bg-gray-100">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/resources/covers/' . $cover_file ) ); ?>" alt="<?php echo esc_attr( $a['title'] ); ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-              <div class="absolute top-3 left-3">
-                <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-white/95 backdrop-blur-xs text-gray-800 shadow-xs">
-                  <?php echo esc_html( $category ); ?>
-                </span>
-              </div>
-              <div class="absolute bottom-2.5 right-3 text-xs text-white font-medium flex items-center gap-1 drop-shadow-xs">
-                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                <?php echo esc_html( $duration ); ?> mins
-              </div>
+          <div class="relative h-44 w-full overflow-hidden bg-gray-100">
+            <img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php echo esc_attr( $a['title'] ); ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            <div class="absolute top-3 left-3">
+              <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-white/95 backdrop-blur-xs text-gray-800 shadow-xs">
+                <?php echo esc_html( $category ); ?>
+              </span>
             </div>
-          <?php endif; ?>
+            <div class="absolute bottom-2.5 right-3 text-xs text-white font-medium flex items-center gap-1 drop-shadow-xs">
+              <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              <?php echo esc_html( $duration ); ?> mins
+            </div>
+          </div>
           <div class="p-6 flex-1 flex flex-col justify-between">
             <div>
               <?php if ( ! $cover_file ) : ?>
