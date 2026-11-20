@@ -18,7 +18,7 @@ import { apiClient } from '../../shared/api/api';
 import { EquipProgram } from '../block-builder/model/block-model';
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { EquipProgramWizard } from './EquipProgramWizard';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { useIsMobile } from '../ui/hooks/useIsMobile';

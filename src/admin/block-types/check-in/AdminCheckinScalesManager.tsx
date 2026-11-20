@@ -14,15 +14,15 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { cn } from '../ui/utils';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
-import { AdminLoading } from '../ui/kit/AdminLoading';
-import { useConfirm } from '../ui/kit/ConfirmDialog';
-import { useAdminResource } from '../ui/hooks/useAdminResource';
-import { apiClient } from '../../shared/api/api';
-import { useNotifications } from '../../shared/state/NotificationContext';
+import { Card, CardContent } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
+import { AdminPageLayout } from '../../ui/kit/AdminPageLayout';
+import { AdminLoading } from '../../ui/kit/AdminLoading';
+import { useConfirm } from '../../ui/kit/ConfirmDialog';
+import { useAdminResource } from '../../ui/hooks/useAdminResource';
+import { apiClient } from '../../../shared/api/api';
+import { useNotifications } from '../../../shared/state/NotificationContext';
 import { ScaleItemForm } from './ScaleItemForm';
 import { SEVERITY_OPTIONS, type ScaleItem, type ScaleType } from './scale-types';
 

@@ -146,13 +146,7 @@ const ContactUs = lazy(() => lazyRetry(() => import('./product/site/pages/Contac
 const ReturnPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/ReturnPolicy').then(m => ({ default: m.ReturnPolicy })), 'ReturnPolicy'));
 const CancellationPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
 
-// Admin screens
-const AdminDashboard = lazy(() => lazyRetry(() => import('./admin/shell/AdminDashboard').then(m => ({ default: m.AdminDashboard })), 'AdminDashboard'));
-const AdminLoginScreen = lazy(() => lazyRetry(() => import('./admin/shell/AdminLoginScreen').then(m => ({ default: m.AdminLoginScreen })), 'AdminLoginScreen'));
-const AdminGate = lazy(() => lazyRetry(() => import('./admin/shell/AdminGate').then(m => ({ default: m.AdminGate })), 'AdminGate'));
-
 // --- Eagerly loaded non-screen components ---
-import { ADMIN_ROUTE_PATHS } from './admin/shell/sections';
 import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
 import { Footer } from './product/site/ui/Footer';
 
@@ -361,7 +355,7 @@ function AppContent() {
         '/equip', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/resource', '/resource-detail', '/account', 
         '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
-        ...ADMIN_ROUTE_PATHS, // every admin section, from admin/shell/sections.ts
+        '/admin', '/admin/login',
         '/join/partner',
         '/timeline',
         '/learning-diary',
@@ -555,12 +549,6 @@ function AppContent() {
     }
   }, [currentRoute]);
 
-  // Redirect unauthenticated users from admin routes (moved out of render)
-  useEffect(() => {
-    if (currentRoute.startsWith('/admin') && currentRoute !== '/admin/login' && !user && isInitialized) {
-      startTransition(() => setCurrentRoute('/admin/login'));
-    }
-  }, [currentRoute, user, isInitialized]);
 
   // Render function
   const renderScreen = () => {
@@ -600,51 +588,15 @@ function AppContent() {
       
       const queryParams = getQueryParams();
 
-      // Check for Admin Routes first
+      // Check for Admin Routes first -> Redirect to WordPress Admin
       if (currentRoute.startsWith('/admin')) {
-        if (currentRoute === '/admin/login') {
-            return (
-              <ErrorBoundary>
-                <Suspense fallback={<LazyFallback />}>
-                  <AdminLoginScreen 
-                      onNavigate={handleNavigate} 
-                      onLoginSuccess={() => handleNavigate('/admin')} 
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            );
+        if (typeof window !== 'undefined') {
+          window.location.replace('/wp-admin/');
         }
-
-        if (!user) {
-            // Don't call handleNavigate during render — return login screen directly
-            return (
-              <ErrorBoundary>
-                <Suspense fallback={<LazyFallback />}>
-                  <AdminLoginScreen 
-                      onNavigate={handleNavigate} 
-                      onLoginSuccess={() => handleNavigate('/admin')} 
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            );
-        }
-
-        const adminPath = currentRoute.replace('/admin/', '');
-        // '/admin' (bare) and '/admin/reporting' both resolve to the landing view —
-        // bare kept as a working alias so existing bookmarks/links don't break.
-        const view = (currentRoute === '/admin' || currentRoute === '/admin/reporting') ? 'dashboard' : adminPath;
-        
-        // Signed in is not enough: AdminGate renders the console only once the
-        // server-loaded profile says is_admin === true (never the cached
-        // localStorage hint), and shows "Not authorised" otherwise.
         return (
-          <ErrorBoundary>
-            <Suspense fallback={<LazyFallback />}>
-              <AdminGate onNavigate={handleNavigate}>
-                <AdminDashboard onNavigate={handleNavigate} initialView={view} />
-              </AdminGate>
-            </Suspense>
-          </ErrorBoundary>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <p className="text-sm text-gray-500">Redirecting to WordPress Admin...</p>
+          </div>
         );
       }
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { cn } from '../ui/utils';
-import { getScaleByKey, getContextTags } from '../ui/lib/emoji-utils';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
+import { getScaleByKey, getContextTags } from '../../ui/lib/emoji-utils';
 import type { CheckinTemplate } from './checkin-template-types';
 
 const MUTED = 'text-[var(--color-text-muted)]';

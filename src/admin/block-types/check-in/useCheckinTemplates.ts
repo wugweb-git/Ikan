@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiClient } from '../../shared/api/api';
-import { useNotifications } from '../../shared/state/NotificationContext';
-import { useAdminResource } from '../ui/hooks/useAdminResource';
-import { useConfirm } from '../ui/kit/ConfirmDialog';
-import { loadCustomScales, clearScaleCache } from '../ui/lib/emoji-utils';
+import { apiClient } from '../../../shared/api/api';
+import { useNotifications } from '../../../shared/state/NotificationContext';
+import { useAdminResource } from '../../ui/hooks/useAdminResource';
+import { useConfirm } from '../../ui/kit/ConfirmDialog';
+import { loadCustomScales, clearScaleCache } from '../../ui/lib/emoji-utils';
 import type { CheckinStep, CheckinTemplate, StepType } from './checkin-template-types';
 
 /**

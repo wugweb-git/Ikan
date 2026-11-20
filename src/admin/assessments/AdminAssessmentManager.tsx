@@ -3,7 +3,7 @@ import { ClipboardList, Plus, Eye, MoreHorizontal, EyeOff, Trash2, Pencil } from
 import { useNotifications } from '../../shared/state/NotificationContext';
 import { apiClient } from '../../shared/api/api';
 import type { AssessmentData } from '../../shared/api/api-types';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { useIsMobile } from '../ui/hooks/useIsMobile';

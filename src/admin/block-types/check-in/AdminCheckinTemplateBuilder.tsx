@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Save, Eye, EyeOff } from 'lucide-react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
-import { useMetadata } from '../ui/hooks/useMetadata';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { AdminPageLayout } from '../../ui/kit/AdminPageLayout';
+import { useMetadata } from '../../ui/hooks/useMetadata';
 import { useCheckinTemplates } from './useCheckinTemplates';
 import { TemplateList } from './TemplateList';
 import { TemplateEditor } from './TemplateEditor';

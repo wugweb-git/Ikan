@@ -1,7 +1,7 @@
 import { Plus, Trash2, Check } from 'lucide-react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { cn } from '../ui/utils';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 import { stepCountLabel, type CheckinTemplate } from './checkin-template-types';
 
 const MUTED = 'text-[var(--color-text-muted)]';

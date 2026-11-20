@@ -1,8 +1,8 @@
 import { Plus, X, Check, Pencil } from 'lucide-react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { cn } from '../ui/utils';
+import { Card } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { cn } from '../../ui/utils';
 import { StepEditorCard } from './StepEditorCard';
 import { BLOCK_TYPES, stepCountLabel } from './checkin-template-types';
 import type { CheckinTemplatesState } from './useCheckinTemplates';

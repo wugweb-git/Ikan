@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { cn } from '../ui/utils';
-import { apiClient } from '../../shared/api/api';
-import { useNotifications } from '../../shared/state/NotificationContext';
-import { errorMessageOf } from '../ui/hooks/useAdminResource';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { cn } from '../../ui/utils';
+import { apiClient } from '../../../shared/api/api';
+import { useNotifications } from '../../../shared/state/NotificationContext';
+import { errorMessageOf } from '../../ui/hooks/useAdminResource';
 import { FIELD_INPUT, FIELD_LABEL } from './checkin-template-types';
 
 function slugify(name: string): string {

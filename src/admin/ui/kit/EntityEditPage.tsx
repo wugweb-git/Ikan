@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback } from 'react';
 import { Save } from 'lucide-react';
-import { AdminPageLayout } from '../../shell/AdminPageLayout';
+import { AdminPageLayout } from './AdminPageLayout';
 import { useFormValidation, type ValidationSchema } from '../hooks/useFormValidation';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';

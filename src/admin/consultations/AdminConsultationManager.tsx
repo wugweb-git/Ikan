@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Users, Plus, Star, FileText, Link2 } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { AdminLoading } from '../ui/kit/AdminLoading';
 import { useIsMobile } from '../ui/hooks/useIsMobile';
 import { Button } from '../ui/button';

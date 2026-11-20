@@ -1,11 +1,11 @@
 import type React from 'react';
 import { X, Trash2, FileText, Save, Star } from 'lucide-react';
-import { Button } from '../ui/button';
-import { cn } from '../ui/utils';
-import { AdminStatusBadge } from '../ui/kit/AdminStatusBadge';
-import { AdminErrorState, AdminSkeleton } from '../ui/kit/AdminErrorState';
-import { AdminLoading } from '../ui/kit/AdminLoading';
-import { useIsMobile } from '../ui/hooks/useIsMobile';
+import { Button } from '../button';
+import { cn } from '../utils';
+import { AdminStatusBadge } from './AdminStatusBadge';
+import { AdminErrorState, AdminSkeleton } from './AdminErrorState';
+import { AdminLoading } from './AdminLoading';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { AdminHeader, type AdminHeaderProps } from './AdminHeader';
 
 /**

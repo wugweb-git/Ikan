@@ -230,16 +230,6 @@ export const routes: RouteConfig[] = [
     showInPrivateNav: false,
     description: 'Set a new password from a recovery link'
   },
-  {
-    path: '/admin/login',
-    label: 'Admin Sign In',
-    isPublic: true,
-    requiresAuth: false,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Admin login and authentication'
-  },
 
   // Private App Routes
   {
@@ -348,106 +338,16 @@ export const routes: RouteConfig[] = [
     description: 'Your program learning diary and worksheet'
   },
 
-  // Admin Routes
+  // Admin Route (redirects to WordPress Admin)
   {
     path: '/admin',
-    label: 'Admin Dashboard',
+    label: 'Admin',
     isPublic: false,
     requiresAuth: true,
     showInNavigation: false,
     showInPublicNav: false,
     showInPrivateNav: false,
-    description: 'Administrative dashboard'
-  },
-  {
-    path: '/admin/resources',
-    label: 'Resource Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage library resources'
-  },
-  {
-    path: '/admin/equip',
-    label: 'Equip Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage Equip programs'
-  },
-  {
-    path: '/admin/users',
-    label: 'User Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage users'
-  },
-  {
-    path: '/admin/consultants',
-    label: 'Consultant Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage consultants'
-  },
-  {
-    path: '/admin/assessments',
-    label: 'Assessment Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage assessments'
-  },
-  {
-    path: '/admin/analytics',
-    label: 'Analytics',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'System analytics'
-  },
-  {
-    path: '/admin/settings',
-    label: 'Settings',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'System settings'
-  },
-  {
-    path: '/admin/media',
-    label: 'Media Manager',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Manage media assets'
-  },
-  {
-    path: '/admin/crud',
-    label: 'CRUD Testing',
-    isPublic: false,
-    requiresAuth: true,
-    showInNavigation: false,
-    showInPublicNav: false,
-    showInPrivateNav: false,
-    description: 'Database testing tool'
+    description: 'Administrative portal (WordPress Admin)'
   }
 ];
 

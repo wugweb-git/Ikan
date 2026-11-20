@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { BookOpen, PenTool, Calendar, Settings2, Zap } from 'lucide-react';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { ACTIVITIES as CANONICAL_SUBTYPES } from '../block-builder/model/vocabulary';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
