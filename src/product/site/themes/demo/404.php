@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme bg-canvas text-foreground min-h-[70vh] flex items-center justify-center py-16 px-5 pb-24 md:pb-16">
+<main class="ikan2-theme site-page-below-nav bg-canvas text-foreground min-h-[70vh] flex items-center justify-center py-16 px-5 pb-24 md:pb-16">
   <div class="max-w-[480px] w-full text-center">
     
     <!-- State Illustration / Icon -->

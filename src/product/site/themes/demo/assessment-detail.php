@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme">
+<main class="ikan2-theme site-page-below-nav">
 
   <?php
   // Get CMS content for assessment detail
@@ -19,7 +19,7 @@ get_header(); ?>
   
   <!-- Hero Section -->
   <section class="py-16 bg-gradient-to-b from-gray-50 to-gray-100">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="relative z-10">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
           Assessment Detail
@@ -33,7 +33,7 @@ get_header(); ?>
 
   <!-- Assessment Content -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="prose prose-in max-w-prose">
         <?php if ( $assessment ): ?>
           <?php echo wp_kses_post( $assessment['content'] ?? '' ); ?>
@@ -48,7 +48,7 @@ get_header(); ?>
 
   <!-- Assessment Results -->
   <section class="py-12 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Your Results</h2>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div class="p-4 border rounded-lg">

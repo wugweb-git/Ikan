@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="w-full flex-1 pt-24 pb-20 bg-white" style="font-family: var(--font-sans);">
+<main class="site-page-below-nav w-full flex-1 pt-28 pb-20 bg-white" style="font-family: var(--font-sans);">
   <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); 
     $post_id   = get_the_ID();
     $medium    = get_post_meta( $post_id, 'medium', true ) ?: 'article';

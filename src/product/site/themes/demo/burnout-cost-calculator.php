@@ -189,6 +189,71 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
+  // Bind pilot lead form submission
+  var leadForm = document.querySelector(".calc-lead__form");
+  if (leadForm) {
+    leadForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      var submitBtn = leadForm.querySelector("button[type='submit']");
+      var nameInput = leadForm.querySelector("input[name='name']");
+      var emailInput = leadForm.querySelector("input[name='email']");
+      var companyInput = leadForm.querySelector("input[name='company']");
+      var roleInput = leadForm.querySelector("input[name='role']");
+      var noteInput = leadForm.querySelector("textarea[name='note']");
+
+      if (!emailInput || !emailInput.value.trim()) {
+        alert("Please enter your work email.");
+        if (emailInput) emailInput.focus();
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "Sending...";
+      }
+
+      var figNum = document.querySelector(".calc-figure__num");
+      var costText = figNum ? figNum.textContent : "";
+      var fd = new FormData();
+      fd.append("action", "ikan_submit_burnout_lead");
+      fd.append("name", nameInput ? nameInput.value : "");
+      fd.append("email", emailInput.value);
+      fd.append("company", companyInput ? companyInput.value : "");
+      fd.append("role", roleInput ? roleInput.value : "");
+      fd.append("note", noteInput ? noteInput.value : "");
+      fd.append("calculated_cost", costText);
+      fd.append("sector", currentSector);
+      fd.append("team_size", currentHeadcount);
+
+      fetch("<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>", {
+        method: "POST",
+        body: fd
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data && data.success) {
+          var leadContainer = document.querySelector(".calc-lead");
+          if (leadContainer) {
+            leadContainer.innerHTML = "<div class='bg-emerald-50 border border-emerald-200 text-emerald-900 p-8 rounded-2xl text-center space-y-3 my-4'><svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='#059669' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='mx-auto'><path d='M22 11.08V12a10 10 0 1 1-5.93-9.14'></path><polyline points='22 4 12 14.01 9 11.01'></polyline></svg><h3 class='text-2xl font-bold'>Request Received!</h3><p class='text-base'>" + (data.data && data.data.message ? data.data.message : "Your request is with us. We reply within 24 hours.") + "</p></div>";
+          }
+        } else {
+          alert(data && data.data && data.data.message ? data.data.message : "Failed to send. Please try again.");
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "Request a pilot call";
+          }
+        }
+      })
+      .catch(function(err) {
+        alert("An error occurred. Please try again or email support@ikanhealth.in");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = "Request a pilot call";
+        }
+      });
+    });
+  }
+
   render();
 });
 </script>

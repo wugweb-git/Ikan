@@ -19,7 +19,7 @@ get_header(); ?>
   
   <!-- Hero Section -->
   <section class="py-16 bg-gradient-to-b from-green-50 to-green-100">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="relative z-10">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
           Equip Programs
@@ -33,7 +33,7 @@ get_header(); ?>
 
   <!-- Program Categories -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <?php 
         $program_categories = [
@@ -63,7 +63,7 @@ get_header(); ?>
 
   <!-- Program Features -->
   <section class="py-12 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-medium mb-3">
@@ -92,7 +92,7 @@ get_header(); ?>
 
   <!-- Success Stories -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Success Stories</h2>
       <p class="text-gray-600 mb-4">
         Join thousands who have improved their mental wellness with iKAN.

@@ -6,7 +6,7 @@
 
 get_header(); ?>
 
-<main class="ikan2-theme">
+<main class="ikan2-theme site-page-below-nav">
 
   <?php
   // Get CMS content for consultation page
@@ -19,7 +19,7 @@ get_header(); ?>
   
   <!-- Hero Section -->
   <section class="py-16 bg-gradient-to-b from-blue-50 to-indigo-100">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="relative z-10">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">
           Consultation & Professional Support
@@ -33,7 +33,7 @@ get_header(); ?>
 
   <!-- Consultation Options -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div>
           <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl font-medium mb-3">
@@ -62,7 +62,7 @@ get_header(); ?>
 
   <!-- Language & Mode Selection -->
   <section class="py-12 bg-gray-50">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Choose Your Support</h2>
       <div>
         <p class="text-gray-600 mb-4">Select your preferred language and session mode:</p>
@@ -82,7 +82,7 @@ get_header(); ?>
 
   <!-- Find a Consultant -->
   <section class="py-12">
-    <div class="max-w-[1600px] mx-auto px-4">
+    <div class="max-w-[1100px] mx-auto px-4">
       <h2 class="text-2xl font-medium text-gray-900 mb-4">Our Consultants</h2>
       <p class="text-gray-600 mb-4">Licensed professionals ready to support your mental health journey.</p>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">

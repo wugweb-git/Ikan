@@ -310,3 +310,118 @@ function ikan_handle_ajax_newsletter() {
 }
 add_action( 'wp_ajax_ikan_newsletter_submit', 'ikan_handle_ajax_newsletter' );
 add_action( 'wp_ajax_nopriv_ikan_newsletter_submit', 'ikan_handle_ajax_newsletter' );
+
+// ── Burnout Cost Calculator Lead Submission Handler ─────────────────
+function ikan_handle_ajax_burnout_lead() {
+  $name = sanitize_text_field( $_POST['name'] ?? '' );
+  $email = sanitize_email( $_POST['email'] ?? '' );
+  $company = sanitize_text_field( $_POST['company'] ?? '' );
+  $role = sanitize_text_field( $_POST['role'] ?? '' );
+  $note = sanitize_textarea_field( $_POST['note'] ?? '' );
+  $cost = sanitize_text_field( $_POST['calculated_cost'] ?? '' );
+  $sector = sanitize_text_field( $_POST['sector'] ?? '' );
+  $team_size = intval( $_POST['team_size'] ?? 0 );
+
+  if ( empty( $email ) || ! is_email( $email ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter a valid work email.' ] );
+    return;
+  }
+
+  $payload = [
+    'full_name'       => $name,
+    'email'           => $email,
+    'company_name'    => $company,
+    'role'            => $role,
+    'note'            => $note,
+    'team_size'       => $team_size,
+    'sector'          => $sector,
+    'calculated_cost' => $cost,
+  ];
+
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 3,
+        'response'   => json_encode( $payload ),
+        'source_url' => home_url( '/burnout-cost-calculator/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
+  }
+
+  ikan_record_lead_in_fluentcrm( [
+    'email'      => $email,
+    'name'       => $name,
+    'list_slug'  => 'burnout-leads',
+    'list_title' => 'Burnout Calculator Leads',
+    'tag_slug'   => 'burnout-calculator',
+    'tag_title'  => 'Burnout Calculator',
+    'note_title' => 'Burnout Estimate: ' . ( $cost ?: 'Calculated' ),
+    'note_desc'  => sprintf( "Company: %s\nRole: %s\nTeam Size: %d\nSector: %s\nNote: %s", $company, $role, $team_size, $sector, $note ),
+  ] );
+
+  wp_send_json_success( [
+    'message' => 'Thanks' . ( $name ? ', ' . esc_html( explode( ' ', $name )[0] ) : '' ) . '. Your request is with us. We reply within 24 hours to ' . esc_html( $email ) . '.',
+  ] );
+}
+add_action( 'wp_ajax_ikan_submit_burnout_lead', 'ikan_handle_ajax_burnout_lead' );
+add_action( 'wp_ajax_nopriv_ikan_submit_burnout_lead', 'ikan_handle_ajax_burnout_lead' );
+
+// ── Partner Onboarding Application Submission Handler ──────────────
+function ikan_handle_ajax_partner_application() {
+  $name = sanitize_text_field( $_POST['full_name'] ?? '' );
+  $email = sanitize_email( $_POST['email'] ?? '' );
+  $phone = sanitize_text_field( $_POST['phone'] ?? '' );
+  $title = sanitize_text_field( $_POST['professional_title'] ?? '' );
+  $city = sanitize_text_field( $_POST['city'] ?? '' );
+  $license = sanitize_text_field( $_POST['license_number'] ?? '' );
+  $expertise = sanitize_textarea_field( $_POST['expertise'] ?? '' );
+
+  if ( empty( $email ) || ! is_email( $email ) ) {
+    wp_send_json_error( [ 'message' => 'Please enter a valid email address.' ] );
+    return;
+  }
+
+  $payload = [
+    'full_name'             => $name,
+    'email'                 => $email,
+    'phone'                 => $phone,
+    'professional_title'    => $title,
+    'city'                  => $city,
+    'license_registration'  => $license,
+    'specialisations'       => $expertise,
+  ];
+
+  if ( function_exists( 'wpFluent' ) ) {
+    try {
+      wpFluent()->table( 'fluentform_submissions' )->insert([
+        'form_id'    => 4,
+        'response'   => json_encode( $payload ),
+        'source_url' => home_url( '/join/partner/' ),
+        'status'     => 'unread',
+        'created_at' => current_time( 'mysql' ),
+        'updated_at' => current_time( 'mysql' ),
+      ]);
+    } catch ( Throwable $e ) {}
+  }
+
+  ikan_record_lead_in_fluentcrm( [
+    'email'      => $email,
+    'name'       => $name,
+    'list_slug'  => 'partner-applicants',
+    'list_title' => 'Partner & Therapist Applicants',
+    'tag_slug'   => 'therapist-partner',
+    'tag_title'  => 'Therapist Partner',
+    'note_title' => 'Partner Application: ' . ( $title ?: 'Therapist' ),
+    'note_desc'  => sprintf( "Phone: %s\nTitle: %s\nCity: %s\nLicense: %s\nExpertise: %s", $phone, $title, $city, $license, $expertise ),
+  ] );
+
+  wp_send_json_success( [
+    'message' => 'Thank you for applying to partner with iKAN. Our clinical team will verify your details and reply within 3–5 business days.',
+  ] );
+}
+add_action( 'wp_ajax_ikan_submit_partner_application', 'ikan_handle_ajax_partner_application' );
+add_action( 'wp_ajax_nopriv_ikan_submit_partner_application', 'ikan_handle_ajax_partner_application' );
+
