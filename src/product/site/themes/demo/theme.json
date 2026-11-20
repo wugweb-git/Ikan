@@ -4,9 +4,36 @@
   "title": "demo",
   "settings": {
     "appearanceTools": true,
+    "useRootPaddingAwareAlignments": true,
     "layout": {
       "contentSize": "1200px",
       "wideSize": "1600px"
+    },
+    "color": {
+      "palette": [
+        { "name": "Primary", "slug": "primary", "color": "#1e293b" },
+        { "name": "Brand Teal", "slug": "brand-teal", "color": "#0ea5e9" },
+        { "name": "Brand Coral", "slug": "brand-coral", "color": "#f43f5e" },
+        { "name": "Brand Amber", "slug": "brand-amber", "color": "#f59e0b" },
+        { "name": "Calm", "slug": "calm", "color": "#10b981" },
+        { "name": "Canvas", "slug": "canvas", "color": "#f8fafc" },
+        { "name": "Foreground", "slug": "foreground", "color": "#0f172a" },
+        { "name": "Background", "slug": "background", "color": "#ffffff" }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "name": "Manrope",
+          "slug": "manrope",
+          "fontFamily": "Manrope, sans-serif"
+        },
+        {
+          "name": "Sora",
+          "slug": "sora",
+          "fontFamily": "Sora, sans-serif"
+        }
+      ]
     }
   }
 }
