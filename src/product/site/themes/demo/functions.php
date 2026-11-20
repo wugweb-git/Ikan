@@ -31,9 +31,10 @@ add_action( 'after_setup_theme', 'demo_theme_features' );
 
 // Register styles and scripts
 function demo_enqueue_styles() {
-  // Tailwind Play CDN
-  wp_enqueue_script( 'tailwind-cdn', 'https://cdn.tailwindcss.com', [], null, false );
-  
+  // Production Compiled Tailwind v4 & App CSS
+  wp_enqueue_style( 'demo-tailwind', get_theme_file_uri( 'assets/css/tailwind.css' ), [], '1.0.3' );
+  wp_enqueue_style( 'demo-app', get_theme_file_uri( 'assets/css/app.css' ), [ 'demo-tailwind' ], '1.0.3' );
+
   // Google Fonts (Manrope, Sora)
   wp_enqueue_style( 'demo-fonts', 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap', [], null );
   
@@ -42,7 +43,7 @@ function demo_enqueue_styles() {
   wp_enqueue_style( 'demo-icons', 'https://cdnjs.cloudflare.com/ajax/libs/lucide/0.293.0/lucide.min.css', [], null );
   
   // Theme stylesheet with iKAN design system
-  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [], '1.0.2' );
+  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.3' );
 
   // Pass AJAX URL and Nonce to frontend scripts
   wp_localize_script( 'lucide-js', 'ikanAjax', [

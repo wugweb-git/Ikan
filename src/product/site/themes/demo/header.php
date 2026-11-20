@@ -13,6 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/tailwind.css' ) ); ?>">
+  <link rel="stylesheet" href="<?php echo esc_url( get_theme_file_uri( 'assets/css/app.css' ) ); ?>">
   <?php wp_head(); ?>
 </head>
 <body <?php body_class( 'ikan2-theme antialiased' ); ?> style="background-color: var(--canvas); color: var(--foreground); font-family: var(--font-sans); min-height: 100vh; display: flex; flex-direction: column;">
