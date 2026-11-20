@@ -95,3 +95,21 @@ add_action( 'acf/init', function() {
     ] );
   }
 } );
+
+// Route blog archive and single post requests to dedicated PHP templates
+add_filter( 'template_include', function( $template ) {
+  if ( is_home() || is_page( 'resources' ) ) {
+    $php_file = get_template_directory() . '/resources.php';
+    if ( file_exists( $php_file ) ) {
+      return $php_file;
+    }
+  }
+  if ( is_singular( 'post' ) ) {
+    $php_file = get_template_directory() . '/single.php';
+    if ( file_exists( $php_file ) ) {
+      return $php_file;
+    }
+  }
+  return $template;
+}, 99 );
+
