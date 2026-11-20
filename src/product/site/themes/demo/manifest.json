@@ -1,0 +1,44 @@
+{
+  "name": "iKAN Health",
+  "short_name": "iKAN",
+  "description": "Evidence-based mental healthcare, clinical assessments, and neurobehavioral wellness programs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F8F7",
+  "theme_color": "#101010",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["health", "medical", "wellness", "lifestyle"],
+  "icons": [
+    {
+      "src": "/wp-content/themes/demo/assets/img/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Assessments",
+      "short_name": "Assessments",
+      "description": "Take a clinical mental health assessment",
+      "url": "/assessments/",
+      "icons": [{ "src": "/wp-content/themes/demo/assets/img/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Equip Programs",
+      "short_name": "Programs",
+      "description": "Browse neurobehavioral wellness programs",
+      "url": "/equip-programs/",
+      "icons": [{ "src": "/wp-content/themes/demo/assets/img/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Burnout Calculator",
+      "short_name": "Calculator",
+      "description": "Estimate workplace burnout costs",
+      "url": "/burnout-cost-calculator/",
+      "icons": [{ "src": "/wp-content/themes/demo/assets/img/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}
