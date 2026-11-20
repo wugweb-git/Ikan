@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { clearEngineConfigCache } from '../engines/recommendation-engine';
 import { Trash2, Plus, Save, BookOpen, FileText, ClipboardList, Sparkles, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../../shared/state/NotificationContext';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { AdminDataTable, type Column } from '../ui/kit/AdminDataTable';
 import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { Button } from '../ui/button';

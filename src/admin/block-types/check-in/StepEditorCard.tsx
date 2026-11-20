@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { cn } from '../ui/utils';
-import { getAvailableScaleKeys } from '../ui/lib/emoji-utils';
+import { Card, CardContent } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
+import { cn } from '../../ui/utils';
+import { getAvailableScaleKeys } from '../../ui/lib/emoji-utils';
 import { AddNewScaleModal } from './AddNewScaleModal';
 import {
   BLOCK_TYPES,

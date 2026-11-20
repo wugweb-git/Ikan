@@ -1,11 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Plus, Save, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { cn } from '../ui/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Switch } from '../../ui/switch';
+import { cn } from '../../ui/utils';
 import { SCALE_EMOJI_PICKS, SEVERITY_OPTIONS, type ScaleItem } from './scale-types';
 
 /** Add / edit form for one scale item. */

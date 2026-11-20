@@ -18,7 +18,7 @@ import {
 import { ACTIVITIES, interactionsOf, type ActivityName } from '../block-builder/model/vocabulary';
 import { LEAF_BLOCK_TYPES } from '../block-builder/model/block-model';
 import { DAY_TYPE_PRESETS } from '../block-builder/model/block-type-rules';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 
 /**
  * Permitted activities per block type.

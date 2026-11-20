@@ -3,7 +3,7 @@ import {
   Calculator, Save, Plus, Trash2, CircleAlert, Info, ArrowUpDown,
   ChevronDown, ChevronUp, Lock, LockOpen, TriangleAlert, Check,
 } from 'lucide-react';
-import { AdminPageLayout } from '../shell/AdminPageLayout';
+import { AdminPageLayout } from '../ui/kit/AdminPageLayout';
 import { useAdminResource } from '../ui/hooks/useAdminResource';
 import { useConfirm } from '../ui/kit/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
