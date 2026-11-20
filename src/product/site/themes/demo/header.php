@@ -106,9 +106,21 @@
       }
     }
   </style>
+  <!-- Google Tag Manager (GTM-5XF9PNPX) -->
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-5XF9PNPX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  </script>
+  <!-- End Google Tag Manager -->
   <?php wp_head(); ?>
 </head>
 <body <?php body_class( "antialiased ikan2-theme" ); ?>>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5XF9PNPX"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
   <?php
   // Query WordPress Primary menu or provide fallback items
   $primary_items = [];
