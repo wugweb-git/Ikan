@@ -16,11 +16,42 @@ import { PublicBottomNavMobile } from './product/site/ui/PublicBottomNavMobile';
 import { useIsCompactNav } from './product/site/ui/hooks/useIsMobile';
 import { RouteGuard } from './product/app/shell/RouteGuard';
 import { DEFAULT_PUBLIC_ROUTE } from './product/app/ui/route-config';
-import { MobileOnboarding } from './product/app/onboarding/MobileOnboarding';
-import { VerifyEmail } from './product/app/onboarding/VerifyEmail';
-import { GetStarted } from './product/app/onboarding/GetStarted';
 
-import { PushPermissionPrompt, usePushPermissionPrompt } from './product/app/notifications/PushPermissionPrompt';
+const APP_ORIGIN = 'https://app.ikanhealth.in';
+
+function MemberRedirect({ path }: { path: string }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.location.replace(`${APP_ORIGIN}${path}`);
+    }
+  }, [path]);
+
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <p className="text-sm text-gray-500">Redirecting to iKAN Member App...</p>
+    </div>
+  );
+}
+
+function AuthRedirect() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/login/');
+    }
+  }, []);
+
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <p className="text-sm text-gray-500">Redirecting to sign-in...</p>
+    </div>
+  );
+}
+
+const MobileOnboarding = () => <AuthRedirect />;
+const VerifyEmail = () => <AuthRedirect />;
+const GetStarted = () => <AuthRedirect />;
+const PushPermissionPrompt = () => null;
+const usePushPermissionPrompt = () => ({ shouldShowPrompt: false });
 import { Toaster } from './product/app/ui/sonner';
 import { cn } from './product/app/ui/utils';
 import { logger } from './product/app/shell/logger';
@@ -90,51 +121,42 @@ if (typeof window !== 'undefined') {
 
 // --- ALL screens are now lazy-loaded to prevent module-level crashes ---
 // Previously eagerly loaded screens moved to lazy:
-const Dashboard = lazy(() => lazyRetry(() => import('./product/app/dashboard/Dashboard').then(m => ({ default: m.Dashboard })), 'Dashboard'));
+const Dashboard = () => <MemberRedirect path="/dashboard" />;
 const Homepage = lazy(() => lazyRetry(() => import('./product/site/pages/Homepage').then(m => ({ default: m.Homepage })), 'Homepage'));
 const NotFound = lazy(() => lazyRetry(() => import('./product/site/pages/NotFound').then(m => ({ default: m.NotFound })), 'NotFound'));
-const LoginScreen = lazy(() => lazyRetry(() => import('./product/app/shell/LoginScreen').then(m => ({ default: m.default || m.LoginScreen })), 'LoginScreen'));
-const ResetPassword = lazy(() => lazyRetry(() => import('./product/app/account/ResetPassword').then(m => ({ default: m.default || m.ResetPassword })), 'ResetPassword'));
-// Onboarding flow screens are imported eagerly (not lazy): they are small, sit
-// at the entry of the app, and lazy-loading them deadlocks the AnimatePresence
-// `mode="wait"` transition when entering an unloaded chunk.
+const LoginScreen = () => <AuthRedirect />;
+const ResetPassword = () => <AuthRedirect />;
 
 // --- Lazy loaded screens (split by category) ---
 
 // Assessment screens
-/* Static catalogue pages (2026-09-21): ikanhealth.in serves these from a
-   build-time snapshot for everyone; account actions link out to the member app
-   (APP_ORIGIN). The app screens of the same names stay in product/app/screens,
-   unrouted. */
 const Assessments = lazy(() => lazyRetry(() => import('./product/site/pages/Assessments').then(m => ({ default: m.Assessments })), 'Assessments'));
 const AssessmentDetail = lazy(() => lazyRetry(() => import('./product/site/pages/AssessmentDetail').then(m => ({ default: m.AssessmentDetail })), 'AssessmentDetail'));
-const AssessmentFlow = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentFlow').then(m => ({ default: m.AssessmentFlow })), 'AssessmentFlow'));
-const AssessmentResults = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentResults').then(m => ({ default: m.AssessmentResults })), 'AssessmentResults'));
-const AssessmentHistoryDetail = lazy(() => lazyRetry(() => import('./product/app/assessments/AssessmentHistoryDetail').then(m => ({ default: m.AssessmentHistoryDetail })), 'AssessmentHistoryDetail'));
+const AssessmentFlow = () => <MemberRedirect path="/assessment-flow" />;
+const AssessmentResults = () => <MemberRedirect path="/assessment-results" />;
+const AssessmentHistoryDetail = () => <MemberRedirect path="/assessment-history-detail" />;
 
 // Equip screens
 const EquipPrograms = lazy(() => lazyRetry(() => import('./product/site/pages/EquipPrograms').then(m => ({ default: m.EquipPrograms })), 'EquipPrograms'));
 const EquipDetail = lazy(() => lazyRetry(() => import('./product/site/pages/EquipDetail').then(m => ({ default: m.EquipDetail })), 'EquipDetail'));
-const EquipOnboarding = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramOnboarding').then(m => ({ default: m.EquipOnboarding })), 'EquipOnboarding'));
-const EquipProgramFlow = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramFlow').then(m => ({ default: m.EquipProgramFlow })), 'EquipProgramFlow'));
-const EquipProgramCompletion = lazy(() => lazyRetry(() => import('./product/app/programs/EquipProgramCompletion').then(m => ({ default: m.EquipProgramCompletion })), 'EquipProgramCompletion'));
+const EquipOnboarding = () => <MemberRedirect path="/equip-program-onboarding" />;
+const EquipProgramFlow = () => <MemberRedirect path="/equip-program-flow" />;
+const EquipProgramCompletion = () => <MemberRedirect path="/equip-program-completion" />;
 
 // User screens
 const Consultation = lazy(() => lazyRetry(() => import('./product/site/pages/Consultation').then(m => ({ default: m.Consultation })), 'Consultation'));
 const Library = lazy(() => lazyRetry(() => import('./product/site/pages/Resources').then(m => ({ default: m.Resources })), 'Resources'));
-const Account = lazy(() => lazyRetry(() => import('./product/app/account/Account').then(m => ({ default: m.Account })), 'Account'));
-const MoodJournal = lazy(() => lazyRetry(() => import('./product/app/journal/MoodJournal').then(m => ({ default: m.MoodJournal })), 'MoodJournal'));
+const Account = () => <MemberRedirect path="/account" />;
+const MoodJournal = () => <MemberRedirect path="/mood-journal" />;
 const ResourceDetail = lazy(() => lazyRetry(() => import('./product/site/pages/ResourceDetail').then(m => ({ default: m.ResourceDetail })), 'ResourceDetail'));
 const BurnoutCostCalculator = lazy(() => lazyRetry(() => import('./product/site/pages/BurnoutCostCalculator').then(m => ({ default: m.BurnoutCostCalculator })), 'BurnoutCostCalculator'));
 const WorkplacePrivacy = lazy(() => lazyRetry(() => import('./product/site/pages/WorkplacePrivacy').then(m => ({ default: m.WorkplacePrivacy })), 'WorkplacePrivacy'));
-// The invitee's door. Routed here rather than inside OrgPortal: the portal's
-// shell runs hooks before it knows the route, so branching to Join inside it
-// changed the hook order between /org and /org/join.
+
 const OrgJoin = lazy(() => lazyRetry(() => import('./product/org/pages/Join').then(m => ({ default: m.Join })), 'OrgJoin'));
 const OrgPortal = lazy(() => lazyRetry(() => import('./product/org/OrgPortal').then(m => ({ default: m.OrgPortal })), 'OrgPortal'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
-const WellnessTimeline = lazy(() => lazyRetry(() => import('./product/app/journal/WellnessTimeline').then(m => ({ default: m.WellnessTimeline })), 'WellnessTimeline'));
-const LearningDiary = lazy(() => lazyRetry(() => import('./product/app/journal/LearningDiary').then(m => ({ default: m.LearningDiary })), 'LearningDiary'));
+const WellnessTimeline = () => <MemberRedirect path="/timeline" />;
+const LearningDiary = () => <MemberRedirect path="/learning-diary" />;
 
 // Static/legal pages
 const AboutUs = lazy(() => lazyRetry(() => import('./product/site/pages/AboutUs').then(m => ({ default: m.AboutUs })), 'AboutUs'));
@@ -147,14 +169,15 @@ const ReturnPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/Ret
 const CancellationPolicy = lazy(() => lazyRetry(() => import('./product/site/pages/CancellationPolicy').then(m => ({ default: m.CancellationPolicy })), 'CancellationPolicy'));
 
 // --- Eagerly loaded non-screen components ---
-import { GoogleFitProvider } from './product/app/integrations/GoogleFitContext';
+const GoogleFitProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 import { Footer } from './product/site/ui/Footer';
 
 import { ErrorBoundary } from './product/app/ui/ErrorBoundary';
 import { ChunkErrorBoundary } from './product/app/shell/ChunkErrorBoundary';
 import { SecurityProvider } from './product/app/shell/SecurityProvider';
 import { usePublicSettings } from './admin/ui/hooks/usePublicSettings';
-import { CrisisSupport, useCrisisSupport } from './product/app/safety/CrisisSupport';
+const useCrisisSupport = () => ({ isVisible: false, triggerReason: null, hideCrisisSupport: () => {} });
+const CrisisSupport = () => null;
 import { SafePerformanceMonitor } from './product/app/shell/SafePerformanceMonitor';
 import { SkipToMainContent, useReducedMotion } from './product/app/ui/accessibility-helpers';
 import { OfflineBanner } from './product/app/shell/OfflineBanner';

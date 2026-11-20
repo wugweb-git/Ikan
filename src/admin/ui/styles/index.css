@@ -5,4 +5,4 @@
 @import './globals.css';
 /* admin, plus the two product components admin renders as previews */
 @source '../../**/*.{js,ts,jsx,tsx}';
-@source '../../../product/app/programs/**/*.{js,ts,jsx,tsx}';
+@source '../../programs/**/*.{js,ts,jsx,tsx}';
