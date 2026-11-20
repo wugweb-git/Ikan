@@ -122,7 +122,7 @@ get_header(); ?>
             </form>
 
             <div class="pt-2 border-t border-gray-100 text-center">
-              <button type="button" onclick="fillDemoAccount()" class="text-xs text-gray-500 hover:text-black font-medium underline">
+              <button type="button" onclick="fillDemoAccount()" class="inline-flex items-center justify-center min-h-[44px] py-2 px-3 text-xs text-gray-500 hover:text-black font-medium underline">
                 Quick Demo: demo@ikanhealth.in / password123
               </button>
             </div>
