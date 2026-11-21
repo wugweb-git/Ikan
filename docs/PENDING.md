@@ -6,6 +6,14 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ---
 
+## Recent Deployments & Completed Work (2026-11-21)
+- [x] **WordPress Block Theme & Gutenberg Rules Mapping**:
+  - Populated all 26 pages in WordPress (`https://ikanhealth.in/wp-admin/edit.php?post_type=page`) with authentic, fully compliant Gutenberg block markup (`core/heading`, `core/paragraph`, `core/group`, `core/columns`, `core/details`, `core/list`, `core/button`, `core/shortcode`).
+  - Mapped and synchronized all Fluent Forms across pages: Form 1 (Contact & Org inquiries), Form 2 (Newsletter subscription), Form 3 (Burnout Cost Calculator report request), Form 4 (Partner & Provider onboarding), Form 5 (User registration).
+  - Replaced default WordPress boilerplate on Privacy Policy (ID 3) with authentic iKAN Privacy Policy blocks.
+  - Enabled Block Editor stylesheet support, font enqueues (`Sora`, `Manrope`), and design system variables for Gutenberg editing in `functions.php` and `style.css`.
+  - Resolved mobile homepage responsive layout bugs (Reviews vertical stack with clean margin, FAQ 1-column on mobile, fluid responsive H1 heading clamp).
+
 ## 1. Upcoming & Open Work
 
 ### Analytics & Event Tracking (Scheduled Next Session)
