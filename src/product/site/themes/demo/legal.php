@@ -84,7 +84,13 @@ $summary = $current_item['summary'] ?? '';
       <?php endif; ?>
 
       <!-- Sections -->
-      <?php if ( ! empty( $sections ) && is_array( $sections ) ) : ?>
+      <?php
+      $post_has_content = trim( get_the_content() );
+      if ( ! empty( $post_has_content ) ) : ?>
+        <div class="prose max-w-none text-gray-700 space-y-6">
+          <?php the_content(); ?>
+        </div>
+      <?php elseif ( ! empty( $sections ) && is_array( $sections ) ) : ?>
         <div class="space-y-8">
           <?php foreach ( $sections as $sec ) : ?>
             <div class="space-y-2">

@@ -80,8 +80,23 @@
   </style>
   <style>
     /* Responsive Navigation Controls & Sitewide Spacing */
-    :root, .ikan2-theme {
+    :root, html, body, .ikan2-theme {
+      --font-display: 'Sora', system-ui, -apple-system, sans-serif !important;
+      --font-sans: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif !important;
       --nav-clearance: 112px;
+    }
+    .font-display {
+      font-family: var(--font-display) !important;
+    }
+    @media (max-width: 1023px) {
+      .ikan-desktop-only { display: none !important; }
+      .ikan-mobile-only { display: block !important; }
+      .faq-two-col { display: grid !important; grid-template-columns: 1fr !important; gap: 32px !important; }
+    }
+    @media (min-width: 1024px) {
+      .ikan-mobile-only { display: none !important; }
+      .ikan-desktop-only { display: block !important; }
+      .faq-two-col { display: grid !important; grid-template-columns: 1fr 340px !important; gap: 40px !important; }
     }
     @media (max-width: 1023px) {
       :root, .ikan2-theme {
