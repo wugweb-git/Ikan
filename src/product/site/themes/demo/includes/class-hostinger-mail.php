@@ -169,6 +169,19 @@ class Ikan_Hostinger_Mail {
     if ( ! empty( $opt ) ) {
       return $opt;
     }
+    // Check FluentSMTP connection settings
+    if ( function_exists( 'fluentMailGetSettings' ) ) {
+      try {
+        $fm_settings = fluentMailGetSettings();
+        if ( ! empty( $fm_settings['connections'] ) ) {
+          foreach ( $fm_settings['connections'] as $conn ) {
+            if ( ! empty( $conn['provider_settings']['password'] ) ) {
+              return $conn['provider_settings']['password'];
+            }
+          }
+        }
+      } catch ( Throwable $e ) {}
+    }
     // Check WordPress SMTP plugin credentials
     if ( class_exists( 'WordPress\SMTP\Credentials' ) ) {
       try {
