@@ -1,0 +1,15 @@
+{
+  "name": "ikan/demo-theme",
+  "description": "iKAN Health WordPress Block Theme",
+  "type": "wordpress-theme",
+  "require": {
+    "php": ">=8.1",
+    "hostinger/mail-api-php-sdk": "^1.18"
+  },
+  "config": {
+    "platform": {
+      "php": "8.3.0"
+    },
+    "platform-check": false
+  }
+}

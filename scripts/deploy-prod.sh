@@ -22,6 +22,12 @@ echo "→ Building Vite project..."
 npm run build >/dev/null 2>&1 || { echo "✗ local build failed" >&2; exit 1; }
 echo "✓ Local build successful"
 
+# Verify Composer dependencies for Theme
+if [ -f "src/product/site/themes/demo/composer.json" ] && [ ! -f "src/product/site/themes/demo/vendor/autoload.php" ]; then
+  echo "→ Installing theme Composer dependencies..."
+  (cd src/product/site/themes/demo && composer install --no-dev --optimize-autoloader) || { echo "✗ composer install failed" >&2; exit 1; }
+fi
+
 # Sync Theme & Data to Hostinger
 echo "→ Rsyncing theme files to Hostinger ($HOSTINGER_HOST)..."
 rsync -avz --delete \

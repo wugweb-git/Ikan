@@ -38,3 +38,7 @@ supabase/.temp/
 # Claude chat outputs — local working notes, not source (untracked 2026-09-21)
 /Claude outputs/
 *.zip
+
+# Composer Vendor
+src/product/site/themes/demo/vendor/
+
