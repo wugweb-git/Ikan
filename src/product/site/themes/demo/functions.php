@@ -1058,6 +1058,137 @@ add_action( 'rest_api_init', function() {
     },
     'permission_callback' => '__return_true',
   ] );
+
+  // 7. Full Resources / Blog Articles Catalog API for ikan2
+  register_rest_route( 'ikan/v1', '/resources', [
+    'methods'             => 'GET',
+    'callback'            => function( WP_REST_Request $request ) {
+      $category_filter = sanitize_text_field( $request->get_param( 'category' ) );
+      
+      // 1. First try loading from published WordPress posts
+      $args = [
+        'post_type'      => 'post',
+        'post_status'    => 'publish',
+        'posts_per_page' => 100,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+      ];
+      if ( ! empty( $category_filter ) ) {
+        $args['category_name'] = $category_filter;
+      }
+      $query = new WP_Query( $args );
+
+      if ( $query->have_posts() ) {
+        $items = [];
+        while ( $query->have_posts() ) {
+          $query->the_post();
+          $post_id = get_the_ID();
+          $cats = get_the_category();
+          $cat_name = ! empty( $cats ) ? $cats[0]->name : 'General';
+          $thumb_id = get_post_thumbnail_id( $post_id );
+          $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'full' ) : '';
+
+          $items[] = [
+            'id'          => 'resource-' . $post_id,
+            'slug'        => get_post_field( 'post_name', $post_id ),
+            'title'       => get_the_title(),
+            'category'    => $cat_name,
+            'date'        => get_the_date( 'Y-m-d' ),
+            'minutes'     => intval( get_post_meta( $post_id, '_resource_minutes', true ) ?: 4 ),
+            'medium'      => get_post_meta( $post_id, '_resource_medium', true ) ?: 'article',
+            'src'         => get_post_meta( $post_id, '_resource_src', true ) ?: '',
+            'poster'      => get_post_meta( $post_id, '_resource_poster', true ) ?: $thumb_url,
+            'cover_url'   => $thumb_url,
+            'featured'    => get_post_meta( $post_id, '_resource_featured', true ) === '1',
+            'author'      => get_post_meta( $post_id, '_resource_author', true ) ?: get_the_author(),
+            'description' => get_the_excerpt(),
+          ];
+        }
+        wp_reset_postdata();
+        return rest_ensure_response( [
+          'source' => 'wordpress_posts',
+          'count'  => count( $items ),
+          'data'   => $items,
+        ] );
+      }
+
+      // 2. Fallback to bundled assets/resources.json
+      $file = get_template_directory() . '/assets/resources.json';
+      if ( file_exists( $file ) ) {
+        $resources = json_decode( file_get_contents( $file ), true );
+        if ( is_array( $resources ) ) {
+          if ( ! empty( $category_filter ) ) {
+            $resources = array_values( array_filter( $resources, function( $r ) use ( $category_filter ) {
+              return strcasecmp( $r['category'] ?? '', $category_filter ) === 0;
+            } ) );
+          }
+          return rest_ensure_response( [
+            'source' => 'bundled_json',
+            'count'  => count( $resources ),
+            'data'   => $resources,
+          ] );
+        }
+      }
+
+      return rest_ensure_response( [ 'source' => 'empty', 'count' => 0, 'data' => [] ] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 8. Single Resource / Article Detail API for ikan2
+  register_rest_route( 'ikan/v1', '/resources/(?P<slug>[a-zA-Z0-9-]+)', [
+    'methods'             => 'GET',
+    'callback'            => function( WP_REST_Request $request ) {
+      $slug = sanitize_title( $request->get_param( 'slug' ) );
+
+      // 1. Try finding published WordPress post
+      $post = get_page_by_path( $slug, OBJECT, 'post' );
+      if ( $post && $post->post_status === 'publish' ) {
+        $post_id = $post->ID;
+        $cats = get_the_category( $post_id );
+        $cat_name = ! empty( $cats ) ? $cats[0]->name : 'General';
+        $thumb_id = get_post_thumbnail_id( $post_id );
+        $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'full' ) : '';
+
+        return rest_ensure_response( [
+          'source'      => 'wordpress_post',
+          'id'          => 'resource-' . $post_id,
+          'slug'        => $post->post_name,
+          'title'       => $post->post_title,
+          'category'    => $cat_name,
+          'date'        => get_the_date( 'Y-m-d', $post ),
+          'minutes'     => intval( get_post_meta( $post_id, '_resource_minutes', true ) ?: 4 ),
+          'medium'      => get_post_meta( $post_id, '_resource_medium', true ) ?: 'article',
+          'src'         => get_post_meta( $post_id, '_resource_src', true ) ?: '',
+          'poster'      => get_post_meta( $post_id, '_resource_poster', true ) ?: $thumb_url,
+          'cover_url'   => $thumb_url,
+          'featured'    => get_post_meta( $post_id, '_resource_featured', true ) === '1',
+          'author'      => get_post_meta( $post_id, '_resource_author', true ) ?: get_the_author_meta( 'display_name', $post->post_author ),
+          'description' => $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ),
+          'html'        => apply_filters( 'the_content', $post->post_content ),
+        ] );
+      }
+
+      // 2. Fallback to bundled assets/resources.json
+      $file = get_template_directory() . '/assets/resources.json';
+      if ( file_exists( $file ) ) {
+        $resources = json_decode( file_get_contents( $file ), true );
+        if ( is_array( $resources ) ) {
+          foreach ( $resources as $r ) {
+            if ( ( $r['slug'] ?? '' ) === $slug || ( $r['id'] ?? '' ) === $slug || ( $r['id'] ?? '' ) === 'resource-' . $slug ) {
+              return rest_ensure_response( [
+                'source' => 'bundled_json',
+                'data'   => $r,
+              ] );
+            }
+          }
+        }
+      }
+
+      return new WP_Error( 'not_found', 'Resource article not found', [ 'status' => 404 ] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
 } );
 
 
