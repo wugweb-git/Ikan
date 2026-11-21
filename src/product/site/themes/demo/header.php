@@ -172,13 +172,13 @@
       <a href="#main-content" class="skip-to-main" style="position: absolute; left: -9999px; z-index: 9999; padding: var(--spacing-2) var(--spacing-4); background-color: var(--color-primary-default); color: var(--color-primary-on); border-radius: var(--radius-sm); font-weight: var(--font-weight-medium); text-decoration: none;">Skip to main content</a>
       
       <!-- Desktop Capsule Nav -->
-      <header class="ikan2-theme nav-fixed-wrapper" role="banner">
+      <header class="ikan2-theme nav-fixed-wrapper hidden lg:flex" role="banner">
         <nav class="ikan-capsule-nav px-[16px] py-[12px] m-[0px]" aria-label="Primary navigation" style="border-radius: 9999px;">
           <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="nav-brand no-underline shrink-0" aria-label="iKAN home">
             <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
             <span class="type-subhead">iKAN</span>
           </a>
-          <div class="hidden lg:flex items-center gap-1 xl:gap-2">
+          <div class="flex items-center gap-1 xl:gap-2">
             <?php if ( ! empty( $primary_items ) ) : ?>
               <?php foreach ( $primary_items as $item ) : 
                 $active = ( rtrim( $item->url, '/' ) === rtrim( $current_url, '/' ) ) || ( is_front_page() && rtrim( $item->url, '/' ) === rtrim( home_url(), '/' ) );
@@ -201,7 +201,7 @@
           <div class="flex items-center gap-2 xl:gap-3 shrink-0">
             <a href="<?php echo esc_url( home_url( "/contact-us" ) ); ?>" class="btn-nav-secondary gap-2 no-underline text-xs xl:text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
-              Let\x27s Talk
+              Let's Talk
             </a>
             <a href="https://app.ikanhealth.in/login" class="btn-nav-primary gap-2 no-underline text-xs xl:text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" x2="3" y1="12" y2="12"></line></svg>
@@ -212,7 +212,7 @@
       </header>
 
       <!-- Mobile Public Capsule Navigation Bar -->
-      <nav class="ikan2-theme mnav" aria-label="Public navigation">
+      <nav class="ikan2-theme mnav block lg:hidden" aria-label="Public navigation">
         <div class="mnav__bar">
           <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__brand" aria-label="iKAN home">
             <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
@@ -273,7 +273,7 @@
           <div class="mnav__actions">
             <a href="<?php echo esc_url( home_url( "/contact-us" ) ); ?>" class="mnav__talk type-label-lg no-underline">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
-              Let\x27s Talk
+              Let's Talk
             </a>
             <a href="https://app.ikanhealth.in/login" class="mnav__signin type-label-lg no-underline">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" x2="3" y1="12" y2="12"></line></svg>
