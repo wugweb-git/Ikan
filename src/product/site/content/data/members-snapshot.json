@@ -1,0 +1,164 @@
+[
+  {
+    "email": "demo1@ikan.com",
+    "name": "Alex Johnson (demo)",
+    "role": "test",
+    "joined": "2025-09-29"
+  },
+  {
+    "email": "admin@wugweb.com",
+    "name": "Admin",
+    "role": "team",
+    "joined": "2026-03-10"
+  },
+  {
+    "email": "vedanshu@wugweb.com",
+    "name": "Vedanshu Srivastava",
+    "role": "team",
+    "joined": "2026-09-14"
+  },
+  {
+    "email": "vedanshu.srivastava@gmail.com",
+    "name": "Vedanshu Srivastava",
+    "role": "team",
+    "joined": "2026-02-26"
+  },
+  {
+    "email": "designs@vedanshusrivastava.com",
+    "name": "Vedanshu Srivastava",
+    "role": "team",
+    "joined": "2026-09-15"
+  },
+  {
+    "email": "kartikchaturvedi91@gmail.com",
+    "name": "Kartik Chandra Chaturvedi",
+    "role": "team",
+    "joined": "2026-02-27"
+  },
+  {
+    "email": "kartik@i-kan.co",
+    "name": "Kartik",
+    "role": "team",
+    "joined": "2026-03-10"
+  },
+  {
+    "email": "kartikchaturvedi0991@protonmail.com",
+    "name": "Katz",
+    "role": "team",
+    "joined": "2026-06-24"
+  },
+  {
+    "email": "sachinvshmpn@gmail.com",
+    "name": "Sachin Vaishampayan",
+    "role": "team",
+    "joined": "2026-09-07"
+  },
+  {
+    "email": "divyanshu.pundir@wugweb.com",
+    "name": "Divyanshu Pundir",
+    "role": "team",
+    "joined": "2026-09-25"
+  },
+  {
+    "email": "divyanshupundir945@gmail.com",
+    "name": "Divyanshu Pundir",
+    "role": "team",
+    "joined": "2026-09-24"
+  },
+  {
+    "email": "purvisharma.1612@gmail.com",
+    "name": "Purvi Sharma",
+    "role": "team",
+    "joined": "2026-09-14"
+  },
+  {
+    "email": "bshubhi34@gmail.com",
+    "name": "Shubhi Bhatnagar",
+    "role": "member",
+    "joined": "2026-09-15"
+  },
+  {
+    "email": "arunimad767@gmail.com",
+    "name": "Arunima D",
+    "role": "member",
+    "joined": "2026-09-23"
+  },
+  {
+    "email": "rohitdhir806@gmail.com",
+    "name": "Rohit Dhir",
+    "role": "member",
+    "joined": "2026-09-24"
+  },
+  {
+    "email": "shama.llama04@gmail.com",
+    "name": "Maya Shah",
+    "role": "member",
+    "joined": "2026-09-27"
+  },
+  {
+    "email": "jonathan.arsenal@gmail.com",
+    "name": "Jonathan Emmett",
+    "role": "member",
+    "joined": "2026-10-02"
+  },
+  {
+    "email": "ipsitaguharoy@gmail.com",
+    "name": "Ipsita Guharoy",
+    "role": "member",
+    "joined": "2026-10-03"
+  },
+  {
+    "email": "mithileshsinghsingh84@gmail.com",
+    "name": "Mithilesh Singh",
+    "role": "member",
+    "joined": "2026-10-06"
+  },
+  {
+    "email": "devikasaxena1@gmail.com",
+    "name": "Devika Saxena",
+    "role": "member",
+    "joined": "2026-10-07"
+  },
+  {
+    "email": "pooja.joshi011@gmail.com",
+    "name": "Pooja Joshi",
+    "role": "member",
+    "joined": "2026-10-08"
+  },
+  {
+    "email": "chandravatsala0@gmail.com",
+    "name": "Vatsala Chandra",
+    "role": "member",
+    "joined": "2026-10-11"
+  },
+  {
+    "email": "arushi.chandra23@gmail.com",
+    "name": "Arushi Chandra",
+    "role": "member",
+    "joined": "2026-10-13"
+  },
+  {
+    "email": "praneetver@gmail.com",
+    "name": "Praneet Verma",
+    "role": "member",
+    "joined": "2026-10-18"
+  },
+  {
+    "email": "smitachandra0904@gmail.com",
+    "name": "Smita",
+    "role": "member",
+    "joined": "2026-10-18"
+  },
+  {
+    "email": "chinmaiverma12@gmail.com",
+    "name": "Chinmai Verma",
+    "role": "member",
+    "joined": "2026-10-27"
+  },
+  {
+    "email": "vchinmay2011@gmail.com",
+    "name": "Dipti Chinmay",
+    "role": "member",
+    "joined": "2026-11-12"
+  }
+]
