@@ -79,8 +79,67 @@ function demo_register_sidebars() {
 }
 add_action( 'widgets_init', 'demo_register_sidebars' );
 
+// Direct redirect for marketing login requests to member PWA app
+add_action( 'template_redirect', function() {
+  $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+  if ( $req_path === 'login' || is_page( 'login' ) ) {
+    wp_redirect( 'https://app.ikanhealth.in/login', 302 );
+    exit;
+  }
+} );
+
 // Route blog archive, single post, and custom page requests to dedicated PHP templates
 add_filter( 'template_include', function( $template ) {
+  $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+
+  // Explicit URL alias to template map for 100% URL parity
+  $alias_map = [
+    'about'                   => 'about-us.php',
+    'about-us'                => 'about-us.php',
+    'service'                 => 'services.php',
+    'services'                => 'services.php',
+    'resource'                => 'resources.php',
+    'resources'               => 'resources.php',
+    'article'                 => 'resources.php',
+    'articles'                => 'resources.php',
+    'assessment'              => 'assessments.php',
+    'assessments'             => 'assessments.php',
+    'equip'                   => 'equip-programs.php',
+    'equip-programs'          => 'equip-programs.php',
+    'program'                 => 'equip-programs.php',
+    'programs'                => 'equip-programs.php',
+    'calculator'              => 'burnout-cost-calculator.php',
+    'calc'                    => 'burnout-cost-calculator.php',
+    'burnout-cost-calculator' => 'burnout-cost-calculator.php',
+    'burnout-calculator'      => 'burnout-cost-calculator.php',
+    'contact'                 => 'contact-us.php',
+    'contact-us'              => 'contact-us.php',
+    'faq'                     => 'faq.php',
+    'faqs'                    => 'faq.php',
+    'consult'                 => 'consultation.php',
+    'consultation'            => 'consultation.php',
+    'org'                     => 'org.php',
+    'organisation'            => 'org.php',
+    'privacy'                 => 'privacy-policy.php',
+    'privacy-policy'          => 'privacy-policy.php',
+    'terms'                   => 'terms-of-use.php',
+    'terms-of-use'            => 'terms-of-use.php',
+    'cancellation'            => 'cancellation-policy.php',
+    'cancellation-policy'     => 'cancellation-policy.php',
+    'return-policy'           => 'return-policy.php',
+    'returns'                 => 'return-policy.php',
+    'workplace-privacy'       => 'workplace-privacy.php',
+    'partner'                 => 'professional-application.php',
+    'join/partner'            => 'professional-application.php',
+  ];
+
+  if ( isset( $alias_map[ $req_path ] ) ) {
+    $mapped_file = get_template_directory() . '/' . $alias_map[ $req_path ];
+    if ( file_exists( $mapped_file ) ) {
+      return $mapped_file;
+    }
+  }
+
   if ( is_front_page() ) {
     $front = get_template_directory() . '/front-page.php';
     if ( file_exists( $front ) ) {
@@ -104,6 +163,12 @@ add_filter( 'template_include', function( $template ) {
 
   if ( is_page() ) {
     $post_slug = get_post_field( 'post_name', get_post() );
+    if ( isset( $alias_map[ $post_slug ] ) ) {
+      $mapped_file = get_template_directory() . '/' . $alias_map[ $post_slug ];
+      if ( file_exists( $mapped_file ) ) {
+        return $mapped_file;
+      }
+    }
     $page_file = get_template_directory() . '/' . $post_slug . '.php';
     if ( $post_slug && file_exists( $page_file ) ) {
       return $page_file;
@@ -111,7 +176,6 @@ add_filter( 'template_include', function( $template ) {
   }
 
   // Fallback for direct path match to template file (e.g. /assessments, /services, /equip-programs)
-  $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
   if ( $req_path && ! str_contains( $req_path, '/' ) ) {
     $direct_file = get_template_directory() . '/' . $req_path . '.php';
     if ( file_exists( $direct_file ) ) {
