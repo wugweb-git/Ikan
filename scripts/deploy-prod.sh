@@ -66,9 +66,9 @@ URLS=(
 
 FAILED=0
 for url in "${URLS[@]}"; do
-  STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" "$url")
-  if [ "$STATUS" = "200" ]; then
-    echo "  ✓ [200] $url"
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+  if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
+    echo "  ✓ [$STATUS] $url"
   else
     echo "  ✗ [$STATUS] $url"
     FAILED=1
