@@ -100,9 +100,9 @@ get_header(); ?>
     </section>
 
     <!-- Message Form Section with Validation, Success, and Failure states -->
-    <section class="rounded-[24px] bg-white border border-gray-200 p-6 md:p-8 shadow-sm" id="contact-form-container">
-      <h2 class="text-xl font-bold text-gray-900 mb-1">Send us a message</h2>
-      <p class="text-sm text-gray-500 mb-6">Drop us a line and our care team will get back to you promptly.</p>
+    <section class="rounded-[24px] bg-white border border-gray-200/80 p-6 md:p-8 shadow-xs" id="contact-form-container">
+      <h2 class="font-display text-xl font-semibold text-gray-900 mb-1">Send us a message</h2>
+      <p class="font-sans text-sm text-gray-500 mb-6">Drop us a line and our care team will get back to you promptly.</p>
 
       <!-- Success Scenario Card -->
       <div id="contact-success" class="hidden overflow-hidden rounded-[24px] bg-[#DFF0E8] text-[#173D2F] border border-[#B3DEC9] p-6 mb-6">
@@ -111,8 +111,8 @@ get_header(); ?>
             <i data-lucide="check" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold">Message sent successfully</h3>
-            <p class="text-sm mt-1 text-[#285743]" id="contact-success-msg">
+            <h3 class="font-display text-base font-semibold">Message sent successfully</h3>
+            <p class="font-sans text-sm mt-1 text-[#285743]" id="contact-success-msg">
               We’ve received your message and will reply to you within 24 hours.
             </p>
           </div>
@@ -122,50 +122,50 @@ get_header(); ?>
       <!-- Failure Alert Scenario Banner -->
       <div id="contact-failure" class="hidden rounded-xl bg-red-50 border border-red-200 text-red-800 p-4 mb-6 text-sm flex items-center gap-3">
         <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 shrink-0"></i>
-        <span id="contact-failure-msg">Your message didn’t send. Check your connection and try again, or email us directly at support@ikanhealth.in.</span>
+        <span id="contact-failure-msg" class="font-sans">Your message didn’t send. Check your connection and try again, or email us directly at support@ikanhealth.in.</span>
       </div>
 
       <form id="contact-form" noValidate class="space-y-4">
         <!-- Name Field -->
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
             Name <span class="text-red-500">*</span>
           </label>
-          <input type="text" id="contact-name" name="name" required maxlength="60" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+          <input type="text" id="contact-name" name="name" required maxlength="60" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
           <span class="text-xs text-red-500 mt-1 hidden" id="err-name"></span>
         </div>
 
         <!-- Email Field -->
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
             Email <span class="text-red-500">*</span>
           </label>
-          <input type="email" id="contact-email" name="email" required maxlength="254" placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+          <input type="email" id="contact-email" name="email" required maxlength="254" placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
           <span class="text-xs text-red-500 mt-1 hidden" id="err-email"></span>
         </div>
 
         <!-- Subject Field -->
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
             Subject (optional)
           </label>
-          <input type="text" id="contact-subject" name="subject" maxlength="120" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none transition-colors" />
+          <input type="text" id="contact-subject" name="subject" maxlength="120" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
         </div>
 
         <!-- Message Field with length counter -->
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-700">
+            <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700">
               Message <span class="text-red-500">*</span>
             </label>
             <span class="text-xs text-gray-400 tabular-nums" id="msg-counter">0/2000</span>
           </div>
-          <textarea id="contact-message" name="message" rows="5" required maxlength="2000" placeholder="Write a little more so we can help (10 characters or more)..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-blue-600 focus:outline-none resize-none transition-colors"></textarea>
+          <textarea id="contact-message" name="message" rows="5" required maxlength="2000" placeholder="Write a little more so we can help (10 characters or more)..." class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none resize-none transition-colors"></textarea>
           <span class="text-xs text-red-500 mt-1 hidden" id="err-message"></span>
         </div>
 
         <!-- Submit Button with Busy Spinner -->
-        <button type="submit" id="contact-submit-btn" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
+        <button type="submit" id="contact-submit-btn" class="w-full py-3.5 px-6 rounded-xl bg-[#151515] hover:bg-black text-white font-sans font-semibold text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer">
           <span id="btn-text">Send message</span>
           <svg id="btn-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -176,13 +176,13 @@ get_header(); ?>
     </section>
 
     <!-- FAQ Banner Link -->
-    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="block rounded-[24px] border border-gray-200 bg-gray-50/70 p-5 hover:bg-gray-100 transition-colors">
+    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="block rounded-[24px] border border-gray-200/80 bg-gray-50/70 p-5 hover:bg-gray-100 transition-colors">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-sm font-bold text-gray-900">Looking for immediate answers?</h3>
-          <p class="text-xs text-gray-500 mt-0.5">Explore our frequently asked questions about assessments, privacy, and therapy.</p>
+          <h3 class="font-display text-sm font-semibold text-gray-900">Looking for immediate answers?</h3>
+          <p class="font-sans text-xs text-gray-500 mt-0.5">Explore our frequently asked questions about assessments, privacy, and therapy.</p>
         </div>
-        <span class="text-xs font-bold text-blue-600 underline whitespace-nowrap ml-4">
+        <span class="font-sans text-xs font-semibold text-[#2A9D8F] underline whitespace-nowrap ml-4">
           Visit FAQ &rarr;
         </span>
       </div>
