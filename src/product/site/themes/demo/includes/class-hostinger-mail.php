@@ -28,7 +28,7 @@ class Ikan_Hostinger_Mail {
   const HOST = 'smtp.hostinger.com';
   const PORT_SSL = 465;
   const PORT_TLS = 587;
-  const DEFAULT_FROM_EMAIL = 'support@ikanhealth.in';
+  const DEFAULT_FROM_EMAIL = 'noreply@ikanhealth.in';
   const DEFAULT_FROM_NAME  = 'iKAN Health';
 
   /**
