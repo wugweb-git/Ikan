@@ -1000,6 +1000,64 @@ add_action( 'rest_api_init', function() {
     },
     'permission_callback' => '__return_true',
   ] );
+
+  // 6. Dynamic Headless Page Content API for ikan2 (About, FAQ, Contact, etc.)
+  register_rest_route( 'ikan/v1', '/page/(?P<slug>[a-zA-Z0-9-]+)', [
+    'methods'             => 'GET',
+    'callback'            => function( WP_REST_Request $request ) {
+      $slug = sanitize_title( $request->get_param( 'slug' ) );
+      $meta_key_map = [
+        'about'      => [ 'page-about-us', 'page-about' ],
+        'about-us'   => [ 'page-about-us', 'page-about' ],
+        'contact'    => [ 'page-contact', 'page-contact-us' ],
+        'contact-us' => [ 'page-contact', 'page-contact-us' ],
+        'faq'        => [ 'page-faq' ],
+      ];
+
+      // 1. Try to find content from WordPress post meta
+      $page = get_page_by_path( $slug );
+      if ( ! $page && isset( $meta_key_map[ $slug ] ) ) {
+        // Try fallback slug (e.g. about -> about-us)
+        $alt_slug = ( $slug === 'about' ) ? 'about-us' : ( ( $slug === 'about-us' ) ? 'about' : $slug );
+        $page = get_page_by_path( $alt_slug );
+      }
+
+      if ( $page ) {
+        $keys = $meta_key_map[ $slug ] ?? [ 'page-' . $slug ];
+        foreach ( $keys as $k ) {
+          $raw = get_post_meta( $page->ID, $k, true );
+          if ( ! empty( $raw ) ) {
+            $parsed = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
+            if ( ! empty( $parsed ) ) {
+              return rest_ensure_response( [
+                'source' => 'wordpress_meta',
+                'page_id' => $page->ID,
+                'slug'   => $slug,
+                'data'   => $parsed,
+              ] );
+            }
+          }
+        }
+      }
+
+      // 2. Fallback to bundled assets/pages.json
+      $file = get_template_directory() . '/assets/pages.json';
+      if ( file_exists( $file ) ) {
+        $all_pages = json_decode( file_get_contents( $file ), true );
+        $json_key = ( $slug === 'about-us' ) ? 'about' : ( ( $slug === 'contact-us' ) ? 'contact' : $slug );
+        if ( isset( $all_pages[ $json_key ] ) ) {
+          return rest_ensure_response( [
+            'source' => 'bundled_json',
+            'slug'   => $slug,
+            'data'   => $all_pages[ $json_key ],
+          ] );
+        }
+      }
+
+      return new WP_Error( 'not_found', 'Page content not found', [ 'status' => 404 ] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
 } );
 
 
