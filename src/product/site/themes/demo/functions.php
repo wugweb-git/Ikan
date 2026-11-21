@@ -19,6 +19,8 @@ function demo_theme_features() {
   add_theme_support( 'post-thumbnails' );
   add_theme_support( 'align-wide' );
   add_theme_support( 'block-templates' );
+  add_theme_support( 'editor-styles' );
+  add_editor_style( 'style.css' );
   add_theme_support( 'custom-logo', [
     'height'      => 60,
     'width'       => 200,
@@ -28,6 +30,12 @@ function demo_theme_features() {
   add_theme_support( 'html5', [ 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption' ] );
 }
 add_action( 'after_setup_theme', 'demo_theme_features' );
+
+// Enqueue Block Editor Assets (Fonts & Design System for Gutenberg)
+add_action( 'enqueue_block_editor_assets', function() {
+  wp_enqueue_style( 'demo-editor-fonts', 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap', [], null );
+  wp_enqueue_style( 'demo-editor-style', get_stylesheet_uri(), [], '1.0.4' );
+} );
 
 // Register styles and scripts
 function demo_enqueue_styles() {
