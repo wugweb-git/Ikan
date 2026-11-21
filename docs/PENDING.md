@@ -2,17 +2,39 @@
 
 Single source of truth for outstanding work across sessions. Update this file whenever a deployment or major change completes — see [`docs/GOVERNANCE.md`](GOVERNANCE.md).
 
-*Last updated: 2026-11-21*
+*Last updated: 2026-11-22*
 
 ---
 
-## Recent Deployments & Completed Work (2026-11-21)
-- [x] **WordPress Block Theme & Gutenberg Rules Mapping**:
-  - Populated all 26 pages in WordPress (`https://ikanhealth.in/wp-admin/edit.php?post_type=page`) with authentic, fully compliant Gutenberg block markup (`core/heading`, `core/paragraph`, `core/group`, `core/columns`, `core/details`, `core/list`, `core/button`, `core/shortcode`).
-  - Mapped and synchronized all Fluent Forms across pages: Form 1 (Contact & Org inquiries), Form 2 (Newsletter subscription), Form 3 (Burnout Cost Calculator report request), Form 4 (Partner & Provider onboarding), Form 5 (User registration).
-  - Replaced default WordPress boilerplate on Privacy Policy (ID 3) with authentic iKAN Privacy Policy blocks.
-  - Enabled Block Editor stylesheet support, font enqueues (`Sora`, `Manrope`), and design system variables for Gutenberg editing in `functions.php` and `style.css`.
-  - Resolved mobile homepage responsive layout bugs (Reviews vertical stack with clean margin, FAQ 1-column on mobile, fluid responsive H1 heading clamp).
+## 1. Immediate Next Steps / User Action Required
+
+- [ ] **Set Outgoing Mail Password**:
+  - The SMTP plugin is configured for `smtp.hostinger.com:465` (SSL) with username `noreply@ikanhealth.in`.
+  - Enter the mailbox password in **wp-admin → Settings → SMTP** (or via WP-CLI: `printf '%s' "PASSWORD" | wp smtp settings set password=-`).
+  - Run verification test: `wp ikan-mail test <email>`.
+- [ ] **Update DKIM TXT Record in Hostinger hPanel**:
+  - In Hostinger hPanel → Domains → `ikanhealth.in` → DNS Zone Editor:
+  - Replace the old value for TXT record `hostingermail1._domainkey` with the newly generated key:
+    `v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtDmULKqEraHiYpO3qZFQ2H40o6W7uLpredsqq/yD1mujgQ9HOdeb/NiZuwfl53dZSyLtra2vYM4N2NknjKOJrh68xRBucd+n/uiwuS7pVmdu8fCp3vCIP0i8143bVFvBYm9q3ohpckCmEu6Xwogj3gx0HdwAJwLvRRSzdjUtFAyc8H1dpjOeo8sMFYcm9IgEqYgkqpLS5ee8cAsu2hi4OHLszurchuycZHxIECzAEzdX4zrcsnP8dsTiGbl+M9xdi+W9gWVevinxCzOLckxpaB3+iT417kRxiBJIbILEWrDsaWWZ1eFXg2/W306XeUuAZqjyd/fQdLxPAgOD4Akm3wIDAQAB`
+
+---
+
+## 2. Recent Completed Milestones (2026-11-22)
+
+- [x] **Hostinger Mail API PHP SDK & High-Stability SMTP**:
+  - Installed `hostinger/mail-api-php-sdk: ^1.18` via Composer in the theme and verified autoloading.
+  - Implemented `Ikan_Hostinger_Mail` wrapper (`includes/class-hostinger-mail.php`) supporting REST API SDK client and SMTPS on Port 465.
+  - Enforced `noreply@ikanhealth.in` as default from address across all WordPress and FluentCRM transactional emails.
+  - Built custom WP-CLI diagnostics command: `wp ikan-mail [status|test <email>]`.
+- [x] **Fluent Forms & Contact Form Mapping**:
+  - Renamed Form ID 1 from starter title "Contact Form Demo" to "Contact Us Form".
+  - Mapped directly with Contact Us page (`/contact-us/`, ID 14) and synced into FluentCRM leads.
+- [x] **UI Parity & Mobile Layout Bug Fixes**:
+  - Fixed mobile testimonial 3-card squishing bug by replacing with responsive vertical stack.
+  - Fixed FAQ accordion 2-column squishing by enforcing 1-column responsive collapse on mobile.
+  - Corrected fluid H1 font sizes (`42px` mobile, `56px` desktop).
+  - Validated `/services/` server-rendered routing and verified all 26 WordPress pages use Gutenberg block editor markup.
+
 
 ## 1. Upcoming & Open Work
 
