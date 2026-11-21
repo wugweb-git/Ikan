@@ -8,10 +8,9 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
-- [ ] **Set Outgoing Mail Password**:
-  - The SMTP plugin is configured for `smtp.hostinger.com:465` (SSL) with username `noreply@ikanhealth.in`.
-  - Enter the mailbox password in **wp-admin → Settings → SMTP** (or via WP-CLI: `printf '%s' "PASSWORD" | wp smtp settings set password=-`).
-  - Run verification test: `wp ikan-mail test <email>`.
+- [ ] **Email Design Review (In Progress)**:
+  - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test dispatches.
+  - Awaiting user feedback on layout, header/footer spacing, author card, and copy.
 - [ ] **Update DKIM TXT Record in Hostinger hPanel**:
   - In Hostinger hPanel → Domains → `ikanhealth.in` → DNS Zone Editor:
   - Replace the old value for TXT record `hostingermail1._domainkey` with the newly generated key:
@@ -21,11 +20,27 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-22)
 
-- [x] **Hostinger Mail API PHP SDK & High-Stability SMTP**:
-  - Installed `hostinger/mail-api-php-sdk: ^1.18` via Composer in the theme and verified autoloading.
-  - Implemented `Ikan_Hostinger_Mail` wrapper (`includes/class-hostinger-mail.php`) supporting REST API SDK client and SMTPS on Port 465.
-  - Enforced `noreply@ikanhealth.in` as default from address across all WordPress and FluentCRM transactional emails.
-  - Built custom WP-CLI diagnostics command: `wp ikan-mail [status|test <email>]`.
+- [x] **FluentSMTP & Hostinger Mail SMTPS Production Connection**:
+  - Configured FluentSMTP with `smtp.hostinger.com:465` (SSL) for `noreply@ikanhealth.in`.
+  - Enforced `force_from_name = 'yes'` and `force_from_email = 'yes'` so outgoing sender is globally locked to `iKAN Health <noreply@ikanhealth.in>`.
+  - Verified connection health via WP-CLI: `wp fluent-smtp health` -> healthy.
+- [x] **Hostinger Mail API PHP SDK Wrapper**:
+  - Installed `hostinger/mail-api-php-sdk: ^1.18` via Composer in the theme.
+  - Implemented `Ikan_Hostinger_Mail` supporting direct REST API dispatch (`send_via_api`), quota checks, and SMTPS fallback.
+- [x] **Email Design System & FluentCRM Gutenberg Templates (All 6 Use Cases)**:
+  - Designed and published 6 production templates in FluentCRM (`fc_template`):
+    - `ID: 313` — Master Brand Template (Contact Inquiries Form 1 & 2)
+    - `ID: 318` — Burnout Cost Calculator Executive Report (Form 3 & AJAX lead dispatch)
+    - `ID: 315` — Partner Onboarding Application Received (Form 4)
+    - `ID: 316` — Member Onboarding Account Activation & Magic Link (Form 5)
+    - `ID: 317` — Weekly Wellbeing Status Digest (Recurring Member Progress)
+    - `ID: 314` — Member Assessment Summary Export (User clicks "Email summary to myself" in ikan2)
+  - Resolved all feedback items:
+    - Slim horizontal header (30px emblem + wordmark + category pill badge, zero wasted vertical space).
+    - Founder & Clinical Director card with Kartik's portrait (`kartik.jpg`), title, and direct support links.
+    - Monochrome SVG social icons (`icon-linkedin.svg`, `icon-x.svg`, `icon-instagram.svg`, `icon-web.svg`).
+    - Eliminating generic duplicate footers via `_footer_settings['disable_footer'] = 'yes'`.
+  - Created standalone [Interactive Email Gallery](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html) with desktop/mobile device switcher.
 - [x] **Fluent Forms & Contact Form Mapping**:
   - Renamed Form ID 1 from starter title "Contact Form Demo" to "Contact Us Form".
   - Mapped directly with Contact Us page (`/contact-us/`, ID 14) and synced into FluentCRM leads.
