@@ -40,6 +40,10 @@ rsync -avz --delete \
   }
 echo "✓ Theme files synced successfully"
 
+# Ensure Storybook symlink is active
+ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
+  "ln -sfn $THEME_DEST/assets/storybook $REMOTE_PATH/storybook" >/dev/null 2>&1
+
 # Purge LiteSpeed & CDN Caches
 echo "→ Purging LiteSpeed and CDN caches on server..."
 ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
@@ -57,6 +61,7 @@ URLS=(
   "https://ikanhealth.in/equip-programs/"
   "https://ikanhealth.in/join/partner/"
   "https://ikanhealth.in/burnout-cost-calculator/"
+  "https://ikanhealth.in/storybook/"
 )
 
 FAILED=0

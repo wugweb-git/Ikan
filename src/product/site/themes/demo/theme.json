@@ -11,29 +11,117 @@
     },
     "color": {
       "palette": [
-        { "name": "Primary", "slug": "primary", "color": "#1e293b" },
-        { "name": "Brand Teal", "slug": "brand-teal", "color": "#0ea5e9" },
-        { "name": "Brand Coral", "slug": "brand-coral", "color": "#f43f5e" },
-        { "name": "Brand Amber", "slug": "brand-amber", "color": "#f59e0b" },
-        { "name": "Calm", "slug": "calm", "color": "#10b981" },
-        { "name": "Canvas", "slug": "canvas", "color": "#f8fafc" },
-        { "name": "Foreground", "slug": "foreground", "color": "#0f172a" },
-        { "name": "Background", "slug": "background", "color": "#ffffff" }
+        { "name": "Primary / Foreground", "slug": "primary", "color": "#151515" },
+        { "name": "Foreground", "slug": "foreground", "color": "#151515" },
+        { "name": "Canvas", "slug": "canvas", "color": "#F8F9FA" },
+        { "name": "Background", "slug": "background", "color": "#FFFFFF" },
+        { "name": "Calm / Accent", "slug": "calm", "color": "#10B981" },
+        { "name": "Accent Strong", "slug": "accent-strong", "color": "#059669" },
+        { "name": "Accent Soft", "slug": "accent-soft", "color": "#ECFDF5" },
+        { "name": "Muted", "slug": "muted", "color": "#64748B" },
+        { "name": "Brand Coral", "slug": "brand-coral", "color": "#F43F5E" },
+        { "name": "Brand Amber", "slug": "brand-amber", "color": "#F59E0B" },
+        { "name": "Secondary Surface", "slug": "secondary", "color": "#F3F4F6" }
       ]
     },
     "typography": {
       "fontFamilies": [
         {
-          "name": "Manrope",
-          "slug": "manrope",
-          "fontFamily": "Manrope, sans-serif"
+          "name": "Sora (Display / Headlines)",
+          "slug": "sora",
+          "fontFamily": "\"Sora\", ui-sans-serif, system-ui, sans-serif"
         },
         {
-          "name": "Sora",
-          "slug": "sora",
-          "fontFamily": "Sora, sans-serif"
+          "name": "Manrope (Body / UI)",
+          "slug": "manrope",
+          "fontFamily": "\"Manrope\", ui-sans-serif, system-ui, sans-serif"
         }
+      ],
+      "fontSizes": [
+        { "name": "Display Large", "slug": "display-lg", "size": "52px" },
+        { "name": "Headline Large", "slug": "headline-lg", "size": "32px" },
+        { "name": "Headline Medium", "slug": "headline-md", "size": "28px" },
+        { "name": "Headline Small", "slug": "headline-sm", "size": "24px" },
+        { "name": "Title Large", "slug": "title-lg", "size": "22px" },
+        { "name": "Title Medium", "slug": "title-md", "size": "16px" },
+        { "name": "Body Large", "slug": "body-lg", "size": "16px" },
+        { "name": "Body Regular / Action", "slug": "body", "size": "15px" },
+        { "name": "Body Medium", "slug": "body-md", "size": "14px" },
+        { "name": "Body Small", "slug": "body-sm", "size": "13px" },
+        { "name": "Label Medium", "slug": "label-md", "size": "12px" }
       ]
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "#FFFFFF",
+      "text": "#151515"
+    },
+    "typography": {
+      "fontFamily": "var(--wp--preset--font-family--manrope)",
+      "fontSize": "15px",
+      "lineHeight": "1.6"
+    },
+    "elements": {
+      "heading": {
+        "typography": {
+          "fontFamily": "var(--wp--preset--font-family--sora)",
+          "fontWeight": "600",
+          "letterSpacing": "-0.01em"
+        },
+        "color": {
+          "text": "#151515"
+        }
+      },
+      "link": {
+        "color": {
+          "text": "#10B981"
+        },
+        ":hover": {
+          "color": {
+            "text": "#059669"
+          }
+        }
+      },
+      "button": {
+        "color": {
+          "background": "#151515",
+          "text": "#FFFFFF"
+        },
+        "border": {
+          "radius": "9999px"
+        },
+        "typography": {
+          "fontFamily": "var(--wp--preset--font-family--manrope)",
+          "fontWeight": "600",
+          "fontSize": "15px",
+          "letterSpacing": "0.01em"
+        },
+        "spacing": {
+          "padding": {
+            "top": "12px",
+            "bottom": "12px",
+            "left": "24px",
+            "right": "24px"
+          }
+        }
+      }
+    },
+    "blocks": {
+      "core/button": {
+        "border": {
+          "radius": "9999px"
+        },
+        "color": {
+          "background": "#151515",
+          "text": "#FFFFFF"
+        },
+        "typography": {
+          "fontFamily": "var(--wp--preset--font-family--manrope)",
+          "fontWeight": "600",
+          "fontSize": "15px"
+        }
+      }
     }
   }
 }
