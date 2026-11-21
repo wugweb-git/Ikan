@@ -8,9 +8,12 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
-- [ ] **Email Design Review (In Progress)**:
-  - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test dispatches.
-  - Awaiting user feedback on layout, header/footer spacing, author card, and copy.
+- [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
+  - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.
+  - Zero emails are sent until explicit approval.
+- [ ] **PDF Generation & Dynamic Email Automation (Tomorrow's Agenda)**:
+  - Activated `Fluent PDF Generator` (`fluentforms-pdf` v2.2.0) on Hostinger production.
+  - Connect dynamic calculations from `/burnout-cost-calculator/` and `ikan2` assessments into branded PDF generation and FluentCRM Template dispatch (Templates 318 and 314).
 - [ ] **Update DKIM TXT Record in Hostinger hPanel**:
   - In Hostinger hPanel → Domains → `ikanhealth.in` → DNS Zone Editor:
   - Replace the old value for TXT record `hostingermail1._domainkey` with the newly generated key:
@@ -20,7 +23,18 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-22)
 
-- [x] **FluentSMTP & Hostinger Mail SMTPS Production Connection**:
+- [x] **Fluent PDF Generator (v2.2.0) Activated on Hostinger**:
+  - Installed and activated `fluentforms-pdf` on Hostinger production via WP-CLI.
+- [x] **Headless CMS & Resources REST API Routes (`functions.php`)**:
+  - Registered `/wp-json/ikan/v1/page/(?P<slug>[a-zA-Z0-9-]+)` for dynamic page content (About, FAQ, Contact).
+  - Registered `/wp-json/ikan/v1/resources` for full article catalog retrieval by `ikan2`.
+  - Registered `/wp-json/ikan/v1/resources/(?P<slug>[a-zA-Z0-9-]+)` for single article with `.prose-ikan` formatting.
+- [x] **404 Error Page 1:1 Parity with `ikan2` `NotFoundScreen` (`404.php`)**:
+  - Matched Sora 26px heading ("We can’t find that one"), Manrope body copy, `#151515` pill buttons ("Take me home", "Browse the library"), and 20px rounded crisis helpline banner (KIRAN 1800-599-0019 / iCALL 9152987821).
+- [x] **Supabase Member Roster Ingested into FluentCRM**:
+  - Imported 27 registered Supabase accounts into FluentCRM (15 into `iKAN Members` with tag `member`, 12 into `Internal Team & Dev`).
+  - Created git backup snapshot at `src/product/site/content/data/members-snapshot.json`.
+- [x] **Email Design System & FluentCRM Gutenberg Templates (All 6 Use Cases)**:
   - Configured FluentSMTP with `smtp.hostinger.com:465` (SSL) for `noreply@ikanhealth.in`.
   - Enforced `force_from_name = 'yes'` and `force_from_email = 'yes'` so outgoing sender is globally locked to `iKAN Health <noreply@ikanhealth.in>`.
   - Verified connection health via WP-CLI: `wp fluent-smtp health` -> healthy.
