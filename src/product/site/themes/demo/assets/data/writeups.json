@@ -1,0 +1,513 @@
+{
+  "assessments": {
+    "feeling-depressed-and-hopeless": {
+      "title": "Feeling depressed and hopeless",
+      "main_title": "Why take this depression assessment?",
+      "description": "Reflect on how frequently depressive symptoms have impacted your mood, energy, and daily functioning recently.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you reflect on how often low mood, emotional heaviness, or loss of interest has affected you.\n\nIt focuses on emotional wellbeing and daily functioning.",
+      "section2_bullets": [
+        "Mood and emotional state",
+        "Interest and motivation",
+        "Energy levels and engagement"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Think about recent weeks",
+        "Choose what best describes your experience",
+        "There’s no need to overthink",
+        "Results appear after completion"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "3",
+      "difficulty": "beginner",
+      "category": "depression",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you reflect on how low mood, loss of interest, or emotional heaviness may have been affecting you recently.\n\nIt focuses on common experiences such as feeling down, tired, disconnected, or lacking motivation. The goal is not to label you, but to help you notice patterns that may be weighing on your day-to-day life.\n\nWhat it measures\n\n- Frequency of low mood and loss of interest\n- Emotional and physical symptoms linked to depression\n- Impact on energy, focus, and daily functioning\n\nNumber of questions\n\n- 9 questions\n\nImportant\nThis assessment is not a diagnosis. It is a tool to help you understand whether what you’re experiencing may need attention or support.",
+      "metadata.tile2_content": "Abstract, subdued, calming image\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on how you’ve felt over the past 2 weeks\n- Choose the option that best matches your experience\n- There are no right or wrong answers\n- Your progress is saved automatically\n- Results appear immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A summary of how often depressive symptoms have appeared\n- Clear explanation of what your results may suggest\n- Insight into whether symptoms seem occasional or persistent\n- Optional next steps such as Equip programs, resources, or professional support\n\nNo diagnoses. No labels. Just information to help you decide what to do next.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-help and awareness tool, not a medical diagnosis\n- Not intended for emergency or crisis situations\n- If you’re feeling unsafe, hopeless, or at risk of harming yourself, seek immediate help from local emergency services or a mental health professional\n- You’re encouraged to discuss your results with a qualified professional if helpful",
+      "metadata.important_note_1": "This is not a medical diagnosis",
+      "metadata.important_note_2": "If you feel distressed, seek professional support"
+    },
+    "feeling-overwhelmed-and-anxious": {
+      "title": "Feeling overwhelmed and anxious",
+      "main_title": "Why take this anxiety assessment?",
+      "description": "Measure how often anxiety symptoms have affected you over the last two weeks to better understand your current stress response",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you understand how frequently anxiety has been present in your life recently, including excessive worry, nervousness, and restlessness.\n\nIt focuses on how anxiety has affected your thoughts, physical sensations, and ability to manage everyday situations.",
+      "section2_bullets": [
+        "Frequency of anxious thoughts",
+        "Physical and mental tension",
+        "Impact of worry on daily functioning"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Answer based on the past 2 weeks",
+        "Choose whAnswer based on how you’ve felt recently",
+        "Choose what best reflects your experience",
+        "Results are shown after completion"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "4",
+      "difficulty": "beginner",
+      "category": "anxiety",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you understand how anxiety may be showing up in your life right now.\n\nIt focuses on common experiences like excessive worrying, restlessness, difficulty relaxing, and feeling on edge. The questions look at how often these experiences have occurred recently—not why they happen.\n\nWhat it measures\n\n- Frequency of anxiety-related thoughts and sensations\n- Impact of worry and tension on daily life\n- Whether anxiety feels occasional or persistent\n\nNumber of questions\n\n- 7 questions\n\nImportant\nThis assessment is not a diagnosis. It helps identify patterns that may be worth paying attention to or discussing further.",
+      "metadata.tile2_content": "Abstract, calming image\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on how you’ve felt over the past 2 weeks\n- Choose the option that fits best—there are no right or wrong answers\n- Progress is saved automatically\n- You can pause and return anytime\n- Results appear immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nOnce completed, you’ll receive:\n\n- A summary of how frequently anxiety symptoms have appeared\n- Clear explanation of what your score range means\n- Insight into whether anxiety seems situational or more consistent\n- Optional next steps such as self-guided tools, Equip programs, or further assessments\n\nNo labels. No judgments. Just information.",
+      "metadata.tile5_content": "How it works\n\n- Answer based on how you’ve felt over the past 2 weeks\n- Choose the option that fits best—there are no right or wrong answers\n- Progress is saved automatically\n- You can pause and return anytime\n- Results appear immediately after completion",
+      "metadata.important_note_1": "This assessment supports self-reflection only",
+      "metadata.important_note_2": "It does not replace professional care"
+    },
+    "feeling-worried-and-stressed": {
+      "title": "Feeling worried and stressed",
+      "main_title": "Why take this stress assessment?",
+      "description": "Gauge how overwhelmed or in control you’ve felt over the last month to understand your stress levels.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you understand how stressed or overwhelmed you’ve been feeling lately, and whether life has felt manageable or out of control.\n\nIt focuses on how you’ve been responding to everyday pressures at work, at home, or personally.",
+      "section2_bullets": [
+        "Perceived stress and overwhelm",
+        "Sense of control vs pressure",
+        "How demanding life has felt"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Answer based on the past month",
+        "Choose the option that fits best",
+        "There are no right or wrong answers",
+        "Go with your first instinct"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "4",
+      "difficulty": "beginner",
+      "category": "stress",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you understand how stressed or overwhelmed you’ve been feeling lately, and whether life has felt manageable or out of control.\n\nIt focuses on how you’ve been responding to everyday pressures—at work, at home, or in your personal life—and how often stress has affected your thoughts and emotions.\n\nWhat it measures\n\n- Perceived stress and overwhelm\n- Sense of control vs pressure\n- How unpredictable or demanding life has felt\n\nNumber of questions\n\n- 10 questions\n\nImportant\nThis assessment is not a diagnosis. It helps you notice patterns in how stress is showing up, so you can decide what support might help.",
+      "metadata.tile2_content": "Abstract, grounded image\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on how you’ve felt over the past month\n- Choose the option that best reflects your experience\n- There are no right or wrong answers\n- Progress is saved automatically\n- Results are shown immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A summary of how frequently stress has affected you\n- Explanation of what your stress level may indicate\n- Insight into whether stress feels situational or ongoing\n- Suggested next steps such as Equip programs, resources, or further assessments\n\nNo labels. No judgments. Just clarity.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-help and awareness tool, not a medical diagnosis\n- Not intended for emergency or crisis situations\n- If stress feels overwhelming or unmanageable, consider reaching out to a mental health professional\n- You may choose to share your results with a professional if helpful",
+      "metadata.important_note_1": "This is a self-awareness tool, not a diagnosis",
+      "metadata.important_note_2": "Not intended for emergency or crisis situations"
+    },
+    "struggling-with-quality-sleep": {
+      "title": "Struggling with quality sleep",
+      "main_title": "Why take this sleep assessment?",
+      "description": "An 8-question assessment to understand sleep quality, night-time patterns, and possible insomnia symptoms.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you understand your sleep patterns and how restful or disrupted your sleep has been.\n\nIt looks at both sleep quality and how sleep affects your day.",
+      "section2_bullets": [
+        "Difficulty falling or staying asleep",
+        "Sleep quality and restfulness",
+        "Daytime energy and alertness"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Think about your recent sleep habits",
+        "Answer based on typical nights",
+        "There are no correct answers",
+        "Be as accurate as possible"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "10",
+      "difficulty": "beginner",
+      "category": "sleep",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you understand how your sleep has been affecting you and whether difficulties with falling asleep, staying asleep, or feeling rested are becoming a pattern.\n\nIt focuses on your recent sleep quality and how sleep may be impacting your energy, mood, and daily functioning.\n\nWhat it measures\n\n- Sleep quality and consistency\n- Difficulty falling or staying asleep\n- Impact of sleep on daytime functioning\n\nNumber of questions\n\n- 8 questions\n\nImportant\nThis assessment is not a diagnosis. It’s a way to better understand your sleep patterns and decide what support might help.",
+      "metadata.tile2_content": "Abstract, soft, night-inspired image\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on your sleep over the past month\n- Choose the option that best fits your experience\n- There are no right or wrong answers\n- Your progress is saved automatically\n- Results appear immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A summary of your sleep quality and patterns\n- Explanation of whether sleep issues appear occasional or persistent\n- Insight into how sleep may be affecting your daily life\n- Suggested next steps such as self-guided tools, Equip programs, or resources\n\nNo labels. No diagnoses. Just clarity.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-help and awareness tool, not a medical diagnosis\n- Not intended for emergency or crisis situations\n- If sleep problems are severe or ongoing, consider speaking with a healthcare professional\n- You may choose to share your results with a professional if helpful",
+      "metadata.important_note_1": "Sleep issues can have many causes",
+      "metadata.important_note_2": "This is a self-help assessment, not a diagnosis"
+    },
+    "struggling-to-balance-life": {
+      "title": "Struggling to balance life",
+      "main_title": "Why take this balance assessment?",
+      "description": "Pinpoint workplace stressors like workload, support, and control that may be disrupting work-life balance.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you understand how your time and energy are divided between work, rest, and the people and activities that matter to you.\n\nIt focuses on whether everyday demands have been leaving room for the rest of your life.",
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "10",
+      "difficulty": "beginner",
+      "category": "balance",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you understand whether work-related pressures are affecting your ability to balance work, personal life, and well-being.\n\nIt focuses on factors like workload, control, support, recognition, and how work stress may be spilling over into other areas of your life.\n\nWhat it measures\n\n- Job-related stress and pressure\n- Sense of control and support at work\n- Impact of work on personal well-being and balance\n\nNumber of questions\n\n- 10 questions\n\nImportant\nThis assessment is not a diagnosis. It helps identify workplace stress patterns that may be affecting your overall balance and quality of life.",
+      "metadata.tile2_content": "Abstract, grounded image with balance cues\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on your current work situation\n- Choose the option that best reflects your experience\n- There are no right or wrong answers\n- Progress is saved automatically\n- Results appear immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A summary of work-related stress and balance indicators\n- Insight into which factors (workload, control, support) feel most challenging\n- Explanation of what your results may suggest\n- Suggested next steps such as Equip programs, resources, or reflection tools\n\nNo labels. No judgments. Just clarity.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-help and awareness tool, not a medical or workplace diagnosis\n- Not intended for emergency or crisis situations\n- If work stress is significantly affecting your health or functioning, consider speaking with a mental health professional or trusted workplace support\n- You may choose to share your results with a professional if helpful"
+    },
+    "feeling-drained-and-burned-out": {
+      "title": "Feeling drained and burned out",
+      "main_title": "Why take this burnout assessment?",
+      "description": "Identify emotional exhaustion and mental distance related to work stress as a first step toward recovery.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you identify signs of burnout, including exhaustion, detachment, and reduced motivation.\n\nIt focuses on how prolonged stress may be affecting your work and personal life.",
+      "section2_bullets": [
+        "Emotional and physical exhaustion",
+        "Sense of detachment or cynicism",
+        "Reduced sense of effectiveness"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Reflect on sustained patterns, not one bad day",
+        "Answer based on your typical experience",
+        "Be honest with yourself",
+        "Results are shown immediately"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "10",
+      "difficulty": "beginner",
+      "category": "burnout",
+      "metadata.tile1_content": "What is this assessment?\n\nThis assessment helps you understand whether ongoing demands—especially related to work or responsibilities—may be leading to burnout.\n\nIt looks beyond temporary tiredness and focuses on patterns like emotional exhaustion, mental distance, reduced motivation, and difficulty functioning.\n\nWhat it measures\n\n- Exhaustion and depletion\n- Mental distance or disengagement\n- Emotional and cognitive strain\n- Impact on daily functioning\n\nNumber of questions\n\n- 23 questions\n\nImportant\nThis assessment is not a diagnosis. It’s a way to recognize patterns that may signal the need for rest, boundaries, or support.",
+      "metadata.tile2_content": "Abstract, muted image\n(No text · decorative only · aria-hidden)",
+      "metadata.tile3_content": "How it works\n\n- Answer based on how you’ve felt over a longer period of time\n- Choose responses that best reflect your typical experience\n- There are no right or wrong answers\n- Progress is saved automatically\n- Results appear immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A summary of burnout-related signals\n- Insight into which dimensions (energy, motivation, mental distance) feel most affected\n- Explanation of what your results may suggest\n- Optional next steps such as Equip programs, resources, or professional support\n\nNo labels. No judgments. Just perspective.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-help and awareness tool, not a medical diagnosis\n- Not intended for emergency or crisis situations\n- If burnout feels severe, persistent, or is affecting your ability to function, consider speaking with a mental health professional\n- You may choose to share your results with a professional if helpful",
+      "metadata.important_note_1": "Burnout can build gradually over time",
+      "metadata.important_note_2": "This assessment is for awareness, not diagnosis"
+    },
+    "unsure-or-general-concern": {
+      "title": "Unsure or general concern",
+      "main_title": "Why take this general assessment?",
+      "description": "A quick, holistic snapshot combining anxiety, depression, well-being, resilience, and self-efficacy.",
+      "main_content": [
+        "Understand your symptoms",
+        "Get personalized insights",
+        "Take the first step to recovery"
+      ],
+      "highlights_title": "Assessment Highlights",
+      "section1_title": "How it works",
+      "section1_who_title": "Who can take this?",
+      "section1_who_content": "This assessment is designed for adults 18+.",
+      "section1_eligibility_title": "What to expect:",
+      "section1_eligibility_points": [
+        "Answer honestly",
+        "Takes about 5 minutes",
+        "Instant results"
+      ],
+      "section2_title": "What is this assessment?",
+      "section2_content": "This assessment helps you reflect on your overall emotional state and how balanced or strained you’ve been feeling.\n\nIt focuses on emotional awareness and everyday wellbeing.",
+      "section2_bullets": [
+        "Emotional balance and stability",
+        "Ability to cope with feelings",
+        "Overall sense of wellbeing"
+      ],
+      "section3_title": "What you'll see",
+      "section3_subtitle": "Understanding your mental health is the first step.",
+      "section4_notes_title": "Things to remember",
+      "section4_notes": [
+        "Answer honestly and intuitively",
+        "Focus on how you’ve felt lately",
+        "No judgment or scoring pressure",
+        "Results appear after completion"
+      ],
+      "notes_title": "Things to keep in mind",
+      "cta_button_text": "Take Assessment",
+      "duration": "10",
+      "difficulty": "beginner",
+      "category": "general",
+      "metadata.tile1_content": "What is this assessment?\n\nIf you’re not sure what you’re feeling, this assessment helps you pause and take stock.\n\nIt brings together short, validated questions related to anxiety, mood, overall well-being, resilience, and confidence. Rather than focusing on one condition, it offers a broad snapshot of your emotional health right now.\n\nWhat it measures\n\n- General emotional well-being\n- Early signs of anxiety or low mood\n- Sense of coping, resilience, and self-efficacy\n\nNumber of questions\n\n- 11 questions\n\nImportant\nThis assessment is not a diagnosis. It is a starting point to help you understand where you may need attention or support.",
+      "metadata.tile2_content": "Abstract, calming image\n(No text, decorative only)",
+      "metadata.tile3_content": "How it works\n\n- Answer questions based on how you’ve felt recently\n- Most questions refer to the past 2 weeks\n- There are no right or wrong answers\n- Your progress is saved automatically\n- You can pause and return anytime\n- Results are shown immediately after completion",
+      "metadata.tile4_content": "What you’ll see\n\nAfter completing the assessment, you’ll see:\n\n- A simple summary of your responses\n- An overview of areas that seem stable and areas that may need attention\n- Clear explanations of what your results may indicate\n- Suggested next steps such as self-guided tools, Equip programs, or external support resources\n\nNo labels. No diagnoses. Just clarity.",
+      "metadata.tile5_content": "Important notes\n\n- This is a self-reflection tool, not a medical or clinical diagnosis\n- Not intended for crisis or emergency situations\n- If you’re feeling overwhelmed, distressed, or unsafe, please seek support from a mental health professional or local emergency services\n- You’re encouraged to share your results with a qualified professional if helpful",
+      "metadata.important_note_1": "This tool supports self-reflection",
+      "metadata.important_note_2": "Not intended for crisis situations"
+    }
+  },
+  "programmes": {
+    "sleep-tight": {
+      "title": "Sleep Tight",
+      "subtitle": "Transform your life with daily practice.",
+      "description": "A gentle, guided program to help you understand and improve your sleep. There’s nothing to “fix” immediately \n. We’ll start by noticing patterns and building consistency.",
+      "category": "sleep",
+      "difficulty": "beginner",
+      "duration_days": "31",
+      "duration_weeks": "5",
+      "tags": ["sleep", "cbt-i", "insomnia", "rest"],
+      "metadata.tile1_content": "Having trouble sleeping? I-Kan's Sleep Tight module is here. We know quality sleep is essential for your well-being. Over the next  31 days, we'll work together to address your sleep troubles and help you achieve restful nights, improving your health, focus, and mood.",
+      "metadata.tile2_content": [
+        "Daily micro-lessons (5-10 minutes)",
+        "Evidence-based CBT techniques",
+        "Progress tracking & insights",
+        "Personalized sleep plan"
+      ],
+      "metadata.tile3_content": [
+        "Complete your daily lessons at your own pace",
+        "Track your sleep patterns and progress",
+        "Practice new techniques each day",
+        "Review your insights and adjust your plan"
+      ],
+      "metadata.tile4_content": [
+        "Better Sleep Quality. Fall asleep faster and wake up refreshed",
+        "Reduced Sleep Anxiety. Stop worrying about sleep and feel more in control",
+        "Sustainable Habits. Build routines that last beyond the program",
+        "Improved Daily Energy. Feel more alert and energized during the day"
+      ],
+      "metadata.eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+      "metadata.eligibility_point_1": "Evidence-based CBT techniques",
+      "metadata.eligibility_point_2": "Progress tracking & insights",
+      "metadata.eligibility_point_3": "Personalized sleep plan",
+      "metadata.eligibility_point_4": "No pills",
+      "equip_program_by_slug.description": "A gentle, guided program to help you understand and improve your sleep. There’s nothing to “fix” immediately — we’ll start by noticing patterns and building consistency.",
+      "equip_program_by_slug.duration_days": "28",
+      "equip_program_by_slug.metadata.tile1_content": "Having trouble sleeping? I-Kan's Sleep Tight module is here. We know quality sleep is essential for your well-being. Over the next  18 days, we'll work together to address your sleep troubles and help you achieve restful nights, improving your health, focus, and mood.",
+      "equip_program_by_slug.metadata.tile3_content": [
+        "Complete your daily lesson at your own pace",
+        "Track your sleep patterns and progress",
+        "Practice new techniques each day",
+        "Review your insights and adjust your plan"
+      ],
+      "equip_program_by_slug.metadata.tile4_content": [
+        "Better Sleep Quality - Fall asleep faster and wake up refreshed",
+        "Reduced Sleep Anxiety - Stop worrying about sleep and feel more in control",
+        "Sustainable Habits - Build routines that last beyond the program",
+        "Improved Daily Energy - Feel more alert and energized during the day"
+      ],
+      "equip_program_by_slug.metadata.eligibility_point_4": "Personalized sleep plan",
+      "repo_editor_placeholder_tile1_content": "Example: Sleep Tight is a guided, self-help program designed to help you understand and improve your sleep. Over the next 18 days, you'll identify factors that disrupt your sleep and gradually build healthier sleep patterns...",
+      "repo_editor_placeholder_eligibility": [
+        "Sleep Tight may be helpful if:",
+        "You have trouble falling asleep or staying asleep",
+        "You find yourself worrying about your sleep",
+        "You wake up too early and struggle to fall back asleep",
+        "Poor sleep is starting to affect your day-to-day life"
+      ],
+      "repo_bento_what_is_title": "What is this program about?",
+      "repo_bento_is_this_for_you_label": "IS THIS FOR YOU?",
+      "repo_bento_how_it_works_title": "How it works",
+      "repo_bento_how_it_works_subtitle": "This program works in progressive stages.",
+      "repo_bento_how_it_works_footer": "The focus is on building sustainable habits and developing practical skills you can use every day."
+    },
+    "unburn": {
+      "title": "Unburn",
+      "subtitle": "Transform your life with daily practice.",
+      "description": "A comprehensive 30-day program to understand, manage, and recover from burnout.",
+      "category": "burnout",
+      "difficulty": "intermediate",
+      "duration_days": "35",
+      "duration_weeks": "4",
+      "tags": ["burnout", "stress", "work", "resilience"],
+      "metadata.tile1_content": "Don't let burnout drain your spark. With our Bite-sized daily steps reclaim your energy and peace of mind in 35 days.",
+      "metadata.tile2_content": [
+        "Daily micro-lessons (5-10 minutes)",
+        "Evidence-based CBT techniques",
+        "Progress tracking & insights",
+        "Practical and useful tips"
+      ],
+      "metadata.tile3_content": [
+        "Complete your daily lessons at your own pace",
+        "Track your patterns and progress",
+        "Practice new techniques each day",
+        "Review your insights and adjust your plan"
+      ],
+      "metadata.tile4_content": [
+        "Restored Mental & Physical Energy. Overcome chronic exhaustion and feel genuinely recharged",
+        "Clear Mental Boundaries. Protect your mental bandwidth and stop taking stress home",
+        "Sustainable Work Habits. Create a pace of life you can maintain without burning out",
+        "Renewed Passion & Focus. Feel engaged, present, and motivated in your day-to-day"
+      ],
+      "metadata.eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+      "metadata.eligibility_point_1": "Evidence-based CBT techniques",
+      "metadata.eligibility_point_2": "Progress tracking & insights",
+      "metadata.eligibility_point_3": "Real world ways to challenge burnout  ",
+      "metadata.eligibility_point_4": "No pills",
+      "equip_program_by_slug.title": "Burnout Reset",
+      "equip_program_by_slug.duration_days": "28",
+      "repo_bento_what_is_title": "What is this program about?",
+      "repo_bento_is_this_for_you_label": "IS THIS FOR YOU?",
+      "repo_bento_how_it_works_title": "How it works",
+      "repo_bento_how_it_works_subtitle": "This program works in progressive stages.",
+      "repo_bento_how_it_works_footer": "The focus is on building sustainable habits and developing practical skills you can use every day."
+    },
+    "stress-buster": {
+      "title": "Stress Buster",
+      "description": "A 30-day guided program to understand, manage, and reduce everyday stress.",
+      "category": "stress",
+      "difficulty": "beginner",
+      "duration_days": "30",
+      "duration_weeks": "4",
+      "tags": ["stress", "resilience", "mindfulness", "cbt"],
+      "metadata.tile1_content": "Don't let stress get the better of you. Understanding and learning to manage your stress has never been easier. Simple modules over the next 30 days will teach you how.",
+      "metadata.tile2_content": [
+        "Daily micro-lessons (5-10 minutes)",
+        "Evidence-based CBT techniques",
+        "Progress tracking & insights",
+        "Practical and useful tips"
+      ],
+      "metadata.tile3_content": [
+        "Complete your daily lessons at your own pace",
+        "Track your patterns and progress",
+        "Practice new techniques each day",
+        "Review your insights and adjust your plan"
+      ],
+      "metadata.tile4_content": [
+        "Lower daily stress. Stay calm under pressure and regain control over your life",
+        "Reduced Mental Overwhelm. Clear mental clutter and stop feeling constantly overloaded",
+        "Sustainable Habits. Build routines that last beyond the program",
+        "Improved Daily Energy. Feel more alert and energized during the day"
+      ],
+      "metadata.eligibility_intro": "Daily micro-lessons (5-10 minutes)",
+      "metadata.eligibility_point_1": "Evidence-based CBT techniques",
+      "metadata.eligibility_point_2": "Progress tracking & insights",
+      "metadata.eligibility_point_3": "Practical stress management ",
+      "metadata.eligibility_point_4": "No pills",
+      "equip_program_by_slug.duration_days": "28",
+      "repo_bento_what_is_title": "What is this program about?",
+      "repo_bento_is_this_for_you_label": "IS THIS FOR YOU?",
+      "repo_bento_how_it_works_title": "How it works",
+      "repo_bento_how_it_works_subtitle": "This program works in progressive stages.",
+      "repo_bento_how_it_works_footer": "The focus is on building sustainable habits and developing practical skills you can use every day."
+    },
+    "productivity-reset": {
+      "title": "Productivity Reset",
+      "description": "A 10-day guided program to sharpen your focus, stop putting things off and rebuild momentum, one manageable step at a time.",
+      "category": "focus",
+      "difficulty": "beginner",
+      "duration_days": "10",
+      "duration_weeks": "2",
+      "tags": ["productivity", "focus", "planning", "habits"],
+      "metadata.tile2_content": [
+        "Daily micro-lessons (around 10 minutes)",
+        "Practical planning and focus techniques",
+        "A trigger log, a Hermit Hour and a mindful break you can keep using",
+        "A summary of your focus and screen time, start to end"
+      ],
+      "metadata.tile3_content": [
+        "Notice where your time and attention go",
+        "Plan your day and eat the frog first",
+        "Protect an hour of focus, then fine-tune it",
+        "Look back and plan the week ahead"
+      ],
+      "metadata.tile4_content": [
+        "Sharper focus. Work for longer stretches without reaching for your phone",
+        "Less putting off. Start the hard task first and see it through",
+        "A plan that holds. Organise your week around what matters most",
+        "More energy for the day. Build breaks and movement into your routine"
+      ],
+      "repo_bento_what_is_title": "What is this program about?",
+      "repo_bento_is_this_for_you_label": "IS THIS FOR YOU?",
+      "repo_bento_eligibility_intro_fallback": "This program may be helpful if:",
+      "repo_bento_how_it_works_title": "How it works",
+      "repo_bento_how_it_works_subtitle": "This program works in progressive stages.",
+      "repo_bento_how_it_works_footer": "The focus is on building sustainable habits and developing practical skills you can use every day.",
+      "metadata.tile1_content": "Busy all day but nothing important gets done? Over the next 10 days you'll see where your time really goes, learn to start the hard task first, protect an hour of real focus, and finish with a plan for the week ahead.",
+      "repo_editor_placeholder_eligibility": [
+        "Productivity Reset may be helpful if:",
+        "You're busy all day but the important things don't get done",
+        "You keep putting off tasks you know matter",
+        "You pick up your phone more often than you'd like",
+        "You want a simple routine to plan and protect your time"
+      ]
+    }
+  }
+}

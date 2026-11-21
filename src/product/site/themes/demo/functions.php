@@ -1189,6 +1189,20 @@ add_action( 'rest_api_init', function() {
     },
     'permission_callback' => '__return_true',
   ] );
+
+  // 9. Assessment & Equip Educational Writeups API
+  register_rest_route( 'ikan/v1', '/writeups', [
+    'methods'             => 'GET',
+    'callback'            => function() {
+      $file = get_template_directory() . '/assets/data/writeups.json';
+      if ( file_exists( $file ) ) {
+        $json = json_decode( file_get_contents( $file ), true );
+        return rest_ensure_response( $json ?: [] );
+      }
+      return rest_ensure_response( [] );
+    },
+    'permission_callback' => '__return_true',
+  ] );
 } );
 
 
