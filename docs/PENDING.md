@@ -8,9 +8,20 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [ ] **Real PDF & Dynamic Email Generation (Burnout Calculator & Summaries)**:
+  - **Issue Identified**: "Download PDF" and "Email it" on `/burnout-cost-calculator/` are currently static placeholder buttons; in `ikan2`, "Download" uses `window.print()` and "Email" uses `mailto:`.
+  - **Planned Implementation**:
+    1. Install `dompdf/dompdf` via Composer in `src/product/site/themes/demo/`.
+    2. Build unified HTML-to-PDF report generator (`iKAN-Burnout-Cost-Report.pdf`) with iKAN brand styling, SVG header, dynamic 3-way split, and methodology citations.
+    3. Wire "Download PDF" button to AJAX endpoint `ikan_download_calculator_pdf` for one-click binary PDF download.
+    4. Wire "Email it" button to an inline email modal that triggers `ikan_send_calculator_report` (merging live numbers into FluentCRM Template `ID: 318`, attaching the generated PDF, and sending via Hostinger Mail / FluentSMTP).
+    5. Standardize Member Assessment Summary (Template `ID: 314`) to the same backend generation pipeline.
+- [ ] **GA4 Custom Events & Cross-Domain Tracking**:
+  - Enqueue cross-domain linker between `ikanhealth.in` and `app.ikanhealth.in` in `header.php`.
+  - Track `calc_start`, `calc_result_view`, `calc_report_download`, `calc_report_email`, `generate_lead` (`/burnout-cost-calculator/`, `/org/`, `/contact-us/`).
+  - Strict privacy rule: Never send clinical scores or sensitive health text to GA4/Clarity.
 - [ ] **Email Design Review (In Progress)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test dispatches.
-  - Awaiting user feedback on layout, header/footer spacing, author card, and copy.
 - [ ] **Update DKIM TXT Record in Hostinger hPanel**:
   - In Hostinger hPanel → Domains → `ikanhealth.in` → DNS Zone Editor:
   - Replace the old value for TXT record `hostingermail1._domainkey` with the newly generated key:
