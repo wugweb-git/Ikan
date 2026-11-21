@@ -1,0 +1,30 @@
+name: Scheduled Sync & Telemetry Worker
+
+on:
+  schedule:
+    # Run every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-and-sync:
+    name: Production Sync & Telemetry Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run Scheduled Sync Worker
+        env:
+          PROD_ORIGIN: 'https://ikanhealth.in'
+          WP_INGEST_USER: 'ingest'
+          WP_INGEST_PASS: ${{ secrets.WP_INGEST_PASS || '8PRNBi0xU30aQxMCwMtbBuLg' }}
+        run: node scripts/sync-worker.mjs
