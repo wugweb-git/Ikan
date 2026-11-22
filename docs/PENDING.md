@@ -8,21 +8,26 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
-- [ ] **`ikan2` GitHub Actions Secrets for Automated DB Backup**:
-  - The nightly backup workflow in `ikan2` (`.github/workflows/backup.yml`) requires two secrets in GitHub repo settings (`wugweb-git/ikan2` → Settings → Secrets and variables → Actions):
-    - `IKAN_DB_URL`: Supabase session-mode connection URI (port 5432).
-    - `BACKUP_PASSPHRASE`: Passphrase for AES-256-CBC encryption of database dumps.
-  - *Interim note*: Database backups run manually via `scripts/backup-db.sh` until secrets are saved in GitHub.
+- [ ] **Database & Backup Architecture: Move to WordPress Admin & Hostinger (Off GitHub)**:
+  - Rather than storing database dumps in GitHub Actions artifacts (which require secrets and expose health dumps to runner logs), map the database and backups directly into **WordPress Admin on Hostinger**.
+  - Hostinger already performs automated daily hosting snapshots and database backups.
+  - UpdraftPlus on WordPress provides direct off-site backup destinations (Google Drive/S3) with zero dependency on GitHub Actions runners.
 
 - [ ] **Strategic Migration: Unify Member Experience into Main WordPress (`ikan`)**:
   - **Vision**: Bring the full private member experience (clinical program tracks, daily check-ins, encrypted health journals, and user diaries) directly into the main WordPress platform (`ikan` on Hostinger), unifying the platform under one roof.
+  - **Scheduled Actions Engine (Action Scheduler)**:
+    - WordPress **Action Scheduler** (`wp action-scheduler`, v3.9.3) is already installed, active, and running every minute on Hostinger.
+    - We will leverage Action Scheduler to register recurring background synchronization jobs (`as_schedule_recurring_action()`) that pull/push updates between the Supabase interim buffer and WordPress MySQL safely without blocking user requests.
   - **Database Mapping Strategy**:
     - Design WordPress database mapping for member journeys (custom MySQL tables or structured Custom Post Types with REST API endpoints).
     - **Interim Buffer Rule**: Maintain the existing `ikan2` Supabase database as a live buffer during migration — zero disruption or data loss for existing accounts, check-ins, or program progressions.
-    - **Security & Privacy**: Retain client-side encryption / robust tokenization for sensitive health journals and user diaries.
+    - **Clinical Data Privacy (Client-Side Encryption)**:
+      - Sensitive personal health records (encrypted journals, private diary entries) remain strictly client-side encrypted (AES-GCM zero-knowledge encryption).
+      - WordPress MySQL stores only ciphertext, IV, and salt — ensuring that even with direct database access, reflections remain cryptographically unreadable without the member's private key.
+      - Keeps all clinical health records in the dedicated host database, completely off GitHub.
   - **Milestone Phases**:
-    1. *Phase 1 — Schema & API Mapping*: Define relational mapping between Supabase tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema.
-    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization script/webhook between Supabase and WordPress to mirror member progress safely.
+    1. *Phase 1 — Schema & Action Scheduler Mapping*: Define relational mapping between Supabase tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema. Register Action Scheduler worker jobs.
+    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization bridge between Supabase and WordPress to mirror member progress safely.
     3. *Phase 3 — UI Component Migration*: Integrate `ikan2` React/M3 member components into the WordPress theme application layer.
     4. *Phase 4 — Cutover & Verification*: Comprehensive smoke testing before retiring Supabase.
 
