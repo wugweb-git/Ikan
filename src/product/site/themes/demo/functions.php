@@ -37,6 +37,12 @@ require_once get_template_directory() . '/includes/class-hostinger-mail.php';
 // Load iKAN Database Schema Manager (Tables: Assessments, Programs, Journals, Wellness)
 require_once get_template_directory() . '/includes/class-ikan-db-schema.php';
 
+// Load iKAN Secure Custom Fields (SCF) Clinical Field Group on wp_users
+require_once get_template_directory() . '/includes/class-ikan-scf-fields.php';
+
+// Load iKAN Clinical Admin Hub (Assessments Catalog, Questions, Equip Curriculum, Results Reviewer)
+require_once get_template_directory() . '/includes/class-ikan-clinical-admin.php';
+
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
 

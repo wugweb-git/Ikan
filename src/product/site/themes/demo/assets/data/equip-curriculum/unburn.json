@@ -1,0 +1,2578 @@
+{
+  "slug": "unburn",
+  "source": "https://mousy-literature-52f.notion.site/3d9a10202d6f80658b0df5326803c969",
+  "units": [
+    {
+      "n": 1,
+      "title": "Onboarding",
+      "days": [
+        {
+          "day": 0,
+          "title": "Onboarding",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Setup Phase.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we begin, we’d like to know a little about you. This helps us tailor the program better."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Occupation",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "occupation",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "What do you do for a living?",
+              "options": [
+                "Employed",
+                "Self-employed",
+                "Student",
+                "Homemaker",
+                "Between jobs",
+                "Retired"
+              ],
+              "uiHints": "cards"
+            },
+            {
+              "n": 3,
+              "title": "Therapy History",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "therapy_history",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Have you ever taken therapy before?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 4,
+              "title": "Conditions",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "pre_existing_conditions",
+              "minutes": 5,
+              "group": "onboarding_conditions",
+              "body": [],
+              "notes": [],
+              "prompt": "Do you have any pre-existing conditions?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 5,
+              "title": "Conditions Detail",
+              "type": "reflection",
+              "key": "conditions_detail",
+              "minutes": 5,
+              "group": "onboarding_conditions",
+              "body": [],
+              "notes": [],
+              "prompt": "If yes, what?",
+              "rules": {
+                "dependsOn": "pre_existing_conditions == Yes"
+              }
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 2,
+      "title": "Burnout Snapshot",
+      "days": [
+        {
+          "day": 1,
+          "title": "Burnout Snapshot",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Understanding My Workplace.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "I'm S. A couple of years back I was seriously burnt out. I was unaware while it was happening, missing the signs and not recognizing them. That's exactly why this program exists: to help you understand burnout, spot it early, and build tools to manage it. I wish I’d had this program when I needed it."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Indicators",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "key": "burnout_indicators",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Which of these feel true for you right now?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options:"
+                },
+                {
+                  "kind": "li",
+                  "text": "It's stressful and hectic"
+                },
+                {
+                  "kind": "li",
+                  "text": "I've drifted from my colleagues"
+                },
+                {
+                  "kind": "li",
+                  "text": "I'm exhausted all the time"
+                },
+                {
+                  "kind": "li",
+                  "text": "My performance has slipped"
+                },
+                {
+                  "kind": "li",
+                  "text": "There's always more to do, and nothing feels finished"
+                },
+                {
+                  "kind": "li",
+                  "text": "I dread going in"
+                },
+                {
+                  "kind": "li",
+                  "text": "I've had communication issues with my manager"
+                },
+                {
+                  "kind": "li",
+                  "text": "I feel energized and look forward to work"
+                },
+                {
+                  "kind": "li",
+                  "text": "I got real recognition recently"
+                },
+                {
+                  "kind": "li",
+                  "text": "I badly need a break"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "This gives us a first read on how work feels to you day to day. Not everything here is in your control, and that’s alright, because resilience against burnout is something you can build. See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "title": "Thoughts vs Feelings",
+          "kind": "learning",
+          "declaredBlocks": 8,
+          "subtitle": "Identification.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A thought is a sentence in your head, like \"This line is taking forever\", whereas a feeling is usually a one-word reaction to that thought, say bored or anxious. Telling them apart helps you see why you reacted the way you did."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought or feeling?",
+              "type": "lesson",
+              "interaction": "single-select",
+              "key": "tf_q1",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For each situation below, one line is a thought, one is a feeling. We have done the first one for you. Frequent power cuts → \"They make me furious!\" = Feeling; \"They make things inconvenient for a lot of us.\" = Thought"
+                }
+              ],
+              "notes": [],
+              "prompt": "“It makes me furious!”",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 3,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "single-select",
+              "key": "tf_q2",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [],
+              "notes": [],
+              "prompt": "“This is inconvenient and difficult.”",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 4,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [],
+              "notes": [],
+              "columns": ["The last cricket match you watched…", "Thought", "Feeling"],
+              "rows": [
+                "I was so excited and happy that our team won!",
+                "We won the tournament after a really long time. The spinners played really well!"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [],
+              "notes": [],
+              "columns": [
+                "A friend of yours finally bagged their dream job…",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "It is so great! They had worked so hard for this job. I am sure they will excel and thrive in the role.",
+                "I am so happy for them!"
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [],
+              "notes": [],
+              "columns": [
+                "When you are about to deliver a presentation to your class",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "I am definitely going to mess this up. I wish I had worked on my presentation instead of playing Counter-Strike with my friends.",
+                "I am so scared and nervous."
+              ]
+            },
+            {
+              "n": 7,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "group": "tf_identification",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Tasks 2-7 can be done by showing 2 at a time on 1 card"
+                }
+              ],
+              "columns": [
+                "Tell me about the time when you went to a relative's wedding reception",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "Why is everyone teasing me about getting married? I am so not ready for this.",
+                "This is getting really annoying now."
+              ]
+            },
+            {
+              "n": 8,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good grounding. Tomorrow we start tracking these as they happen day to day."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 3,
+      "title": "Tracking",
+      "days": [
+        {
+          "day": 3,
+          "title": "Tracking Thoughts and Feelings",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "reflection",
+              "interaction": "matrix",
+              "key": "tf_log",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Burnout clouds your thinking, and tracking it is the first step from being overwhelmed by your thoughts to actually managing them. Two worked examples:"
+                },
+                {
+                  "kind": "ol",
+                  "text": "Traffic jam → \"This is so frustrating\" → irritated."
+                },
+                {
+                  "kind": "ol",
+                  "text": "Deadline approaching → \"I won't finish on time\" → anxious."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show a card, user picks a date and time then mentions an event and the thought and feeling it evoked."
+                },
+                {
+                  "kind": "text",
+                  "text": "User can add cards for as many items as they feel like. Cards can be pulled up by swiping left or right."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Notice anything? Hold onto it. We'll get back to it soon."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "title": "Thought Log",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing Patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "The Impact of Burnout",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Burnout drains the parts of work you used to enjoy, and turns work relationships cynical. From today, we add one more column: Response. What you actually did after the thought or feeling hit, like staying up late working or listening to calming music."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_behavior_log",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "Bring up cards from Task 2 Day 3 and prompt…"
+                },
+                {
+                  "kind": "text",
+                  "text": "Response."
+                },
+                {
+                  "kind": "text",
+                  "text": "Users can add new cards and then get prompted the response."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For the next few days, this log is the whole assignment. See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing Patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's keep logging."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_behavior_log",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat task 2 from day 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "only give options to add new cards along with response"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Great! We'll resume tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing Patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same again today."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_behavior_log",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat task 2 from day 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "only give options to add new cards along with response"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Great! We'll pick this up tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing Patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this stretch. From tomorrow onwards we’ll start looking at what the pattern is telling us."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_behavior_log",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat task 2 from day 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "only give options to add new cards along with response"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we have some insights about our real attitude towards work and our real stressors, we’ll explore some activities that will help us improve our relationship with our workplace."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "title": "Understanding the Balance",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Efforts and Rewards.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "matrix",
+              "key": "tf_behavior_log_d5",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A few years ago I hit a wall. I was juggling research, management, and admin. On top of all that, there were extra roles that didn't even matter to me. I worked harder to force results, but the returns stayed flat. Eventually I realized the effort wasn't worth the cost. Whether you’re a student, a professional, a caregiver or any other role, the lesson remains the same. If the output's plateaued, working harder isn't the fix. Alignment is."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Efforts and Rewards",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Burnout often comes down to an imbalance between the effort put in and the reward received. Stress only worsens it. Effort might be caregiving, a demanding course, or a job with little tangible payoff. Reward is what you get back, like recovery, a good grade or real recognition."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Understanding the Balance",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, show them this table and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Do these feel in balance to you?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                },
+                {
+                  "kind": "table",
+                  "rows": [
+                    ["Effort", "Return"],
+                    ["Preparing a presentation", "Successful delivery"],
+                    ["Working on a report", "Timely recognition"],
+                    ["Helping a colleague", "Committee membership"]
+                  ]
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Over the next few days we'll dig into your own efforts and rewards, in your own words."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 4,
+      "title": "Efforts vs. Rewards",
+      "days": [
+        {
+          "day": 9,
+          "title": "Efforts and Rewards",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Pause and Breathe.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we go any further, how have your thoughts and feelings been the past couple of days?"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thoughts",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Overall, how were they?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "👍 Positive"
+                },
+                {
+                  "kind": "text",
+                  "text": "👎 Negative"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "The Why",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Log your efforts. Any kind of effort will do. For each, what reward did you expect, what actually happened, and why you took it on in the first place."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Effort:"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Expected Reward"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "General Outcome"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "The ‘Why’"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's it for the next couple of days — just this table."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "title": "Efforts and Rewards (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Pause and Breathe.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Picking up from yesterday."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "The Why",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 9"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "title": "Efforts and Rewards (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Pause and Breathe.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One more day of this, then we move to the next step."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "The Why",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 9"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Well done. Tomorrow we shall work on the next steps."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "title": "Anatomy of Burnout",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Goals and success.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Anatomy",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Welcome back. Burnout often means losing sight of your longer-term goals and values. Write down your personal goals, both long and short term."
+                },
+                {
+                  "kind": "p",
+                  "text": "For each goal, describe what realistic success looks like. Realistic, not perfect: just genuinely achievable. Example: goal = become a surgeon → realistic success = admission to a solid program, a well-paying job after training. Only list what's genuinely necessary and aligned with your real goals."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Goals and Success",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "demands_resources",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List your goals and what success looks like."
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "My Goals and My Absolute Requirements"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "My Measures of Success"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We shall continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "title": "Anatomy of Burnout (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Goals and success.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Continuing yesterday's work."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Goals and Success",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 12"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's all for today. See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "title": "Goals and Necessities",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Goal Necessity Alignment",
+              "type": "exercise",
+              "interaction": "single-select",
+              "key": "er_balance",
+              "minutes": 5,
+              "group": "effort_reward_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "It's not about doing everything. It's about doing the right things."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, show cards from activity 2 of day 12 and 13 and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Do your efforts align with your goals?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Goal Necessity Alignment",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_reflection",
+              "minutes": 5,
+              "group": "effort_reward_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, show cards from activity 3 of day 9, activity 2 of day 10 and activity 2 of day 11 and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Do your efforts align with your goals?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Simple but important. This sets up tomorrow's work on cutting unnecessary load."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 5,
+      "title": "Reducing Workload",
+      "days": [
+        {
+          "day": 15,
+          "title": "Reducing Workload",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Structured Table.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Managing Workload",
+              "type": "lesson",
+              "interaction": "matrix",
+              "key": "effort_map",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Recovering from burnout, it's tempting to overcompensate by taking on even more. The fix: realistically reevaluate what's actually on your plate, lean on your team, and prioritize what's truly urgent."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Managing Workload",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "When you have multiple tasks with different deadlines, tackle what's due soonest first, delegate what doesn't need you directly, postpone what isn't urgent, and break anything large into smaller, shareable pieces."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Show two cards side by side(swipe for phone optimization in case it can’t fit a screen)"
+                },
+                {
+                  "kind": "text",
+                  "text": "Card 1"
+                },
+                {
+                  "kind": "text",
+                  "text": "Things to do"
+                },
+                {
+                  "kind": "li",
+                  "text": "Analyze a dataset for a meeting scheduled the same day."
+                },
+                {
+                  "kind": "li",
+                  "text": "Write a report due in a few weeks."
+                },
+                {
+                  "kind": "li",
+                  "text": "Conduct data collection."
+                },
+                {
+                  "kind": "li",
+                  "text": "Create a presentation."
+                },
+                {
+                  "kind": "text",
+                  "text": "Card 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "To manage these tasks effectively:"
+                },
+                {
+                  "kind": "li",
+                  "text": "Start with what’s due earliest (in this case, the data analysis)."
+                },
+                {
+                  "kind": "li",
+                  "text": "Delegate tasks that don’t require your direct intervention (have a co-worker handle data collection)."
+                },
+                {
+                  "kind": "li",
+                  "text": "Postpone non-urgent tasks (schedule report writing for later)."
+                },
+                {
+                  "kind": "li",
+                  "text": "If a task is large, break it down into smaller parts and either tackle it yourself or seek assistance (ask someone to help you design and grammar-check the presentation)."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Reducing Workload",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "options": [
+                "I can delegate some tasks",
+                "I can organize my schedule to prioritize the urgent tasks",
+                "I can outright refuse the tasks allotted to me a while back",
+                "I can take sick leave",
+                "I don’t need anyone, I can do it all on my own",
+                "I can cut out the absolute non-essential tasks"
+              ],
+              "prompt": "Which of these could lighten your load?"
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll build on this over the next couple of days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 16,
+          "title": "Reducing Weight",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Outcome Check.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We often take on tasks that don't actually help us, like going beyond the call of duty, activities that don't benefit us, things we take on just because we know we can do them. That's often unfair to both you and your colleagues."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Reducing Weight",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Today and tomorrow: go through your non-essential tasks and start shedding them. Postpone, pull out, or delegate. By the day after, aim to have dropped at least some deadweight."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, show cards from activity 3 of day 9, activity 2 of day 10 and activity 2 of day 11 and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "How will you get rid of them?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Free text"
+                },
+                {
+                  "kind": "text",
+                  "text": "Give users the option to create new entries and the prompt again."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "See you tomorrow. Same table, one more pass."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 17,
+          "title": "Reducing Weight (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Outcome Check.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's continue where we left off."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Reducing Weight",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 16"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's a real piece of the work done. You’ve shed what doesn't serve you. Next up: a few more tools for managing burnout day to day."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 6,
+      "title": "Worry Log",
+      "days": [
+        {
+          "day": 18,
+          "title": "Journaling",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For the next three days, just keep a worry log. This is a safe space, nothing kept beyond 24 hours."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task"
+                },
+                {
+                  "kind": "text",
+                  "text": "user picks a time and writes what’s worrying them."
+                },
+                {
+                  "kind": "text",
+                  "text": "User can create as many cards as they want."
+                },
+                {
+                  "kind": "text",
+                  "text": "The text gets deleted after 24 hours from time stamp of entry."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Hope you were able to fill in the boxes with some content. Let’s keep doing this for a couple of days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 19,
+          "title": "Journaling (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same again."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 18"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 20,
+          "title": "Journaling (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this one. Next, we'll look at what's going well."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 18"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we have figured out this technique, when we meet next, we will work on noticing what’s going well."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 7,
+      "title": "Positive Capture",
+      "days": [
+        {
+          "day": 21,
+          "title": "Positive Capturing",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Rebalancing perspective.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Positive Capturing",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Stress narrows your view of what's actually going well. Let's take the next few days to widen it back out."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Good Things",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some good things that happened to you today"
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "There's Always Room",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some things that could have been better."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "For Tomorrow",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Things that I will achieve tomorrow."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Practicing Thankfulness",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some things you’re grateful for today."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 22,
+          "title": "Positive Capturing (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Rebalancing perspective.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same four, one more time."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Good Things",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 21"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "There's Always Room",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 21"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "For Tomorrow",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 21"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Practicing Thankfulness",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 5 from day 21"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "New chapter starts tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 8,
+      "title": "Perfectionism",
+      "days": [
+        {
+          "day": 23,
+          "title": "Perfectionism",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Perfectionism",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Perfectionism is the need to be, or appear, perfect. While it can drive real excellence, left unchecked it feeds low self-esteem, procrastination, and constant pressure."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Perfectionism",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Perpetual stress without relief leads to burnout. High standards are fine; the trap is unrealistic standards. Standards which are impossible to hit in the real world. You either burn out chasing the perfect first draft, or you get stuck endlessly \"preparing\" and never start."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Perfectionism in Daily Life",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task,"
+                },
+                {
+                  "kind": "text",
+                  "text": "What do you think of these sentences?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show each of these and prompt:"
+                },
+                {
+                  "kind": "li",
+                  "text": "It is good to be a perfectionist some of the time"
+                },
+                {
+                  "kind": "li",
+                  "text": "Being self-critical is a part and parcel of a healthy working style"
+                },
+                {
+                  "kind": "li",
+                  "text": "Sometimes it is good to just start and learn in the process"
+                },
+                {
+                  "kind": "li",
+                  "text": "Perfectionism always leads to procrastination"
+                },
+                {
+                  "kind": "li",
+                  "text": "Only perfectionists are hard workers"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅ True"
+                },
+                {
+                  "kind": "text",
+                  "text": "❌ False"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll go deeper on this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 24,
+          "title": "Understanding Perfectionism",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Goal Alignment.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Perfectionism",
+              "type": "reflection",
+              "interaction": "matrix",
+              "key": "alignment_check",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Perfectionism feeds stress and procrastination, and narrows how you see your own work. Nothing ever feels good enough. But perfection is a result of iteration, not a starting point. Example: \"I have to write a document for marketing\" → perfect outcome: \"grammatically flawless, no follow-up questions.\""
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Situations and Outcomes",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task,"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show a sentence and the user has to fill a ‘Perfect Outcome’"
+                },
+                {
+                  "kind": "text",
+                  "text": "Example Card"
+                },
+                {
+                  "kind": "text",
+                  "text": "I have to write a document for the marketing team. → The document is grammatically excellent, extremely clear and the marketing team has no queries about it."
+                },
+                {
+                  "kind": "text",
+                  "text": "Show each of these and prompt:"
+                },
+                {
+                  "kind": "li",
+                  "text": "I have to make a presentation for the half-yearly meeting"
+                },
+                {
+                  "kind": "li",
+                  "text": "I have to produce content for social media"
+                },
+                {
+                  "kind": "li",
+                  "text": "I have to work on a customer acquisition plan"
+                },
+                {
+                  "kind": "li",
+                  "text": "I am in charge of producing marketing strategy for this product"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we know what we want we’ll work on actually getting it tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 25,
+          "title": "Bringing in Realism",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Closure.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Bringing in Realism",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Things never go exactly as pictured. Take yesterday's table and add a realistic outcome for each."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Example Card"
+                },
+                {
+                  "kind": "text",
+                  "text": "I have to write a document for the marketing team. → The document is grammatically excellent, extremely clear and the marketing team has no queries about it. → The document had some grammatical errors and the marketing team had a few questions about the document."
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Bringing in Realism",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "burnout_recalibration",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task,"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show the cards from Activity 2 Day 24 and let user write a ‘Realistic Outcome’"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "With realistic outcomes on the table, tomorrow we work out how to actually get there."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 26,
+          "title": "Challenging Perfectionism",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Challenging Perfectionism",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Aim to get things realistically done, not perfectly done. Once there, improve on it. Start beats perfect, every time. Like Nike says, “Just Do It.” Think of realistic goals you’d like to set and steps you can take to achieve them."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Example Card"
+                },
+                {
+                  "kind": "text",
+                  "text": "I have to write a document for the marketing team. → The document is grammatically excellent, extremely clear and the marketing team has no queries about it. → The document had some grammatical errors and the marketing team had a few questions about the document. → The document’s first iteration gets some feedback which is worked upon swiftly. → Create the first draft, double-check it, send it for feedback. Work on the feedback and get approval."
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Challenging Perfectionism",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task,"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show the cards from Activity 2 Day 25 and let user write ‘Realistic Goals I’d like to set’ and ‘Steps I can take to achieve them.’"
+                },
+                {
+                  "kind": "text",
+                  "text": "Users can add new entries like this"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Situation"
+                },
+                {
+                  "kind": "text",
+                  "text": "Perfect Outcome"
+                },
+                {
+                  "kind": "text",
+                  "text": "Realistic Outcome"
+                },
+                {
+                  "kind": "text",
+                  "text": "Realistic Goal I’d like to set"
+                },
+                {
+                  "kind": "text",
+                  "text": "Steps I can take towards achieving that goal"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                },
+                {
+                  "kind": "text",
+                  "text": "This activity should be available for ever, on demand."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "This table's yours to keep using on real situations, any time."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 9,
+      "title": "Just Do It",
+      "days": [
+        {
+          "day": 27,
+          "title": "Just Do It!",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Just Do It",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Pick one task you've been putting off. Today, plan it out."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Just Do It",
+              "type": "reflection",
+              "interaction": "structured-list",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task,"
+                },
+                {
+                  "kind": "quote",
+                  "text": "Prompt: Today's Task"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Task I will take up today"
+                },
+                {
+                  "kind": "text",
+                  "text": "Timeline"
+                },
+                {
+                  "kind": "text",
+                  "text": "When will I begin it. Time Picker"
+                },
+                {
+                  "kind": "text",
+                  "text": "Dependencies, if any (if I need support from someone to complete this task)"
+                },
+                {
+                  "kind": "text",
+                  "text": "Task Status Let user choose from Ongoing, Done, Postponed etc."
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                },
+                {
+                  "kind": "text",
+                  "text": "This activity should be available for ever, on demand."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Tomorrow we shall start actually working the plan."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 28,
+          "title": "Just Do It! (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Just Do It",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Pick up your plan from yesterday and keep going. Falling behind schedule is normal. Adjust the plan, don't abandon it. Keep closing tasks from your list."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Just Do It",
+              "type": "reflection",
+              "interaction": "structured-list",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 2 from day 27"
+                },
+                {
+                  "kind": "text",
+                  "text": "Fresh Entries and old"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Two more days after this."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 29,
+          "title": "Just Do It! (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's continue with yesterday's task."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Just Do It",
+              "type": "reflection",
+              "interaction": "structured-list",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 2 from day 27"
+                },
+                {
+                  "kind": "text",
+                  "text": "Fresh Entries and old"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll resume tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 30,
+          "title": "Just Do It! (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Did you close out the tasks? Let’s keep doing this for all tasks from now on."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Just Do It",
+              "type": "reflection",
+              "interaction": "structured-list",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 2 from day 27"
+                },
+                {
+                  "kind": "text",
+                  "text": "Fresh Entries and old"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That’s the program. Every table and framework you built here stays yours, ready whenever work starts to feel heavy again. Well done for sticking with it."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "name": "Unburn — burnout-reset",
+  "meta": {
+    "id": "416feb50-e73f-4898-a996-f8a4695a708e",
+    "days": "30 days",
+    "blocks": "110 blocks",
+    "category": "burnout",
+    "level": "intermediate"
+  },
+  "tagline": "Transform your life with daily practice.",
+  "schedule": [
+    {
+      "Days": "0",
+      "Unit": "Onboarding",
+      "Focus": "Background + baseline"
+    },
+    {
+      "Days": "1–2",
+      "Unit": "Burnout Snapshot",
+      "Focus": "What it looks like, thoughts vs. feelings"
+    },
+    {
+      "Days": "3–8",
+      "Unit": "Tracking",
+      "Focus": "Thought & behavior log, effort/reward intro"
+    },
+    {
+      "Days": "9–14",
+      "Unit": "Efforts vs. Rewards",
+      "Focus": "Logging effort, checking alignment with your goals"
+    },
+    {
+      "Days": "15–17",
+      "Unit": "Reducing Workload",
+      "Focus": "Trimming what doesn't serve your goals"
+    },
+    {
+      "Days": "18–20",
+      "Unit": "Worry Log",
+      "Focus": "A daily release valve, no judgment"
+    },
+    {
+      "Days": "21–22",
+      "Unit": "Positive Capture",
+      "Focus": "Rebalancing perspective"
+    },
+    {
+      "Days": "23–26",
+      "Unit": "Perfectionism",
+      "Focus": "Where it comes from, realistic outcomes"
+    },
+    {
+      "Days": "27–30",
+      "Unit": "Just Do It",
+      "Focus": "Breaking the procrastination-burnout loop, one task at a time"
+    }
+  ],
+  "description": "A comprehensive 30-day program to understand, manage, and recover from burnout."
+}
