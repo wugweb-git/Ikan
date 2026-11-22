@@ -187,7 +187,7 @@ import { hasCompletedFirstRun } from './product/app/shell/first-run';
 
 /** Marketing-site routes (the pages under product/site/pages). */
 const SITE_FOOTER_ROUTES = new Set([
-  '/', '/about', '/service', '/services', '/faq', '/contact',
+  '/', '/about', '/service', '/services', '/faq', '/contact', '/contact-us',
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
@@ -388,7 +388,7 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/resource', '/resource-detail', '/account', 
-        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
+        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/contact-us', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         '/admin', '/admin/login',
         '/join/partner',
         '/join/professional',
@@ -720,6 +720,7 @@ function AppContent() {
         case '/terms':
           return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
         case '/contact':
+        case '/contact-us':
           return withSuspense(<ContactUs onNavigate={handleNavigate} />);
         case '/burnout-cost-calculator':
           return withSuspense(<BurnoutCostCalculator onNavigate={handleNavigate} />);
