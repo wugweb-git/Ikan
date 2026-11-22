@@ -377,6 +377,174 @@ function ikan_get_resource_cover_url( $post_id ) {
   return get_theme_file_uri( 'assets/img/photo-1758272422634-e8ed8e252a14' );
 }
 
+/**
+ * Resolves rich metadata, clinical credentials, source attributions,
+ * and assessment links for a resource post.
+ */
+function ikan_get_resource_extra_meta( $post_id ) {
+  static $resources_cache = null;
+  if ( $resources_cache === null ) {
+    $resources_cache = [];
+    $json_file = get_template_directory() . '/assets/resources.json';
+    if ( file_exists( $json_file ) ) {
+      $decoded = json_decode( file_get_contents( $json_file ), true );
+      if ( is_array( $decoded ) ) {
+        foreach ( $decoded as $item ) {
+          if ( ! empty( $item['slug'] ) ) {
+            $resources_cache[ sanitize_title( $item['slug'] ) ] = $item;
+          }
+          if ( ! empty( $item['id'] ) ) {
+            $resources_cache[ $item['id'] ] = $item;
+          }
+        }
+      }
+    }
+  }
+
+  $post = get_post( $post_id );
+  $slug = $post ? $post->post_name : '';
+  $json_meta = $resources_cache[ $slug ] ?? $resources_cache[ 'resource-' . $slug ] ?? [];
+
+  $medium = get_post_meta( $post_id, 'medium', true ) ?: ( $json_meta['medium'] ?? 'article' );
+  $minutes = intval( get_post_meta( $post_id, 'minutes', true ) ?: ( $json_meta['minutes'] ?? 5 ) );
+  if ( ! $minutes && $post && ! empty( $post->post_content ) ) {
+    $word_count = str_word_count( wp_strip_all_tags( $post->post_content ) );
+    $minutes = max( 1, (int) ceil( $word_count / 200 ) );
+  }
+
+  $author = get_post_meta( $post_id, 'author', true ) ?: ( $json_meta['author'] ?? '' );
+  if ( empty( $author ) || $author === 'iKAN Clinical Team' ) {
+    $author = 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board';
+  }
+
+  $source = ! empty( $json_meta['source'] ) ? $json_meta['source'] : null;
+  $assessment = ! empty( $json_meta['assessment'] ) ? $json_meta['assessment'] : null;
+  $assessmentRole = ! empty( $json_meta['assessmentRole'] ) ? $json_meta['assessmentRole'] : 'explains';
+  $programme = ! empty( $json_meta['programme'] ) ? $json_meta['programme'] : null;
+  $journal = ! empty( $json_meta['journal'] );
+  $consult = ! empty( $json_meta['consult'] );
+
+  // Map assessment details if present
+  $assessment_details = null;
+  if ( $assessment ) {
+    $assessment_map = [
+      'unsure-or-general-concern' => [
+        'name' => 'WHO-5 Well-Being Index',
+        'title' => 'WHO-5 Well-Being Index',
+        'slug' => 'unsure-or-general-concern',
+        'questions' => 5,
+        'minutes' => 3,
+        'category' => 'General Wellness',
+      ],
+      'feeling-overwhelmed-and-anxious' => [
+        'name' => 'GAD-7 Anxiety Screener',
+        'title' => 'Generalized Anxiety Disorder-7',
+        'slug' => 'feeling-overwhelmed-and-anxious',
+        'questions' => 7,
+        'minutes' => 4,
+        'category' => 'Anxiety & Panic',
+      ],
+      'feeling-depressed-and-hopeless' => [
+        'name' => 'PHQ-9 Depression Screener',
+        'title' => 'Patient Health Questionnaire-9',
+        'slug' => 'feeling-depressed-and-hopeless',
+        'questions' => 9,
+        'minutes' => 5,
+        'category' => 'Mood & Depression',
+      ],
+      'feeling-worried-and-stressed' => [
+        'name' => 'PSS-10 Stress Scale',
+        'title' => 'Perceived Stress Scale',
+        'slug' => 'feeling-worried-and-stressed',
+        'questions' => 10,
+        'minutes' => 4,
+        'category' => 'Stress & Overwhelm',
+      ],
+      'feeling-drained-and-burned-out' => [
+        'name' => 'BAT-23 Burnout Assessment',
+        'title' => 'Burnout Assessment Tool (BAT-23)',
+        'slug' => 'feeling-drained-and-burned-out',
+        'questions' => 23,
+        'minutes' => 6,
+        'category' => 'Workplace & Burnout',
+      ],
+      'struggling-to-balance-life' => [
+        'name' => 'Workplace Stress Scale',
+        'title' => 'Workplace Stress Scale',
+        'slug' => 'struggling-to-balance-life',
+        'questions' => 8,
+        'minutes' => 4,
+        'category' => 'Work-Life Balance',
+      ],
+      'struggling-with-quality-sleep' => [
+        'name' => 'SCI Sleep Condition Indicator',
+        'title' => 'Sleep Condition Indicator',
+        'slug' => 'struggling-with-quality-sleep',
+        'questions' => 8,
+        'minutes' => 4,
+        'category' => 'Sleep Health',
+      ],
+    ];
+    $assessment_details = $assessment_map[ $assessment ] ?? [
+      'name' => ucwords( str_replace( '-', ' ', $assessment ) ),
+      'title' => ucwords( str_replace( '-', ' ', $assessment ) ),
+      'slug' => $assessment,
+      'questions' => 10,
+      'minutes' => 5,
+      'category' => 'Psychological Assessment',
+    ];
+  }
+
+  // Map programme details if present
+  $programme_details = null;
+  if ( $programme ) {
+    $prog_map = [
+      'stress-buster' => [
+        'title' => 'Stress Buster',
+        'slug' => 'stress-buster',
+        'duration' => '14 Days',
+        'tagline' => 'Neurobiological and cognitive techniques to reset chronic stress activation.',
+      ],
+      'unburn' => [
+        'title' => 'Unburn',
+        'slug' => 'unburn',
+        'duration' => '14 Days',
+        'tagline' => 'Restore mental energy, cognitive boundaries, and intrinsic motivation.',
+      ],
+      'sleep-tight' => [
+        'title' => 'Sleep Tight',
+        'slug' => 'sleep-tight',
+        'duration' => '14 Days',
+        'tagline' => 'CBT-I based sleep restriction, stimulus control, and circadian alignment.',
+      ],
+    ];
+    $programme_details = $prog_map[ $programme ] ?? null;
+  }
+
+  // Tags
+  $tags = wp_get_post_tags( $post_id, [ 'fields' => 'names' ] );
+  if ( empty( $tags ) && ! empty( $json_meta['category'] ) ) {
+    $tags = [ $json_meta['category'], 'Mental Health', 'Evidence Based' ];
+  }
+
+  return [
+    'medium'             => $medium,
+    'minutes'            => $minutes,
+    'author'             => $author,
+    'author_role'        => 'Clinical Psychology & Behavioral Science',
+    'source'             => $source,
+    'assessment'         => $assessment_details,
+    'assessmentRole'     => $assessmentRole,
+    'programme'          => $programme_details,
+    'journal'            => $journal,
+    'consult'            => $consult,
+    'tags'               => $tags,
+    'reviewed_by'        => 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board',
+    'reviewed_role'      => 'Senior Consultant Psychologist, Fortis / iKAN Advisory Board',
+    'review_standards'   => 'Reviewed against DSM-5 / ICD-11 diagnostic criteria & WHO guidelines',
+  ];
+}
+
 // ── FluentCRM Profiling & Data Collection Engine (NO SUPABASE) ───────────────
 
 /**
