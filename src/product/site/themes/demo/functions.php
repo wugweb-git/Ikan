@@ -530,16 +530,36 @@ function ikan_handle_ajax_contact() {
     } catch ( Throwable $e ) {}
   }
 
+  $is_pilot = ( str_starts_with( $subject, 'Pilot enquiry' ) || str_starts_with( $subject, 'Pilot' ) );
+
   $recorded = ikan_record_lead_in_fluentcrm( [
     'email'      => $email,
     'name'       => $name,
-    'list_slug'  => 'contact-enquiries',
-    'list_title' => 'Website Contact Enquiries',
-    'tag_slug'   => 'contact-form',
-    'tag_title'  => 'Contact Form',
-    'note_title' => 'Website Message: ' . $subject,
+    'list_slug'  => $is_pilot ? 'pilot-leads' : 'contact-enquiries',
+    'list_title' => $is_pilot ? 'Workplace Pilot Enquiries' : 'Website Contact Enquiries',
+    'tag_slug'   => $is_pilot ? 'pilot-enquiry' : 'contact-form',
+    'tag_title'  => $is_pilot ? 'Pilot Enquiry' : 'Contact Form',
+    'note_title' => ( $is_pilot ? 'Workplace Pilot Lead: ' : 'Website Message: ' ) . $subject,
     'note_desc'  => $note_desc,
   ] );
+
+  // 3. Post to Supabase ikan2_contact_messages table (triggers team email alert)
+  wp_remote_post( 'https://jpfvoevxegnknxoqmwye.supabase.co/rest/v1/ikan2_contact_messages', [
+    'headers' => [
+      'apikey'        => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwZnZvZXZ4ZWdua254b3Ftd3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMjIyNDIsImV4cCI6MjA3MzY5ODI0Mn0.VGYSE8LqBEggrQcUHJH9NcvursaoNfQK9K8-ESCo-rc',
+      'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwZnZvZXZ4ZWdua254b3Ftd3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMjIyNDIsImV4cCI6MjA3MzY5ODI0Mn0.VGYSE8LqBEggrQcUHJH9NcvursaoNfQK9K8-ESCo-rc',
+      'Content-Type'  => 'application/json',
+      'Prefer'        => 'return=minimal',
+    ],
+    'body'    => json_encode([
+      'name'    => $name,
+      'email'   => $email,
+      'subject' => $subject,
+      'message' => $message,
+      'source'  => 'website',
+    ]),
+    'timeout' => 5,
+  ]);
 
   wp_send_json_success( [
     'message' => 'Message sent. We’ll reply to ' . esc_html( $email ) . ' within 24 hours.',
