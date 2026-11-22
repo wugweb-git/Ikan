@@ -45,3 +45,16 @@ To maintain developer ergonomics across workflows:
   ```bash
   ssh -p 65002 -i ~/.ssh/hostinger_aw u544169507@46.28.45.135 "cd /home/u544169507/domains/ikanhealth.in/public_html && wp <command>"
   ```
+
+---
+
+## 4. Demo Accounts & Evaluation Credentials
+
+For interactive client presentations, stakeholder review, and end-to-end evaluation:
+- **Organisation Portal & Member Demo**:
+  - Email: `admin@wugweb.com`
+  - Password: `WugWeb123@`
+- **Supported Surfaces**:
+  - `/login` and `/signup` (1-click fill button)
+  - `/org` (Admin corporate dashboard demo with department stress levels & wellbeing benchmarks)
+  - Live demo organization: **Wugweb Technologies** (Founder & CEO Vedanshu, Indiranagar, Bengaluru, India)

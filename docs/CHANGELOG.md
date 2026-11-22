@@ -4,6 +4,20 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-22] — Wugweb Technologies Demo Credentials, Auth Direct Routing & Resource Metadata Enrichment
+
+### Added
+- **Direct Auth Routing (`/login`, `/signup`)**: Intercepted `/login` and `/signup` in `functions.php` to serve `template-auth.php` directly (HTTP 200 OK) with 2-step onboarding flow, tab switching, and Google/OTP alternative links.
+- **Wugweb Demo Credentials Integration**: Configured 1-click evaluation credentials (`admin@wugweb.com` / `WugWeb123@`) across `/login`, `/signup`, `/org`, and the Org Portal (`OrgPortal.tsx`, `auth.tsx`).
+- **Wugweb Technologies Rebrand**: Rebranded corporate portal demo organization to Wugweb Technologies (Vedanshu, Founder & CEO, Indiranagar, Bengaluru, India, `wugweb.com`).
+- **Resource Clinical Schema & Rich Interactivity**: Enriched `resources.php` and `single.php` with `schema.org/CollectionPage` and `schema.org/Article` JSON-LD, dynamic reading progress bar, keep-reading recommendation engine, and metadata bridge (`assessment`, `assessment_role`, `programme`).
+
+### Changed
+- **Demo Authentication Handler**: Updated `ikan_handle_ajax_user_login()` in `functions.php` to authenticate `admin@wugweb.com` / `WugWeb123@` with auto-provisioning of `wugweb_demo` user session and auth cookies.
+- **Org Portal Defaults**: Set default credentials and 1-click filler in `org.php` and `OrgPortal.tsx` to `admin@wugweb.com` / `WugWeb123@`.
+
+---
+
 ## [2026-11-22] — Restoration of Org Portal, Professional Application, Onboarding Flow & H1 Typography
 
 ### Added
