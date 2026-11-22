@@ -2,7 +2,7 @@
 /**
  * iKAN Database Schema Manager.
  *
- * Handles creation and upgrades of custom database tables for clinical programs,
+ * Handles creation and maintenance of custom database tables for clinical programs,
  * assessment histories, encrypted journals, and wellness trajectories.
  *
  * @package iKAN_Health
@@ -36,17 +36,19 @@ class Ikan_DB_Schema {
 	}
 
 	/**
-	 * Create or update the 4 custom tables via dbDelta.
+	 * Create the 4 custom tables cleanly via $wpdb.
 	 */
 	public static function create_tables() {
 		global $wpdb;
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		$charset_collate = $wpdb->get_charset_collate();
+		if ( empty( $charset_collate ) ) {
+			$charset_collate = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
+		}
 
 		// 1. Assessment Results Table
 		$table_assessments = $wpdb->prefix . 'ikan_assessment_results';
-		$sql_assessments = "CREATE TABLE $table_assessments (
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS $table_assessments (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			supabase_user_id varchar(64) NOT NULL DEFAULT '',
@@ -61,17 +63,17 @@ class Ikan_DB_Schema {
 			snapshot longtext DEFAULT NULL,
 			completed_at datetime NOT NULL,
 			created_at datetime NOT NULL,
-			PRIMARY KEY  (id),
+			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY supabase_user_id (supabase_user_id),
 			KEY assessment_slug (assessment_slug),
 			KEY completed_at (completed_at),
 			UNIQUE KEY result_uuid (assessment_result_id)
-		) $charset_collate;";
+		) $charset_collate;" );
 
 		// 2. Program Progress Table
 		$table_program = $wpdb->prefix . 'ikan_program_progress';
-		$sql_program = "CREATE TABLE $table_program (
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS $table_program (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			supabase_user_id varchar(64) NOT NULL DEFAULT '',
@@ -88,16 +90,16 @@ class Ikan_DB_Schema {
 			last_active_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
-			PRIMARY KEY  (id),
+			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY supabase_user_id (supabase_user_id),
 			KEY program_slug (program_slug),
-			UNIQUE KEY user_program (user_id, program_slug)
-		) $charset_collate;";
+			UNIQUE KEY user_program (supabase_user_id, program_slug)
+		) $charset_collate;" );
 
 		// 3. Encrypted Journal Table
 		$table_journal = $wpdb->prefix . 'ikan_journals';
-		$sql_journal = "CREATE TABLE $table_journal (
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS $table_journal (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			supabase_user_id varchar(64) NOT NULL DEFAULT '',
@@ -116,16 +118,16 @@ class Ikan_DB_Schema {
 			iv varchar(64) DEFAULT NULL,
 			salt varchar(64) DEFAULT NULL,
 			created_at datetime NOT NULL,
-			PRIMARY KEY  (id),
+			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY supabase_user_id (supabase_user_id),
 			KEY entry_date (entry_date),
 			UNIQUE KEY entry_uuid_idx (entry_uuid)
-		) $charset_collate;";
+		) $charset_collate;" );
 
 		// 4. Wellness Scores Table
 		$table_wellness = $wpdb->prefix . 'ikan_wellness_scores';
-		$sql_wellness = "CREATE TABLE $table_wellness (
+		$wpdb->query( "CREATE TABLE IF NOT EXISTS $table_wellness (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			supabase_user_id varchar(64) NOT NULL DEFAULT '',
@@ -134,17 +136,14 @@ class Ikan_DB_Schema {
 			overall_score int(11) NOT NULL DEFAULT 0,
 			subscores text DEFAULT NULL,
 			created_at datetime NOT NULL,
-			PRIMARY KEY  (id),
+			PRIMARY KEY (id),
 			KEY user_id (user_id),
 			KEY supabase_user_id (supabase_user_id),
 			KEY score_date (score_date),
-			UNIQUE KEY user_score_date (user_id, score_date)
-		) $charset_collate;";
+			UNIQUE KEY user_score_date (supabase_user_id, score_date)
+		) $charset_collate;" );
 
-		dbDelta( $sql_assessments );
-		dbDelta( $sql_program );
-		dbDelta( $sql_journal );
-		dbDelta( $sql_wellness );
+		return true;
 	}
 }
 
