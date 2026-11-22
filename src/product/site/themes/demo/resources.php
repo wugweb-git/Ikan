@@ -113,23 +113,26 @@ $collection_schema = [
       <?php
       if ( $query->have_posts() ) :
         while ( $query->have_posts() ) : $query->the_post();
-          $post_id   = get_the_ID();
-          $meta      = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $post_id ) : [];
-          $medium    = $meta['medium'] ?? get_post_meta( $post_id, 'medium', true ) ?: 'article';
-          $minutes   = $meta['minutes'] ?? intval( get_post_meta( $post_id, 'minutes', true ) ?: 5 );
-          $author    = $meta['author'] ?? get_post_meta( $post_id, 'author', true ) ?: 'Dr. Divya Jain, Ph.D.';
+          $post_id    = get_the_ID();
+          $meta       = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $post_id ) : [];
+          $medium     = $meta['medium'] ?? get_post_meta( $post_id, 'medium', true ) ?: 'article';
+          $minutes    = $meta['minutes'] ?? intval( get_post_meta( $post_id, 'minutes', true ) ?: 5 );
+          $author     = $meta['author'] ?? get_post_meta( $post_id, 'author', true ) ?: 'Dr. Divya Jain, Ph.D.';
+          $tags       = $meta['tags'] ?? [];
+          $labels     = $meta['labels'] ?? [];
           $categories = get_the_category();
-          $cat_slug  = ! empty( $categories ) ? strtolower( $categories[0]->slug ) : 'general';
-          $cat_name  = ! empty( $categories ) ? $categories[0]->name : 'General';
-          $post_link = get_permalink();
+          $cat_slug   = ! empty( $categories ) ? strtolower( $categories[0]->slug ) : 'general';
+          $cat_name   = ! empty( $categories ) ? $categories[0]->name : 'General';
+          $post_link  = get_permalink();
           $post_title = get_the_title();
           $post_excerpt = get_the_excerpt() ?: wp_trim_words( wp_strip_all_tags( get_the_content() ), 24 );
+          $search_corpus = strtolower( $post_title . ' ' . $post_excerpt . ' ' . $cat_name . ' ' . $author . ' ' . implode( ' ', $tags ) . ' ' . implode( ' ', $labels ) );
       ?>
 
         <article 
           class="res-card bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-xs flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all group"
           data-category="<?php echo esc_attr( $cat_slug . ' ' . strtolower( $cat_name ) ); ?>"
-          data-search="<?php echo esc_attr( strtolower( $post_title . ' ' . $post_excerpt . ' ' . $cat_name . ' ' . $author ) ); ?>"
+          data-search="<?php echo esc_attr( $search_corpus ); ?>"
         >
           <div>
             <!-- Thumbnail / Cover -->
@@ -165,9 +168,17 @@ $collection_schema = [
 
             <!-- Content Area -->
             <div class="p-6">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full mb-3 inline-block">
-                <?php echo esc_html( $cat_name ); ?>
-              </span>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full inline-block">
+                  <?php echo esc_html( $cat_name ); ?>
+                </span>
+                <?php if ( ! empty( $author ) ) : ?>
+                  <span class="text-xs text-gray-500 font-medium flex items-center gap-1 truncate max-w-[170px]" title="<?php echo esc_attr( $author ); ?>">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-gray-400 shrink-0"></i>
+                    <span class="truncate"><?php echo esc_html( $author ); ?></span>
+                  </span>
+                <?php endif; ?>
+              </div>
 
               <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-2 leading-snug">
                 <a href="<?php echo esc_url( $post_link ); ?>" class="group-hover:text-emerald-700 transition-colors">
@@ -175,9 +186,20 @@ $collection_schema = [
                 </a>
               </h2>
 
-              <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed">
+              <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed mb-3">
                 <?php echo esc_html( $post_excerpt ); ?>
               </p>
+
+              <!-- Tags / Labels Badges -->
+              <?php if ( ! empty( $tags ) ) : ?>
+                <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                  <?php foreach ( array_slice( $tags, 0, 3 ) as $t ) : ?>
+                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-800 transition-colors">
+                      #<?php echo esc_html( $t ); ?>
+                    </span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
             </div>
           </div>
 
