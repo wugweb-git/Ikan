@@ -599,6 +599,255 @@ Text Domain: demo
   .prose-ikan a {
     text-decoration: underline;
     text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+  }
+  .prose-ikan a[href^="/resources/"]:not([target]) {
+    color: var(--brand-teal, #006A60);
+    text-decoration-color: currentColor;
+  }
+  .prose-ikan a[target="_blank"]::after {
+    content: "";
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    margin-left: 0.15em;
+    vertical-align: -0.05em;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* Score tables styled as responsive cards */
+  .prose-ikan table {
+    display: block;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5em;
+  }
+  .prose-ikan thead,
+  .prose-ikan tr:first-child {
+    display: none;
+  }
+  .prose-ikan tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .prose-ikan tr {
+    display: block;
+    border-radius: 16px;
+    background: #f8faf9;
+    border: 1px solid #e2e8e5;
+    padding: 16px 18px;
+  }
+  .prose-ikan td {
+    display: block;
+    border: 0;
+    padding: 0;
+  }
+  .prose-ikan td:first-child {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-teal, #006A60);
+  }
+  .prose-ikan td:first-child::before {
+    content: "Score Range";
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 2px;
+  }
+  .prose-ikan td:nth-child(2) {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 4px;
+    color: #111827;
+  }
+  .prose-ikan td:nth-child(3) {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 6px;
+    color: #4b5563;
+  }
+  .prose-ikan td h2 {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  /* Data tables */
+  .prose-ikan table.data-table tbody tr:first-child {
+    display: block;
+  }
+  .prose-ikan table.data-table td:first-child {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .prose-ikan table.data-table td:first-child::before {
+    content: none;
+  }
+  .prose-ikan table.data-table td + td {
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .prose-ikan table.data-table td + td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  /* Figures & Infographics */
+  .prose-ikan figure {
+    margin: 1.8em 0;
+  }
+  .prose-ikan figure a {
+    display: block;
+    text-decoration: none;
+  }
+  .prose-ikan figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+  }
+  .prose-ikan figcaption {
+    font-size: 12px;
+    margin-top: 10px;
+    color: #64748b;
+  }
+
+  /* Interactive / CSS Charts */
+  .prose-ikan figure.chart {
+    border-radius: 20px;
+    background: #f8faf9;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+  }
+  .prose-ikan .chart-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: #111827;
+  }
+  .prose-ikan .chart ol {
+    display: grid;
+    gap: 14px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .prose-ikan .chart li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 6px;
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+  }
+  .prose-ikan .chart .bar-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #111827;
+  }
+  .prose-ikan .chart .bar {
+    grid-column: 1 / -1;
+    display: block;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: #e2e8f0;
+  }
+  .prose-ikan .chart .bar i {
+    display: block;
+    width: calc(var(--v) * 100%);
+    min-width: 8px;
+    height: 100%;
+    border-radius: 9999px;
+    background: #94a3b8;
+  }
+  .prose-ikan .chart .is-key .bar i {
+    background: var(--brand-teal, #006A60);
+  }
+  .prose-ikan .chart .is-key .bar-label {
+    color: #111827;
+    font-weight: 600;
+  }
+  .prose-ikan .chart-note {
+    font-size: 13px;
+    margin-top: 14px;
+    color: #64748b;
+  }
+
+  /* Source Bibliography Card */
+  .prose-ikan .sources {
+    margin-top: 2.5em;
+    border-radius: 20px;
+    background: #f8faf9;
+    border: 1px solid #e2e8e5;
+    padding: 20px;
+    font-size: 13px;
+    color: #4b5563;
+  }
+  .prose-ikan .sources h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #475569;
+  }
+  .prose-ikan .sources h2::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .prose-ikan .sources h3 {
+    font-size: 13px;
+    margin-top: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .prose-ikan .sources ul,
+  .prose-ikan .sources ol {
+    margin-top: 10px;
+    padding-left: 1.2em;
+  }
+  .prose-ikan .sources li,
+  .prose-ikan .sources p {
+    font-style: italic;
+  }
+  .prose-ikan .sources li + li {
+    margin-top: 6px;
+  }
+  .prose-ikan .sources p {
+    margin-top: 12px;
+  }
+  .prose-ikan .sources li > strong:first-child,
+  .prose-ikan .sources p > strong:first-child {
+    font-style: normal;
+    font-weight: 600;
+    color: #111827;
+  }
+  .prose-ikan .sources a {
+    color: var(--brand-teal, #006A60);
   }
 
   /* The legal HTML in this repo was authored for a Tailwind-classed container
