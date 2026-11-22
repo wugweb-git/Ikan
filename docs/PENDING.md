@@ -10,6 +10,7 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 - [ ] **Database & Backup Architecture: Move to WordPress Admin & Hostinger (Off GitHub)**:
   - Rather than storing database dumps in GitHub Actions artifacts (which require secrets and expose health dumps to runner logs), map the database and backups directly into **WordPress Admin on Hostinger**.
+  - **Interim DB Naming & Boundary**: The `ikan2` Supabase database is formally designated as the **Interim DB** (interim buffer for member app state). GitHub only interfaces with code and interim/buffer orchestration — never with clinical health records.
   - Hostinger already performs automated daily hosting snapshots and database backups.
   - UpdraftPlus on WordPress provides direct off-site backup destinations (Google Drive/S3) with zero dependency on GitHub Actions runners.
 
@@ -17,19 +18,19 @@ Single source of truth for outstanding work across sessions. Update this file wh
   - **Vision**: Bring the full private member experience (clinical program tracks, daily check-ins, encrypted health journals, and user diaries) directly into the main WordPress platform (`ikan` on Hostinger), unifying the platform under one roof.
   - **Scheduled Actions Engine (Action Scheduler)**:
     - WordPress **Action Scheduler** (`wp action-scheduler`, v3.9.3) is already installed, active, and running every minute on Hostinger.
-    - We will leverage Action Scheduler to register recurring background synchronization jobs (`as_schedule_recurring_action()`) that pull/push updates between the Supabase interim buffer and WordPress MySQL safely without blocking user requests.
+    - We will leverage Action Scheduler to register recurring background synchronization jobs (`as_schedule_recurring_action()`) that pull/push updates between the **Interim DB** (ikan2 Supabase) and WordPress MySQL safely without blocking user requests.
   - **Database Mapping Strategy**:
     - Design WordPress database mapping for member journeys (custom MySQL tables or structured Custom Post Types with REST API endpoints).
-    - **Interim Buffer Rule**: Maintain the existing `ikan2` Supabase database as a live buffer during migration — zero disruption or data loss for existing accounts, check-ins, or program progressions.
+    - **Interim DB Protocol**: The `ikan2` Supabase database acts strictly as the **Interim DB** during migration — zero disruption or data loss for existing accounts, check-ins, or program progressions.
     - **Clinical Data Privacy (Client-Side Encryption)**:
       - Sensitive personal health records (encrypted journals, private diary entries) remain strictly client-side encrypted (AES-GCM zero-knowledge encryption).
       - WordPress MySQL stores only ciphertext, IV, and salt — ensuring that even with direct database access, reflections remain cryptographically unreadable without the member's private key.
-      - Keeps all clinical health records in the dedicated host database, completely off GitHub.
+      - Keeps all clinical health records in the dedicated WordPress Admin database, completely off GitHub.
   - **Milestone Phases**:
-    1. *Phase 1 — Schema & Action Scheduler Mapping*: Define relational mapping between Supabase tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema. Register Action Scheduler worker jobs.
-    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization bridge between Supabase and WordPress to mirror member progress safely.
+    1. *Phase 1 — Schema & Action Scheduler Mapping*: Define relational mapping between Interim DB tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema. Register Action Scheduler worker jobs.
+    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization bridge between Interim DB and WordPress to mirror member progress safely.
     3. *Phase 3 — UI Component Migration*: Integrate `ikan2` React/M3 member components into the WordPress theme application layer.
-    4. *Phase 4 — Cutover & Verification*: Comprehensive smoke testing before retiring Supabase.
+    4. *Phase 4 — Cutover & Verification*: Comprehensive smoke testing before retiring the Interim DB.
 
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.
