@@ -86,7 +86,46 @@ add_action( 'template_redirect', function() {
     wp_redirect( 'https://app.ikanhealth.in/login', 302 );
     exit;
   }
+
+  // Intercept partner, professional application, and org routes before canonical redirects
+  if (
+    $req_path === 'join/partner' || str_starts_with( $req_path, 'join/partner/' ) ||
+    $req_path === 'join/professional' || str_starts_with( $req_path, 'join/professional/' ) ||
+    $req_path === 'partner' || str_starts_with( $req_path, 'partner/' ) ||
+    $req_path === 'professional-application' || str_starts_with( $req_path, 'professional-application/' )
+  ) {
+    status_header( 200 );
+    $tpl = locate_template( 'professional-application.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
+
+  if ( $req_path === 'org' || str_starts_with( $req_path, 'org/' ) || $req_path === 'organisation' ) {
+    status_header( 200 );
+    $tpl = locate_template( 'org.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
 } );
+
+// Prevent WordPress from redirecting /join/professional or /join/partner away
+add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
+  $path = trim( parse_url( $requested_url, PHP_URL_PATH ), '/' );
+  if (
+    $path === 'join/professional' || str_starts_with( $path, 'join/professional/' ) ||
+    $path === 'join/partner' || str_starts_with( $path, 'join/partner/' ) ||
+    $path === 'partner' || str_starts_with( $path, 'partner/' ) ||
+    $path === 'org' || str_starts_with( $path, 'org/' ) ||
+    $path === 'professional-application' || str_starts_with( $path, 'professional-application/' )
+  ) {
+    return false;
+  }
+  return $redirect_url;
+}, 10, 2 );
 
 // Helper to resolve current Vite production entry script
 function get_vite_entry_script() {
@@ -156,6 +195,7 @@ add_filter( 'template_include', function( $template ) {
     'partner'                 => 'professional-application.php',
     'join/partner'            => 'professional-application.php',
     'join/professional'       => 'professional-application.php',
+    'professional-application'=> 'professional-application.php',
   ];
 
   if ( isset( $alias_map[ $req_path ] ) ) {

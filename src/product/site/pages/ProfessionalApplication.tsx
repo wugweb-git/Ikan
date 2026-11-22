@@ -58,7 +58,9 @@ const stepPath = (i: number) => `${BASE_PATH}/${STEP_SLUGS[i]}`;
 
 /** The step a path names: a step index, 'intro', or 'submitted'. Unknown slugs read as the intro. */
 function stepFromPath(pathname: string): number | 'intro' | 'submitted' {
-  const rest = pathname.replace(/\/+$/, '').slice(BASE_PATH.length).replace(/^\//, '');
+  const norm = pathname.replace(/\/+$/, '');
+  const prefix = ['/join/partner', '/join/professional', '/professional-application', '/partner'].find((p) => norm.startsWith(p)) || BASE_PATH;
+  const rest = norm.slice(prefix.length).replace(/^\//, '');
   if (!rest) return 'intro';
   if (rest === 'submitted') return 'submitted';
   const i = STEP_SLUGS.indexOf(rest);

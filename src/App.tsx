@@ -191,7 +191,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
-  '/consultation', '/join/partner',
+  '/consultation', '/join/partner', '/join/professional', '/professional-application', '/partner',
   '/resource', '/resource-detail',
   '/workplace-privacy',
   '/burnout-cost-calculator',
@@ -300,9 +300,21 @@ function AppContent() {
       const path = window.location.pathname;
       // Slug detail routes map to the existing detail screens
       if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
-      // Every step of the partner wizard (/join/partner/<step>) is the one page;
+      // Every step of the partner wizard (/join/partner/<step>, /join/professional, etc.) is the one page;
       // the page reads its step from the URL itself.
-      if (path.startsWith('/join/partner/')) return '/join/partner';
+      const norm = path.replace(/\/+$/, '');
+      if (
+        norm === '/join/partner' ||
+        norm.startsWith('/join/partner/') ||
+        norm === '/join/professional' ||
+        norm.startsWith('/join/professional/') ||
+        norm === '/professional-application' ||
+        norm.startsWith('/professional-application/') ||
+        norm === '/partner' ||
+        norm.startsWith('/partner/')
+      ) {
+        return '/join/partner';
+      }
       /* A programme's own pages live under it — /equip/<slug>/result and
          /equip/<slug>/diary. Checked BEFORE the bare slug, or `sleep-tight/diary`
          would be read as a slug. */
@@ -380,6 +392,8 @@ function AppContent() {
         '/admin', '/admin/login',
         '/join/partner',
         '/join/professional',
+        '/professional-application',
+        '/partner',
         '/splash',
         '/timeline',
         '/learning-diary',
@@ -389,7 +403,17 @@ function AppContent() {
         '/burnout-cost-calculator'
       ];
       
-      if (path.startsWith('/join/partner/') || path.startsWith('/join/professional/')) {
+      const normPath = path.replace(/\/+$/, '');
+      if (
+        normPath === '/join/partner' ||
+        normPath.startsWith('/join/partner/') ||
+        normPath === '/join/professional' ||
+        normPath.startsWith('/join/professional/') ||
+        normPath === '/professional-application' ||
+        normPath.startsWith('/professional-application/') ||
+        normPath === '/partner' ||
+        normPath.startsWith('/partner/')
+      ) {
         startTransition(() => setCurrentRoute('/join/partner'));
         if (typeof window !== 'undefined') window.history.pushState({}, '', route);
         return;
@@ -535,7 +559,17 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path === '/join/partner' || path.startsWith('/join/partner/')) {
+      const norm = path.replace(/\/+$/, '');
+      if (
+        norm === '/join/partner' ||
+        norm.startsWith('/join/partner/') ||
+        norm === '/join/professional' ||
+        norm.startsWith('/join/professional/') ||
+        norm === '/professional-application' ||
+        norm.startsWith('/professional-application/') ||
+        norm === '/partner' ||
+        norm.startsWith('/partner/')
+      ) {
         // The wizard follows its own steps on popstate; leave the page mounted
         // and do not scroll, or Back between steps would jump to the top.
         startTransition(() => setCurrentRoute('/join/partner'));
@@ -707,6 +741,8 @@ function AppContent() {
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/partner':
         case '/join/professional':
+        case '/professional-application':
+        case '/partner':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
