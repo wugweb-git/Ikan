@@ -153,23 +153,23 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export const DEMO_ORG: Organization = {
   id: 'demo-org',
-  name: 'Acme Technologies India',
-  slug: 'acme-india',
+  name: 'Wugweb Technologies',
+  slug: 'wugweb',
   status: 'active',
   seats_purchased: 200,
   contract_start: '2026-01-01',
   contract_end: '2026-12-31',
-  allowed_email_domains: ['acme.com', 'acme.in'],
+  allowed_email_domains: ['wugweb.com', 'wugweb.in'],
   min_group_size: 5,
   logo_url: null,
-  website: 'https://acme.in',
+  website: 'https://wugweb.com',
   industry: 'Software / Technology',
   address: 'Indiranagar',
   city: 'Bengaluru',
   country: 'India',
-  primary_contact_name: 'Priya Sharma',
-  primary_contact_role: 'Head of People & Culture',
-  primary_contact_email: 'priya@acme.in',
+  primary_contact_name: 'Vedanshu',
+  primary_contact_role: 'Founder & CEO',
+  primary_contact_email: 'vedanshu@wugweb.com',
   primary_contact_phone: '+91 98765 43210',
   your_role: 'admin',
 };
@@ -210,16 +210,16 @@ export const DEMO_INSIGHTS: Insights = {
 };
 
 export const DEMO_MEMBERS: Member[] = [
-  { id: 'm-1', email: 'priya@acme.in', role: 'admin', department: 'People & Culture', relationship_type: 'employee', invited_at: '2026-01-05T09:00:00Z', accepted_at: '2026-01-05T09:10:00Z', started_at: '2026-01-05T09:10:00Z', ended_at: null },
-  { id: 'm-2', email: 'rahul.sharma@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-11T14:20:00Z', started_at: '2026-01-11T14:20:00Z', ended_at: null },
-  { id: 'm-3', email: 'ananya.iyer@acme.in', role: 'member', department: 'Product & Design', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T11:45:00Z', started_at: '2026-01-10T11:45:00Z', ended_at: null },
-  { id: 'm-4', email: 'vikram.mehta@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-15T08:30:00Z', accepted_at: '2026-01-15T09:00:00Z', started_at: '2026-01-15T09:00:00Z', ended_at: null },
-  { id: 'm-5', email: 'sneha.patel@acme.in', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-02-01T12:00:00Z', accepted_at: '2026-02-02T10:15:00Z', started_at: '2026-02-02T10:15:00Z', ended_at: null },
-  { id: 'm-6', email: 'karan.verma@acme.in', role: 'viewer', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-02-05T15:00:00Z', accepted_at: '2026-02-06T11:30:00Z', started_at: '2026-02-06T11:30:00Z', ended_at: null },
-  { id: 'm-7', email: 'rohit.gupta@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-03-01T09:00:00Z', accepted_at: null, started_at: null, ended_at: null },
-  { id: 'm-8', email: 'deepa.nair@acme.in', role: 'member', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-03-05T10:00:00Z', accepted_at: '2026-03-06T16:00:00Z', started_at: '2026-03-06T16:00:00Z', ended_at: null },
-  { id: 'm-9', email: 'amit.deshmukh@acme.in', role: 'member', department: 'Executive & Legal', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T12:00:00Z', started_at: '2026-01-10T12:00:00Z', ended_at: null },
-  { id: 'm-10', email: 'neha.singh@acme.in', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-01-12T11:00:00Z', accepted_at: null, started_at: null, ended_at: null },
+  { id: 'm-1', email: 'vedanshu@wugweb.com', role: 'admin', department: 'Leadership', relationship_type: 'employee', invited_at: '2026-01-05T09:00:00Z', accepted_at: '2026-01-05T09:10:00Z', started_at: '2026-01-05T09:10:00Z', ended_at: null },
+  { id: 'm-2', email: 'rahul.sharma@wugweb.com', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-11T14:20:00Z', started_at: '2026-01-11T14:20:00Z', ended_at: null },
+  { id: 'm-3', email: 'ananya.iyer@wugweb.com', role: 'member', department: 'Product & Design', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T11:45:00Z', started_at: '2026-01-10T11:45:00Z', ended_at: null },
+  { id: 'm-4', email: 'vikram.mehta@wugweb.com', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-15T08:30:00Z', accepted_at: '2026-01-15T09:00:00Z', started_at: '2026-01-15T09:00:00Z', ended_at: null },
+  { id: 'm-5', email: 'sneha.patel@wugweb.com', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-02-01T12:00:00Z', accepted_at: '2026-02-02T10:15:00Z', started_at: '2026-02-02T10:15:00Z', ended_at: null },
+  { id: 'm-6', email: 'karan.verma@wugweb.com', role: 'viewer', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-02-05T15:00:00Z', accepted_at: '2026-02-06T11:30:00Z', started_at: '2026-02-06T11:30:00Z', ended_at: null },
+  { id: 'm-7', email: 'rohit.gupta@wugweb.com', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-03-01T09:00:00Z', accepted_at: null, started_at: null, ended_at: null },
+  { id: 'm-8', email: 'deepa.nair@wugweb.com', role: 'member', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-03-05T10:00:00Z', accepted_at: '2026-03-06T16:00:00Z', started_at: '2026-03-06T16:00:00Z', ended_at: null },
+  { id: 'm-9', email: 'amit.deshmukh@wugweb.com', role: 'member', department: 'Executive & Legal', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T12:00:00Z', started_at: '2026-01-10T12:00:00Z', ended_at: null },
+  { id: 'm-10', email: 'neha.singh@wugweb.com', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-01-12T11:00:00Z', accepted_at: null, started_at: null, ended_at: null },
 ];
 
 export const orgApi = {

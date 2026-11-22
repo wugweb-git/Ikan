@@ -125,6 +125,24 @@ add_action( 'template_redirect', function() {
     }
   }
 
+  // Canonical redirects for singular and shortcut aliases
+  $canonical_aliases = [
+    'resource'   => '/resources/',
+    'article'    => '/resources/',
+    'articles'   => '/resources/',
+    'assessment' => '/assessments/',
+    'equip'      => '/equip-programs/',
+    'program'    => '/equip-programs/',
+    'programs'   => '/equip-programs/',
+    'consult'    => '/consultation/',
+    'calculator' => '/burnout-cost-calculator/',
+    'faqs'       => '/faq/',
+  ];
+  if ( isset( $canonical_aliases[ $req_path ] ) ) {
+    wp_redirect( home_url( $canonical_aliases[ $req_path ] ), 301 );
+    exit;
+  }
+
   // URL alias handling for exact 1:1 route parity between ikan and ikan2
   $route_alias_templates = [
     'about'                   => 'about-us.php',
