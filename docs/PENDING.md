@@ -23,6 +23,16 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-22)
 
+- [x] **Wugweb Technologies Rebrand & 1-Click Demo Credentials (`admin@wugweb.com` / `WugWeb123@`)**:
+  - Rebranded corporate demo from Acme Health to **Wugweb Technologies** (Vedanshu, Founder & CEO, Indiranagar, Bengaluru, India).
+  - Hardcoded instant demo credentials `admin@wugweb.com` / `WugWeb123@` across `/login`, `/signup`, `/org`, and the Org Portal (`OrgPortal.tsx` & `auth.tsx`).
+  - Implemented `fillDemoAccount()` button on `/login` and `/signup` and "Fill Demo Credentials" in `/org`.
+  - Configured `ikan_handle_ajax_user_login()` in `functions.php` to authenticate and auto-provision the demo user session with auth cookies.
+- [x] **Direct Auth Routing (`/login`, `/signup` serving `template-auth.php`)**:
+  - Intercepted `/login` and `/signup` in `functions.php` to serve `template-auth.php` directly (HTTP 200 OK) with 2-step onboarding and tab switching instead of 302 redirecting to `app.ikanhealth.in`.
+- [x] **Resources Catalog & Single Post Clinical Enrichment**:
+  - Injected Schema.org `CollectionPage` JSON-LD on `/resources` and `Article` JSON-LD on `/resources/<slug>`.
+  - Added dynamic reading progress indicator bar, keep-reading recommendation grid, and metadata bridges (`assessment`, `assessment_role`, `programme`).
 - [x] **Fluent PDF Generator (v2.2.0) Activated on Hostinger**:
   - Installed and activated `fluentforms-pdf` on Hostinger production via WP-CLI.
 - [x] **Headless CMS & Resources REST API Routes (`functions.php`)**:
