@@ -12,7 +12,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [equip-carry-forward, main]
+    branches: [main, wordpress, wordpress-dev, equip-carry-forward]
 
 jobs:
   verify:

@@ -3,10 +3,17 @@
  * Only logs in development mode, silent in production
  */
 
-const isDevelopment = 
-  (typeof import.meta !== 'undefined' && import.meta.env?.DEV) || 
-  (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'development') ||
-  false;
+interface MetaEnv {
+  DEV?: boolean;
+  MODE?: string;
+}
+
+interface CustomImportMeta {
+  env?: MetaEnv;
+}
+
+const meta = typeof import.meta !== 'undefined' ? (import.meta as unknown as CustomImportMeta) : undefined;
+const isDevelopment = Boolean(meta?.env?.DEV || meta?.env?.MODE === 'development');
 
 export const logger = {
   log: (...args: unknown[]) => {

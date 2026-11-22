@@ -24,9 +24,10 @@ node scripts/update-theme-manifest.mjs
 echo "✓ Local build successful"
 
 # Verify Composer dependencies for Theme
-if [ -f "src/product/site/themes/demo/composer.json" ] && [ ! -f "src/product/site/themes/demo/vendor/autoload.php" ]; then
+THEME_SRC="src/product/site/themes/demo"
+if [ -f "$THEME_SRC/composer.json" ] && [ ! -f "$THEME_SRC/vendor/autoload.php" ]; then
   echo "→ Installing theme Composer dependencies..."
-  (cd src/product/site/themes/demo && composer install --no-dev --optimize-autoloader) || { echo "✗ composer install failed" >&2; exit 1; }
+  (cd "$THEME_SRC" && composer install --no-dev --optimize-autoloader) || { echo "✗ composer install failed" >&2; exit 1; }
 fi
 
 # Sync Theme & Data to Hostinger
