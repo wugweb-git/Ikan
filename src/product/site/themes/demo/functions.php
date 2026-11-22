@@ -88,9 +88,33 @@ add_action( 'template_redirect', function() {
   }
 } );
 
+// Helper to resolve current Vite production entry script
+function get_vite_entry_script() {
+  $assets_dir = ABSPATH . 'assets';
+  if ( is_dir( $assets_dir ) ) {
+    $files = glob( $assets_dir . '/index-*.js' );
+    if ( ! empty( $files ) ) {
+      return '/assets/' . basename( end( $files ) );
+    }
+  }
+  return '/assets/index-C_BRL1DW.js';
+}
+
 // Route blog archive, single post, and custom page requests to dedicated PHP templates
 add_filter( 'template_include', function( $template ) {
   $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+
+  // Handle prefix routes for multi-step applications and sub-pages
+  if ( str_starts_with( $req_path, 'org' ) ) {
+    return get_template_directory() . '/org.php';
+  }
+  if ( str_starts_with( $req_path, 'join/partner' ) || str_starts_with( $req_path, 'join/professional' ) || $req_path === 'partner' ) {
+    return get_template_directory() . '/professional-application.php';
+  }
+  if ( str_starts_with( $req_path, 'onboarding' ) || str_starts_with( $req_path, 'get-started' ) || $req_path === 'splash' ) {
+    $onboard_file = get_template_directory() . '/onboarding.php';
+    if ( file_exists( $onboard_file ) ) return $onboard_file;
+  }
 
   // Explicit URL alias to template map for 100% URL parity
   $alias_map = [
@@ -131,6 +155,7 @@ add_filter( 'template_include', function( $template ) {
     'workplace-privacy'       => 'workplace-privacy.php',
     'partner'                 => 'professional-application.php',
     'join/partner'            => 'professional-application.php',
+    'join/professional'       => 'professional-application.php',
   ];
 
   if ( isset( $alias_map[ $req_path ] ) ) {
@@ -317,11 +342,37 @@ function ikan_record_lead_in_fluentcrm( $data ) {
       'source'     => 'iKAN Web PWA',
     ];
 
+    if ( ! empty( $data['phone'] ) )       $contact_data['phone']       = sanitize_text_field( $data['phone'] );
+    if ( ! empty( $data['city'] ) )        $contact_data['city']        = sanitize_text_field( $data['city'] );
+    if ( ! empty( $data['postal_code'] ) ) $contact_data['postal_code'] = sanitize_text_field( $data['postal_code'] );
+
     if ( $list_id ) $contact_data['lists'] = [ $list_id ];
     if ( $tag_id )  $contact_data['tags'] = [ $tag_id ];
 
     $contact = $contactApi->createOrUpdate( $contact_data );
     $sub_id = is_object( $contact ) ? $contact->id : ( $contact['id'] ?? null );
+
+    if ( $sub_id && ! empty( $data['meta'] ) && is_array( $data['meta'] ) ) {
+      global $wpdb;
+      $meta_table = $wpdb->prefix . 'fc_subscriber_meta';
+      foreach ( $data['meta'] as $mk => $mv ) {
+        $meta_key = sanitize_key( $mk );
+        $meta_val = is_array( $mv ) ? json_encode( $mv ) : (string) $mv;
+        $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$meta_table} WHERE subscriber_id = %d AND `key` = %s LIMIT 1", $sub_id, $meta_key ) );
+        if ( $existing ) {
+          $wpdb->update( $meta_table, [ 'value' => $meta_val, 'updated_at' => current_time( 'mysql' ) ], [ 'id' => $existing ] );
+        } else {
+          $wpdb->insert( $meta_table, [
+            'subscriber_id' => $sub_id,
+            'key'           => $meta_key,
+            'value'         => $meta_val,
+            'object_type'   => 'option',
+            'created_at'    => current_time( 'mysql' ),
+            'updated_at'    => current_time( 'mysql' ),
+          ] );
+        }
+      }
+    }
 
     if ( $sub_id && ! empty( $data['note_title'] ) ) {
       ikan_fluentcrm_add_note( $sub_id, $data['note_title'], $data['note_desc'] ?? '' );

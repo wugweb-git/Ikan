@@ -417,4 +417,6 @@ get_header(); ?>
   });
 </script>
 
+<script type="module" crossorigin src="<?php echo esc_url( get_vite_entry_script() ); ?>"></script>
+
 <?php get_footer(); ?>

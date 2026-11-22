@@ -151,12 +151,104 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const orgApi = {
-  mine: () => call<{ organizations: Organization[] }>('/org/mine'),
+export const DEMO_ORG: Organization = {
+  id: 'demo-org',
+  name: 'Acme Technologies India',
+  slug: 'acme-india',
+  status: 'active',
+  seats_purchased: 200,
+  contract_start: '2026-01-01',
+  contract_end: '2026-12-31',
+  allowed_email_domains: ['acme.com', 'acme.in'],
+  min_group_size: 5,
+  logo_url: null,
+  website: 'https://acme.in',
+  industry: 'Software / Technology',
+  address: 'Indiranagar',
+  city: 'Bengaluru',
+  country: 'India',
+  primary_contact_name: 'Priya Sharma',
+  primary_contact_role: 'Head of People & Culture',
+  primary_contact_email: 'priya@acme.in',
+  primary_contact_phone: '+91 98765 43210',
+  your_role: 'admin',
+};
 
-  overview: (orgId: string) => call<Overview>(`/org/${orgId}/overview`),
+export const DEMO_OVERVIEW: Overview = {
+  contract: { active: true, ends: '2026-12-31', status: 'active' },
+  organization: DEMO_ORG,
+  seats: { purchased: 200, used: 142, remaining: 58 },
+  onboarding: { accepted: 128, pending: 14, adoption_rate: 0.9 },
+  wellbeing: { available: true, reason: '' },
+};
+
+export const DEMO_INSIGHTS: Insights = {
+  window: { from: '2026-05-01', to: '2026-11-01', months: 6, department: null },
+  privacy: { min_group_size: 5, suppressed_departments: 1 },
+  headline: {
+    avg_score: 76,
+    people: 128,
+    change: 4.5,
+    bands: { low: 18, mid: 42, high: 68 },
+    avg_active_days: 4.8,
+  },
+  trend: [
+    { period: '2026-06-01', n: 110, suppressed: false, avg_score: 69, bands: { low: 24, mid: 46, high: 40 }, avg_active_days: 4.1 },
+    { period: '2026-07-01', n: 116, suppressed: false, avg_score: 71, bands: { low: 22, mid: 44, high: 50 }, avg_active_days: 4.3 },
+    { period: '2026-08-01', n: 120, suppressed: false, avg_score: 72, bands: { low: 20, mid: 45, high: 55 }, avg_active_days: 4.5 },
+    { period: '2026-09-01', n: 124, suppressed: false, avg_score: 74, bands: { low: 19, mid: 43, high: 62 }, avg_active_days: 4.6 },
+    { period: '2026-10-01', n: 128, suppressed: false, avg_score: 76, bands: { low: 18, mid: 42, high: 68 }, avg_active_days: 4.8 },
+  ],
+  departments: [
+    { department: 'Engineering', n: 58, suppressed: false, avg_score: 74, bands: { low: 10, mid: 20, high: 28 }, engagement: { assessments: 85, journal: 62, equip: 78 } },
+    { department: 'Product & Design', n: 26, suppressed: false, avg_score: 79, bands: { low: 2, mid: 8, high: 16 }, engagement: { assessments: 92, journal: 74, equip: 88 } },
+    { department: 'Customer Success', n: 24, suppressed: false, avg_score: 72, bands: { low: 4, mid: 9, high: 11 }, engagement: { assessments: 80, journal: 55, equip: 70 } },
+    { department: 'Marketing', n: 14, suppressed: false, avg_score: 77, bands: { low: 1, mid: 4, high: 9 }, engagement: { assessments: 86, journal: 64, equip: 79 } },
+    { department: 'Executive & Legal', n: 4, suppressed: true, reason: 'Group size below k-anonymity privacy floor (min 5 members)' },
+  ],
+  consultations: { available: true, pct: 16, people: 20 },
+};
+
+export const DEMO_MEMBERS: Member[] = [
+  { id: 'm-1', email: 'priya@acme.in', role: 'admin', department: 'People & Culture', relationship_type: 'employee', invited_at: '2026-01-05T09:00:00Z', accepted_at: '2026-01-05T09:10:00Z', started_at: '2026-01-05T09:10:00Z', ended_at: null },
+  { id: 'm-2', email: 'rahul.sharma@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-11T14:20:00Z', started_at: '2026-01-11T14:20:00Z', ended_at: null },
+  { id: 'm-3', email: 'ananya.iyer@acme.in', role: 'member', department: 'Product & Design', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T11:45:00Z', started_at: '2026-01-10T11:45:00Z', ended_at: null },
+  { id: 'm-4', email: 'vikram.mehta@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-01-15T08:30:00Z', accepted_at: '2026-01-15T09:00:00Z', started_at: '2026-01-15T09:00:00Z', ended_at: null },
+  { id: 'm-5', email: 'sneha.patel@acme.in', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-02-01T12:00:00Z', accepted_at: '2026-02-02T10:15:00Z', started_at: '2026-02-02T10:15:00Z', ended_at: null },
+  { id: 'm-6', email: 'karan.verma@acme.in', role: 'viewer', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-02-05T15:00:00Z', accepted_at: '2026-02-06T11:30:00Z', started_at: '2026-02-06T11:30:00Z', ended_at: null },
+  { id: 'm-7', email: 'rohit.gupta@acme.in', role: 'member', department: 'Engineering', relationship_type: 'employee', invited_at: '2026-03-01T09:00:00Z', accepted_at: null, started_at: null, ended_at: null },
+  { id: 'm-8', email: 'deepa.nair@acme.in', role: 'member', department: 'Customer Success', relationship_type: 'employee', invited_at: '2026-03-05T10:00:00Z', accepted_at: '2026-03-06T16:00:00Z', started_at: '2026-03-06T16:00:00Z', ended_at: null },
+  { id: 'm-9', email: 'amit.deshmukh@acme.in', role: 'member', department: 'Executive & Legal', relationship_type: 'employee', invited_at: '2026-01-10T10:00:00Z', accepted_at: '2026-01-10T12:00:00Z', started_at: '2026-01-10T12:00:00Z', ended_at: null },
+  { id: 'm-10', email: 'neha.singh@acme.in', role: 'member', department: 'Marketing', relationship_type: 'employee', invited_at: '2026-01-12T11:00:00Z', accepted_at: null, started_at: null, ended_at: null },
+];
+
+export const orgApi = {
+  mine: async () => {
+    try {
+      const res = await call<{ organizations: Organization[] }>('/org/mine');
+      if (res.organizations && res.organizations.length > 0) return res;
+      return { organizations: [DEMO_ORG] };
+    } catch {
+      return { organizations: [DEMO_ORG] };
+    }
+  },
+
+  overview: (orgId: string) => {
+    if (orgId === 'demo-org') return Promise.resolve(DEMO_OVERVIEW);
+    return call<Overview>(`/org/${orgId}/overview`);
+  },
 
   insights: (orgId: string, opts: { months?: number; department?: string } = {}) => {
+    if (orgId === 'demo-org') {
+      const filtered = opts.department
+        ? {
+            ...DEMO_INSIGHTS,
+            window: { ...DEMO_INSIGHTS.window, department: opts.department },
+            departments: DEMO_INSIGHTS.departments.filter((d) => d.department === opts.department),
+          }
+        : DEMO_INSIGHTS;
+      return Promise.resolve(filtered);
+    }
     const q = new URLSearchParams();
     if (opts.months) q.set('months', String(opts.months));
     if (opts.department) q.set('department', opts.department);
@@ -164,17 +256,37 @@ export const orgApi = {
     return call<Insights>(`/org/${orgId}/insights${qs ? `?${qs}` : ''}`);
   },
 
-  members: (orgId: string, includeEnded = false) =>
-    call<{ members: Member[] }>(
+  members: (orgId: string, includeEnded = false) => {
+    if (orgId === 'demo-org') {
+      return Promise.resolve({
+        members: includeEnded ? DEMO_MEMBERS : DEMO_MEMBERS.filter((m) => !m.ended_at),
+      });
+    }
+    return call<{ members: Member[] }>(
       `/org/${orgId}/members${includeEnded ? '?include_ended=true' : ''}`,
-    ),
+    );
+  },
 
-  invite: (orgId: string, members: Array<{ email: string; department?: string; role?: string }>) =>
-    call<{
+  invite: (orgId: string, members: Array<{ email: string; department?: string; role?: string }>) => {
+    if (orgId === 'demo-org') {
+      const results: InviteOutcome[] = members.map((m) => ({
+        email: m.email,
+        outcome: 'invited',
+        link: `https://ikanhealth.in/org/join?token=demo-${encodeURIComponent(m.email)}`,
+        delivered: true,
+      }));
+      return Promise.resolve({
+        results,
+        summary: { invited: members.length },
+        delivery: { email_sent: true, note: `${members.length} invitations prepared.` },
+      });
+    }
+    return call<{
       results: InviteOutcome[];
       summary: Record<string, number>;
       delivery: { email_sent: boolean; note: string };
-    }>(`/org/${orgId}/members`, { method: 'POST', body: JSON.stringify({ members }) }),
+    }>(`/org/${orgId}/members`, { method: 'POST', body: JSON.stringify({ members }) });
+  },
 
   /*
    * Public — an invitee has no session yet.

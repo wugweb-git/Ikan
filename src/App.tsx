@@ -45,9 +45,10 @@ function AuthRedirect() {
   );
 }
 
-const MobileOnboarding = () => <AuthRedirect />;
-const VerifyEmail = () => <AuthRedirect />;
-const GetStarted = () => <AuthRedirect />;
+const MobileOnboarding = lazy(() => lazyRetry(() => import('./product/app/onboarding/MobileOnboarding').then(m => ({ default: m.MobileOnboarding })), 'MobileOnboarding'));
+const VerifyEmail = lazy(() => lazyRetry(() => import('./product/app/onboarding/VerifyEmail').then(m => ({ default: m.VerifyEmail })), 'VerifyEmail'));
+const GetStarted = lazy(() => lazyRetry(() => import('./product/app/onboarding/GetStarted').then(m => ({ default: m.GetStarted })), 'GetStarted'));
+const WelcomeSplash = lazy(() => lazyRetry(() => import('./product/app/onboarding/WelcomeSplash').then(m => ({ default: m.WelcomeSplash })), 'WelcomeSplash'));
 const PushPermissionPrompt = () => null;
 const usePushPermissionPrompt = () => ({ shouldShowPrompt: false });
 import { Toaster } from './product/app/ui/sonner';
@@ -378,6 +379,8 @@ function AppContent() {
         '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         '/admin', '/admin/login',
         '/join/partner',
+        '/join/professional',
+        '/splash',
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
@@ -386,7 +389,7 @@ function AppContent() {
         '/burnout-cost-calculator'
       ];
       
-      if (path.startsWith('/join/partner/')) {
+      if (path.startsWith('/join/partner/') || path.startsWith('/join/professional/')) {
         startTransition(() => setCurrentRoute('/join/partner'));
         if (typeof window !== 'undefined') window.history.pushState({}, '', route);
         return;
@@ -690,6 +693,8 @@ function AppContent() {
           return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':
           return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
+        case '/splash':
+          return withSuspense(<WelcomeSplash onNavigate={handleNavigate} />);
         case '/onboarding':
           return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
         case '/verify-email':
@@ -701,6 +706,7 @@ function AppContent() {
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/partner':
+        case '/join/professional':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);

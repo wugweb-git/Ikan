@@ -412,7 +412,7 @@ Text Domain: demo
     color: color-mix(in oklab, var(--foreground) 88%, transparent);
   }
 
-  .ikan2-theme h1 {
+  .ikan2-theme :where(h1) {
     font-family: var(--font-display);
     font-size: 34px;
     line-height: 40px;
@@ -422,7 +422,7 @@ Text Domain: demo
   }
 
   /* Headline S — tracking 0, per the table. */
-  .ikan2-theme h2 {
+  .ikan2-theme :where(h2) {
     font-family: var(--font-display);
     font-size: 24px;
     line-height: 32px;
@@ -432,7 +432,7 @@ Text Domain: demo
   }
 
   /* Title M — the app's h3, +0.01em. */
-  .ikan2-theme h3 {
+  .ikan2-theme :where(h3) {
     font-family: var(--font-display);
     font-size: 16px;
     line-height: 24px;
@@ -443,7 +443,7 @@ Text Domain: demo
 
   /* Title L for h4, then the two Label roles — continuing the ladder into the
      levels the app leaves undefined. */
-  .ikan2-theme h4 {
+  .ikan2-theme :where(h4) {
     font-family: var(--font-display);
     font-size: 22px;
     line-height: 28px;

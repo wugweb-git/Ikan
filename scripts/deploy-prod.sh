@@ -40,6 +40,17 @@ rsync -avz --delete \
   }
 echo "✓ Theme files synced successfully"
 
+# Sync Vite production assets to public_html/assets
+echo "→ Rsyncing Vite production assets to Hostinger ($HOSTINGER_HOST)..."
+rsync -avz \
+  --exclude '.DS_Store' \
+  -e "ssh -p $HOSTINGER_PORT -i $HOSTINGER_KEY" \
+  dist/assets/ "$HOSTINGER_USER@$HOSTINGER_HOST:$REMOTE_PATH/assets/" || {
+    echo "✗ Failed to rsync dist assets to Hostinger" >&2
+    exit 1
+  }
+echo "✓ Production assets synced successfully"
+
 # Ensure Storybook symlink is active
 ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
   "ln -sfn $THEME_DEST/assets/storybook $REMOTE_PATH/storybook" >/dev/null 2>&1
