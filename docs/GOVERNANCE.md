@@ -51,19 +51,18 @@ assume it matches what a similar-looking entity uses. (`resource.category` is a 
 
 Repeated in several places historically; stated here as the authority:
 
-- **Production branch is `main`**, which is also the GitHub default. It was
-  `equip-carry-forward` until 2026-10-03, when that branch was renamed to `main`
-  and the stale `main` deleted.
-- **Pushing to `main` deploys the frontend.** `autoJobCancelation` was turned off in `82f08723`
-  and `git.deploymentEnabled` lists `main`, so a push ships. This bullet used to claim the
-  opposite; it was true before that commit. Push deliberately.
+- **Production branch is `wordpress`**, which is also the GitHub default. It was
+  `main` until 2026-11-22, when that branch was renamed to `wordpress`
+  and the default branch updated on GitHub.
+- **Pushing to `wordpress` deploys the frontend.** `autoJobCancelation` was turned off in `82f08723`
+  and `git.deploymentEnabled` lists `wordpress`, so a push ships.
 - **Deploy only through the guarded scripts** — `bash scripts/deploy-prod.sh` (frontend) and
   `bash scripts/deploy-edge.sh` (edge function). Never run the Vercel or Supabase CLI directly:
   both ship whatever is checked out. The scripts run `scripts/deploy-guard.sh` first, which refuses
-  unless you are on `main`, level with origin, with no uncommitted changes in what
+  unless you are on `wordpress`, level with origin, with no uncommitted changes in what
   ships, and CI is green on that exact commit.
 - **CI exists** (`.github/workflows/ci.yml`): tests, the typecheck/lint/contrast/raw-hex/a11y/boundary
-  ratchets, and a build, on every pull request and on pushes to `main` / `main`. CI
+  ratchets, and a build, on every pull request and on pushes to `wordpress` / `wordpress-dev`. CI
   verifies; it does not deploy.
 - **Frontend and edge function deploy independently** and nothing links them. Run
   `deploy-edge.sh` whenever a merge touches `src/supabase/functions/server/`, and smoke-test

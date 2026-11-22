@@ -4,6 +4,29 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-22] — Production Default Branch Renamed to wordpress, Full Resources Revamp & CI Ratchet Fixes
+
+### Added
+- **Default Branch Transition to `wordpress`**: Designated `wordpress` as the GitHub default and primary production deployment branch. Updated `scripts/deploy-guard.sh` (`PROD_BRANCH="wordpress"`), `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, and `SESSIONS.md`.
+- **Full Clinical Resources Revamp (`resources.php` & `single.php`)**:
+  - Implemented Schema.org structured data JSON-LD (`@type: Article / VideoObject / AudioObject` on single posts, `CollectionPage` / `ItemList` on archive).
+  - Pinned responsive reading progress bar (`#reading-progress-bar`) at the top of the viewport.
+  - Added clinical author byline and verification badge ("Medically Reviewed by Dr. Divya Jain, Ph.D. & iKAN Advisory Board").
+  - Added metadata pills with Lucide icons (`BookOpen` / `Play` / `Headphones` for format, `Clock3` for duration, `CalendarDays` for date, `UserRound` for author).
+  - Added interactive category & tags pills linking directly to search queries.
+  - Implemented `SourceCard` displaying publisher attribution, licence, and language for NHS, NIMH, UCLA MARC, and WHO materials.
+  - Integrated "Related in iKAN" section with Stacked Assessment cards (PHQ-9, GAD-7, PSS-10, BAT-23, WHO-5), Equip Program cards (Stress Buster, Unburn, Sleep Tight), and 1:1 Clinical Consultation cards.
+  - Added "Keep Reading" recommendation section with 3 related cards from the same category.
+  - Added responsive CSS styling in `style.css` for score tables (formatted into readable cards on mobile), CSS progress charts, and bibliography sources.
+
+### Fixed
+- **TypeScript Typecheck Ratchet (TS2339 in `src/shared/lib/logger.ts`)**: Safely typed `import.meta.env` with `CustomImportMeta` interface, lowering baseline from 103 down to 102.
+- **ESLint No-Empty Error (`scripts/update-theme-manifest.mjs`)**: Fixed empty `catch {}` block statement with `catch { existing = null; }`.
+- **Script Path Verification (`scripts/check-script-paths.mjs`)**: Ignored uncommitted Composer `vendor/` build artifacts from missing-source checks on clean CI checkouts.
+- **GitHub Actions CI Gates**: All 9 gates verified passing 100% green across `wordpress` and `wordpress-dev`.
+
+---
+
 ## [2026-11-22] — Wugweb Technologies Demo Credentials, Auth Direct Routing & Resource Metadata Enrichment
 
 ### Added
