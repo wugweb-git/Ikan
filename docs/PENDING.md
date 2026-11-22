@@ -14,23 +14,18 @@ Single source of truth for outstanding work across sessions. Update this file wh
   - Hostinger already performs automated daily hosting snapshots and database backups.
   - UpdraftPlus on WordPress provides direct off-site backup destinations (Google Drive/S3) with zero dependency on GitHub Actions runners.
 
-- [ ] **Strategic Migration: Unify Member Experience into Main WordPress (`ikan`)**:
-  - **Vision**: Bring the full private member experience (clinical program tracks, daily check-ins, encrypted health journals, and user diaries) directly into the main WordPress platform (`ikan` on Hostinger), unifying the platform under one roof.
-  - **Scheduled Actions Engine (Action Scheduler)**:
-    - WordPress **Action Scheduler** (`wp action-scheduler`, v3.9.3) is already installed, active, and running every minute on Hostinger.
-    - We will leverage Action Scheduler to register recurring background synchronization jobs (`as_schedule_recurring_action()`) that pull/push updates between the **Interim DB** (ikan2 Supabase) and WordPress MySQL safely without blocking user requests.
-  - **Database Mapping Strategy**:
-    - Design WordPress database mapping for member journeys (custom MySQL tables or structured Custom Post Types with REST API endpoints).
-    - **Interim DB Protocol**: The `ikan2` Supabase database acts strictly as the **Interim DB** during migration — zero disruption or data loss for existing accounts, check-ins, or program progressions.
-    - **Clinical Data Privacy (Client-Side Encryption)**:
-      - Sensitive personal health records (encrypted journals, private diary entries) remain strictly client-side encrypted (AES-GCM zero-knowledge encryption).
-      - WordPress MySQL stores only ciphertext, IV, and salt — ensuring that even with direct database access, reflections remain cryptographically unreadable without the member's private key.
-      - Keeps all clinical health records in the dedicated WordPress Admin database, completely off GitHub.
-  - **Milestone Phases**:
-    1. *Phase 1 — Schema & Action Scheduler Mapping*: Define relational mapping between Interim DB tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema. Register Action Scheduler worker jobs.
-    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization bridge between Interim DB and WordPress to mirror member progress safely.
-    3. *Phase 3 — UI Component Migration*: Integrate `ikan2` React/M3 member components into the WordPress theme application layer.
-    4. *Phase 4 — Cutover & Verification*: Comprehensive smoke testing before retiring the Interim DB.
+- [x] **Database & Sync Infrastructure (Interim Buffer -> WordPress & FluentCRM)**:
+  - **Architecture Confirmed**: UI stays in `ikan2` (React/PWA/M3), Supabase acts as interim buffer, WordPress MySQL & FluentCRM on Hostinger act as main authoritative DB.
+  - **4 Custom Clinical Tables Created (`class-ikan-db-schema.php`)**:
+    - `wp_ikan_assessment_results` (scores, severity bands, answers, snapshots)
+    - `wp_ikan_program_progress` (completed days, answers, feedback ratings, tracker data)
+    - `wp_ikan_journals` (mood/sleep/stress ratings, tags, encrypted reflections)
+    - `wp_ikan_wellness_scores` (daily longitudinal wellness scores)
+  - **Full Ingestion Worker Implemented (`class-ikan-interim-sync.php`)**:
+    - Maps Supabase user state (`assessments.v1`, `equip.*.v2`, `journal.v1`, `wellness.v1`) to destination tables.
+    - Syncs contact profile, tags (`prog:day-N`, `assess:phq9:band`), and custom fields in FluentCRM.
+    - Automated alerts for high-risk assessments (`assess:phq9:severe`) and clinician feedback notes.
+    - Background Action Scheduler hourly job active on Hostinger (Action ID `1893`).
 
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.

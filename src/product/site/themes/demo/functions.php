@@ -34,6 +34,9 @@ add_action( 'after_setup_theme', 'demo_theme_features' );
 // Load Hostinger Mail Integration & PHP SDK
 require_once get_template_directory() . '/includes/class-hostinger-mail.php';
 
+// Load iKAN Database Schema Manager (Tables: Assessments, Programs, Journals, Wellness)
+require_once get_template_directory() . '/includes/class-ikan-db-schema.php';
+
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
 
