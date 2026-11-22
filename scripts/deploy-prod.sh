@@ -20,6 +20,7 @@ echo "==> iKAN Health Production Deployment"
 # Verify build passes
 echo "→ Building Vite project..."
 npm run build >/dev/null 2>&1 || { echo "✗ local build failed" >&2; exit 1; }
+node scripts/update-theme-manifest.mjs
 echo "✓ Local build successful"
 
 # Verify Composer dependencies for Theme
@@ -40,6 +41,17 @@ rsync -avz --delete \
   }
 echo "✓ Theme files synced successfully"
 
+# Sync Vite production assets to public_html/assets
+echo "→ Rsyncing Vite production assets to Hostinger ($HOSTINGER_HOST)..."
+rsync -avz --delete \
+  --exclude '.DS_Store' \
+  -e "ssh -p $HOSTINGER_PORT -i $HOSTINGER_KEY" \
+  dist/assets/ "$HOSTINGER_USER@$HOSTINGER_HOST:$REMOTE_PATH/assets/" || {
+    echo "✗ Failed to rsync dist assets to Hostinger" >&2
+    exit 1
+  }
+echo "✓ Production assets synced successfully"
+
 # Ensure Storybook symlink is active
 ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
   "ln -sfn $THEME_DEST/assets/storybook $REMOTE_PATH/storybook" >/dev/null 2>&1
@@ -55,12 +67,15 @@ ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
 echo "→ Running live production smoke tests..."
 URLS=(
   "https://ikanhealth.in/"
+  "https://ikanhealth.in/about/"
   "https://ikanhealth.in/login/"
   "https://ikanhealth.in/consultation/"
   "https://ikanhealth.in/assessments/"
   "https://ikanhealth.in/equip-programs/"
   "https://ikanhealth.in/join/partner/"
   "https://ikanhealth.in/burnout-cost-calculator/"
+  "https://ikanhealth.in/org/"
+  "https://ikanhealth.in/faq/"
   "https://ikanhealth.in/storybook/"
 )
 

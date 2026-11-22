@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { OrgAuthProvider, useOrgAuth } from './auth';
-import { orgApi, type Organization, type Overview as OverviewData } from './api';
+import { orgApi, DEMO_ORG, DEMO_OVERVIEW, type Organization, type Overview as OverviewData } from './api';
 import { Insights } from './pages/Insights';
 import { People } from './pages/People';
 import { Settings } from './pages/Settings';
@@ -67,6 +67,11 @@ export function OrgPortal(props: OrgPortalProps) {
 function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
   const { user, isInitialized, signIn, signOut } = useOrgAuth();
 
+  const [isDemo, setIsDemo] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const sp = new URLSearchParams(window.location.search);
+    return sp.get('demo') === '1' || window.location.hash === '#demo' || window.location.pathname.includes('/demo');
+  });
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [active, setActive] = useState<Organization | null>(null);
   const [overview, setOverview] = useState<OverviewData | null>(null);
@@ -84,10 +89,13 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
 
   const go = (s: Section) => onNavigate?.(s === 'overview' ? '/org' : `/org/${s}`);
 
-  /* Which organisations may this person open? An empty list is a complete,
-     correct answer — most signed-in users are not org admins — so it gets its
-     own screen rather than an error. */
   useEffect(() => {
+    if (isDemo) {
+      setOrgs([DEMO_ORG]);
+      setActive(DEMO_ORG);
+      setOverview(DEMO_OVERVIEW);
+      return;
+    }
     if (!isInitialized || !user) return;
     let live = true;
     (async () => {
@@ -101,25 +109,29 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
       }
     })();
     return () => { live = false; };
-  }, [isInitialized, user]);
+  }, [isInitialized, user, isDemo]);
 
   const loadOverview = useCallback(async (org: Organization) => {
+    if (isDemo || org.id === 'demo-org') {
+      setOverview(DEMO_OVERVIEW);
+      return;
+    }
     try {
       setOverview(await orgApi.overview(org.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the overview.');
     }
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
     if (active) void loadOverview(active);
   }, [active, loadOverview]);
 
-  if (!isInitialized) {
+  if (!isInitialized && !isDemo) {
     return <div className="ikan2-theme org-portal"><div className="org-page">Loading…</div></div>;
   }
 
-  if (!user) return <SignIn onSignIn={signIn} />;
+  if (!user && !isDemo) return <SignIn onSignIn={signIn} onExploreDemo={() => setIsDemo(true)} />;
 
   if (orgs === null && !error) {
     return <div className="ikan2-theme org-portal"><div className="org-page">Loading…</div></div>;
@@ -238,7 +250,7 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
  * screen that offers "track your mood" is the wrong first impression of a
  * product they are paying for.
  */
-function SignIn({ onSignIn }: { onSignIn: (email: string, password: string) => Promise<void> }) {
+function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, password: string) => Promise<void>; onExploreDemo?: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -323,6 +335,18 @@ function SignIn({ onSignIn }: { onSignIn: (email: string, password: string) => P
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
             </div>
+            {onExploreDemo && (
+              <div style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  className="org-button org-button--quiet"
+                  onClick={onExploreDemo}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  Explore Interactive Demo
+                </button>
+              </div>
+            )}
           </form>
 
           <p className="org-login__help">

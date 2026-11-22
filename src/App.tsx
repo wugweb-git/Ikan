@@ -45,9 +45,10 @@ function AuthRedirect() {
   );
 }
 
-const MobileOnboarding = () => <AuthRedirect />;
-const VerifyEmail = () => <AuthRedirect />;
-const GetStarted = () => <AuthRedirect />;
+const MobileOnboarding = lazy(() => lazyRetry(() => import('./product/app/onboarding/MobileOnboarding').then(m => ({ default: m.MobileOnboarding })), 'MobileOnboarding'));
+const VerifyEmail = lazy(() => lazyRetry(() => import('./product/app/onboarding/VerifyEmail').then(m => ({ default: m.VerifyEmail })), 'VerifyEmail'));
+const GetStarted = lazy(() => lazyRetry(() => import('./product/app/onboarding/GetStarted').then(m => ({ default: m.GetStarted })), 'GetStarted'));
+const WelcomeSplash = lazy(() => lazyRetry(() => import('./product/app/onboarding/WelcomeSplash').then(m => ({ default: m.WelcomeSplash })), 'WelcomeSplash'));
 const PushPermissionPrompt = () => null;
 const usePushPermissionPrompt = () => ({ shouldShowPrompt: false });
 import { Toaster } from './product/app/ui/sonner';
@@ -190,7 +191,7 @@ const SITE_FOOTER_ROUTES = new Set([
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
-  '/consultation', '/join/partner',
+  '/consultation', '/join/partner', '/join/professional', '/professional-application', '/partner',
   '/resource', '/resource-detail',
   '/workplace-privacy',
   '/burnout-cost-calculator',
@@ -299,9 +300,21 @@ function AppContent() {
       const path = window.location.pathname;
       // Slug detail routes map to the existing detail screens
       if (path.startsWith('/assessment/') && path !== '/assessment/') return '/assessment-detail';
-      // Every step of the partner wizard (/join/partner/<step>) is the one page;
+      // Every step of the partner wizard (/join/partner/<step>, /join/professional, etc.) is the one page;
       // the page reads its step from the URL itself.
-      if (path.startsWith('/join/partner/')) return '/join/partner';
+      const norm = path.replace(/\/+$/, '');
+      if (
+        norm === '/join/partner' ||
+        norm.startsWith('/join/partner/') ||
+        norm === '/join/professional' ||
+        norm.startsWith('/join/professional/') ||
+        norm === '/professional-application' ||
+        norm.startsWith('/professional-application/') ||
+        norm === '/partner' ||
+        norm.startsWith('/partner/')
+      ) {
+        return '/join/partner';
+      }
       /* A programme's own pages live under it — /equip/<slug>/result and
          /equip/<slug>/diary. Checked BEFORE the bare slug, or `sleep-tight/diary`
          would be read as a slug. */
@@ -378,6 +391,10 @@ function AppContent() {
         '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
         '/admin', '/admin/login',
         '/join/partner',
+        '/join/professional',
+        '/professional-application',
+        '/partner',
+        '/splash',
         '/timeline',
         '/learning-diary',
         '/onboarding', '/verify-email', '/get-started',
@@ -386,7 +403,17 @@ function AppContent() {
         '/burnout-cost-calculator'
       ];
       
-      if (path.startsWith('/join/partner/')) {
+      const normPath = path.replace(/\/+$/, '');
+      if (
+        normPath === '/join/partner' ||
+        normPath.startsWith('/join/partner/') ||
+        normPath === '/join/professional' ||
+        normPath.startsWith('/join/professional/') ||
+        normPath === '/professional-application' ||
+        normPath.startsWith('/professional-application/') ||
+        normPath === '/partner' ||
+        normPath.startsWith('/partner/')
+      ) {
         startTransition(() => setCurrentRoute('/join/partner'));
         if (typeof window !== 'undefined') window.history.pushState({}, '', route);
         return;
@@ -532,7 +559,17 @@ function AppContent() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path === '/join/partner' || path.startsWith('/join/partner/')) {
+      const norm = path.replace(/\/+$/, '');
+      if (
+        norm === '/join/partner' ||
+        norm.startsWith('/join/partner/') ||
+        norm === '/join/professional' ||
+        norm.startsWith('/join/professional/') ||
+        norm === '/professional-application' ||
+        norm.startsWith('/professional-application/') ||
+        norm === '/partner' ||
+        norm.startsWith('/partner/')
+      ) {
         // The wizard follows its own steps on popstate; leave the page mounted
         // and do not scroll, or Back between steps would jump to the top.
         startTransition(() => setCurrentRoute('/join/partner'));
@@ -690,6 +727,8 @@ function AppContent() {
           return withSuspense(<ReturnPolicy onNavigate={handleNavigate} />);
         case '/cancellation-policy':
           return withSuspense(<CancellationPolicy onNavigate={handleNavigate} />);
+        case '/splash':
+          return withSuspense(<WelcomeSplash onNavigate={handleNavigate} />);
         case '/onboarding':
           return withSuspense(<MobileOnboarding onNavigate={handleNavigate} />);
         case '/verify-email':
@@ -701,6 +740,9 @@ function AppContent() {
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/partner':
+        case '/join/professional':
+        case '/professional-application':
+        case '/partner':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);

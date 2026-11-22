@@ -86,11 +86,83 @@ add_action( 'template_redirect', function() {
     wp_redirect( 'https://app.ikanhealth.in/login', 302 );
     exit;
   }
+
+  // Intercept partner, professional application, and org routes before canonical redirects
+  if (
+    $req_path === 'join/partner' || str_starts_with( $req_path, 'join/partner/' ) ||
+    $req_path === 'join/professional' || str_starts_with( $req_path, 'join/professional/' ) ||
+    $req_path === 'partner' || str_starts_with( $req_path, 'partner/' ) ||
+    $req_path === 'professional-application' || str_starts_with( $req_path, 'professional-application/' )
+  ) {
+    status_header( 200 );
+    $tpl = locate_template( 'professional-application.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
+
+  if ( $req_path === 'org' || str_starts_with( $req_path, 'org/' ) || $req_path === 'organisation' ) {
+    status_header( 200 );
+    $tpl = locate_template( 'org.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
 } );
+
+// Prevent WordPress from redirecting /join/professional or /join/partner away
+add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
+  $path = trim( parse_url( $requested_url, PHP_URL_PATH ), '/' );
+  if (
+    $path === 'join/professional' || str_starts_with( $path, 'join/professional/' ) ||
+    $path === 'join/partner' || str_starts_with( $path, 'join/partner/' ) ||
+    $path === 'partner' || str_starts_with( $path, 'partner/' ) ||
+    $path === 'org' || str_starts_with( $path, 'org/' ) ||
+    $path === 'professional-application' || str_starts_with( $path, 'professional-application/' )
+  ) {
+    return false;
+  }
+  return $redirect_url;
+}, 10, 2 );
+
+// Helper to resolve current Vite production entry script
+function get_vite_entry_script() {
+  $assets = ikan_get_vite_assets();
+  return $assets['js'];
+}
+
+// Helper to resolve current Vite production assets (JS and CSS)
+function ikan_get_vite_assets() {
+  $manifest_path = get_theme_file_path( 'assets/manifest.json' );
+  if ( file_exists( $manifest_path ) ) {
+    $manifest = json_decode( file_get_contents( $manifest_path ), true );
+    if ( ! empty( $manifest['js'] ) && ! empty( $manifest['css'] ) ) {
+      return $manifest;
+    }
+  }
+  return [
+    'js'  => '/assets/index-BN9O1lzE.js',
+    'css' => '/assets/index-_0EzZI--.css',
+  ];
+}
 
 // Route blog archive, single post, and custom page requests to dedicated PHP templates
 add_filter( 'template_include', function( $template ) {
   $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+
+  // Handle prefix routes for multi-step applications and sub-pages
+  if ( str_starts_with( $req_path, 'org' ) ) {
+    return get_template_directory() . '/org.php';
+  }
+  if ( str_starts_with( $req_path, 'join/partner' ) || str_starts_with( $req_path, 'join/professional' ) || $req_path === 'partner' ) {
+    return get_template_directory() . '/professional-application.php';
+  }
+  if ( str_starts_with( $req_path, 'onboarding' ) || str_starts_with( $req_path, 'get-started' ) || $req_path === 'splash' ) {
+    $onboard_file = get_template_directory() . '/onboarding.php';
+    if ( file_exists( $onboard_file ) ) return $onboard_file;
+  }
 
   // Explicit URL alias to template map for 100% URL parity
   $alias_map = [
@@ -131,6 +203,8 @@ add_filter( 'template_include', function( $template ) {
     'workplace-privacy'       => 'workplace-privacy.php',
     'partner'                 => 'professional-application.php',
     'join/partner'            => 'professional-application.php',
+    'join/professional'       => 'professional-application.php',
+    'professional-application'=> 'professional-application.php',
   ];
 
   if ( isset( $alias_map[ $req_path ] ) ) {
@@ -317,11 +391,37 @@ function ikan_record_lead_in_fluentcrm( $data ) {
       'source'     => 'iKAN Web PWA',
     ];
 
+    if ( ! empty( $data['phone'] ) )       $contact_data['phone']       = sanitize_text_field( $data['phone'] );
+    if ( ! empty( $data['city'] ) )        $contact_data['city']        = sanitize_text_field( $data['city'] );
+    if ( ! empty( $data['postal_code'] ) ) $contact_data['postal_code'] = sanitize_text_field( $data['postal_code'] );
+
     if ( $list_id ) $contact_data['lists'] = [ $list_id ];
     if ( $tag_id )  $contact_data['tags'] = [ $tag_id ];
 
     $contact = $contactApi->createOrUpdate( $contact_data );
     $sub_id = is_object( $contact ) ? $contact->id : ( $contact['id'] ?? null );
+
+    if ( $sub_id && ! empty( $data['meta'] ) && is_array( $data['meta'] ) ) {
+      global $wpdb;
+      $meta_table = $wpdb->prefix . 'fc_subscriber_meta';
+      foreach ( $data['meta'] as $mk => $mv ) {
+        $meta_key = sanitize_key( $mk );
+        $meta_val = is_array( $mv ) ? json_encode( $mv ) : (string) $mv;
+        $existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$meta_table} WHERE subscriber_id = %d AND `key` = %s LIMIT 1", $sub_id, $meta_key ) );
+        if ( $existing ) {
+          $wpdb->update( $meta_table, [ 'value' => $meta_val, 'updated_at' => current_time( 'mysql' ) ], [ 'id' => $existing ] );
+        } else {
+          $wpdb->insert( $meta_table, [
+            'subscriber_id' => $sub_id,
+            'key'           => $meta_key,
+            'value'         => $meta_val,
+            'object_type'   => 'option',
+            'created_at'    => current_time( 'mysql' ),
+            'updated_at'    => current_time( 'mysql' ),
+          ] );
+        }
+      }
+    }
 
     if ( $sub_id && ! empty( $data['note_title'] ) ) {
       ikan_fluentcrm_add_note( $sub_id, $data['note_title'], $data['note_desc'] ?? '' );
@@ -1059,6 +1159,69 @@ add_action( 'rest_api_init', function() {
       return rest_ensure_response([
         'success' => true,
         'message' => 'Event ingested into FluentCRM',
+        'email'   => $email,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 5b. Partner & Clinical Onboarding Application Ingestion (FluentCRM + Fluent Forms)
+  register_rest_route( 'ikan/v1', '/partner-application', [
+    'methods'             => 'POST',
+    'callback'            => function( WP_REST_Request $request ) {
+      $data = $request->get_json_params();
+      if ( empty( $data ) ) {
+        $data = $request->get_params();
+      }
+
+      $name = sanitize_text_field( $data['full_name'] ?? $data['name'] ?? '' );
+      $email = sanitize_email( $data['email'] ?? '' );
+      $phone = sanitize_text_field( $data['phone'] ?? '' );
+      $title = sanitize_text_field( $data['category'] ?? $data['professional_title'] ?? 'Therapist Partner' );
+      $city = sanitize_text_field( $data['location'] ?? $data['city'] ?? '' );
+      $license = sanitize_text_field( $data['registration_number'] ?? $data['license_number'] ?? '' );
+      $pincode = sanitize_text_field( $data['pincode'] ?? '' );
+      $exp = sanitize_text_field( $data['years_experience'] ?? '' );
+      $fee = sanitize_text_field( $data['session_fee'] ?? '' );
+
+      $modalities = isset( $data['languages'] ) && is_array( $data['languages'] )
+        ? implode( ', ', $data['languages'] )
+        : ( is_array( $data['modalities'] ?? null ) ? implode( ', ', $data['modalities'] ) : sanitize_textarea_field( $data['expertise'] ?? '' ) );
+
+      if ( empty( $email ) || ! is_email( $email ) ) {
+        return new WP_Error( 'invalid_email', 'Please provide a valid email address.', [ 'status' => 400 ] );
+      }
+
+      if ( function_exists( 'wpFluent' ) ) {
+        try {
+          wpFluent()->table( 'fluentform_submissions' )->insert([
+            'form_id'    => 4,
+            'response'   => json_encode( $data ),
+            'source_url' => home_url( '/join/partner/' ),
+            'status'     => 'unread',
+            'created_at' => current_time( 'mysql' ),
+            'updated_at' => current_time( 'mysql' ),
+          ]);
+        } catch ( Throwable $e ) {}
+      }
+
+      ikan_record_lead_in_fluentcrm([
+        'email'      => $email,
+        'name'       => $name,
+        'phone'      => $phone,
+        'city'       => $city,
+        'postal_code'=> $pincode,
+        'list_slug'  => 'partner-applicants',
+        'list_title' => 'Partner & Therapist Applicants',
+        'tag_slug'   => 'therapist-partner',
+        'tag_title'  => 'Therapist Partner',
+        'note_title' => 'Partner Application: ' . ( $title ?: 'Therapist' ),
+        'note_desc'  => sprintf( "Phone: %s\nTitle: %s\nCity: %s\nPIN: %s\nExperience: %s years\nFee: %s\nLicense/Reg: %s\nExpertise: %s", $phone, $title, $city, $pincode, $exp, $fee, $license, $modalities ),
+      ]);
+
+      return rest_ensure_response([
+        'success' => true,
+        'message' => 'Partner application recorded in FluentCRM and Fluent Forms.',
         'email'   => $email,
       ]);
     },

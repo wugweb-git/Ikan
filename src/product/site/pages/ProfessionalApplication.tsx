@@ -58,7 +58,9 @@ const stepPath = (i: number) => `${BASE_PATH}/${STEP_SLUGS[i]}`;
 
 /** The step a path names: a step index, 'intro', or 'submitted'. Unknown slugs read as the intro. */
 function stepFromPath(pathname: string): number | 'intro' | 'submitted' {
-  const rest = pathname.replace(/\/+$/, '').slice(BASE_PATH.length).replace(/^\//, '');
+  const norm = pathname.replace(/\/+$/, '');
+  const prefix = ['/join/partner', '/join/professional', '/professional-application', '/partner'].find((p) => norm.startsWith(p)) || BASE_PATH;
+  const rest = norm.slice(prefix.length).replace(/^\//, '');
   if (!rest) return 'intro';
   if (rest === 'submitted') return 'submitted';
   const i = STEP_SLUGS.indexOf(rest);
@@ -805,6 +807,31 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       if (res.status === 404) throw new Error("We can't receive applications just yet. Your answers are saved on this device, so please try again later.");
       const result = await res.json().catch(() => ({}));
       if (!res.ok || !result.success) throw new Error(result.error || 'Failed to submit application');
+
+      // Hook to WordPress FluentCRM for CRM pipeline tracking
+      try {
+        await fetch('/wp-json/ikan/v1/partner-application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: `${form.firstName} ${form.lastName}`.trim(),
+            email: form.email,
+            phone: form.phone,
+            category: form.title,
+            location: `${form.city}, ${form.state}`,
+            pincode: form.pincode,
+            registration_number: form.registrationNumber,
+            years_experience: form.yearsExperience,
+            languages: form.languages,
+            session_fee: form.feePerSession,
+            source: 'website',
+          }),
+        });
+      } catch (crmErr) {
+        // Non-blocking: Supabase is primary source of truth
+        console.warn('FluentCRM partner application hook:', crmErr);
+      }
+
       clearDraft();
       setSubmitted(true);
       setUrl(`${BASE_PATH}/submitted`, 'replace');
@@ -865,11 +892,25 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
       <div className={root}>
         {pageHeader}
         <div className="wizard__body wizard__body--single">
-          <section className="wizard__card partner-done" aria-labelledby="partner-done-title">
-            <CircleCheck className="partner-done__icon" aria-hidden="true" />
-            <h2 id="partner-done-title" className="wizard__title">Application received</h2>
-            <p className="partner-lede">Thank you for applying to partner with iKAN. Our team will verify your details and reply to {form.email || 'you'} within 3–5 business days.</p>
-            <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={home}>Back to iKAN</button>
+          <section className="wizard__card partner-done" aria-labelledby="partner-done-title" style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <div style={{ width: 64, height: 64, borderRadius: 999, background: 'var(--color-status-success-light, #DCFCE7)', color: 'var(--color-status-success, #16A34A)', display: 'grid', placeItems: 'center', margin: '0 auto 20px' }}>
+              <CircleCheck style={{ width: 36, height: 36 }} aria-hidden="true" />
+            </div>
+            <h2 id="partner-done-title" className="wizard__title" style={{ fontSize: 26, marginBottom: 12 }}>
+              Application Received
+            </h2>
+            <p className="partner-lede" style={{ maxWidth: 520, margin: '0 auto 24px', lineHeight: 1.6 }}>
+              Thank you for applying to partner with iKAN. Our clinical credentialing committee reviews all applications within <strong>3–5 business days</strong>. We have sent a confirmation to <strong>{form.email || 'your email'}</strong>.
+            </p>
+            <div style={{ maxWidth: 440, margin: '0 auto 28px', padding: 16, borderRadius: 12, background: 'var(--color-background-muted, #F5F5F5)', textAlign: 'left', fontSize: 13, color: 'var(--color-text-muted)' }}>
+              <p style={{ fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 6 }}>Next steps in credentialing:</p>
+              <p style={{ margin: '4px 0' }}>1. Primary source verification of degrees and Council / RCI registrations.</p>
+              <p style={{ margin: '4px 0' }}>2. Clinical coordination call with our lead psychologist.</p>
+              <p style={{ margin: '4px 0' }}>3. Profile publishing & member session scheduling activation.</p>
+            </div>
+            <button type="button" className="btn btn--filled state-layer motion-press partner-done__cta" onClick={home}>
+              Return to Homepage
+            </button>
           </section>
         </div>
       </div>
@@ -979,7 +1020,24 @@ export function ProfessionalApplication({ onNavigate }: ProfessionalApplicationP
               {STEPS[step].hint ? <p className="field__message">{STEPS[step].hint}</p> : null}
             </div>
             <Body f={form} set={set} />
-            {submitError ? <p className="form-error partner-wide" role="alert">{submitError}</p> : null}
+            {submitError ? (
+              <div
+                className="partner-wide p-4 rounded-xl border border-red-200 bg-red-50 text-red-900 my-4 text-left"
+                role="alert"
+                style={{ borderRadius: 12, border: '1px solid #FECACA', background: '#FEF2F2', padding: 16 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={{ color: '#DC2626', fontWeight: 'bold', fontSize: 18, lineHeight: 1 }}>&#9888;</span>
+                  <div>
+                    <p style={{ fontWeight: 600, color: '#991B1B', margin: 0, fontSize: 14 }}>Submission Could Not Be Completed</p>
+                    <p style={{ color: '#B91C1C', margin: '4px 0 0', fontSize: 13 }}>{submitError}</p>
+                    <p style={{ color: '#7F1D1D', margin: '8px 0 0', fontSize: 12 }}>
+                      Your answers remain safely saved on this device. Please check your network and click <strong>Submit application</strong> to retry.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             {/* Enter in a field moves on, as in iKAN 2's flows. */}
             <button type="submit" hidden tabIndex={-1} aria-label={primary.label} />
           </form>
