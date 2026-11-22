@@ -21,19 +21,15 @@ This file is read by AI coding assistants. It documents the conventions, archite
 
 ---
 
-## Production branch is `main`
+## Production branch is `wordpress`
 
-**The live site deploys from `main`**, which is also the GitHub default.
+**The live site deploys from `wordpress`**, which is also the GitHub default.
 
-This changed on 2026-10-03. Production used to live on `equip-carry-forward`
-while `main` held a divergent, four-month-old snapshot that was never deployed —
-so the rule here used to be the opposite one, "production is NOT main". The
-restructure was merged into `equip-carry-forward`, that branch was renamed to
-`main` via GitHub's rename API (so old links redirect), and the stale `main`
-was deleted. `equip-carry-forward` no longer exists.
+This changed on 2026-11-22 when the default branch was updated to `wordpress`.
+Production previously lived on `main`.
 
 If you are reading an older doc, a commit message or a changelog entry that
-names `equip-carry-forward`, it means what is now `main`.
+names `main`, it means what is now `wordpress`.
 
 ### Deploy method — the guarded scripts
 
