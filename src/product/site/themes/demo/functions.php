@@ -533,11 +533,15 @@ function ikan_get_resource_extra_meta( $post_id ) {
     $programme_details = $prog_map[ $programme ] ?? null;
   }
 
-  // Tags
+  // Tags & Labels
   $tags = wp_get_post_tags( $post_id, [ 'fields' => 'names' ] );
-  if ( empty( $tags ) && ! empty( $json_meta['category'] ) ) {
+  if ( empty( $tags ) && ! empty( $json_meta['tags'] ) ) {
+    $tags = $json_meta['tags'];
+  } elseif ( empty( $tags ) && ! empty( $json_meta['category'] ) ) {
     $tags = [ $json_meta['category'], 'Mental Health', 'Evidence Based' ];
   }
+
+  $labels = ! empty( $json_meta['labels'] ) ? $json_meta['labels'] : [];
 
   return [
     'medium'             => $medium,
@@ -551,6 +555,7 @@ function ikan_get_resource_extra_meta( $post_id ) {
     'journal'            => $journal,
     'consult'            => $consult,
     'tags'               => $tags,
+    'labels'             => $labels,
     'reviewed_by'        => 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board',
     'reviewed_role'      => 'Senior Consultant Psychologist, Fortis / iKAN Advisory Board',
     'review_standards'   => 'Reviewed against DSM-5 / ICD-11 diagnostic criteria & WHO guidelines',
@@ -1614,11 +1619,12 @@ add_action( 'rest_api_init', function() {
         $items = [];
         while ( $query->have_posts() ) {
           $query->the_post();
-          $post_id = get_the_ID();
-          $cats = get_the_category();
-          $cat_name = ! empty( $cats ) ? $cats[0]->name : 'General';
-          $thumb_id = get_post_thumbnail_id( $post_id );
+          $post_id   = get_the_ID();
+          $cats      = get_the_category();
+          $cat_name  = ! empty( $cats ) ? $cats[0]->name : 'General';
+          $thumb_id  = get_post_thumbnail_id( $post_id );
           $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'full' ) : '';
+          $meta      = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $post_id ) : [];
 
           $items[] = [
             'id'          => 'resource-' . $post_id,
@@ -1626,14 +1632,18 @@ add_action( 'rest_api_init', function() {
             'title'       => get_the_title(),
             'category'    => $cat_name,
             'date'        => get_the_date( 'Y-m-d' ),
-            'minutes'     => intval( get_post_meta( $post_id, '_resource_minutes', true ) ?: 4 ),
-            'medium'      => get_post_meta( $post_id, '_resource_medium', true ) ?: 'article',
-            'src'         => get_post_meta( $post_id, '_resource_src', true ) ?: '',
-            'poster'      => get_post_meta( $post_id, '_resource_poster', true ) ?: $thumb_url,
+            'minutes'     => $meta['minutes'] ?? intval( get_post_meta( $post_id, 'minutes', true ) ?: 4 ),
+            'medium'      => $meta['medium'] ?? get_post_meta( $post_id, 'medium', true ) ?: 'article',
+            'src'         => get_post_meta( $post_id, 'video_url', true ) ?: ( get_post_meta( $post_id, 'audio_url', true ) ?: '' ),
+            'poster'      => get_post_meta( $post_id, 'poster', true ) ?: $thumb_url,
             'cover_url'   => $thumb_url,
-            'featured'    => get_post_meta( $post_id, '_resource_featured', true ) === '1',
-            'author'      => get_post_meta( $post_id, '_resource_author', true ) ?: get_the_author(),
+            'featured'    => get_post_meta( $post_id, 'featured', true ) === '1',
+            'author'      => $meta['author'] ?? get_post_meta( $post_id, 'author', true ) ?: get_the_author(),
             'description' => get_the_excerpt(),
+            'tags'        => $meta['tags'] ?? [],
+            'labels'      => $meta['labels'] ?? [],
+            'programme'   => $meta['programme'] ?? null,
+            'assessment'  => $meta['assessment'] ?? null,
           ];
         }
         wp_reset_postdata();
@@ -1676,11 +1686,12 @@ add_action( 'rest_api_init', function() {
       // 1. Try finding published WordPress post
       $post = get_page_by_path( $slug, OBJECT, 'post' );
       if ( $post && $post->post_status === 'publish' ) {
-        $post_id = $post->ID;
-        $cats = get_the_category( $post_id );
-        $cat_name = ! empty( $cats ) ? $cats[0]->name : 'General';
-        $thumb_id = get_post_thumbnail_id( $post_id );
+        $post_id   = $post->ID;
+        $cats      = get_the_category( $post_id );
+        $cat_name  = ! empty( $cats ) ? $cats[0]->name : 'General';
+        $thumb_id  = get_post_thumbnail_id( $post_id );
         $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'full' ) : '';
+        $meta      = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $post_id ) : [];
 
         return rest_ensure_response( [
           'source'      => 'wordpress_post',
@@ -1689,14 +1700,18 @@ add_action( 'rest_api_init', function() {
           'title'       => $post->post_title,
           'category'    => $cat_name,
           'date'        => get_the_date( 'Y-m-d', $post ),
-          'minutes'     => intval( get_post_meta( $post_id, '_resource_minutes', true ) ?: 4 ),
-          'medium'      => get_post_meta( $post_id, '_resource_medium', true ) ?: 'article',
-          'src'         => get_post_meta( $post_id, '_resource_src', true ) ?: '',
-          'poster'      => get_post_meta( $post_id, '_resource_poster', true ) ?: $thumb_url,
+          'minutes'     => $meta['minutes'] ?? intval( get_post_meta( $post_id, 'minutes', true ) ?: 4 ),
+          'medium'      => $meta['medium'] ?? get_post_meta( $post_id, 'medium', true ) ?: 'article',
+          'src'         => get_post_meta( $post_id, 'video_url', true ) ?: ( get_post_meta( $post_id, 'audio_url', true ) ?: '' ),
+          'poster'      => get_post_meta( $post_id, 'poster', true ) ?: $thumb_url,
           'cover_url'   => $thumb_url,
-          'featured'    => get_post_meta( $post_id, '_resource_featured', true ) === '1',
-          'author'      => get_post_meta( $post_id, '_resource_author', true ) ?: get_the_author_meta( 'display_name', $post->post_author ),
+          'featured'    => get_post_meta( $post_id, 'featured', true ) === '1',
+          'author'      => $meta['author'] ?? get_post_meta( $post_id, 'author', true ) ?: get_the_author_meta( 'display_name', $post->post_author ),
           'description' => $post->post_excerpt ?: wp_trim_words( $post->post_content, 30 ),
+          'tags'        => $meta['tags'] ?? [],
+          'labels'      => $meta['labels'] ?? [],
+          'programme'   => $meta['programme'] ?? null,
+          'assessment'  => $meta['assessment'] ?? null,
           'html'        => apply_filters( 'the_content', $post->post_content ),
         ] );
       }

@@ -79,6 +79,15 @@ foreach ( $resources as $r ) {
         }
     }
 
+    // Assign Tags & Labels
+    if ( ! empty( $r['tags'] ) && is_array( $r['tags'] ) ) {
+        wp_set_post_tags( $post_id, $r['tags'], false );
+        update_post_meta( $post_id, 'tags', $r['tags'] );
+    }
+    if ( ! empty( $r['labels'] ) && is_array( $r['labels'] ) ) {
+        update_post_meta( $post_id, 'labels', $r['labels'] );
+    }
+
     // Set Custom Fields / Post Meta
     update_post_meta( $post_id, 'medium', $medium );
     update_post_meta( $post_id, 'minutes', $minutes );

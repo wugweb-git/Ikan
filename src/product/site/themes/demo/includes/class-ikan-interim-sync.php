@@ -379,6 +379,9 @@ class Ikan_Interim_Sync {
 	 * Sync all user state records (profiles, assessments, programs, journals, wellness).
 	 */
 	public static function sync_all_user_state( $custom_rows = null ) {
+		// Clean up any legacy tag slugs before synchronizing new clinical tags
+		self::cleanup_legacy_fluentcrm_tags();
+
 		$counts = array(
 			'profiles'    => 0,
 			'assessments' => 0,
@@ -587,19 +590,42 @@ class Ikan_Interim_Sync {
 				$wpdb->insert( $table, $row_data );
 			}
 
+			// Map to canonical clinical instrument
+			$inst           = self::get_clinical_instrument( $slug );
+			$clean_id       = $inst['id'];
+			$inst_code      = $inst['code'];
+			$inst_name      = $inst['name'];
+			$matrix_spec    = $inst['matrix'];
+			$severity_label = self::format_severity_label( $severity );
+
 			// FluentCRM Tagging & Meta
 			if ( ! empty( $user_info['fc_sub_id'] ) ) {
-				self::add_fluentcrm_tag( $user_info['fc_sub_id'], "assess:{$slug}:{$severity}" );
-				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_assessment', $slug );
+				// Canonical clinical tag e.g. assess:PHQ-9:Moderate
+				self::add_fluentcrm_tag( $user_info['fc_sub_id'], "assess:{$inst_code}:{$severity_label}" );
+				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_assessment', $inst_name );
+				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'assessment_id', $clean_id );
 				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_score', $score );
-				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_severity', $severity );
+				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_severity', $severity_label );
 
-				if ( 'severe' === $severity ) {
+				if ( 'severe' === $severity || 'high' === $severity ) {
 					self::add_fluentcrm_tag( $user_info['fc_sub_id'], 'clinical:high-risk' );
 					self::add_fluentcrm_note(
 						$user_info['fc_sub_id'],
-						sprintf( 'High-Risk Alert: Member completed %s with score %d (Severe)', strtoupper( $slug ), $score )
+						sprintf( 'High-Risk Alert: Member completed %s with score %d (%s)', $inst_name, $score, $severity_label )
 					);
+				}
+			}
+
+			// Sync to WordPress wp_users meta for SCF
+			if ( ! empty( $user_info['wp_user_id'] ) ) {
+				update_user_meta( $user_info['wp_user_id'], 'latest_assessment', $clean_id );
+				update_user_meta( $user_info['wp_user_id'], 'assessment_id', $clean_id );
+				update_user_meta( $user_info['wp_user_id'], 'assessment_result_id', $res_id );
+				update_user_meta( $user_info['wp_user_id'], 'latest_score', $score );
+				update_user_meta( $user_info['wp_user_id'], 'latest_severity', $severity );
+				update_user_meta( $user_info['wp_user_id'], 'scoring_matrix', $matrix_spec );
+				if ( 'severe' === $severity || 'high' === $severity ) {
+					update_user_meta( $user_info['wp_user_id'], 'clinical_risk_flag', 1 );
 				}
 			}
 
@@ -686,6 +712,15 @@ class Ikan_Interim_Sync {
 			}
 		}
 
+		// Sync to WordPress wp_users meta for SCF
+		if ( ! empty( $user_info['wp_user_id'] ) ) {
+			update_user_meta( $user_info['wp_user_id'], 'current_program', $slug );
+			update_user_meta( $user_info['wp_user_id'], 'program_id', 'prg_' . str_replace( '-', '_', $slug ) );
+			update_user_meta( $user_info['wp_user_id'], 'program_current_day', $current_day );
+			update_user_meta( $user_info['wp_user_id'], 'program_status', 'active' );
+			update_user_meta( $user_info['wp_user_id'], 'last_active_at', $last_active );
+		}
+
 		return 1;
 	}
 
@@ -747,6 +782,10 @@ class Ikan_Interim_Sync {
 			self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'last_journal_date', $latest_date );
 		}
 
+		if ( $latest_date && ! empty( $user_info['wp_user_id'] ) ) {
+			update_user_meta( $user_info['wp_user_id'], 'last_journal_date', $latest_date );
+		}
+
 		return $count;
 	}
 
@@ -794,7 +833,133 @@ class Ikan_Interim_Sync {
 			self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_wellness_score', $latest_score );
 		}
 
+		if ( null !== $latest_score && ! empty( $user_info['wp_user_id'] ) ) {
+			update_user_meta( $user_info['wp_user_id'], 'wellness_index_score', $latest_score );
+		}
+
 		return $count;
+	}
+
+	/**
+	 * Canonical mapping of raw assessment concern slugs to validated clinical instruments.
+	 *
+	 * Maps internal concern slugs to standardized clinical names, acronyms, and scoring matrix specs.
+	 */
+	public static function get_clinical_instrument( $slug ) {
+		$map = array(
+			'feeling-depressed-and-hopeless' => array(
+				'id'     => 'phq-9',
+				'code'   => 'PHQ-9',
+				'name'   => 'PHQ-9 (Depression & Low Mood)',
+				'matrix' => 'PHQ-9: Sum of 9 items, 0–27 (Minimal 0–4, Mild 5–9, Moderate 10–14, Moderately Severe 15–19, Severe 20–27)',
+			),
+			'feeling-worried-and-stressed' => array(
+				'id'     => 'gad-7',
+				'code'   => 'GAD-7',
+				'name'   => 'GAD-7 (Anxiety & Worry)',
+				'matrix' => 'GAD-7: Sum of 7 items, 0–21 (Minimal 0–4, Mild 5–9, Moderate 10–14, Severe 15–21)',
+			),
+			'feeling-overwhelmed-and-anxious' => array(
+				'id'     => 'pss-10',
+				'code'   => 'PSS-10',
+				'name'   => 'PSS-10 (Perceived Stress)',
+				'matrix' => 'PSS-10: 10 items with reverse scoring on 4,5,7,8, 0–40 (Low 0–13, Moderate 14–26, High 27–40)',
+			),
+			'feeling-drained-and-burned-out' => array(
+				'id'     => 'bat-23',
+				'code'   => 'BAT-23',
+				'name'   => 'BAT-23 (Burnout Assessment Tool)',
+				'matrix' => 'BAT-23: Mean score 1.0–5.0 across 4 core burnout dimensions (No Risk <2.59, At Risk 2.59–3.01, High Risk >3.01)',
+			),
+			'struggling-with-quality-sleep' => array(
+				'id'     => 'sci',
+				'code'   => 'SCI',
+				'name'   => 'SCI (Sleep Condition Indicator)',
+				'matrix' => 'SCI: 8 items, 0–32 (Clinical Insomnia <=16, Subthreshold 17–24, Good Sleep 25–32)',
+			),
+			'struggling-to-balance-life' => array(
+				'id'     => 'who-5',
+				'code'   => 'WHO-5',
+				'name'   => 'WHO-5 (Work-Life Well-being)',
+				'matrix' => 'WHO-5: Sum of 5 items x 4, 0–100% (Poor Well-being <=50%, Risk of Depression <=28%, Optimal >50%)',
+			),
+			'unsure-or-general-concern' => array(
+				'id'     => 'general-concern',
+				'code'   => 'General-Concern',
+				'name'   => 'General Holistic Concern',
+				'matrix' => 'General Battery: Composite screening covering GAD-2, PHQ-2, WHO-5, NGSE, and BRS',
+			),
+		);
+
+		if ( isset( $map[ $slug ] ) ) {
+			return $map[ $slug ];
+		}
+
+		foreach ( $map as $item ) {
+			if ( $item['id'] === $slug || strtolower( $item['code'] ) === strtolower( $slug ) ) {
+				return $item;
+			}
+		}
+
+		$fallback_code = strtoupper( str_replace( '-', ' ', $slug ) );
+		return array(
+			'id'     => sanitize_title( $slug ),
+			'code'   => $fallback_code,
+			'name'   => $fallback_code,
+			'matrix' => 'Clinical Assessment Matrix',
+		);
+	}
+
+	/**
+	 * Canonical formatting of clinical severity band labels.
+	 */
+	public static function format_severity_label( $band ) {
+		$band = strtolower( trim( (string) $band ) );
+		$map  = array(
+			'normal'            => 'Normal',
+			'minimal'           => 'Minimal',
+			'mild'              => 'Mild',
+			'moderate'          => 'Moderate',
+			'moderately-severe' => 'Moderately-Severe',
+			'severe'            => 'Severe',
+			'high'              => 'High',
+			'low'               => 'Low',
+			'at-risk'           => 'At-Risk',
+			'no-risk'           => 'No-Risk',
+			'optimal'           => 'Optimal',
+		);
+		return isset( $map[ $band ] ) ? $map[ $band ] : ucfirst( $band );
+	}
+
+	/**
+	 * Remove old ugly slug tags (e.g. assess:feeling-depressed-and-hopeless:normal)
+	 * from FluentCRM to keep the subscriber tagging pristine.
+	 */
+	public static function cleanup_legacy_fluentcrm_tags() {
+		global $wpdb;
+		$tags_table  = $wpdb->prefix . 'fc_tags';
+		$pivot_table = $wpdb->prefix . 'fc_subscriber_pivot';
+
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '$tags_table'" ) !== $tags_table ) {
+			return;
+		}
+
+		$legacy_tags = $wpdb->get_results(
+			"SELECT id, title, slug FROM $tags_table 
+			 WHERE slug LIKE 'assess-feeling-%' 
+			    OR slug LIKE 'assess-struggling-%' 
+			    OR slug LIKE 'assess-unsure-%'
+			    OR title LIKE 'assess:feeling-%' 
+			    OR title LIKE 'assess:struggling-%'
+			    OR title LIKE 'assess:unsure-%'"
+		);
+
+		if ( ! empty( $legacy_tags ) ) {
+			$ids = wp_list_pluck( $legacy_tags, 'id' );
+			$placeholders = implode( ',', array_map( 'intval', $ids ) );
+			$wpdb->query( "DELETE FROM $pivot_table WHERE tag_id IN ($placeholders)" );
+			$wpdb->query( "DELETE FROM $tags_table WHERE id IN ($placeholders)" );
+		}
 	}
 
 	/**
