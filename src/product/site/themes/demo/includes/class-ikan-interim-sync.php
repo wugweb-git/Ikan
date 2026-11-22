@@ -31,8 +31,8 @@ class Ikan_Interim_Sync {
 		// Event-driven: Trigger sync on user login
 		add_action( 'wp_login', array( __CLASS__, 'on_user_login' ), 10, 2 );
 
-		// Clean up recurring hourly schedule (switched to event-driven login triggers)
-		add_action( 'init', array( __CLASS__, 'cleanup_recurring_schedule' ) );
+		// Clean up recurring hourly schedule once on admin init or theme switch
+		add_action( 'admin_init', array( __CLASS__, 'cleanup_legacy_recurring' ) );
 
 		// Register REST endpoint for client/app login triggers
 		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
@@ -44,13 +44,19 @@ class Ikan_Interim_Sync {
 	}
 
 	/**
-	 * Clean up legacy recurring hourly schedule so only event-driven login triggers run.
+	 * Clean up legacy recurring hourly schedule once (switched to event-driven login triggers).
 	 */
-	public static function cleanup_recurring_schedule() {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			// Unschedules recurring hourly triggers
-			as_unschedule_all_actions( self::HOOK_NAME, null, self::ACTION_GROUP );
+	public static function cleanup_legacy_recurring() {
+		if ( get_option( 'ikan_cleaned_recurring_schedule' ) ) {
+			return;
 		}
+
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			// Unschedules old recurring hourly triggers that had empty args array()
+			as_unschedule_all_actions( self::HOOK_NAME, array(), self::ACTION_GROUP );
+		}
+
+		update_option( 'ikan_cleaned_recurring_schedule', 1 );
 	}
 
 	/**
