@@ -181,6 +181,24 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
             </span>
           )}
 
+          {isDemo && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '3px 10px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 600,
+                background: 'var(--brand-teal-tint, #DFF3EE)',
+                color: 'var(--brand-teal-ink, #0E4F3E)',
+              }}
+            >
+              Interactive Demo
+            </span>
+          )}
+
           <span className="org-bar__spacer" />
 
           <nav className="org-tabs" aria-label="Sections">
@@ -197,8 +215,15 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
             ))}
           </nav>
 
-          <button type="button" className="org-button org-button--quiet" onClick={() => void signOut()}>
-            Sign out
+          <button
+            type="button"
+            className="org-button org-button--quiet"
+            onClick={() => {
+              if (isDemo) setIsDemo(false);
+              else void signOut();
+            }}
+          >
+            {isDemo ? 'Exit Demo' : 'Sign out'}
           </button>
         </div>
       </header>
@@ -336,7 +361,7 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
               </button>
             </div>
             {onExploreDemo && (
-              <div style={{ marginTop: 10 }}>
+              <div style={{ marginTop: 14 }}>
                 <button
                   type="button"
                   className="org-button org-button--quiet"
@@ -345,6 +370,9 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
                 >
                   Explore Interactive Demo
                 </button>
+                <p style={{ fontSize: 12, color: 'var(--muted-foreground, #717182)', textAlign: 'center', margin: '8px 0 0' }}>
+                  Preview aggregated wellbeing metrics, department k-anonymity, and team roster
+                </p>
               </div>
             )}
           </form>
