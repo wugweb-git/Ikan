@@ -660,16 +660,16 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
         <form onsubmit="event.preventDefault(); document.getElementById('org-login-view').style.display='none'; document.getElementById('org-app').style.display='block';">
           <label class="org-field">
             <span>Work email</span>
-            <input type="email" id="org-login-email" required placeholder="you@yourcompany.com" value="demo@wugweb.com">
+            <input type="email" id="org-login-email" required placeholder="you@yourcompany.com" value="admin@wugweb.com">
           </label>
           <label class="org-field">
             <span>Password</span>
-            <input type="password" id="org-login-password" required value="password123">
+            <input type="password" id="org-login-password" required value="WugWeb123@">
           </label>
 
           <div style="margin-top: 10px; text-align: center;">
-            <button type="button" onclick="document.getElementById('org-login-email').value='demo@wugweb.com'; document.getElementById('org-login-password').value='password123';" style="background: none; border: none; font-size: 12px; color: var(--brand-teal-ink); font-weight: 600; cursor: pointer; text-decoration: underline;">
-              Fill Demo Credentials: demo@wugweb.com / password123
+            <button type="button" onclick="document.getElementById('org-login-email').value='admin@wugweb.com'; document.getElementById('org-login-password').value='WugWeb123@';" style="background: none; border: none; font-size: 12px; color: var(--brand-teal-ink); font-weight: 600; cursor: pointer; text-decoration: underline;">
+              Fill Demo Credentials: admin@wugweb.com / WugWeb123@
             </button>
           </div>
 

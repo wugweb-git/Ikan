@@ -276,8 +276,8 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
  * product they are paying for.
  */
 function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, password: string) => Promise<void>; onExploreDemo?: () => void }) {
-  const [email, setEmail] = useState('demo@wugweb.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('admin@wugweb.com');
+  const [password, setPassword] = useState('WugWeb123@');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -287,8 +287,8 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
     setError('');
     const cleanEmail = email.toLowerCase().trim();
     if (
-      (cleanEmail === 'demo@wugweb.com' || cleanEmail === 'admin@wugweb.com' || cleanEmail === 'demo@ikanhealth.in') &&
-      (password === 'password123' || password === 'wugweb123' || password === 'demo123')
+      (cleanEmail === 'admin@wugweb.com' || cleanEmail === 'demo@wugweb.com' || cleanEmail === 'demo@ikanhealth.in') &&
+      (password === 'WugWeb123@' || password === 'password123' || password === 'wugweb123' || password === 'demo123')
     ) {
       if (onExploreDemo) {
         onExploreDemo();
@@ -377,8 +377,8 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('demo@wugweb.com');
-                  setPassword('password123');
+                  setEmail('admin@wugweb.com');
+                  setPassword('WugWeb123@');
                 }}
                 style={{
                   background: 'none',
@@ -390,7 +390,7 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
                   textDecoration: 'underline',
                 }}
               >
-                Fill Demo Credentials: demo@wugweb.com / password123
+                Fill Demo Credentials: admin@wugweb.com / WugWeb123@
               </button>
             </div>
 

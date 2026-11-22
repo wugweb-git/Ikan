@@ -1107,8 +1107,8 @@ function ikan_handle_ajax_user_login() {
 
   // Hardcoded demo credentials for instant evaluation & testing
   $is_demo = (
-    in_array( strtolower( $email ), [ 'demo@wugweb.com', 'admin@wugweb.com', 'demo@ikanhealth.in' ], true ) &&
-    in_array( $password, [ 'password123', 'wugweb123', 'demo123' ], true )
+    in_array( strtolower( $email ), [ 'admin@wugweb.com', 'demo@wugweb.com', 'demo@ikanhealth.in' ], true ) &&
+    in_array( $password, [ 'WugWeb123@', 'password123', 'wugweb123', 'demo123' ], true )
   );
   if ( $is_demo ) {
     $user = get_user_by( 'email', $email );
