@@ -19,7 +19,7 @@ import { join } from 'node:path';
 
 const DIR = 'scripts';
 const PATH_RE = /['"]((?:\.\/)?src\/[A-Za-z0-9/._-]+)['"]/g;
-const FOREIGN = /^src\/lib\//;
+const FOREIGN = /^(?:src\/lib\/|.*\/vendor\/)/;
 
 let bad = 0;
 let checked = 0;
