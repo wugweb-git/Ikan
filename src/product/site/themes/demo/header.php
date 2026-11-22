@@ -189,11 +189,13 @@
               <?php endforeach; ?>
             <?php else : ?>
               <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="nav-link no-underline <?php echo is_front_page() ? "active" : ""; ?>">Home</a>
-              <a href="<?php echo esc_url( home_url( "/about-us" ) ); ?>" class="nav-link no-underline <?php echo is_page( "about-us" ) ? "active" : ""; ?>">About Us</a>
+              <a href="<?php echo esc_url( home_url( "/about" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "about" ) || is_page( "about-us" )) ? "active" : ""; ?>">About Us</a>
               <a href="<?php echo esc_url( home_url( "/services" ) ); ?>" class="nav-link no-underline <?php echo is_page( "services" ) ? "active" : ""; ?>">Services</a>
-              <a href="<?php echo esc_url( home_url( "/assessments" ) ); ?>" class="nav-link no-underline <?php echo is_page( "assessments" ) ? "active" : ""; ?>">Assessments</a>
-              <a href="<?php echo esc_url( home_url( "/equip-programs" ) ); ?>" class="nav-link no-underline <?php echo is_page( "equip-programs" ) ? "active" : ""; ?>">Equip Programs</a>
-              <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "resources" ) || is_home()) ? "active" : ""; ?>">Resources</a>
+              <a href="<?php echo esc_url( home_url( "/assessments" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "assessments" ) || is_page( "assessment" )) ? "active" : ""; ?>">Assessments</a>
+              <a href="<?php echo esc_url( home_url( "/equip-programs" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "equip-programs" ) || is_page( "equip" ) || is_page( "program" )) ? "active" : ""; ?>">Equip Programs</a>
+              <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "resources" ) || is_page( "resource" ) || is_home()) ? "active" : ""; ?>">Resources</a>
+              <a href="<?php echo esc_url( home_url( "/org" ) ); ?>" class="nav-link no-underline <?php echo is_page( "org" ) ? "active" : ""; ?>">For Organisations</a>
+              <a href="<?php echo esc_url( home_url( "/join/partner" ) ); ?>" class="nav-link no-underline <?php echo (is_page( "partner" ) || is_page( "professional-application" ) || is_page( "join/partner" )) ? "active" : ""; ?>">Join as Partner</a>
               <a href="<?php echo esc_url( home_url( "/burnout-cost-calculator" ) ); ?>" class="nav-link no-underline <?php echo is_page( "burnout-cost-calculator" ) ? "active" : ""; ?>">Calculator</a>
               <a href="<?php echo esc_url( home_url( "/faq" ) ); ?>" class="nav-link no-underline <?php echo is_page( "faq" ) ? "active" : ""; ?>">FAQ</a>
             <?php endif; ?>
@@ -262,6 +264,12 @@
             </a>
             <a href="<?php echo esc_url( home_url( "/resources" ) ); ?>" class="mnav__item type-label-lg <?php echo (is_page( "resources" ) || is_home()) ? "is-active" : ""; ?>" style="text-decoration:none;">
               <i data-lucide="book-open" class="w-4 h-4"></i> Resources
+            </a>
+            <a href="<?php echo esc_url( home_url( "/org" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "org" ) ? "is-active" : ""; ?>" style="text-decoration:none;">
+              <i data-lucide="building" class="w-4 h-4"></i> For Organisations
+            </a>
+            <a href="<?php echo esc_url( home_url( "/join/partner" ) ); ?>" class="mnav__item type-label-lg <?php echo (is_page( "partner" ) || is_page( "professional-application" ) || is_page( "join/partner" )) ? "is-active" : ""; ?>" style="text-decoration:none;">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> Join as Partner
             </a>
             <a href="<?php echo esc_url( home_url( "/burnout-cost-calculator" ) ); ?>" class="mnav__item type-label-lg <?php echo is_page( "burnout-cost-calculator" ) ? "is-active" : ""; ?>" style="text-decoration:none;">
               <i data-lucide="calculator" class="w-4 h-4"></i> Burnout Calculator

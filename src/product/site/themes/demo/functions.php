@@ -129,17 +129,23 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
 
 // Helper to resolve current Vite production entry script
 function get_vite_entry_script() {
-  $assets_dir = ABSPATH . 'assets';
-  if ( is_dir( $assets_dir ) ) {
-    $files = glob( $assets_dir . '/index-*.js' );
-    if ( ! empty( $files ) ) {
-      usort( $files, function( $a, $b ) {
-        return filemtime( $b ) - filemtime( $a );
-      } );
-      return '/assets/' . basename( $files[0] );
+  $assets = ikan_get_vite_assets();
+  return $assets['js'];
+}
+
+// Helper to resolve current Vite production assets (JS and CSS)
+function ikan_get_vite_assets() {
+  $manifest_path = get_theme_file_path( 'assets/manifest.json' );
+  if ( file_exists( $manifest_path ) ) {
+    $manifest = json_decode( file_get_contents( $manifest_path ), true );
+    if ( ! empty( $manifest['js'] ) && ! empty( $manifest['css'] ) ) {
+      return $manifest;
     }
   }
-  return '/assets/index-BN9O1lzE.js';
+  return [
+    'js'  => '/assets/index-BN9O1lzE.js',
+    'css' => '/assets/index-_0EzZI--.css',
+  ];
 }
 
 // Route blog archive, single post, and custom page requests to dedicated PHP templates
@@ -1153,6 +1159,69 @@ add_action( 'rest_api_init', function() {
       return rest_ensure_response([
         'success' => true,
         'message' => 'Event ingested into FluentCRM',
+        'email'   => $email,
+      ]);
+    },
+    'permission_callback' => '__return_true',
+  ] );
+
+  // 5b. Partner & Clinical Onboarding Application Ingestion (FluentCRM + Fluent Forms)
+  register_rest_route( 'ikan/v1', '/partner-application', [
+    'methods'             => 'POST',
+    'callback'            => function( WP_REST_Request $request ) {
+      $data = $request->get_json_params();
+      if ( empty( $data ) ) {
+        $data = $request->get_params();
+      }
+
+      $name = sanitize_text_field( $data['full_name'] ?? $data['name'] ?? '' );
+      $email = sanitize_email( $data['email'] ?? '' );
+      $phone = sanitize_text_field( $data['phone'] ?? '' );
+      $title = sanitize_text_field( $data['category'] ?? $data['professional_title'] ?? 'Therapist Partner' );
+      $city = sanitize_text_field( $data['location'] ?? $data['city'] ?? '' );
+      $license = sanitize_text_field( $data['registration_number'] ?? $data['license_number'] ?? '' );
+      $pincode = sanitize_text_field( $data['pincode'] ?? '' );
+      $exp = sanitize_text_field( $data['years_experience'] ?? '' );
+      $fee = sanitize_text_field( $data['session_fee'] ?? '' );
+
+      $modalities = isset( $data['languages'] ) && is_array( $data['languages'] )
+        ? implode( ', ', $data['languages'] )
+        : ( is_array( $data['modalities'] ?? null ) ? implode( ', ', $data['modalities'] ) : sanitize_textarea_field( $data['expertise'] ?? '' ) );
+
+      if ( empty( $email ) || ! is_email( $email ) ) {
+        return new WP_Error( 'invalid_email', 'Please provide a valid email address.', [ 'status' => 400 ] );
+      }
+
+      if ( function_exists( 'wpFluent' ) ) {
+        try {
+          wpFluent()->table( 'fluentform_submissions' )->insert([
+            'form_id'    => 4,
+            'response'   => json_encode( $data ),
+            'source_url' => home_url( '/join/partner/' ),
+            'status'     => 'unread',
+            'created_at' => current_time( 'mysql' ),
+            'updated_at' => current_time( 'mysql' ),
+          ]);
+        } catch ( Throwable $e ) {}
+      }
+
+      ikan_record_lead_in_fluentcrm([
+        'email'      => $email,
+        'name'       => $name,
+        'phone'      => $phone,
+        'city'       => $city,
+        'postal_code'=> $pincode,
+        'list_slug'  => 'partner-applicants',
+        'list_title' => 'Partner & Therapist Applicants',
+        'tag_slug'   => 'therapist-partner',
+        'tag_title'  => 'Therapist Partner',
+        'note_title' => 'Partner Application: ' . ( $title ?: 'Therapist' ),
+        'note_desc'  => sprintf( "Phone: %s\nTitle: %s\nCity: %s\nPIN: %s\nExperience: %s years\nFee: %s\nLicense/Reg: %s\nExpertise: %s", $phone, $title, $city, $pincode, $exp, $fee, $license, $modalities ),
+      ]);
+
+      return rest_ensure_response([
+        'success' => true,
+        'message' => 'Partner application recorded in FluentCRM and Fluent Forms.',
         'email'   => $email,
       ]);
     },

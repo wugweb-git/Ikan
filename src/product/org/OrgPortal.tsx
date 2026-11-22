@@ -67,7 +67,11 @@ export function OrgPortal(props: OrgPortalProps) {
 function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
   const { user, isInitialized, signIn, signOut } = useOrgAuth();
 
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const sp = new URLSearchParams(window.location.search);
+    return sp.get('demo') === '1' || window.location.hash === '#demo' || window.location.pathname.includes('/demo');
+  });
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [active, setActive] = useState<Organization | null>(null);
   const [overview, setOverview] = useState<OverviewData | null>(null);

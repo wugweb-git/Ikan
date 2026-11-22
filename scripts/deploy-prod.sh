@@ -20,6 +20,7 @@ echo "==> iKAN Health Production Deployment"
 # Verify build passes
 echo "→ Building Vite project..."
 npm run build >/dev/null 2>&1 || { echo "✗ local build failed" >&2; exit 1; }
+node scripts/update-theme-manifest.mjs
 echo "✓ Local build successful"
 
 # Verify Composer dependencies for Theme
@@ -66,12 +67,15 @@ ssh -p "$HOSTINGER_PORT" -i "$HOSTINGER_KEY" "$HOSTINGER_USER@$HOSTINGER_HOST" \
 echo "→ Running live production smoke tests..."
 URLS=(
   "https://ikanhealth.in/"
+  "https://ikanhealth.in/about/"
   "https://ikanhealth.in/login/"
   "https://ikanhealth.in/consultation/"
   "https://ikanhealth.in/assessments/"
   "https://ikanhealth.in/equip-programs/"
   "https://ikanhealth.in/join/partner/"
   "https://ikanhealth.in/burnout-cost-calculator/"
+  "https://ikanhealth.in/org/"
+  "https://ikanhealth.in/faq/"
   "https://ikanhealth.in/storybook/"
 )
 
