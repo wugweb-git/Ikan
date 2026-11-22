@@ -1,0 +1,315 @@
+[
+  {
+    "id": "resource-five-minutes-stress",
+    "title": "Five Minutes That Can Change How You Handle Stress",
+    "category": "Stress",
+    "date": "2026-10-03",
+    "minutes": 4,
+    "source": {
+      "name": "NHS Every Mind Matters",
+      "url": "https://www.nhs.uk/every-mind-matters/",
+      "cost": "Free",
+      "language": "English"
+    },
+    "art": "pause",
+    "medium": "video",
+    "src": "https://www.youtube.com/watch?v=z7ATOc4ShOc",
+    "poster": "/resources/poster-five-minutes-stress.jpg",
+    "featured": true
+  },
+  {
+    "id": "resource-breathing-five-minutes",
+    "title": "A Five-Minute Guided Breathing Exercise for Anxious Moments",
+    "category": "Mindfulness",
+    "date": "2026-10-03",
+    "minutes": 5,
+    "source": {
+      "name": "Mindful Awareness Research Centre (MARC), UCLA",
+      "url": "https://www.freemindfulness.org/download",
+      "language": "English",
+      "licence": "CC BY-NC-SA 3.0",
+      "note": "Read by Diana Winston. Shared via The Free Mindfulness Project. No background music."
+    },
+    "art": "breathe",
+    "medium": "audio",
+    "src": "/resources/breathing-five-minutes.mp3",
+    "poster": "/resources/poster-breathing-five-minutes.jpg"
+  },
+  {
+    "id": "resource-stress-performance",
+    "title": "Stress, Performance, and Why the Usual Advice Misses",
+    "category": "Work-Life",
+    "date": "2026-10-03",
+    "minutes": 106,
+    "source": {
+      "name": "Ten Percent Happier with Dan Harris",
+      "url": "https://open.spotify.com/show/65J4WUch2vqFxoGmrKuxof",
+      "language": "English",
+      "note": "Guest: Dr. Modupe Akinola, Columbia Business School."
+    },
+    "art": "pressure",
+    "medium": "audio",
+    "src": "https://open.spotify.com/episode/5IvwJBttwqfAgJspvpyB43",
+    "poster": "/resources/poster-stress-performance.jpg"
+  },
+  {
+    "id": "resource-stress-takes-over",
+    "title": "What Happens When Stress Takes Over?",
+    "category": "Stress",
+    "date": "2026-10-03",
+    "minutes": 10,
+    "source": {
+      "name": "National Institute of Mental Health",
+      "url": "https://www.nimh.nih.gov/news/media/2021/guided-visualization-dealing-with-stress",
+      "cost": "Free",
+      "language": "English",
+      "note": "Guided Visualization: Dealing with Stress."
+    },
+    "art": "overload",
+    "medium": "video",
+    "src": "https://www.youtube.com/watch?v=Dq9odPtHbcg",
+    "poster": "/resources/poster-stress-takes-over.jpg"
+  },
+  {
+    "id": "resource-great-practices",
+    "title": "Practical Ways to Manage Stress and Anxiety",
+    "category": "Stress",
+    "date": "2026-10-03",
+    "minutes": 1,
+    "source": {
+      "name": "National Institute of Mental Health",
+      "url": "https://www.nimh.nih.gov/news/media",
+      "cost": "Free",
+      "language": "English",
+      "note": "GREAT: Helpful Practices to Manage Stress and Anxiety."
+    },
+    "art": "toolkit",
+    "medium": "video",
+    "src": "https://www.youtube.com/watch?v=RIyge4jzeFg",
+    "poster": "/resources/poster-great-practices.jpg"
+  },
+  {
+    "id": "resource-can-we-talk",
+    "title": "How to Cope With Anxiety: A Relaxation Technique",
+    "source": {
+      "name": "NHS",
+      "url": "https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/mental-wellbeing-audio-guides/",
+      "cost": "Free",
+      "language": "English",
+      "note": "The second of the NHS mental wellbeing audio guides."
+    },
+    "category": "Stress",
+    "date": "2026-10-03",
+    "minutes": 7,
+    "art": "unwind",
+    "medium": "video",
+    "src": "https://www.youtube.com/watch?v=3cXGt2d1RyQ",
+    "poster": "/resources/poster-cope-with-anxiety.jpg",
+    "embeddable": false
+  },
+  {
+    "id": "resource-not-always-visible",
+    "title": "Being Kind to Yourself",
+    "source": {
+      "name": "World Health Organization",
+      "url": "https://tdr.who.int/home/our-work/global-engagement/9789240003927",
+      "cost": "Free",
+      "language": "English",
+      "note": "From “Doing What Matters in Times of Stress”."
+    },
+    "category": "Stress",
+    "date": "2026-10-03",
+    "minutes": 8,
+    "art": "kindness",
+    "medium": "audio",
+    "src": "/resources/being-kind-to-yourself.mp3"
+  },
+  {
+    "id": "resource-india-numbers",
+    "title": "India’s Mental Health Crisis: The Numbers We Can No Longer Ignore",
+    "category": "General",
+    "date": "2026-10-03",
+    "minutes": 6,
+    "art": "report",
+    "featured": true
+  },
+  {
+    "id": "resource-personal-cost",
+    "title": "Mental Health Has a Personal Cost and It Is High",
+    "category": "General",
+    "date": "2026-10-17",
+    "minutes": 4,
+    "art": "earnings"
+  },
+  {
+    "id": "resource-mood-tracking",
+    "title": "The Pros and Pros of Tracking Your Mood",
+    "category": "Wellness",
+    "date": "2026-10-17",
+    "minutes": 7,
+    "art": "tracker",
+    "journal": true
+  },
+  {
+    "id": "resource-payroll-hidden-cost",
+    "title": "The People Who Run the Payroll Are Paying More Than They Realise",
+    "category": "Work-Life",
+    "date": "2026-10-12",
+    "minutes": 5,
+    "art": "iceberg"
+  },
+  {
+    "id": "resource-country-development",
+    "title": "A Country’s Development Depends on the Health of Its People",
+    "category": "General",
+    "date": "2026-10-12",
+    "minutes": 7,
+    "art": "growth"
+  },
+  {
+    "id": "resource-india-open-data",
+    "title": "Mental Health in India",
+    "category": "General",
+    "date": "2026-10-07",
+    "minutes": 6,
+    "art": "gap",
+    "featured": true
+  },
+  {
+    "id": "resource-who-5",
+    "title": "What Is the WHO-5 Well-Being Index? A Simple Guide to Measuring Mental Wellness",
+    "category": "Wellness",
+    "date": "2026-09-23",
+    "minutes": 5,
+    "art": "wellbeing",
+    "featured": true,
+    "assessment": "unsure-or-general-concern"
+  },
+  {
+    "id": "resource-ngse",
+    "title": "What Is the New General Self-Efficacy (NGSE) Scale? A Simple Guide to Measuring Self-Belief",
+    "category": "Confidence",
+    "date": "2026-09-23",
+    "minutes": 4,
+    "art": "confidence",
+    "assessment": "unsure-or-general-concern"
+  },
+  {
+    "id": "resource-brs",
+    "title": "What Is the Brief Resilience Scale (BRS)? A Simple Guide to the Resilience Test",
+    "category": "Resilience",
+    "date": "2026-09-23",
+    "minutes": 5,
+    "art": "resilience",
+    "assessment": "unsure-or-general-concern"
+  },
+  {
+    "id": "resource-gad-2",
+    "title": "What Is Generalized Anxiety Disorder (GAD)-2? A Simple Guide to the Ultra-Brief Anxiety Screener",
+    "category": "Anxiety",
+    "date": "2026-09-23",
+    "minutes": 4,
+    "art": "worry",
+    "assessment": "feeling-overwhelmed-and-anxious",
+    "assessmentRole": "next"
+  },
+  {
+    "id": "resource-phq-2",
+    "title": "What Is the Patient Health Questionnaire (PHQ)-2? A Simple Guide to the Ultra-Brief Depression Screener",
+    "category": "Depression",
+    "date": "2026-09-23",
+    "minutes": 4,
+    "art": "lowmood",
+    "assessment": "feeling-depressed-and-hopeless",
+    "assessmentRole": "next"
+  },
+  {
+    "id": "de31d473-fda7-47e4-82d6-a549b02eec44",
+    "title": "What Is the Perceived Stress Scale (PSS-10)? Understand the Stress Screening Test",
+    "category": "Stress",
+    "date": "2026-09-10",
+    "minutes": 4,
+    "art": "stress",
+    "featured": true,
+    "assessment": "feeling-worried-and-stressed"
+  },
+  {
+    "id": "98d536d4-938b-4fbf-bc2c-f37e6d0b9409",
+    "title": "What Is the Burnout Assessment Tool (BAT-23)? An Easy Guide to the 23-Question Burnout Test",
+    "category": "Burnout",
+    "date": "2026-09-10",
+    "minutes": 4,
+    "art": "burnout",
+    "assessment": "feeling-drained-and-burned-out"
+  },
+  {
+    "id": "1b783468-f860-433b-8009-7e7943321ac1",
+    "title": "What Is the Workplace Stress Scale? Explained",
+    "category": "Work-Life",
+    "date": "2026-09-10",
+    "minutes": 5,
+    "art": "work",
+    "assessment": "struggling-to-balance-life"
+  },
+  {
+    "id": "resource-1766237270444",
+    "title": "What Is Generalized Anxiety Disorder (GAD)-7? A Simple Guide to the Anxiety Screening Test",
+    "category": "Anxiety",
+    "date": "2026-09-10",
+    "minutes": 4,
+    "art": "anxiety",
+    "assessment": "feeling-overwhelmed-and-anxious"
+  },
+  {
+    "id": "a9697070-1dff-4bcc-a67d-2fbb26cc6e25",
+    "title": "What Is Patient Health Questionnaire (PHQ)-9? A Quick Depression Screening Test",
+    "category": "Depression",
+    "date": "2026-09-10",
+    "minutes": 4,
+    "art": "mood",
+    "assessment": "feeling-depressed-and-hopeless"
+  },
+  {
+    "id": "c775a1e1-a938-4aac-8519-e5ad9f8dda1f",
+    "title": "What Is the Sleep Condition Indicator (SCI)? Wake Up to Better Sleep",
+    "category": "Sleep",
+    "date": "2026-09-10",
+    "minutes": 4,
+    "art": "sleep",
+    "assessment": "struggling-with-quality-sleep"
+  },
+  {
+    "id": "a5bef353-f6e5-4a22-9ae7-2d4e4a7ebd41",
+    "title": "The Late Night Tax: How Bad Sleep Impacts Your Long-Term Health",
+    "category": "Sleep",
+    "date": "2026-04-01",
+    "minutes": 1,
+    "art": "night"
+  },
+  {
+    "id": "resource-1766236115968",
+    "title": "The Power of Measurement-Based Care",
+    "category": "General",
+    "date": "2026-03-19",
+    "minutes": 3,
+    "art": "measure",
+    "featured": true
+  },
+  {
+    "id": "11457137-5bba-4f45-9d0d-51d7e2a4c9c6",
+    "title": "Physical Health Is Measured. Why Should Mental Health Be Any Different?",
+    "category": "General",
+    "date": "2026-03-11",
+    "minutes": 5,
+    "art": "checkup",
+    "featured": true
+  },
+  {
+    "id": "4a4ac2b7-17be-4e9e-9d8e-7d244af5aa73",
+    "title": "Prioritizing Mental Wellness: The Importance of Routine Mental Health Check-Ups",
+    "category": "General",
+    "date": "2026-03-11",
+    "minutes": 4,
+    "art": "routine"
+  }
+]
