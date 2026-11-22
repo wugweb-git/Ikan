@@ -295,6 +295,18 @@ get_header(); ?>
               </div>
             </div>
 
+            <!-- Error Banner (Fail Case) -->
+            <div id="partner-error-banner" class="hidden p-4 rounded-xl border border-red-200 bg-red-50 text-red-900 text-left my-4">
+              <div class="flex items-start gap-3">
+                <span class="text-red-600 font-bold text-lg leading-none">&#9888;</span>
+                <div class="text-sm">
+                  <p class="font-semibold text-red-900" id="partner-error-title">Submission Could Not Be Completed</p>
+                  <p class="mt-1 text-red-800" id="partner-error-message">An error occurred while submitting your application.</p>
+                  <p class="mt-2 text-xs text-red-600">Your information is safely saved on this device. Please check your connection and click <strong>Submit Application</strong> to try again.</p>
+                </div>
+              </div>
+            </div>
+
             <!-- Wizard Bottom Actions -->
             <div class="flex items-center justify-between pt-6 border-t border-gray-100 mt-8">
               <button type="button" id="wizard-prev-btn" class="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-xs font-bold text-gray-700 transition-colors disabled:opacity-40" disabled>
@@ -450,6 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
       window.scrollTo({ top: form.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
     } else {
       // Submit Application
+      const errBanner = document.getElementById('partner-error-banner');
+      const errMsg = document.getElementById('partner-error-message');
+      if (errBanner) errBanner.classList.add('hidden');
+
       spinner.classList.remove('hidden');
       nextBtn.disabled = true;
 
@@ -462,13 +478,27 @@ document.addEventListener('DOMContentLoaded', function() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        localStorage.removeItem(DRAFT_KEY);
-      } catch (err) {}
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok || result.code) {
+          throw new Error(result.message || 'Server error while submitting application.');
+        }
 
-      spinner.classList.add('hidden');
-      form.classList.add('hidden');
-      successPane.classList.remove('hidden');
-      if (window.lucide && lucide.createIcons) lucide.createIcons();
+        localStorage.removeItem(DRAFT_KEY);
+        spinner.classList.add('hidden');
+        form.classList.add('hidden');
+        successPane.classList.remove('hidden');
+        if (window.lucide && lucide.createIcons) lucide.createIcons();
+      } catch (err) {
+        spinner.classList.add('hidden');
+        nextBtn.disabled = false;
+        if (errBanner && errMsg) {
+          errMsg.textContent = err.message || 'Network error. Please try again.';
+          errBanner.classList.remove('hidden');
+          errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          alert(err.message || 'Network error. Please try again.');
+        }
+      }
     }
   });
 
