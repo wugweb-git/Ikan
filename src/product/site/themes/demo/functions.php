@@ -110,17 +110,60 @@ add_action( 'template_redirect', function() {
       exit;
     }
   }
+
+  // URL alias handling for exact 1:1 route parity between ikan and ikan2
+  $route_alias_templates = [
+    'about'                   => 'about-us.php',
+    'about-us'                => 'about-us.php',
+    'service'                 => 'services.php',
+    'services'                => 'services.php',
+    'resource'                => 'resources.php',
+    'resources'               => 'resources.php',
+    'article'                 => 'resources.php',
+    'articles'                => 'resources.php',
+    'assessment'              => 'assessments.php',
+    'assessments'             => 'assessments.php',
+    'equip'                   => 'equip-programs.php',
+    'equip-programs'          => 'equip-programs.php',
+    'program'                 => 'equip-programs.php',
+    'programs'                => 'equip-programs.php',
+    'consult'                 => 'consultation.php',
+    'consultation'            => 'consultation.php',
+    'contact'                 => 'contact-us.php',
+    'contact-us'              => 'contact-us.php',
+    'burnout-cost-calculator' => 'burnout-cost-calculator.php',
+    'calculator'              => 'burnout-cost-calculator.php',
+    'faq'                     => 'faq.php',
+    'faqs'                    => 'faq.php',
+  ];
+
+  if ( isset( $route_alias_templates[ $req_path ] ) ) {
+    $tpl = locate_template( $route_alias_templates[ $req_path ] );
+    if ( $tpl ) {
+      status_header( 200 );
+      load_template( $tpl );
+      exit;
+    }
+  }
 } );
 
-// Prevent WordPress from redirecting /join/professional or /join/partner away
+// Prevent WordPress from canonical-redirecting alias paths away (e.g. /about/ to /about-us/, /org/ to another page)
 add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
   $path = trim( parse_url( $requested_url, PHP_URL_PATH ), '/' );
+  $prevent_redirect = [
+    'about', 'about-us', 'service', 'services', 'resource', 'resources',
+    'article', 'articles', 'assessment', 'assessments', 'equip', 'equip-programs',
+    'program', 'programs', 'consult', 'consultation', 'contact', 'contact-us',
+    'burnout-cost-calculator', 'calculator', 'faq', 'faqs', 'org', 'organisation',
+    'partner', 'professional-application', 'join/partner', 'join/professional'
+  ];
   if (
-    $path === 'join/professional' || str_starts_with( $path, 'join/professional/' ) ||
-    $path === 'join/partner' || str_starts_with( $path, 'join/partner/' ) ||
-    $path === 'partner' || str_starts_with( $path, 'partner/' ) ||
-    $path === 'org' || str_starts_with( $path, 'org/' ) ||
-    $path === 'professional-application' || str_starts_with( $path, 'professional-application/' )
+    in_array( $path, $prevent_redirect, true ) ||
+    str_starts_with( $path, 'join/professional/' ) ||
+    str_starts_with( $path, 'join/partner/' ) ||
+    str_starts_with( $path, 'partner/' ) ||
+    str_starts_with( $path, 'org/' ) ||
+    str_starts_with( $path, 'professional-application/' )
   ) {
     return false;
   }
