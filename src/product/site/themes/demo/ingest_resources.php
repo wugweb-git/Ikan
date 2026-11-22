@@ -87,6 +87,28 @@ foreach ( $resources as $r ) {
     update_post_meta( $post_id, 'author', $author );
     update_post_meta( $post_id, 'poster', $poster );
 
+    if ( ! empty( $r['source'] ) ) {
+        update_post_meta( $post_id, 'source', maybe_serialize( $r['source'] ) );
+    }
+    if ( ! empty( $r['assessment'] ) ) {
+        update_post_meta( $post_id, 'assessment', $r['assessment'] );
+    }
+    if ( ! empty( $r['assessmentRole'] ) ) {
+        update_post_meta( $post_id, 'assessment_role', $r['assessmentRole'] );
+    }
+    if ( ! empty( $r['programme'] ) ) {
+        update_post_meta( $post_id, 'programme', $r['programme'] );
+    }
+    if ( ! empty( $r['journal'] ) ) {
+        update_post_meta( $post_id, 'journal', '1' );
+    }
+    if ( ! empty( $r['consult'] ) ) {
+        update_post_meta( $post_id, 'consult', '1' );
+    }
+    if ( ! empty( $r['art'] ) ) {
+        update_post_meta( $post_id, 'art', $r['art'] );
+    }
+
     if ( $medium === 'video' ) {
         update_post_meta( $post_id, 'video_url', $src );
     } elseif ( $medium === 'audio' ) {

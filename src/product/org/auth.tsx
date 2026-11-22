@@ -90,8 +90,8 @@ export function OrgAuthProvider({ children }: { children: React.ReactNode }) {
     signIn: async (email, password) => {
       const cleanEmail = email.toLowerCase().trim();
       if (
-        (cleanEmail === 'demo@wugweb.com' || cleanEmail === 'admin@wugweb.com' || cleanEmail === 'demo@ikanhealth.in') &&
-        (password === 'password123' || password === 'wugweb123' || password === 'demo123')
+        (cleanEmail === 'admin@wugweb.com' || cleanEmail === 'demo@wugweb.com' || cleanEmail === 'demo@ikanhealth.in') &&
+        (password === 'WugWeb123@' || password === 'password123' || password === 'wugweb123' || password === 'demo123')
       ) {
         setUser({
           id: 'demo-admin-wugweb',
