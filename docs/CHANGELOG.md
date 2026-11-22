@@ -4,6 +4,21 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-23] — Action Scheduler Autonomous Interim Sync Worker (Part 1 Ingestion)
+
+### Added
+- **Autonomous Interim DB Sync Worker (`class-ikan-interim-sync.php`)**:
+  - Implemented background sync worker powered by WordPress **Action Scheduler** (`ikan_sync_interim_buffer` in group `ikan-sync`).
+  - Schedules hourly autonomous synchronization of Part 1 datasets from the Interim DB (Supabase) without consuming AI agent tokens:
+    - Newsletter Subscribers → FluentCRM `wp_fc_subscribers` (list: *Newsletter Subscribers*).
+    - Contact Form Messages → Fluent Forms Form ID 1 (`wp_fluentform_submissions`).
+    - Partner Inquiries → Fluent Forms Form ID 4 (`wp_fluentform_submissions`).
+    - Member Profile Basics → `wp_users` and `wp_usermeta` demographics (`phone`, `city`, `gender`, `dob`).
+  - Added WP-CLI command `wp ikan-sync` for on-demand manual execution and validation.
+  - Verified live on Hostinger: Action Scheduler task ID `1893` registered as recurring background action; manual verification executed in 1.1s.
+
+---
+
 ## [2026-11-22] — Storybook Design System Re-Sync & Lint Ratchets Tightened
 
 ### Added
