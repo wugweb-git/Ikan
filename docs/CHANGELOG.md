@@ -4,6 +4,21 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-22] — Storybook Design System Re-Sync & Lint Ratchets Tightened
+
+### Added
+- **Storybook Design System Sync (`ikan2` -> `ikan`)**:
+  - Rebuilt static Storybook bundle from `ikan2/.design-sync/sb-config` to include newly added component stories (`Kit/ExternalLink`, `Kit/ErrorState`) and latest M3 styling / typography scale updates.
+  - Synced bundle to `src/product/site/themes/demo/assets/storybook/` for production deployment at `https://ikanhealth.in/storybook/`.
+
+### Fixed
+- **Code Quality Baselines Tightened**:
+  - Lowered `scripts/baselines/rawhex` from `497` down to `351`.
+  - Lowered `scripts/baselines/a11y` from `40` down to `20`.
+  - Verified zero regressions across all ratchet tests: `lint:ratchet` (395), `contrast:ratchet` (5), `lint:rawhex` (351), `lint:a11y` (20), `lint:boundary` (0), `lint:scriptpaths` (17), `typecheck-ratchet` (102), and 149 passing unit tests.
+
+---
+
 ## [2026-11-22] — Production Default Branch Renamed to wordpress, Full Resources Revamp & CI Ratchet Fixes
 
 ### Added

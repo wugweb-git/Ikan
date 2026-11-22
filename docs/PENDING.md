@@ -23,6 +23,10 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-22)
 
+- [x] **Storybook Design System Re-Sync & Lint Ratchets Tightened**:
+  - Rebuilt static Storybook from `ikan2/.design-sync/sb-config` incorporating new stories (`Kit/ExternalLink`, `Kit/ErrorState`) and typography scale updates.
+  - Synced bundle to `src/product/site/themes/demo/assets/storybook/` for production hosting at `/storybook/`.
+  - Tightened raw hex baseline from 497 down to 351, and static a11y baseline from 40 down to 20.
 - [x] **Default Branch Renamed to `wordpress` & CI Ratchet Fixes**:
   - Reconfigured GitHub default branch to `wordpress` (`defaultBranchRef: { name: "wordpress" }`).
   - Updated `scripts/deploy-guard.sh` (`PROD_BRANCH="wordpress"`), `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, and `SESSIONS.md`.
