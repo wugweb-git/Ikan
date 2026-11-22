@@ -8,6 +8,24 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [ ] **`ikan2` GitHub Actions Secrets for Automated DB Backup**:
+  - The nightly backup workflow in `ikan2` (`.github/workflows/backup.yml`) requires two secrets in GitHub repo settings (`wugweb-git/ikan2` → Settings → Secrets and variables → Actions):
+    - `IKAN_DB_URL`: Supabase session-mode connection URI (port 5432).
+    - `BACKUP_PASSPHRASE`: Passphrase for AES-256-CBC encryption of database dumps.
+  - *Interim note*: Database backups run manually via `scripts/backup-db.sh` until secrets are saved in GitHub.
+
+- [ ] **Strategic Migration: Unify Member Experience into Main WordPress (`ikan`)**:
+  - **Vision**: Bring the full private member experience (clinical program tracks, daily check-ins, encrypted health journals, and user diaries) directly into the main WordPress platform (`ikan` on Hostinger), unifying the platform under one roof.
+  - **Database Mapping Strategy**:
+    - Design WordPress database mapping for member journeys (custom MySQL tables or structured Custom Post Types with REST API endpoints).
+    - **Interim Buffer Rule**: Maintain the existing `ikan2` Supabase database as a live buffer during migration — zero disruption or data loss for existing accounts, check-ins, or program progressions.
+    - **Security & Privacy**: Retain client-side encryption / robust tokenization for sensitive health journals and user diaries.
+  - **Milestone Phases**:
+    1. *Phase 1 — Schema & API Mapping*: Define relational mapping between Supabase tables (`profiles`, `check_ins`, `journals`, `programs`, `diary_entries`) and WordPress MySQL/REST schema.
+    2. *Phase 2 — Dual-Write / Sync Bridge*: Implement synchronization script/webhook between Supabase and WordPress to mirror member progress safely.
+    3. *Phase 3 — UI Component Migration*: Integrate `ikan2` React/M3 member components into the WordPress theme application layer.
+    4. *Phase 4 — Cutover & Verification*: Comprehensive smoke testing before retiring Supabase.
+
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.
   - Zero emails are sent until explicit approval.
