@@ -90,7 +90,7 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
   const go = (s: Section) => onNavigate?.(s === 'overview' ? '/org' : `/org/${s}`);
 
   useEffect(() => {
-    if (isDemo) {
+    if (isDemo || user?.id === 'demo-admin-wugweb') {
       setOrgs([DEMO_ORG]);
       setActive(DEMO_ORG);
       setOverview(DEMO_OVERVIEW);
@@ -276,8 +276,8 @@ function OrgPortalInner({ route, onNavigate }: OrgPortalProps) {
  * product they are paying for.
  */
 function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, password: string) => Promise<void>; onExploreDemo?: () => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@wugweb.com');
+  const [password, setPassword] = useState('password123');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -285,10 +285,22 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
     e.preventDefault();
     setBusy(true);
     setError('');
+    const cleanEmail = email.toLowerCase().trim();
+    if (
+      (cleanEmail === 'demo@wugweb.com' || cleanEmail === 'admin@wugweb.com' || cleanEmail === 'demo@ikanhealth.in') &&
+      (password === 'password123' || password === 'wugweb123' || password === 'demo123')
+    ) {
+      if (onExploreDemo) {
+        onExploreDemo();
+        setBusy(false);
+        return;
+      }
+    }
     try {
       await onSignIn(email.trim(), password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in.');
+    } finally {
       setBusy(false);
     }
   };
@@ -360,6 +372,28 @@ function SignIn({ onSignIn, onExploreDemo }: { onSignIn: (email: string, passwor
                 {busy ? 'Signing in…' : 'Sign in'}
               </button>
             </div>
+
+            <div style={{ marginTop: 12, textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('demo@wugweb.com');
+                  setPassword('password123');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 12,
+                  color: 'var(--brand-teal-ink, #0E4F3E)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Fill Demo Credentials: demo@wugweb.com / password123
+              </button>
+            </div>
+
             {onExploreDemo && (
               <div style={{ marginTop: 14 }}>
                 <button

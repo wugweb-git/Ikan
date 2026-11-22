@@ -137,8 +137,8 @@ get_header(); ?>
             </div>
 
             <div class="pt-2 border-t border-gray-100 text-center">
-              <button type="button" onclick="fillDemoAccount()" class="inline-flex items-center justify-center min-h-[44px] py-2 px-3 text-xs text-gray-500 hover:text-black font-medium underline">
-                Quick Demo: demo@ikanhealth.in / password123
+              <button type="button" onclick="fillDemoAccount()" class="inline-flex items-center justify-center min-h-[44px] py-2 px-3 text-xs text-emerald-700 hover:text-emerald-900 font-semibold underline">
+                Quick Demo: demo@wugweb.com / password123
               </button>
             </div>
           </div>
@@ -306,7 +306,7 @@ function goToStep1() {
 
 function fillDemoAccount() {
   var form = document.getElementById("form-user-login");
-  form.querySelector("input[name='email']").value = "demo@ikanhealth.in";
+  form.querySelector("input[name='email']").value = "demo@wugweb.com";
   form.querySelector("input[name='password']").value = "password123";
 }
 

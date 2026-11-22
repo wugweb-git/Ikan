@@ -16,7 +16,7 @@ if ( file_exists( $equip_file ) ) {
 }
 ?>
 
-<main class="ikan2-theme site-page-below-nav" style="font-family: var(--font-sans);">
+<main class="ikan2-theme site-page-below-nav pb-24 md:pb-16" style="font-family: var(--font-sans);">
 
   <!-- Hero Section -->
   <section class="py-14 md:py-20 bg-gradient-to-b from-[#F2F7F4] via-[#E5EFE9] to-white border-b border-gray-100">

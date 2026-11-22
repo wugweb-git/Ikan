@@ -16,7 +16,7 @@ if ( file_exists( $assessments_file ) ) {
 }
 ?>
 
-<main class="ikan2-theme site-page-below-nav" style="font-family: var(--font-sans);">
+<main class="ikan2-theme site-page-below-nav pb-24 md:pb-16" style="font-family: var(--font-sans);">
 
   <!-- Hero Section -->
   <section class="py-14 md:py-20 bg-gradient-to-b from-[#F5F8F7] via-[#EBF3EF] to-white border-b border-gray-100">

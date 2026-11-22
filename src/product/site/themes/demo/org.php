@@ -370,8 +370,8 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
           iKAN
         </a>
         <span class="org-bar__org">
-          <span class="org-bar__initial">A</span>
-          Acme Health (Demo)
+          <span class="org-bar__initial">W</span>
+          Wugweb (Demo)
         </span>
 
         <span class="org-bar__spacer"></span>
@@ -392,7 +392,7 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
     <section id="tab-overview" class="org-page org-tab-content">
       <div class="flex flex-wrap items-baseline justify-between gap-4">
         <div>
-          <h1 class="org-page__title">Acme Health</h1>
+          <h1 class="org-page__title">Wugweb Technologies</h1>
           <p class="org-page__lede">Aggregate wellbeing insight across 240 eligible members. Privacy threshold k &ge; 5 strictly enforced.</p>
         </div>
         <a href="<?php echo esc_url( home_url( '/burnout-cost-calculator' ) ); ?>" class="org-button org-button--quiet" style="font-size: 13px;">
@@ -547,7 +547,7 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
           <h1 class="org-page__title">Team Roster</h1>
           <p class="org-page__lede">Manage eligible employee seats and invitations. Health data and app activity are never visible on individual profiles.</p>
         </div>
-        <button type="button" class="org-button" onclick="alert('Demo Mode: Roster management is simulated for Acme Health.');">
+        <button type="button" class="org-button" onclick="alert('Demo Mode: Roster management is simulated for Wugweb.');">
           + Invite Member
         </button>
       </div>
@@ -565,37 +565,37 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
           </thead>
           <tbody>
             <tr>
-              <td><strong>Aarav Sharma</strong></td>
-              <td>aarav@acmehealth.com</td>
-              <td>Engineering</td>
-              <td>Member</td>
+              <td><strong>Vedanshu</strong></td>
+              <td>vedanshu@wugweb.com</td>
+              <td>Leadership</td>
+              <td>Admin</td>
               <td><span style="color: var(--brand-teal-ink); font-weight: 600;">Active</span></td>
             </tr>
             <tr>
               <td><strong>Priya Patel</strong></td>
-              <td>priya@acmehealth.com</td>
+              <td>priya@wugweb.com</td>
               <td>Product &amp; Design</td>
               <td>Admin</td>
               <td><span style="color: var(--brand-teal-ink); font-weight: 600;">Active</span></td>
             </tr>
             <tr>
               <td><strong>Rohan Mehta</strong></td>
-              <td>rohan@acmehealth.com</td>
-              <td>Marketing</td>
+              <td>rohan@wugweb.com</td>
+              <td>Engineering</td>
               <td>Member</td>
               <td><span style="color: var(--brand-teal-ink); font-weight: 600;">Active</span></td>
             </tr>
             <tr>
               <td><strong>Sneha Rao</strong></td>
-              <td>sneha@acmehealth.com</td>
-              <td>Sales</td>
+              <td>sneha@wugweb.com</td>
+              <td>Marketing</td>
               <td>Member</td>
               <td><span style="color: var(--muted-foreground);">Pending Invite</span></td>
             </tr>
             <tr>
               <td><strong>Vikram Verma</strong></td>
-              <td>vikram@acmehealth.com</td>
-              <td>Operations</td>
+              <td>vikram@wugweb.com</td>
+              <td>Engineering</td>
               <td>Member</td>
               <td><span style="color: var(--brand-teal-ink); font-weight: 600;">Active</span></td>
             </tr>
@@ -612,11 +612,11 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
       <div class="org-card" style="max-width: 600px;">
         <label class="org-field">
           <span>Organisation Legal Name</span>
-          <input type="text" value="Acme Health Technologies India Pvt. Ltd." readonly />
+          <input type="text" value="Wugweb Technologies India Pvt. Ltd." readonly />
         </label>
         <label class="org-field">
           <span>Allowed Work Email Domains</span>
-          <input type="text" value="acmehealth.com, acme.co" readonly />
+          <input type="text" value="wugweb.com, wugweb.in" readonly />
         </label>
         <label class="org-field">
           <span>Strict k-Anonymity Threshold</span>
@@ -625,7 +625,7 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
         </label>
         <label class="org-field">
           <span>Primary Contact</span>
-          <input type="text" value="Dr. Ananya Sen (Head of People)" readonly />
+          <input type="text" value="Vedanshu (Founder &amp; CEO)" readonly />
         </label>
       </div>
     </section>
@@ -660,14 +660,20 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
         <form onsubmit="event.preventDefault(); document.getElementById('org-login-view').style.display='none'; document.getElementById('org-app').style.display='block';">
           <label class="org-field">
             <span>Work email</span>
-            <input type="email" required placeholder="you@yourcompany.com" value="admin@acmehealth.com">
+            <input type="email" id="org-login-email" required placeholder="you@yourcompany.com" value="demo@wugweb.com">
           </label>
           <label class="org-field">
             <span>Password</span>
-            <input type="password" required value="••••••••••••">
+            <input type="password" id="org-login-password" required value="password123">
           </label>
 
-          <div style="margin-top: 24px;">
+          <div style="margin-top: 10px; text-align: center;">
+            <button type="button" onclick="document.getElementById('org-login-email').value='demo@wugweb.com'; document.getElementById('org-login-password').value='password123';" style="background: none; border: none; font-size: 12px; color: var(--brand-teal-ink); font-weight: 600; cursor: pointer; text-decoration: underline;">
+              Fill Demo Credentials: demo@wugweb.com / password123
+            </button>
+          </div>
+
+          <div style="margin-top: 20px;">
             <button type="submit" class="org-button" style="width: 100%; justify-content: center;">
               Sign in
             </button>
