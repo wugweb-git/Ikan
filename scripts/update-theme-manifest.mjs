@@ -24,7 +24,9 @@ let existing = null;
 if (fs.existsSync(manifestPath)) {
   try {
     existing = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  } catch {}
+  } catch {
+    existing = null;
+  }
 }
 
 if (existing && existing.js === js && existing.css === css) {
