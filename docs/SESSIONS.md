@@ -6,16 +6,16 @@ This document outlines the protocols, branch ownership, and operational practice
 
 ## 1. Golden Rules
 
-1. **Production Branch is `main`**:
-   - `main` is the primary and default GitHub branch.
-   - All production deployments must originate from `main`.
+1. **Production Branch is `wordpress`**:
+   - `wordpress` is the primary and default GitHub branch.
+   - All production deployments must originate from `wordpress`.
 2. **Guarded Deployment Only**:
    - **Never** deploy ad-hoc or run unverified manual rsync commands.
    - Run production deployments only via:
      ```bash
      bash scripts/deploy-prod.sh
      ```
-   - This script runs local builds, executes `scripts/deploy-guard.sh` (ensuring clean working copy, branch parity with `origin/main`, and CI green), syncs theme files to the Hostinger server, purges LiteSpeed & CDN caches, and verifies live HTTP 200 responses.
+   - This script runs local builds, executes `scripts/deploy-guard.sh` (ensuring clean working copy, branch parity with `origin/wordpress`, and CI green), syncs theme files to the Hostinger server, purges LiteSpeed & CDN caches, and verifies live HTTP 200 responses.
 3. **Backend Service Ownership**:
    - Primary marketing and informational website backend runs on **WordPress** hosted on Hostinger (`ikanhealth.in`).
    - Member PWA application, progress tracking, and Supabase edge functions live in the `ikan2` repository (`app.ikanhealth.in`).
@@ -25,7 +25,7 @@ This document outlines the protocols, branch ownership, and operational practice
 ## 2. Branch Synchronization
 
 To maintain developer ergonomics across workflows:
-- Keep `main`, `wordpress`, and `wordpress-dev` synchronized upon merging code.
+- Keep `wordpress` and `wordpress-dev` synchronized upon merging code.
 - Always verify all CI checks locally prior to pushing:
   ```bash
   npm test && bash scripts/typecheck-ratchet.sh && npm run lint:ratchet && npm run build

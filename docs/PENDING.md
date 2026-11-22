@@ -23,6 +23,19 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-22)
 
+- [x] **Default Branch Renamed to `wordpress` & CI Ratchet Fixes**:
+  - Reconfigured GitHub default branch to `wordpress` (`defaultBranchRef: { name: "wordpress" }`).
+  - Updated `scripts/deploy-guard.sh` (`PROD_BRANCH="wordpress"`), `AGENTS.md`, `CLAUDE.md`, `GOVERNANCE.md`, and `SESSIONS.md`.
+  - Fixed TypeScript TS2339 in `src/shared/lib/logger.ts` and lowered typecheck ratchet baseline from 103 down to 102.
+  - Fixed ESLint empty block error in `scripts/update-theme-manifest.mjs`.
+  - Fixed `scripts/check-script-paths.mjs` to ignore dynamic uncommitted Composer `vendor/` artifacts on clean CI checkouts.
+  - Verified 100% green CI runs on GitHub Actions across both `wordpress` and `wordpress-dev`.
+- [x] **Full Clinical Resources Revamp & Parity (`resources.php` & `single.php`)**:
+  - Injected Schema.org `CollectionPage` JSON-LD on `/resources/` and `Article` / `VideoObject` / `AudioObject` on `/resources/<slug>`.
+  - Added Lucide icons across medium formats, reading time, calendar dates, author bylines, and tags.
+  - Added pinned reading progress bar (`#reading-progress-bar`), clinical advisory verification box, and `SourceCard` attributions.
+  - Linked internal assessment cards (PHQ-9, GAD-7, PSS-10, BAT-23, WHO-5), Equip Program cards, and 1:1 clinical consultation bridges.
+  - Added responsive CSS for score tables, interactive charts, and bibliography sources.
 - [x] **Wugweb Technologies Rebrand & 1-Click Demo Credentials (`admin@wugweb.com` / `WugWeb123@`)**:
   - Rebranded corporate demo from Acme Health to **Wugweb Technologies** (Vedanshu, Founder & CEO, Indiranagar, Bengaluru, India).
   - Hardcoded instant demo credentials `admin@wugweb.com` / `WugWeb123@` across `/login`, `/signup`, `/org`, and the Org Portal (`OrgPortal.tsx` & `auth.tsx`).
