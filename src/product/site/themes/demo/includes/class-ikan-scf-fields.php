@@ -3,7 +3,8 @@
  * iKAN Health — Secure Custom Fields (SCF) Clinical Field Group.
  *
  * Registers structured clinical meta fields on wp_users for member profiles
- * and clinician case management.
+ * and clinician case management, mapping canonical IDs, scoring matrices,
+ * and severity bands.
  *
  * @package iKAN_Health
  */
@@ -62,13 +63,21 @@ class Ikan_SCF_Fields {
 					'type'         => 'select',
 					'choices'      => array(
 						''                    => '— None / Not Enrolled —',
-						'sleep-tight'         => 'Sleep Tight (Insomnia & Recovery)',
-						'unburn'              => 'Unburn (Workplace Burnout & Energy)',
-						'stress-buster'       => 'Stress Buster (Anxiety & Overwhelm)',
-						'productivity-reset'  => 'Productivity Reset (Focus & Flow)',
+						'sleep-tight'         => 'Sleep Tight (Insomnia Recovery · 14 Days)',
+						'unburn'              => 'Unburn (Workplace Burnout & Energy · 28 Days)',
+						'stress-buster'       => 'Stress Buster (Anxiety & Overwhelm · 14 Days)',
+						'productivity-reset'  => 'Productivity Reset (Focus & Flow · 7 Days)',
 					),
 					'allow_null'   => 1,
 					'ui'           => 1,
+					'wrapper'      => array( 'width' => '33' ),
+				),
+				array(
+					'key'          => 'field_ikan_program_id',
+					'label'        => 'Canonical Program ID',
+					'name'         => 'program_id',
+					'type'         => 'text',
+					'instructions' => 'e.g. prg_sleep_tight_v2',
 					'wrapper'      => array( 'width' => '33' ),
 				),
 				array(
@@ -80,11 +89,11 @@ class Ikan_SCF_Fields {
 					'max'          => 28,
 					'step'         => 1,
 					'default_value'=> 1,
-					'wrapper'      => array( 'width' => '33' ),
+					'wrapper'      => array( 'width' => '17' ),
 				),
 				array(
 					'key'          => 'field_ikan_program_status',
-					'label'        => 'Program Pacing Status',
+					'label'        => 'Pacing Status',
 					'name'         => 'program_status',
 					'type'         => 'select',
 					'choices'      => array(
@@ -95,7 +104,7 @@ class Ikan_SCF_Fields {
 					),
 					'default_value'=> 'active',
 					'ui'           => 1,
-					'wrapper'      => array( 'width' => '33' ),
+					'wrapper'      => array( 'width' => '17' ),
 				),
 				array(
 					'key'          => 'field_ikan_last_active_at',
@@ -107,23 +116,23 @@ class Ikan_SCF_Fields {
 				),
 				array(
 					'key'          => 'field_ikan_last_journal_date',
-					'label'        => 'Last Mood/Sleep Check-In',
+					'label'        => 'Last Check-In Date',
 					'name'         => 'last_journal_date',
 					'type'         => 'text',
-					'instructions' => 'Date of most recent daily check-in (YYYY-MM-DD).',
+					'instructions' => 'Date of most recent check-in (YYYY-MM-DD).',
 					'wrapper'      => array( 'width' => '50' ),
 				),
 
 				// Tab 2: Clinical Assessment & Severity
 				array(
 					'key'   => 'field_tab_assessment_severity',
-					'label' => 'Latest Assessment & Triage',
+					'label' => 'Latest Assessment & Severity Matrix',
 					'name'  => '',
 					'type'  => 'tab',
 				),
 				array(
 					'key'          => 'field_ikan_latest_assessment',
-					'label'        => 'Latest Completed Instrument',
+					'label'        => 'Latest Instrument',
 					'name'         => 'latest_assessment',
 					'type'         => 'select',
 					'choices'      => array(
@@ -137,6 +146,22 @@ class Ikan_SCF_Fields {
 						'unsure-or-general-concern'      => 'General Holistic Concern',
 					),
 					'ui'           => 1,
+					'wrapper'      => array( 'width' => '35' ),
+				),
+				array(
+					'key'          => 'field_ikan_assessment_id',
+					'label'        => 'Assessment ID',
+					'name'         => 'assessment_id',
+					'type'         => 'text',
+					'instructions' => 'Canonical assessment instrument ID.',
+					'wrapper'      => array( 'width' => '25' ),
+				),
+				array(
+					'key'          => 'field_ikan_assessment_result_id',
+					'label'        => 'Result UUID',
+					'name'         => 'assessment_result_id',
+					'type'         => 'text',
+					'instructions' => 'Unique submission UUID.',
 					'wrapper'      => array( 'width' => '40' ),
 				),
 				array(
@@ -156,10 +181,18 @@ class Ikan_SCF_Fields {
 						'mild'              => 'Mild',
 						'moderate'          => 'Moderate',
 						'moderately-severe' => 'Moderately Severe',
-						'severe'            => 'Severe (Clinician Review)',
+						'severe'            => 'Severe (Requires Outreach)',
 					),
 					'ui'           => 1,
 					'wrapper'      => array( 'width' => '25' ),
+				),
+				array(
+					'key'          => 'field_ikan_scoring_matrix',
+					'label'        => 'Scoring Matrix Spec',
+					'name'         => 'scoring_matrix',
+					'type'         => 'text',
+					'instructions' => 'Instrument calc mode, score range, cut-points (e.g. PHQ-9: Sum, 0–27).',
+					'wrapper'      => array( 'width' => '40' ),
 				),
 				array(
 					'key'          => 'field_ikan_clinical_risk_flag',
@@ -169,17 +202,45 @@ class Ikan_SCF_Fields {
 					'message'      => 'Active clinical triage alert (requires outreach)',
 					'wrapper'      => array( 'width' => '15' ),
 				),
+
+				// Tab 3: Longitudinal Wellness Trajectory
+				array(
+					'key'   => 'field_tab_wellness_trajectory',
+					'label' => 'Longitudinal Wellness Trajectory',
+					'name'  => '',
+					'type'  => 'tab',
+				),
 				array(
 					'key'          => 'field_ikan_latest_wellness_score',
-					'label'        => 'Current Holistic Wellness Score (0–100)',
+					'label'        => 'Holistic Wellness Score (0–100)',
 					'name'         => 'latest_wellness_score',
 					'type'         => 'number',
 					'min'          => 0,
 					'max'          => 100,
-					'wrapper'      => array( 'width' => '50' ),
+					'wrapper'      => array( 'width' => '33' ),
+				),
+				array(
+					'key'          => 'field_ikan_wellness_7d_avg',
+					'label'        => '7-Day Rolling Average',
+					'name'         => 'wellness_7d_avg',
+					'type'         => 'number',
+					'step'         => 0.1,
+					'wrapper'      => array( 'width' => '33' ),
+				),
+				array(
+					'key'          => 'field_ikan_wellness_trajectory_trend',
+					'label'        => 'Trajectory Trend',
+					'name'         => 'wellness_trajectory_trend',
+					'type'         => 'select',
+					'choices'      => array(
+						'improving' => 'Improving (Trending Up)',
+						'stable'    => 'Stable',
+						'declining' => 'Declining (Trending Down)',
+					),
+					'wrapper'      => array( 'width' => '34' ),
 				),
 
-				// Tab 3: Clinician Assignment & Notes
+				// Tab 4: Clinician Assignment & Case Notes
 				array(
 					'key'   => 'field_tab_case_management',
 					'label' => 'Clinician Case Management',
@@ -192,6 +253,14 @@ class Ikan_SCF_Fields {
 					'name'         => 'assigned_clinician',
 					'type'         => 'text',
 					'placeholder'  => 'e.g. Dr. Vedanshu / Lead Clinical Psychologist',
+					'wrapper'      => array( 'width' => '50' ),
+				),
+				array(
+					'key'          => 'field_ikan_supabase_user_id',
+					'label'        => 'Buffer Sync UUID',
+					'name'         => '_ikan_supabase_user_id',
+					'type'         => 'text',
+					'instructions' => 'Supabase Interim Buffer auth UUID.',
 					'wrapper'      => array( 'width' => '50' ),
 				),
 				array(
