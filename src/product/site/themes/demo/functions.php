@@ -133,10 +133,13 @@ function get_vite_entry_script() {
   if ( is_dir( $assets_dir ) ) {
     $files = glob( $assets_dir . '/index-*.js' );
     if ( ! empty( $files ) ) {
-      return '/assets/' . basename( end( $files ) );
+      usort( $files, function( $a, $b ) {
+        return filemtime( $b ) - filemtime( $a );
+      } );
+      return '/assets/' . basename( $files[0] );
     }
   }
-  return '/assets/index-C_BRL1DW.js';
+  return '/assets/index-BN9O1lzE.js';
 }
 
 // Route blog archive, single post, and custom page requests to dedicated PHP templates

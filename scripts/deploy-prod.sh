@@ -42,7 +42,7 @@ echo "✓ Theme files synced successfully"
 
 # Sync Vite production assets to public_html/assets
 echo "→ Rsyncing Vite production assets to Hostinger ($HOSTINGER_HOST)..."
-rsync -avz \
+rsync -avz --delete \
   --exclude '.DS_Store' \
   -e "ssh -p $HOSTINGER_PORT -i $HOSTINGER_KEY" \
   dist/assets/ "$HOSTINGER_USER@$HOSTINGER_HOST:$REMOTE_PATH/assets/" || {
