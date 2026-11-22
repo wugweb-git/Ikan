@@ -214,10 +214,45 @@ get_header(); ?>
     const errEmail = document.getElementById('err-email');
     const errMessage = document.getElementById('err-message');
 
+    // Prefill pilot enquiry from Burnout Calculator or URL parameters
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const topic = urlParams.get('topic');
+      const paramSubject = urlParams.get('subject');
+      const paramName = urlParams.get('name');
+      const paramEmail = urlParams.get('email');
+
+      if (paramName && !nameInput.value) nameInput.value = paramName;
+      if (paramEmail && !emailInput.value) emailInput.value = paramEmail;
+      if (paramSubject && !subjectInput.value) subjectInput.value = paramSubject;
+
+      if (topic === 'pilot') {
+        const PILOT_KEY = 'ikan.calc.pilot-prefill.v1';
+        let prefilled = false;
+        try {
+          const raw = window.sessionStorage.getItem(PILOT_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') {
+              if (parsed.subject) subjectInput.value = parsed.subject.slice(0, 120);
+              if (parsed.message) messageInput.value = parsed.message.slice(0, 2000);
+              prefilled = true;
+            }
+          }
+        } catch (e) {}
+
+        if (!prefilled && !subjectInput.value) {
+          subjectInput.value = 'Pilot enquiry';
+        }
+      }
+    } catch (e) {}
+
     // Live message character counter
-    messageInput.addEventListener('input', function() {
-      counter.textContent = `${this.value.length}/2000`;
-    });
+    function updateCounter() {
+      counter.textContent = `${messageInput.value.length}/2000`;
+    }
+    updateCounter();
+    messageInput.addEventListener('input', updateCounter);
 
     function validate() {
       let valid = true;
@@ -290,6 +325,9 @@ get_header(); ?>
         const data = await res.json();
 
         if (data.success) {
+          try {
+            window.sessionStorage.removeItem('ikan.calc.pilot-prefill.v1');
+          } catch (e) {}
           form.classList.add('hidden');
           successMsg.textContent = data.data && data.data.message ? data.data.message : 'Message sent. We will reply to your email.';
           successCard.classList.remove('hidden');

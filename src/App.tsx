@@ -31,16 +31,21 @@ function MemberRedirect({ path }: { path: string }) {
   );
 }
 
-function AuthRedirect() {
+function AuthRedirect({ path = '/login' }: { path?: string }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.location.replace('/login/');
+      const crossHost = crossHostSignInUrl(window.location.hostname, path);
+      if (crossHost) {
+        window.location.replace(crossHost + window.location.search);
+      } else {
+        window.location.replace(path.endsWith('/') ? path : path + '/');
+      }
     }
-  }, []);
+  }, [path]);
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <p className="text-sm text-gray-500">Redirecting to sign-in...</p>
+      <p className="text-sm text-gray-500">Redirecting to {path.includes('signup') ? 'sign-up' : 'sign-in'}...</p>
     </div>
   );
 }
@@ -187,7 +192,7 @@ import { hasCompletedFirstRun } from './product/app/shell/first-run';
 
 /** Marketing-site routes (the pages under product/site/pages). */
 const SITE_FOOTER_ROUTES = new Set([
-  '/', '/about', '/service', '/services', '/faq', '/contact',
+  '/', '/about', '/service', '/services', '/faq', '/contact', '/contact-us',
   '/privacy', '/privacy-policy', '/terms', '/return-policy', '/cancellation-policy',
   '/assessment', '/assessment-detail',
   '/equip', '/equip-detail',
@@ -352,13 +357,16 @@ function AppContent() {
     startTransition(() => setCurrentRoute('/login'));
   };
 
-  // A direct visit or bookmark to ikanhealth.in/login bypasses both handlers
+  // A direct visit or bookmark to ikanhealth.in/login or /signup bypasses both handlers
   // above, so catch it once on load. replace(), not assign(): the marketing
-  // /login URL should not sit in history for Back to bounce into again.
+  // /login or /signup URL should not sit in history for Back to bounce into again.
   useEffect(() => {
-    if (window.location.pathname !== '/login') return;
-    const crossHost = crossHostSignInUrl(window.location.hostname);
-    if (crossHost) window.location.replace(crossHost + window.location.search);
+    const rawPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (rawPath === '/login' || rawPath === '/signup' || rawPath === '/register') {
+      const targetPath = (rawPath === '/signup' || rawPath === '/register') ? '/signup' : '/login';
+      const crossHost = crossHostSignInUrl(window.location.hostname, targetPath);
+      if (crossHost) window.location.replace(crossHost + window.location.search);
+    }
   }, []);
 
   const handleNavigate = useCallback((route: string, resourceId?: string) => {
@@ -373,11 +381,12 @@ function AppContent() {
       
       const [path, search] = route.split('?');
 
-      // Any route into /login from the marketing host leaves for the app host,
+      // Any route into /login, /signup, /register from the marketing host leaves for the app host,
       // so onboarding and password-reset flows land there too, not only the
       // header button.
-      if (path === '/login') {
-        const crossHost = crossHostSignInUrl(window.location.hostname);
+      if (path === '/login' || path === '/signup' || path === '/register') {
+        const targetPath = (path === '/signup' || path === '/register') ? '/signup' : '/login';
+        const crossHost = crossHostSignInUrl(window.location.hostname, targetPath);
         if (crossHost) {
           window.location.assign(crossHost + (search ? `?${search}` : ''));
           return;
@@ -388,7 +397,7 @@ function AppContent() {
         '/', '/dashboard', '/mood-journal', '/assessment', '/assessment-detail', '/assessment-flow', '/assessment-results', '/assessment-history-detail',
         '/equip', '/equip-detail', '/equip-program-onboarding', '/equip-program-flow', '/equip-program-completion',
         '/consultation', '/resource', '/resource-detail', '/account', 
-        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/return-policy', '/cancellation-policy', '/login', '/reset-password',
+        '/about', '/service', '/services', '/faq', '/privacy', '/privacy-policy', '/terms', '/contact', '/contact-us', '/return-policy', '/cancellation-policy', '/login', '/signup', '/register', '/reset-password',
         '/admin', '/admin/login',
         '/join/partner',
         '/join/professional',
@@ -720,6 +729,7 @@ function AppContent() {
         case '/terms':
           return withSuspense(<TermsOfUse onNavigate={handleNavigate} />);
         case '/contact':
+        case '/contact-us':
           return withSuspense(<ContactUs onNavigate={handleNavigate} />);
         case '/burnout-cost-calculator':
           return withSuspense(<BurnoutCostCalculator onNavigate={handleNavigate} />);
@@ -737,6 +747,9 @@ function AppContent() {
           return withSuspense(<GetStarted onNavigate={handleNavigate} />);
         case '/login':
           return withSuspense(<LoginScreen onNavigate={handleNavigate} onSuccess={() => handleNavigate(hasCompletedFirstRun() ? '/dashboard' : '/get-started')} />);
+        case '/signup':
+        case '/register':
+          return withSuspense(<AuthRedirect path="/signup" />);
         case '/reset-password':
           return withSuspense(<ResetPassword onNavigate={handleNavigate} />);
         case '/join/partner':

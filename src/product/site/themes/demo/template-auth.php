@@ -98,7 +98,7 @@ get_header(); ?>
               <div>
                 <div class="flex items-center justify-between mb-1.5">
                   <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600">Password</label>
-                  <a href="<?php echo esc_url( wp_lostpassword_url() ); ?>" class="text-xs text-gray-500 hover:text-black">Forgot password?</a>
+                  <a href="https://app.ikanhealth.in/forgot-password" class="text-xs text-gray-500 hover:text-black">Forgot password?</a>
                 </div>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -120,6 +120,21 @@ get_header(); ?>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
               </button>
             </form>
+
+            <div class="pt-3 flex flex-col gap-2">
+              <div class="relative flex items-center justify-center">
+                <span class="absolute inset-x-0 h-px bg-gray-100"></span>
+                <span class="relative bg-white px-2 text-[11px] text-gray-400 uppercase tracking-wider">Or continue with</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 mt-1">
+                <a href="https://app.ikanhealth.in/login" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i> Google / App
+                </a>
+                <a href="https://app.ikanhealth.in/phone-login" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                  <i data-lucide="smartphone" class="w-3.5 h-3.5 text-blue-600"></i> Mobile OTP
+                </a>
+              </div>
+            </div>
 
             <div class="pt-2 border-t border-gray-100 text-center">
               <button type="button" onclick="fillDemoAccount()" class="inline-flex items-center justify-center min-h-[44px] py-2 px-3 text-xs text-gray-500 hover:text-black font-medium underline">
@@ -229,7 +244,7 @@ get_header(); ?>
           <!-- Footnote -->
           <p class="mt-6 text-center text-xs text-gray-400">
             By continuing, you agree to our 
-            <a href="<?php echo esc_url( home_url( '/terms/' ) ); ?>" class="text-gray-600 hover:text-black underline">Terms of Use</a> and 
+            <a href="<?php echo esc_url( home_url( '/terms-of-use/' ) ); ?>" class="text-gray-600 hover:text-black underline">Terms of Use</a> and 
             <a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>" class="text-gray-600 hover:text-black underline">Privacy Policy</a>.
           </p>
 

@@ -19,7 +19,11 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap">
   <link rel="icon" type="image/svg+xml" href="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>">
   <link rel="apple-touch-icon" href="<?php echo esc_url( get_theme_file_uri( "assets/img/apple-touch-icon.png" ) ); ?>">
-  <link rel="stylesheet" crossorigin="" href="<?php echo esc_url( get_theme_file_uri( "assets/css/index-C1zkq2-P.css" ) ); ?>">
+  <?php
+  $vite_assets = function_exists( 'ikan_get_vite_assets' ) ? ikan_get_vite_assets() : [];
+  $vite_css_url = ! empty( $vite_assets['css'] ) ? home_url( $vite_assets['css'] ) : get_theme_file_uri( "assets/css/index-C1zkq2-P.css" );
+  ?>
+  <link rel="stylesheet" crossorigin="" href="<?php echo esc_url( $vite_css_url ); ?>">
   <style id="ikan-keyframes">
     @keyframes ikan-fadeIn { 0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)} }
     @keyframes ikan-fadeOut { 0%{opacity:1}100%{opacity:0} }
@@ -92,6 +96,11 @@
       .ikan-desktop-only { display: none !important; }
       .ikan-mobile-only { display: block !important; }
       .faq-two-col { display: grid !important; grid-template-columns: 1fr !important; gap: 32px !important; }
+      @media (max-width: 767px) {
+        input:not([type=checkbox]):not([type=radio]), select, textarea {
+          font-size: 16px !important;
+        }
+      }
     }
     @media (min-width: 1024px) {
       .ikan-mobile-only { display: none !important; }

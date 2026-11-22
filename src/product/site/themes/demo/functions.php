@@ -79,11 +79,25 @@ function demo_register_sidebars() {
 }
 add_action( 'widgets_init', 'demo_register_sidebars' );
 
-// Direct redirect for marketing login requests to member PWA app
+// Direct redirect for marketing login/signup requests to member PWA app (ikan 2)
 add_action( 'template_redirect', function() {
   $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+  $qs = ! empty( $_SERVER['QUERY_STRING'] ) ? '?' . $_SERVER['QUERY_STRING'] : '';
+
   if ( $req_path === 'login' || is_page( 'login' ) ) {
-    wp_redirect( 'https://app.ikanhealth.in/login', 302 );
+    wp_redirect( 'https://app.ikanhealth.in/login' . $qs, 302 );
+    exit;
+  }
+  if ( $req_path === 'signup' || $req_path === 'register' || is_page( 'signup' ) || is_page( 'register' ) ) {
+    wp_redirect( 'https://app.ikanhealth.in/signup' . $qs, 302 );
+    exit;
+  }
+  if ( $req_path === 'forgot-password' || $req_path === 'reset-password' || is_page( 'forgot-password' ) || is_page( 'reset-password' ) ) {
+    wp_redirect( 'https://app.ikanhealth.in/forgot-password' . $qs, 302 );
+    exit;
+  }
+  if ( $req_path === 'phone-login' || is_page( 'phone-login' ) ) {
+    wp_redirect( 'https://app.ikanhealth.in/phone-login' . $qs, 302 );
     exit;
   }
 
@@ -155,7 +169,8 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
     'article', 'articles', 'assessment', 'assessments', 'equip', 'equip-programs',
     'program', 'programs', 'consult', 'consultation', 'contact', 'contact-us',
     'burnout-cost-calculator', 'calculator', 'faq', 'faqs', 'org', 'organisation',
-    'partner', 'professional-application', 'join/partner', 'join/professional'
+    'partner', 'professional-application', 'join/partner', 'join/professional',
+    'login', 'signup', 'register', 'forgot-password', 'phone-login'
   ];
   if (
     in_array( $path, $prevent_redirect, true ) ||
