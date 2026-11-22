@@ -1,0 +1,2407 @@
+{
+  "slug": "stress-buster",
+  "source": "https://mousy-literature-52f.notion.site/3d9a10202d6f8025b5c8e22479b85841",
+  "units": [
+    {
+      "n": 1,
+      "title": "Onboarding",
+      "days": [
+        {
+          "day": 0,
+          "title": "Onboarding",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Getting to know you.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we begin, we’d like to know a little about you. Your responses help personalize your experience."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Occupation",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "occupation",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "What do you do for a living?",
+              "options": [
+                "Employed",
+                "Self-employed",
+                "Student",
+                "Homemaker",
+                "Between jobs",
+                "Retired"
+              ],
+              "uiHints": "cards"
+            },
+            {
+              "n": 3,
+              "title": "Therapy History",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "therapy_history",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Have you ever taken therapy before?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 4,
+              "title": "Pre-existing Conditions",
+              "type": "quiz",
+              "interaction": "mcq",
+              "key": "pre_existing_conditions",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Do you have any pre-existing conditions?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 5,
+              "title": "Condition Details",
+              "type": "reflection",
+              "key": "condition_details",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "If yes, please specify",
+              "rules": {
+                "dependsOn": "pre_existing_conditions == Yes"
+              }
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 2,
+      "title": "Taking Stock",
+      "days": [
+        {
+          "day": 1,
+          "title": "Taking Stock",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "How have you been?",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "How have you been?",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we dig into techniques, let's take stock of where things stand currently. What's actually been stressing you lately?"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Recent Stressors",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "recent_stressors",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt: What has been stressing you recently?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's it for today. See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "title": "Stress Manifestations",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "How does it show up?",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "stress_manifestations",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Today, let's look at how stress shows up for you."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Checklist"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt: How does stress show up for you?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options:"
+                },
+                {
+                  "kind": "li",
+                  "text": "I am more irritable"
+                },
+                {
+                  "kind": "li",
+                  "text": "I clench my jaw"
+                },
+                {
+                  "kind": "li",
+                  "text": "I have trouble sleeping"
+                },
+                {
+                  "kind": "li",
+                  "text": "I procrastinate"
+                },
+                {
+                  "kind": "li",
+                  "text": "I forget things"
+                },
+                {
+                  "kind": "li",
+                  "text": "I feel restless"
+                },
+                {
+                  "kind": "li",
+                  "text": "Other"
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "How Stress Manifests",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Not all stress is bad. Some stress helps. At times, the push before a deadline or an exam can sharpen you up. The problem is stress that persists long after (or during) whatever caused it. It can wear on you both mentally (constantly on edge) and physically (poor sleep, appetite changes, stomach issues). It is your fight-or-flight response stuck in overdrive."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Stress and You",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Checklist"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt: Which of these apply to you specifically?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options:"
+                },
+                {
+                  "kind": "li",
+                  "text": "I'm more irritable"
+                },
+                {
+                  "kind": "li",
+                  "text": "I hyperventilate"
+                },
+                {
+                  "kind": "li",
+                  "text": "I clench my jaw or bite my lips/nails"
+                },
+                {
+                  "kind": "li",
+                  "text": "I speak fast"
+                },
+                {
+                  "kind": "li",
+                  "text": "I can't sleep"
+                },
+                {
+                  "kind": "li",
+                  "text": "My appetite changes (more, less, or none)"
+                },
+                {
+                  "kind": "li",
+                  "text": "My digestion is affected"
+                },
+                {
+                  "kind": "li",
+                  "text": "I forget things or avoid people"
+                },
+                {
+                  "kind": "li",
+                  "text": "I freeze up or procrastinate"
+                },
+                {
+                  "kind": "li",
+                  "text": "Other"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep noticing how your own stress shows up. We'll build on this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "title": "Before Stress",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Remembering your relaxed self.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Your Baseline",
+              "type": "lesson",
+              "key": "pre_stress_self",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we go further, let's set a baseline: what stresses you out, and what you look like when you're genuinely relaxed. Knowing both makes it easier to notice when you've drifted from one toward the other."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt: How are you when you’re relaxed?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Relaxed State",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "relax_methods",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt: What helps you relax?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "What you’ve listed today is your reference point for reminding yourself what brings you back down when you’re stressed."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 3,
+      "title": "Stress Patterns",
+      "days": [
+        {
+          "day": 4,
+          "title": "Stress Patterns",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "My Stress Patterns",
+              "type": "journal",
+              "key": "stress_my_patterns",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's look for patterns. Take a moment, then write freely. As much or as little as you want."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Work and Personal Life",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt: What’s bugging you?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Stressful Activities",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt: Which activities are stressing you out?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Joy",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Prompt: Which activities, things and people bring you joy?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll build on this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "title": "Stress Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "journal",
+              "key": "stress_welcome_back",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same three lists as yesterday. Add to them, or start fresh if today looks different."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Work and Personal Life",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 4"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Stressful Activities",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 4"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Joy",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 4"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good work over these two days. Tomorrow we’ll do something lighter, a quick mindfulness exercise."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "title": "Relaxation and Mindfulness",
+          "kind": "learning",
+          "declaredBlocks": 2,
+          "subtitle": "Continuing observations.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "What is mindfulness?",
+              "type": "lesson",
+              "key": "stress_what_is_mindfulness",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Mindfulness just means being present. Here in the now, rather than caught in the past or future. Try this: stop, take a breath. Say out loud 5 colors you see, then close your eyes and name 4 sounds, 3 smells, 2 things you can feel."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "How did that feel? Try it again a few times today. We'll have more such exercises throughout the program."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 4,
+      "title": "Anatomy of Stress",
+      "days": [
+        {
+          "day": 7,
+          "title": "Anatomy of Stress",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Understand what causes stress.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Today: what actually causes stress."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Anatomy of Stress",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Excessive stress usually comes down to an imbalance between demands and resources."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Show two cards."
+                },
+                {
+                  "kind": "text",
+                  "text": "1st Card"
+                },
+                {
+                  "kind": "text",
+                  "text": "Demand"
+                },
+                {
+                  "kind": "text",
+                  "text": "What's being asked of you."
+                },
+                {
+                  "kind": "li",
+                  "text": "A deadline"
+                },
+                {
+                  "kind": "li",
+                  "text": "A hard course"
+                },
+                {
+                  "kind": "li",
+                  "text": "Caring for family"
+                },
+                {
+                  "kind": "li",
+                  "text": "Expectations"
+                },
+                {
+                  "kind": "text",
+                  "text": "2nd Card"
+                },
+                {
+                  "kind": "text",
+                  "text": "Resource"
+                },
+                {
+                  "kind": "text",
+                  "text": "What restores you."
+                },
+                {
+                  "kind": "li",
+                  "text": "Pay and recognition"
+                },
+                {
+                  "kind": "li",
+                  "text": "Time with people you love"
+                },
+                {
+                  "kind": "li",
+                  "text": "Downtime"
+                },
+                {
+                  "kind": "li",
+                  "text": "Doing well at something that matters to you"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Demand",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 3"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt: Can you think of some demands?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Resources",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt: Can you think of some resources?"
+                },
+                {
+                  "kind": "text",
+                  "text": "User lists things down. Limit to 10."
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll keep building this list over the next couple of days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "title": "Anatomy of Stress (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Understand what causes stress.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep going with today’s demands and resources. Don't spend more than 20 minutes on it."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Your Demands",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 7"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Your Resources",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 7"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One more day of this, then we look at rebalancing."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "title": "Anatomy of Stress (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Understand what causes stress.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last pass on this list."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Your Demands",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 7"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Your Resources",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 7"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Tomorrow, we work on actually rebalancing the two."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "title": "Demands & Resources",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Rebalancing demands and resources.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Balancing Demands and Resources",
+              "type": "lesson",
+              "interaction": "matrix",
+              "key": "demands_resources",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "With your list in front of you, look for ways to reduce demands you actually control. Some ways to do so are to delegate, ask for flexibility and outsource what you can."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Reducing Demand",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "Bring up list of demands from task 3 of day 7 and task 2 of day 8 and Prompt: How can you reduce these demands?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Allow users to add new demands here."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Increasing Resources",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "More time with people who matter, actual time off, some downtime built into your workday. Keep in mind that small but real and meaningful changes count."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Increasing Resources",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "Bring up list of resources from task 4 of day 7 and task 3 of day 8 and Prompt: How can you increase your resources?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Allow users to add new resources here."
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Well done. Tomorrow, we look at the link between stress and your thoughts."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 5,
+      "title": "Thoughts & Feelings",
+      "days": [
+        {
+          "day": 11,
+          "title": "Thoughts and Patterns",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Introduction.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Your thoughts, feelings and emotions have a direct connection with your stress. Negative thoughts heighten alertness and tension. Calmer thoughts do the opposite."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thoughts and Feelings",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "We won the cricket tournament after a really long time. The spinners played really well.",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 3,
+              "title": "Thoughts and Feelings",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "I am furious about the power cuts.",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 4,
+              "title": "Thoughts and Feelings",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "She won a well-deserved award for her performance.",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 5,
+              "title": "Thoughts and Feelings",
+              "type": "exercise",
+              "interaction": "single-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Tasks 2-5 can be done by showing 2 at a time on 1 card"
+                }
+              ],
+              "prompt": "I am so happy for him!",
+              "options": ["Thought", "Feeling"]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's all for today. Tomorrow, we start logging these as they happen."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "title": "Thought Log",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Journaling thoughts.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "key": "tf_event",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's start logging. The moments that stress you, but the good ones too. We'll do this for the next few days."
+                },
+                {
+                  "kind": "p",
+                  "text": "Worked example: Side-project deadline colliding with work → \"This will delay everything and I'll lose confidence\" → stressed, anxious."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_thoughts",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 2"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Time:      Time picker"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "What happened?"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Thoughts:"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Feelings:"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "tf_feelings",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Thanks for keeping a log, we will do this again tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "How did it make you feel?"
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Journaling thoughts.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "key": "tf_event",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep logging."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_thoughts",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 12"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "tf_feelings",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Thanks for keeping a log, we will do this again tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "How did it make you feel?"
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Journaling thoughts.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "key": "tf_event",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same again."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_thoughts",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 12"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "tf_feelings",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Thanks for keeping a log, we will do this again tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "How did it make you feel?"
+            }
+          ]
+        },
+        {
+          "day": 15,
+          "title": "Thought Log (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Journaling thoughts.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "key": "tf_event",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this stretch. Tomorrow we’ll start working with what you've logged."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Thought Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "tf_thoughts",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 12"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "tf_feelings",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's pause the logging for now. We'll begin the next chapter tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 6,
+      "title": "Challenging Thoughts",
+      "days": [
+        {
+          "day": 16,
+          "title": "Reasoning with Thoughts",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Cognitive distortions.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Some of our stress is self-created: our thoughts build scenarios that aren't always accurate, and it costs us anyway. Procrastination often comes from an exaggerated fear of a task, not the task itself. Challenging these patterns takes a bit of effort, but it's a learnable skill."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Six Questions to Challenge a Thought",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Show a card."
+                },
+                {
+                  "kind": "text",
+                  "text": "Reference card."
+                },
+                {
+                  "kind": "text",
+                  "text": "When faced with a situation where your thought feels bigger than the situation, ask yourself these questions."
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I overreacting? Will this matter in a few months?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I going on opinion or isolated experience, not facts?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I assuming I know how someone else feels or will react?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I seeing this in black and white, with nothing in between?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Is there real evidence this thought isn't entirely true?"
+                },
+                {
+                  "kind": "li",
+                  "text": "What would I tell a friend who had this exact thought?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Come back to this whenever a thought feels bigger than the situation."
+                },
+                {
+                  "kind": "text",
+                  "text": "P.S. Once a user has read this card, they should be able to pull this up anytime they like to refer to it."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Try It!",
+              "type": "reflection",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Pick one thought from your log and run it through these questions. Notice what shifted."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Tomorrow, we put this into practice properly."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 17,
+          "title": "Challenging Thoughts",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Tools to challenge.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "thought_challenge",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Yesterday, we asked ourselves some questions about our own thoughts. Sometimes it is important to have the talk with our own thoughts. Let's put them into practice."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Single option select exercise"
+                },
+                {
+                  "kind": "text",
+                  "text": "Ask “Which of yesterday's questions do you find most useful?\""
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I overreacting? Will this matter in a few months?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I going on opinion or isolated experience, not facts?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I assuming I know how someone else feels or will react?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Am I seeing this in black and white, with nothing in between?"
+                },
+                {
+                  "kind": "li",
+                  "text": "Is there real evidence this thought isn't entirely true?"
+                },
+                {
+                  "kind": "li",
+                  "text": "What would I tell a friend who had this exact thought?"
+                }
+              ]
+            },
+            {
+              "n": 2,
+              "title": "From the Thought Log",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Back to the side-project example. Now with three things to consider:"
+                },
+                {
+                  "kind": "p",
+                  "text": "I understand that (the self-set deadline matters, but so does the other work, and it can be split up) → Alternate thought (flag it early, propose a realistic timeline, under-commit and over-deliver) → How I feel now (hopeful, relieved, determined)."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Challenging Thoughts",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Bring up cards from Task 2 of Day 12, 13, 14 and 15 and against each card, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "I Understand That"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "My Alternate Thoughts:"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "How they make me feel now:"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry. User can create new entries which means all 7 items for each enetry."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give option to do them later once they’ve done 3 and prompt before beginning Day 18"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good work. Let's keep this going for the next several days to really build the habit."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 18,
+          "title": "Challenging Thoughts (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Tools to challenge.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "thought_challenge",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep logging and challenging."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Challenging Thoughts",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 3 from day 17"
+                },
+                {
+                  "kind": "text",
+                  "text": "Not mandatory to add, make it skippable here."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 19,
+          "title": "Challenging Thoughts (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Tools to challenge.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "thought_challenge",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same again."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Challenging Thoughts",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 3 from day 17"
+                },
+                {
+                  "kind": "text",
+                  "text": "Not mandatory to add, make it skippable here."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 20,
+          "title": "Challenging Thoughts (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Tools to challenge.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "thought_challenge",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Almost there."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Challenging Thoughts",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 3 from day 17"
+                },
+                {
+                  "kind": "text",
+                  "text": "Not mandatory to add, make it skippable here."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 21,
+          "title": "Challenging Thoughts (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Tools to challenge.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "interaction": "multi-select",
+              "key": "thought_challenge",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this. You've now got a working system for talking back to a stressful thought."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Challenging Thoughts",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Task 3 from day 17"
+                },
+                {
+                  "kind": "text",
+                  "text": "Not mandatory to add, make it skippable here."
+                },
+                {
+                  "kind": "text",
+                  "text": "Task remains available to the user for ever from here on"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Well done. Now that we've learnt to question our thoughts, we'll learn to empty our mind."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 7,
+      "title": "Worry Log",
+      "days": [
+        {
+          "day": 22,
+          "title": "Journaling",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For the next three days, just keep a worry log. This is a safe space, nothing kept beyond 24 hours."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task"
+                },
+                {
+                  "kind": "text",
+                  "text": "user picks a time and writes what’s worrying them."
+                },
+                {
+                  "kind": "text",
+                  "text": "User can create as many cards as they want."
+                },
+                {
+                  "kind": "text",
+                  "text": "The text gets deleted after 24 hours from time stamp of entry."
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Hope you were able to fill in the boxes with some content. Let’s keep doing this for a couple of days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 23,
+          "title": "Journaling (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same again."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 22"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue this tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 24,
+          "title": "Journaling (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "A daily release valve.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this one. Next, we'll look at what's going well."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "er_control",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 23"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we have figured out this technique, when we meet next, we will work on noticing what’s going well."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 8,
+      "title": "Positive Capture",
+      "days": [
+        {
+          "day": 25,
+          "title": "Positive Capturing",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Rebalancing perspective.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Positive Capturing",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Stress narrows your view of what's actually going well. Let's take the next few days to widen it back out."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Good Things",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some good things that happened to you today"
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "There's Always Room",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some things that could have been better."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "For Tomorrow",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Things that I will achieve tomorrow."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Practicing Thankfulness",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For this task, prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "List down some things you’re grateful for today."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give options to add 3 things with add more once 3 have been entered"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We'll continue tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 26,
+          "title": "Positive Capturing (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Rebalancing perspective.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same four, one more time."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Good Things",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "There's Always Room",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "For Tomorrow",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Practicing Thankfulness",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 5 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "New chapter starts tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 27,
+          "title": "Positive Capturing (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Gratitude.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of the program."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Good Things",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 2 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "There's Always Room",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 3 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "For Tomorrow",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 4 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Practicing Thankfulness",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat exercise 5 from day 25"
+                },
+                {
+                  "kind": "text",
+                  "text": "New entries only"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Nice work. Over these 27 days you've built a real toolkit: a thought log, a way to challenge distorted thinking, a worry log, and a habit of noticing what's actually going well. Come back to any of these whenever stress creeps back up. Everything here stays available whenever you need it."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "name": "Stress Buster — stress-buster",
+  "meta": {
+    "id": "9117b308-ff8a-4613-90ef-007841ef0b79",
+    "days": "27 days",
+    "blocks": "110 blocks",
+    "category": "stress",
+    "level": "beginner"
+  },
+  "schedule": [
+    {
+      "Days": "0",
+      "Unit": "Onboarding",
+      "Focus": "Background + baseline"
+    },
+    {
+      "Days": "1–3",
+      "Unit": "Taking Stock",
+      "Focus": "Current stressors, how stress shows up, your relaxed baseline"
+    },
+    {
+      "Days": "4–6",
+      "Unit": "Stress Patterns",
+      "Focus": "Journaling, mindfulness intro"
+    },
+    {
+      "Days": "7–10",
+      "Unit": "Anatomy of Stress",
+      "Focus": "Demands vs. resources, and rebalancing them"
+    },
+    {
+      "Days": "11–15",
+      "Unit": "Thoughts & Feelings",
+      "Focus": "Telling them apart, logging them as they happen"
+    },
+    {
+      "Days": "16–21",
+      "Unit": "Challenging Thoughts",
+      "Focus": "Where distortions come from, then practicing pushing back"
+    },
+    {
+      "Days": "22–24",
+      "Unit": "Worry Log",
+      "Focus": "A daily release valve"
+    },
+    {
+      "Days": "25–27",
+      "Unit": "Positive Capture",
+      "Focus": "Rebalancing perspective, wrap-up"
+    }
+  ],
+  "description": "A 27-day program to understand what stresses you, and build practical tools to manage it.",
+  "tagline": "Transform your life with daily practice."
+}

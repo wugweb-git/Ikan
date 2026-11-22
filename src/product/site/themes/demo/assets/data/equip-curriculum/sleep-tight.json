@@ -1,0 +1,2806 @@
+{
+  "slug": "sleep-tight",
+  "source": "https://mousy-literature-52f.notion.site/3d9a10202d6f80348c1bc32896d6da8f",
+  "units": [
+    {
+      "n": 1,
+      "title": "Onboarding",
+      "days": [
+        {
+          "day": 0,
+          "title": "Onboarding",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Welcome to Sleep Tight.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome to Sleep Tight",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep impacts mood, focus, immunity, and emotional resilience. Over the next days, we’ll gently rebuild your relationship with sleep."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Primary Sleep Concern",
+              "type": "quiz",
+              "interaction": "multi-select",
+              "key": "sleep_primary_issue",
+              "minutes": 5,
+              "group": "onboarding_core",
+              "body": [],
+              "notes": [],
+              "prompt": "What troubles your sleep the most right now?",
+              "options": [
+                "Difficulty falling asleep",
+                "Waking up during the night",
+                "Waking too early",
+                "Poor sleep quality",
+                "Irregular sleep schedule"
+              ],
+              "uiHints": "cards"
+            },
+            {
+              "n": 3,
+              "title": "Sleep Duration",
+              "type": "quiz",
+              "interaction": "scale",
+              "key": "avg_sleep_hours",
+              "minutes": 5,
+              "group": "baseline_sleep",
+              "body": [],
+              "notes": [],
+              "prompt": "On average, how many hours do you sleep?",
+              "constraints": {
+                "max": 9,
+                "min": 3
+              }
+            },
+            {
+              "n": 4,
+              "title": "Feeling",
+              "type": "reflection",
+              "key": "sleep_feel_note",
+              "minutes": 5,
+              "group": "baseline_sleep",
+              "body": [],
+              "notes": [],
+              "prompt": "How does this amount of sleep usually feel for you?"
+            },
+            {
+              "n": 5,
+              "title": "Commitment",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "key": "commitment_ack",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Commitment",
+              "options": ["I’m willing to try small sleep changes daily"]
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 2,
+      "title": "Understanding Your Sleep",
+      "days": [
+        {
+          "day": 1,
+          "title": "Understanding Your Sleep",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A sleep diary tracks your patterns, habits, and quality. Think of it like a map you use to figure out the route to a destination. For the next week, filling it in is the whole assignment."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Let’s explore if we can fetch this data from Apple/Google/Android health."
+                },
+                {
+                  "kind": "text",
+                  "text": "📏 Last question is the same as mood tracker, let’s use one to populate the other."
+                },
+                {
+                  "kind": "text",
+                  "text": "Sleep diary format in Day 1 is to be used for all 30 days."
+                },
+                {
+                  "kind": "text",
+                  "text": "UI suggestion"
+                }
+              ],
+              "columns": ["Question", "Response"],
+              "listItems": [
+                "Time I went to bed: [ : pm/am ]",
+                "Time I tried to fall asleep: [ : pm/am ]",
+                "Time it took to fall asleep: [   ] minutes",
+                "Number of times I woke up: [   ] times",
+                "Total time spent awake during the night: [   ] minutes",
+                "Time I woke up: [ : am ]",
+                "Time I got out of bed: [ : am ]",
+                "Sleep quality rating (1-5, 5 being best): [   ]"
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_reflection",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That will be all for today. See you tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Welcome back. You don't need exact times, close estimates are fine. Let's keep going."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same time tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Three days in and the patterns are emerging. Keep it up."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Halfway there. See you tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 2,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "No new instructions today, just some plain and simple consistency. That's the actual exercise."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good. Let’s get back tomorrow. Same time."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Halfway through the week."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Almost through the week!"
+                },
+                {
+                  "kind": "p",
+                  "text": "Thank you."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One more after today, then we start using what you've logged."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One left. See you tomorrow."
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "title": "Understanding Your Sleep (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 3,
+          "subtitle": "Observing without fixing.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Understanding Sleep",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of the plain diary week. Tomorrow we start looking at what it's telling us."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_quality_day1",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Conclusion",
+              "type": "conclude",
+              "key": "sleep_conclusion",
+              "minutes": 5,
+              "group": "daily_reflection",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Week one, done. Nice work!"
+                }
+              ],
+              "notes": [],
+              "prompt": "Anything that stood out?"
+            }
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "kind": "text",
+          "text": "Days 1–7 are the same day, seven times with different intros and conclusions. Sleep diary."
+        },
+        {
+          "kind": "text",
+          "text": "Sleep diary data can be shown like this after week 1 and progress over time"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "title": "Thoughts and Feelings",
+      "days": [
+        {
+          "day": 8,
+          "title": "Thoughts and Feelings",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Today we start connecting thoughts and feelings to sleep. Sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Your thoughts, feelings and emotions have a direct connection with your sleep. Negative thoughts heighten alertness and delay sleep. Calmer thoughts do the opposite."
+                },
+                {
+                  "kind": "p",
+                  "text": "This is the feedback loop we'll start tracking: your mindset shapes your rest, and your rest shapes tomorrow's mindset."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Mental Mirror",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "key": "sleep_mental_mirror",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Which of these felt true this morning?"
+                }
+              ],
+              "notes": [],
+              "quoteText": [
+                "😊 Woke up refreshed 💤 Slept soundly, uninterrupted🤸 Tossed and turned 😨 Mind was racing with worries💢 Woke up groggy / low mood🔋 Feel rested and energized😪 Still feel tired🫂 Feel good, body thanks me"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Thanks for the honesty! Tomorrow we shall go a layer deeper."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "title": "Thoughts and Feelings (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 12,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep diary, then straight into today's topic."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A thought is a sentence in your head, like \"This line is taking forever\", whereas a feeling is usually a one-word reaction to that thought, say bored or anxious. Telling them apart helps you see why you reacted the way you did."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Thought or feeling?",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For each situation below, one line is a thought, one is a feeling. We have done the first one for you. Frequent power cuts → \"They make me furious!\" = Feeling; \"They make things inconvenient for a lot of us.\" = Thought"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 5,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "key": "sleep_small_task",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "columns": ["Your schooldays…", "Thought", "Feeling"],
+              "rows": [
+                "I had such a good time there with my friends. I miss those days!",
+                "It makes me nostalgic."
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "columns": ["The last cricket match you watched…", "Thought", "Feeling"],
+              "rows": [
+                "I was so excited and happy that our team won!",
+                "We won the tournament after a really long time. The spinners played really well!"
+              ]
+            },
+            {
+              "n": 7,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "columns": [
+                "A friend of yours finally bagged their dream job…",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "It is so great! They had worked so hard for this job. I am sure they will excel and thrive in the role.",
+                "I am so happy for them!"
+              ]
+            },
+            {
+              "n": 8,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "columns": [
+                "When you are about to deliver a presentation to your class",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "I am definitely going to mess this up. I wish I had worked on my presentation instead of playing Counter-Strike with my friends.",
+                "I am so scared and nervous."
+              ]
+            },
+            {
+              "n": 9,
+              "title": "Thought or feeling?",
+              "type": "exercise",
+              "interaction": "comparison-matrix",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Tasks 5-9 can be done by showing 2 at a time on 1 card"
+                }
+              ],
+              "columns": [
+                "Tell me about the time when you went to a relative's wedding reception",
+                "Thought",
+                "Feeling"
+              ],
+              "rows": [
+                "Why is everyone teasing me about getting married? I am so not ready for this.",
+                "This is getting really annoying now."
+              ]
+            },
+            {
+              "n": 10,
+              "title": "Tracking Thoughts",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For the next stretch, jot down what happens ~3 hours before bed and ~1 hour after waking: the situation, the thought, the feeling, and how you responded. Example: 9 PM, late work call → \"Why do they expect this hour?!\" → angry, irritated → kept worrying about work."
+                },
+                {
+                  "kind": "p",
+                  "text": "9:00 PM — home office setup, a late evening emergency call with the team — \"This is ridiculous! Why do they expect us to work till this hour!\" — angry, irritated — Worrying about work"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 11,
+              "title": "Thought Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 11"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "Entry #1"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Time:      10:30 AM"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Situation: Meeting got delayed"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Thoughts:  I'm wasting my time"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Feelings:  Anxious, annoyed"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "Response:  Took a deep breath"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "divider"
+                },
+                {
+                  "kind": "text",
+                  "text": "|  [ + Add New Entry ]                  |"
+                },
+                {
+                  "kind": "text",
+                  "text": "+---------------------------------------+"
+                },
+                {
+                  "kind": "text",
+                  "text": "1 card per entry, user can add cards and swipe through them."
+                }
+              ]
+            },
+            {
+              "n": 12,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good start. Tomorrow we’ll see if any of this actually affects your sleep."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "title": "Thoughts and Feelings (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Digging deeper into thoughts and feelings",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Digging Deeper into Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Look back at yesterday's thought/feeling log. Did any of it, especially thoughts within an hour of waking up, carry over from the night before? That overlap is often the actual sleep disruptor."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_identifying_disruptions",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "Bring up cards from Task 11 of  Day 9 and give an option to create a fresh card, where all the fields from day 9 show up and the the user is prompted"
+                },
+                {
+                  "kind": "text",
+                  "text": "“Did it affect my sleep?”"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Short one today, but it matters. You now know which thoughts to watch. Tomorrow, we work on managing them."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "title": "Emptying the Mind",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Digging deeper into thoughts and feelings",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before we proceed, let’s fill the sleep diary."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Digging Deeper into Thoughts and Feelings",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Racing thoughts at night? Journaling may just be your secret weapon. Think of it as a release valve. Set a 5-minute timer, open a blank page, and write down every thought without any editing. Once the timer's up, you don't need to reread it. The point is emptying, not analyzing."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "sleep_emptying_mind",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show a card, user picks a date then writes what happened/thought."
+                },
+                {
+                  "kind": "text",
+                  "text": "User can add cards for as many items as they feel like. Cards can be pulled up by swiping left or right."
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "However that felt, you did it. Tomorrow we’ll look at what actually distracts you from sleep."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 4,
+      "title": "Distractions & Control",
+      "days": [
+        {
+          "day": 12,
+          "title": "Distractions and Control",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Small habits.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Welcome back! As always, sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Understanding Distractions",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Poor sleep usually comes from two places: trouble falling asleep, or poor quality once you're out. Both are driven by distractions. Some are within our control, like phone usage, bedtime and racing thoughts, and some are beyond it, like a dog barking, room temperature or a snoring partner."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Let's Check",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "key": "sleep_lets_check",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Which of these would apply to you?",
+              "options": [
+                "Room is too hot",
+                "The pillow is too hard",
+                "The room is too bright",
+                "I overate during dinner",
+                "I had a coffee right before going to bed",
+                "The light is on",
+                "Too many thoughts in my mind",
+                "The mattress is nice and comfortable",
+                "The bedsheet is nice and soft",
+                "Dogs are barking on the street outside",
+                "Others"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Analyzing Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good job! Now that we have an idea about distractors, let us personalize them for our case. From your personal preferences and previous experiences, list down your distractors. Don't hold back. List everything."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 5"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show all things selected(including others) and"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Was this in my control?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ],
+              "columns": ["Things that kept me up", "In My control (Yes/No)"],
+              "quoteText": ["User may add rows"],
+              "userMayAddRows": true
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we know what to target, we’ll brainstorm fixes tomorrow. Stay tuned!"
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "title": "Distractions and Control (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 7,
+          "subtitle": "Small habits.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Ideation",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Today is all about brainstorming, not solving. Example: if phone use is the culprit, ideas might range from \"keep it in another room\" to \"download a lock app\" to \"buy an alarm clock.\" No idea is too small or too obvious yet."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Ground Rules",
+              "type": "lesson",
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "No idea is wrong • Don't critique while writing • Write everything down • Build on your own ideas • Stay on topic • Respect the timer"
+                },
+                {
+                  "kind": "p",
+                  "text": "Are you ready to start brainstorming?"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 5,
+              "title": "Worked Example",
+              "type": "lesson",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Disturbance: doomscrolling on Instagram → Ideas: uninstall it nightly • keep phone in another room • use night mode • quit the app entirely. (We'll refine these later. For now, quantity over quality.)"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 6,
+              "title": "Ideating Solutions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 6"
+                },
+                {
+                  "kind": "text",
+                  "text": "Show a card, user enters a disturbance and then writes ways to reduce."
+                },
+                {
+                  "kind": "text",
+                  "text": "User can add cards for as many items as they feel like. 1 card per screen. Cards can be pulled up by swiping left or right."
+                }
+              ]
+            },
+            {
+              "n": 7,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep your creative juices running! Tomorrow we keep going, then start narrowing down."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "title": "Distractions and Control (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": null,
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Let's continue brainstorming, but sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Ideating Solutions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Tasks 6 from Day 13. User can even pull up previously filled cards."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Take the rest of the day off from this. Tomorrow we turn ideas into a plan."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 15,
+          "title": "Distractions and Control (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Part of the Solution!",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Welcome back! Before we begin, let’s fill the sleep diary."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Reducing Disruptions",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Not every idea from your brainstorm is realistic. We've pulled in your list for you to weigh the pros and cons of each in order to land on a balanced solution for all your disturbances. Continuing with our earlier example of doomscrolling → uninstall nightly (pro: cuts the biggest distraction / con: a hassle) → keep phone away (pro: blocks other distractions too / con: my alarm's on my phone) → night mode (pro: easier on the eyes / con: doesn't stop the scrolling) → quit entirely (pro: biggest impact / con: too extreme, I use it to stay in touch). Balanced fix: get a separate alarm clock, keep the phone away from the bed."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Reducing Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4"
+                },
+                {
+                  "kind": "text",
+                  "text": "Pull up cards from day 13 and 14 and ask user to fill pros and cons for each."
+                },
+                {
+                  "kind": "text",
+                  "text": "Give them an option to fill the rest later say after getting through 3-5 cards."
+                },
+                {
+                  "kind": "text",
+                  "text": "Send notifications or prompt to complete before beginning day 16."
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "You've now got a plan, not just a wish list. Tomorrow: bedtime rituals."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 5,
+      "title": "Bedtime Rituals",
+      "days": [
+        {
+          "day": 16,
+          "title": "Bedtime Rituals",
+          "kind": "learning",
+          "declaredBlocks": 7,
+          "subtitle": "Part of the Solution!",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Developing Rituals",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A consistent pre-sleep routine tells your nervous system and your body it's time to wind down. It's also a good place to fit in essentials like medication, washing up, or just decompressing after a stressful day."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Countdown to a Better Sleep",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "options": [
+                "Warm drink (e.g. turmeric milk)",
+                "Skincare",
+                "Reading",
+                "Meditation or prayer",
+                "Music",
+                "Dimming the lights",
+                "Journaling",
+                "A warm bath (lowers body temp which helps sleep)",
+                "Other (custom)"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Learning to Relax",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "From what you picked, choose what you'll actually try tonight. A few non-negotiables that help almost everyone:"
+                },
+                {
+                  "kind": "li",
+                  "text": "No caffeine within 4 hours of bed"
+                },
+                {
+                  "kind": "li",
+                  "text": "No exercise within 3 hours of bed"
+                },
+                {
+                  "kind": "li",
+                  "text": "Lights dimmed 30 min before bed"
+                },
+                {
+                  "kind": "li",
+                  "text": "No phone in the last 30 min before bed"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 6,
+              "title": "Learning to Relax",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 6"
+                },
+                {
+                  "kind": "text",
+                  "text": "Let user create a list of rituals that they think will relax before bed. Limit rituals to 10"
+                }
+              ]
+            },
+            {
+              "n": 7,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we’ve come up with a list of rituals, we’ll work on making it stick from tomorrow onwards."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 17,
+          "title": "Bedtime Rituals (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 7,
+          "subtitle": "Part of the Solution!",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "First things first, let’s fill the sleep diary."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Forming Habits",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Knowing the technique isn't the hard part. Following through every day is. Distractions and broken routines get in the way of almost everyone. We'll take it one small step at a time, starting with a technique called piggybacking."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Forming Habits",
+              "type": "checklist",
+              "interaction": "multi-select",
+              "key": "sleep_daily_activities",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "From the list below, select all that you do. You can add to the list if you’d like.",
+              "options": [
+                "Lying in bed after waking up or before going to sleep",
+                "Making or having tea or coffee",
+                "Commuting (transit or waiting)",
+                "Taking a break at work",
+                "Waiting for food to cook",
+                "Having meals (breakfast, lunch, dinner and any snacks in between)",
+                "Waiting in line or on hold",
+                "Watching TV or scrolling social media",
+                "Winding down before sleep",
+                "Exercising (walking, jogging or on a machine)",
+                "Other (add your own)"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "My Activities",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "From that list, flag the moments where you're stationary and could have your phone or laptop out. Example: \"Waiting for the pressure cooker\" → Yes. \"Taking a bath\" → No."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 6,
+              "title": "My Activities",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 6"
+                },
+                {
+                  "kind": "text",
+                  "text": "Pull up list from activity 4 and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "“Can I use a device while doing this?”"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ]
+            },
+            {
+              "n": 7,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good groundwork. Tomorrow we pick one and lock it in."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 18,
+          "title": "Bedtime Rituals (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 7,
+          "subtitle": "Part of the Solution!",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sleep diary first."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Shortlisting Activities",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "From the list of activities you mentioned earlier, pick a small piece of the ritual you want to build. You can even pick anything else you've been meaning to start, like reading a chapter from a book before bed."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Shortlisting Activities",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 4, bring up the rituals the user entered in Task 6 of Day 16"
+                },
+                {
+                  "kind": "text",
+                  "text": "Prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "Do you want to inculcate these in your night time rituals?"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ],
+              "columns": ["Habit I want to inculcate"],
+              "quoteText": ["User may add rows"],
+              "userMayAddRows": true
+            },
+            {
+              "n": 5,
+              "title": "Habit Tracking",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Pick one thing you already do every day, ideally near the end of it, say, clearing the dinner table. For the next week, do your new habit immediately after that anchor activity, no distractions. Miss a day? That’s alright, just don't miss two in a row."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 6,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "structured-list",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "For Task 6"
+                },
+                {
+                  "kind": "text",
+                  "text": "Pull up list from activity 4 and prompt"
+                },
+                {
+                  "kind": "text",
+                  "text": "“Did you do this today?”"
+                },
+                {
+                  "kind": "text",
+                  "text": "Options"
+                },
+                {
+                  "kind": "text",
+                  "text": "✅Yes ❌No"
+                }
+              ],
+              "listItems": ["Tick off the activities you completed from days 17 and 18."]
+            },
+            {
+              "n": 7,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now that we have been able to develop a sleep ritual for ourselves, let’s give them a try."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 6,
+      "title": "Tracking Patterns",
+      "days": [
+        {
+          "day": 19,
+          "title": "Tracking Patterns",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "For the next week, all we need is the diary and the habit tracker. No new exercises. Just some good old consistency."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 6 from day 18"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 20,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same as yesterday. Quick log, then tick off your habits."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 19"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Same time tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 21,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A week in on the new ritual. How's it coming along?"
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 20"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep it going."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 22,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Missed a day? No problem, just pick it back up today."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 21"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Almost there."
+                },
+                {
+                  "kind": "p",
+                  "text": "Thank you."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 23,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Almost through this stretch."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 22"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Great going, let’s get back tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 24,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One more after today."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 23"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One more to go."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 25,
+          "title": "Tracking Patterns (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last day of this tracking block. Kudos for the consistency."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 24"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Nice work this week."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "kind": "text",
+          "text": "Days 19–25 are the same day, seven times — sleep diary + habit tracker. Only Day 19's opening lesson copy differs and each day has a different conclusion."
+        },
+        {
+          "kind": "text",
+          "text": "Habit tracking data can be shown like this after week 1 and progress over time"
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "title": "Rituals in Action",
+      "days": [
+        {
+          "day": 26,
+          "title": "Rituals in Action",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "This is the real test, sticking with everything at once: diary, habits, thoughts, disruptions. One step at a time."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 25"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 11"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 10"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good job today! Let’s keep it going for the next few days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 27,
+          "title": "Rituals in Action (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Keep the full stack going. It gets easier by the day."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 26"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 26"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 5 from day 26"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good job today! Let’s keep it going for the next few days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 28,
+          "title": "Rituals in Action (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "You're most of the way through the program now."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 27"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 27"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 5 from day 27"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good job today! Let’s keep it going for the next few days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 29,
+          "title": "Rituals in Action (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Two days left after today."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 28"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 28"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 5 from day 28"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Good job today! Let’s keep it going for the next few days."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 30,
+          "title": "Rituals in Action (Continued)",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Noticing patterns.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "lesson",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Last full-stack day. Let’s wrap things up."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Sleep Diary",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat Sleep Diary from day 1"
+                }
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Tracking",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 3 from day 29"
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Emptying the Mind",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 4 from day 29"
+                }
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Identifying Disruptions",
+              "type": "exercise",
+              "interaction": "input-table",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Repeat of task 5 from day 29"
+                }
+              ]
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 5,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's the program. The habits — the diary, the ritual, catching your thoughts before bed — are yours to keep using as often as you need them. Well done for sticking with it."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "name": "Sleep Tight",
+  "meta": {
+    "id": "68970d31-0ff3-4d73-b137-80e98228d399",
+    "days": "30 days",
+    "blocks": "153 blocks",
+    "category": "sleep",
+    "level": "beginner"
+  },
+  "tagline": "Transform your life with daily practice.",
+  "schedule": [
+    {
+      "Days": "0",
+      "Unit": "Onboarding",
+      "Focus": "Baseline + commitment"
+    },
+    {
+      "Days": "1–7",
+      "Unit": "Understanding Your Sleep",
+      "Focus": "Build the diary habit (Full Diary)"
+    },
+    {
+      "Days": "8–11",
+      "Unit": "Thoughts & Feelings",
+      "Focus": "Thought/feeling literacy, thought tracking"
+    },
+    {
+      "Days": "12–15",
+      "Unit": "Distractions & Control",
+      "Focus": "Identify + brainstorm + refine solutions"
+    },
+    {
+      "Days": "16–18",
+      "Unit": "Bedtime Rituals",
+      "Focus": "Build a ritual, habit-stack it"
+    },
+    {
+      "Days": "19–25",
+      "Unit": "Tracking Patterns",
+      "Focus": "Consistency stretch (Quick Log + Habit Tracker)"
+    },
+    {
+      "Days": "26–30",
+      "Unit": "Rituals in Action",
+      "Focus": "Full stack: diary + tracker + thought log + disruption log"
+    }
+  ],
+  "description": "A gentle, guided program to help you understand and improve your sleep. There’s nothing to “fix” immediately. We’ll start by noticing patterns and building consistency."
+}

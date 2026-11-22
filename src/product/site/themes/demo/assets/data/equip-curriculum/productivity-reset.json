@@ -1,0 +1,1235 @@
+{
+  "slug": "productivity-reset",
+  "source": "https://app.notion.com/p/3d0bb710b9ab8132beffc7b4fab1c443",
+  "name": "Productivity Reset — productivity-reset",
+  "tagline": "Reset your focus in 10 days.",
+  "description": "A 10-day reset to sharpen your focus, stop putting things off and rebuild momentum, one manageable step at a time.",
+  "meta": {
+    "id": "33eae2e2-e0e5-4e09-a423-5d450607bb75",
+    "days": "10 days",
+    "blocks": "73 blocks",
+    "category": "focus",
+    "level": "beginner"
+  },
+  "schedule": [
+    {
+      "Days": "0",
+      "Unit": "Onboarding",
+      "Focus": "Background, goals, focus baseline"
+    },
+    {
+      "Days": "1–2",
+      "Unit": "Awareness",
+      "Focus": "Where your time and attention go, and what sends you to your phone"
+    },
+    {
+      "Days": "3–4",
+      "Unit": "Plan and Act",
+      "Focus": "Planning the day and eating the frog, twice"
+    },
+    {
+      "Days": "5–6",
+      "Unit": "Focus",
+      "Focus": "A Hermit Hour, then adjusted"
+    },
+    {
+      "Days": "7",
+      "Unit": "Reset",
+      "Focus": "A mindful break and movement"
+    },
+    {
+      "Days": "8",
+      "Unit": "Motivation",
+      "Focus": "Why some tasks get put off"
+    },
+    {
+      "Days": "9",
+      "Unit": "Good Enough",
+      "Focus": "Action beats perfection"
+    },
+    {
+      "Days": "10",
+      "Unit": "The Week Ahead",
+      "Focus": "Looking back, planning the next week"
+    }
+  ],
+  "units": [
+    {
+      "n": 1,
+      "title": "Onboarding",
+      "days": [
+        {
+          "day": 0,
+          "title": "Onboarding",
+          "kind": "learning",
+          "declaredBlocks": 9,
+          "subtitle": "Setting Up.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Welcome to Productivity Reset. Over the next 10 days you'll look at where your time actually goes, plan your day around what matters, practise protected focus time, and finish with a plan for the week ahead."
+                },
+                {
+                  "kind": "p",
+                  "text": "Each day takes about 10 minutes, and most days give you a small task to try before the next one."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Occupation",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "occupation",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "What do you do for a living?",
+              "options": [
+                "Employed",
+                "Self-employed",
+                "Student",
+                "Homemaker",
+                "Between jobs",
+                "Retired"
+              ],
+              "uiHints": "cards"
+            },
+            {
+              "n": 3,
+              "title": "Therapy History",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "therapy_history",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Have you ever taken therapy before?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 4,
+              "title": "Conditions",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "pre_existing_conditions",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Do you have any pre-existing conditions?",
+              "options": ["Yes", "No", "I'd prefer not to answer"]
+            },
+            {
+              "n": 5,
+              "title": "Conditions Detail",
+              "type": "reflection",
+              "key": "conditions_detail",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "If yes, what?",
+              "rules": {
+                "dependsOn": "pre_existing_conditions == Yes"
+              }
+            },
+            {
+              "n": 6,
+              "title": "Before We Start",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "This programme builds habits; it doesn't treat a condition. If trouble focusing or getting started has been with you for as long as you can remember, or comes with low mood, constant tiredness or losing interest in things you used to enjoy, it's worth talking to a professional as well. You can book a consultation in iKAN at any time."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 7,
+              "title": "Expectations",
+              "type": "quiz",
+              "interaction": "multi-select",
+              "key": "productivity_goals",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "What do you want to achieve by the end of this reset?",
+              "options": [
+                "Get more done in my day",
+                "Stop putting things off",
+                "Build a routine I can stick to",
+                "Spend less time on screens",
+                "Focus for longer without distraction"
+              ],
+              "uiHints": "cards"
+            },
+            {
+              "n": 8,
+              "title": "Your Focus",
+              "type": "reflection",
+              "key": "weekly_focus",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What is ONE focus you want to prioritise over the next 10 days?"
+            },
+            {
+              "n": 9,
+              "title": "Focus Check",
+              "type": "quiz",
+              "interaction": "scale",
+              "key": "focus_start",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How focused have you felt over the past week, from 0 (all over the place) to 10 (fully focused)?",
+              "constraints": {
+                "min": 0,
+                "max": 10
+              }
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 2,
+      "title": "Awareness",
+      "days": [
+        {
+          "day": 1,
+          "title": "Where Is Your Time Going?",
+          "kind": "learning",
+          "declaredBlocks": 4,
+          "subtitle": "Observe first.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Awareness",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before changing anything, we look. Today is about noticing, not judging."
+                },
+                {
+                  "kind": "p",
+                  "text": "Your phone already keeps count: on Android it's Digital Wellbeing in Settings, on iPhone it's Screen Time. Look at yesterday's total, your three most used apps, and how many times you picked the phone up."
+                },
+                {
+                  "kind": "p",
+                  "text": "Through the day, notice the moments you reach for it: bored, stuck on a task, waiting, or just habit."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Your List",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "task_list",
+              "minutes": 4,
+              "body": [],
+              "notes": [],
+              "prompt": "List what you want to get done over the next 10 days, big or small."
+            },
+            {
+              "n": 3,
+              "title": "Tonight",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before bed tonight, open Digital Wellbeing or Screen Time and look at today's numbers. You'll note them down tomorrow, when the day is complete."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's the first look. Tomorrow we note today's numbers and look at what sends you to your phone."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "title": "What Sends You to Your Phone",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Triggers.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Yesterday's Screen Time",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "screen_time",
+              "minutes": 3,
+              "body": [],
+              "notes": [],
+              "prompt": "Note yesterday's numbers from Digital Wellbeing or Screen Time."
+            },
+            {
+              "n": 2,
+              "title": "Triggers",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Most pick-ups aren't decisions. They follow a cue: a notification, a moment of boredom, getting stuck on something hard, feeling anxious, or just a gap while you wait."
+                },
+                {
+                  "kind": "p",
+                  "text": "The cue comes first and the hand follows. Once you can name the cue, you get a second to choose. Today, each time you catch yourself reaching for the phone, note what was happening."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Trigger Log",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "phone_triggers",
+              "minutes": 3,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Pull this up anytime."
+                }
+              ],
+              "prompt": "Each time you catch yourself reaching for your phone today, add a card."
+            },
+            {
+              "n": 4,
+              "title": "One Swap",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "You don't need to fight every pick-up. Choose one cue that shows up often and decide in advance what you'll do instead: a glass of water, three slow breaths, standing up, or writing the thought down and going back to the task."
+                },
+                {
+                  "kind": "p",
+                  "text": "A plan made now is easier to follow than willpower in the moment."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 5,
+              "title": "Your Swap",
+              "type": "reflection",
+              "key": "phone_swap",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "When I feel the pull to pick up my phone, I'll … instead."
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "You know your cues and you have a swap. Tomorrow we turn your list into a plan."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 3,
+      "title": "Plan and Act",
+      "days": [
+        {
+          "day": 3,
+          "title": "Plan Before You Act",
+          "kind": "learning",
+          "declaredBlocks": 8,
+          "subtitle": "Eat the frog.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "swap_used",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Did you use your swap yesterday?",
+              "options": ["Yes, it helped", "Yes, but it didn't help", "I forgot", "Didn't need it"]
+            },
+            {
+              "n": 2,
+              "title": "Plan",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Clarity reduces procrastination. A to-do list in your head feels endless; on paper it has an edge. Today you pick what goes into today and mark how hard each task is and how much it matters."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Eat the Frog",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "The frog is the hardest important task on your list, the one you're most likely to put off. Eat it first, before the easy tasks use up your energy and your excuses."
+                },
+                {
+                  "kind": "p",
+                  "text": "Once it's done, the rest of the day gets lighter, and you stop carrying it around in your head."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "How to Pick a Frog",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "A good frog is important (Medium or High priority), hard enough that you'd normally delay it, and doable in one sitting."
+                },
+                {
+                  "kind": "p",
+                  "text": "If it's bigger than that, the frog is its first step: not \"write the report\" but \"write the report's outline\"."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 5,
+              "title": "Today's Tasks",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "daily_tasks",
+              "minutes": 4,
+              "body": [],
+              "notes": [],
+              "prompt": "Go through your list: is each one going into today, how hard is it, and how much does it matter?"
+            },
+            {
+              "n": 6,
+              "title": "Your Frog",
+              "type": "reflection",
+              "key": "frog_task",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Pick a Hard task with Medium or High priority. If none are Hard, pick the one you most want to avoid."
+                }
+              ],
+              "notes": [],
+              "prompt": "Which one is your frog for today?"
+            },
+            {
+              "n": 7,
+              "title": "Do It First",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Start the frog as soon as you finish here, or first thing tomorrow if today is already gone. Give it 20 minutes before you touch anything else. Tomorrow we'll ask how it went."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 8,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Plan made, frog picked. See you tomorrow."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "title": "Another Frog",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Practice makes it easier.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "frog_done",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Did you eat your frog?",
+              "options": ["Yes", "Not yet"]
+            },
+            {
+              "n": 2,
+              "title": "After the Frog",
+              "type": "reflection",
+              "key": "frog_reflection",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "How did it feel once it was done?",
+              "rules": {
+                "dependsOn": "frog_done == Yes"
+              }
+            },
+            {
+              "n": 3,
+              "title": "What Got in the Way",
+              "type": "reflection",
+              "key": "frog_blocker",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What got in the way?",
+              "rules": {
+                "dependsOn": "frog_done == Not yet"
+              }
+            },
+            {
+              "n": 4,
+              "title": "Again, Smaller If Needed",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "One frog doesn't make a habit. If yesterday's frog got eaten, pick a new one from your list."
+                },
+                {
+                  "kind": "p",
+                  "text": "If it didn't, that's information, not failure: it was probably too big, too vague, or started too late. Cut it down to the first step you could finish in 20 minutes, and do it earlier in the day."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 5,
+              "title": "Today's Frog",
+              "type": "reflection",
+              "key": "frog_task_2",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What's your frog for today?"
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Second frog picked. Tomorrow we build an hour around it."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 4,
+      "title": "Focus",
+      "days": [
+        {
+          "day": 5,
+          "title": "Hermit Hour",
+          "kind": "learning",
+          "declaredBlocks": 7,
+          "subtitle": "Protected focus time.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "frog_done_2",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Did you eat yesterday's frog?",
+              "options": ["Yes", "Not yet"]
+            },
+            {
+              "n": 2,
+              "title": "Hermit Hour",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Deep focus needs distance from distractions. A Hermit Hour is one hour you protect completely, worked as three 20-minute sessions with a 5-minute break between them."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "How to Run It",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Before you start: choose one task (your frog, or a High-priority task), put your phone in another room or switch on a blocker, close every tab you don't need, and tell the people around you you're unavailable for the hour."
+                },
+                {
+                  "kind": "p",
+                  "text": "Set a timer for 20 minutes and work only on that task until it rings. If a thought pulls you away, write it down and go back. In the breaks, stand up and look away from the screen."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Available to the user for ever, on demand."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Protect Your Hour",
+              "type": "quiz",
+              "interaction": "multi-select",
+              "key": "distraction_methods",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "What will you use to protect your Hermit Hour?",
+              "options": [
+                "Phone in another room",
+                "Blocker app",
+                "Notifications silenced",
+                "A different workspace",
+                "Told people I'm busy",
+                "Other"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "Your Task",
+              "type": "reflection",
+              "key": "hermit_task",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What will you work on in your Hermit Hour?"
+            },
+            {
+              "n": 6,
+              "title": "When",
+              "type": "reflection",
+              "key": "hermit_when",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "When will you do your Hermit Hour today?"
+            },
+            {
+              "n": 7,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Your hour is set. Tomorrow we'll see how many sessions you managed."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "title": "Hermit Hour, Adjusted",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Fix what pulled you away.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "scale",
+              "key": "focus_sessions",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How many 20-minute sessions did you complete in your Hermit Hour?",
+              "constraints": {
+                "min": 0,
+                "max": 3
+              }
+            },
+            {
+              "n": 2,
+              "title": "What Pulled You Away",
+              "type": "quiz",
+              "interaction": "multi-select",
+              "key": "focus_breaker",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "What pulled you away, if anything?",
+              "options": [
+                "My phone",
+                "Messages or email",
+                "People around me",
+                "My own thoughts",
+                "Hunger or tiredness",
+                "Nothing, it went well",
+                "Other"
+              ]
+            },
+            {
+              "n": 3,
+              "title": "Adjust",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "The first Hermit Hour shows you where the leaks are. If it was your phone, put it further away. If it was people, pick a quieter time or place, or tell them earlier."
+                },
+                {
+                  "kind": "p",
+                  "text": "If it was your own thoughts, keep a notepad next to you and park them there. If you were tired, move the hour to when you have the most energy."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 4,
+              "title": "What You'll Change",
+              "type": "reflection",
+              "key": "hermit_change",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What will you change for today's Hermit Hour?"
+            },
+            {
+              "n": 5,
+              "title": "Today's Hour",
+              "type": "reflection",
+              "key": "hermit_when_2",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What will you work on, and when?"
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Second hour set, with the leaks plugged. Tomorrow we look after the person doing the work."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 5,
+      "title": "Reset",
+      "days": [
+        {
+          "day": 7,
+          "title": "Reset Your Mind and Body",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Step away to come back stronger.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "scale",
+              "key": "focus_sessions_2",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How many 20-minute sessions did you complete this time?",
+              "constraints": {
+                "min": 0,
+                "max": 3
+              }
+            },
+            {
+              "n": 2,
+              "title": "Reset",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Focus runs out. Pushing through usually means working slower, not longer. A real break, away from the screen, resets your attention so the next stretch is sharper."
+                },
+                {
+                  "kind": "p",
+                  "text": "Today's reset takes 30 minutes: 5 minutes of mindful breathing, then about 25 minutes of moving your body."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Mindful Break",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Sit comfortably and set a timer for 5 minutes. Breathe in through your nose for a count of 4, hold for 4, breathe out for 4, hold for 4, and repeat."
+                },
+                {
+                  "kind": "p",
+                  "text": "When your mind wanders, and it will, notice where it went and bring it back to the count. Then name 5 things you can see, 4 you can hear and 3 you can feel."
+                }
+              ],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Available to the user for ever, on demand."
+                }
+              ]
+            },
+            {
+              "n": 4,
+              "title": "Movement",
+              "type": "quiz",
+              "interaction": "multi-select",
+              "key": "movement_plan",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How will you move today?",
+              "options": [
+                "A walk",
+                "Stretching",
+                "Yoga",
+                "A workout",
+                "Dancing",
+                "A sport",
+                "Other"
+              ]
+            },
+            {
+              "n": 5,
+              "title": "When",
+              "type": "reflection",
+              "key": "reset_when",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "When will you take your reset today?"
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Take your reset today. Tomorrow we'll ask how it felt."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 6,
+      "title": "Motivation",
+      "days": [
+        {
+          "day": 8,
+          "title": "Motivation Mapping",
+          "kind": "learning",
+          "declaredBlocks": 5,
+          "subtitle": "Why some tasks wait.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "reset_feel",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How did your reset go?",
+              "options": [
+                "Calmer",
+                "More focused",
+                "More energetic",
+                "No different",
+                "Didn't get to it"
+              ]
+            },
+            {
+              "n": 2,
+              "title": "Motivation",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "We put a task off when it feels costly now and pays off later. Four things decide it."
+                },
+                {
+                  "kind": "p",
+                  "text": "Roadblock: what stops you from starting, like not knowing the first step, fear of doing it badly, or it being boring. Reward: what you get once it's done. Urgency: how soon it actually matters. Time gap: how long between doing the work and feeling the reward."
+                },
+                {
+                  "kind": "p",
+                  "text": "The longer the time gap and the lower the urgency, the easier it is to put off. Naming them makes the task smaller."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 3,
+              "title": "Putting It Off",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "putting_off",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "Which of these have you been putting off?"
+            },
+            {
+              "n": 4,
+              "title": "Motivation Map",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "motivation_map",
+              "minutes": 5,
+              "body": [],
+              "notes": [],
+              "prompt": "Map each task you've been putting off."
+            },
+            {
+              "n": 5,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Now you know what's in the way. Tomorrow we take one of these on."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 7,
+      "title": "Good Enough",
+      "days": [
+        {
+          "day": 9,
+          "title": "Perfecting Imperfection",
+          "kind": "learning",
+          "declaredBlocks": 6,
+          "subtitle": "Action beats perfection.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Imperfection",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Perfectionism delays progress. Waiting for the right moment, rewriting the first line, or polishing something nobody asked for are all ways of not finishing."
+                },
+                {
+                  "kind": "p",
+                  "text": "Good enough means it does the job it's for. A sent email that's 90% right beats a perfect one still in drafts."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 2,
+              "title": "Perfectionism Check",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "perfectionism_this_week",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Has wanting it perfect held you back on anything over these days?",
+              "options": ["Yes", "No"]
+            },
+            {
+              "n": 3,
+              "title": "Where",
+              "type": "reflection",
+              "key": "perfectionism_where",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "Where did it hold you back?",
+              "rules": {
+                "dependsOn": "perfectionism_this_week == Yes"
+              }
+            },
+            {
+              "n": 4,
+              "title": "Good Enough Today",
+              "type": "reflection",
+              "key": "good_enough_task",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "Which task from your motivation map will you finish today, good enough rather than perfect?"
+            },
+            {
+              "n": 5,
+              "title": "Good Enough Looks Like",
+              "type": "reflection",
+              "key": "good_enough_bar",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "What does good enough look like for it?"
+            },
+            {
+              "n": 6,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Do it today, at good enough. Tomorrow we look back on the whole reset."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    },
+    {
+      "n": 8,
+      "title": "The Week Ahead",
+      "days": [
+        {
+          "day": 10,
+          "title": "Designing the Next Week",
+          "kind": "learning",
+          "declaredBlocks": 10,
+          "subtitle": "Look back, then plan.",
+          "blocks": [
+            {
+              "n": 1,
+              "title": "Welcome Back!",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "good_enough_done",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "Did you finish your good-enough task?",
+              "options": ["Yes", "Not yet"]
+            },
+            {
+              "n": 2,
+              "title": "How It Turned Out",
+              "type": "reflection",
+              "key": "good_enough_outcome",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "How did it turn out, compared with what you expected?",
+              "rules": {
+                "dependsOn": "good_enough_done == Yes"
+              }
+            },
+            {
+              "n": 3,
+              "title": "Yesterday's Screen Time",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "screen_time_end",
+              "minutes": 3,
+              "body": [],
+              "notes": [],
+              "prompt": "Note yesterday's numbers again, to compare with Day 1."
+            },
+            {
+              "n": 4,
+              "title": "Focus Check",
+              "type": "quiz",
+              "interaction": "scale",
+              "key": "focus_end",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How focused have you felt over the past week, from 0 (all over the place) to 10 (fully focused)?",
+              "constraints": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            {
+              "n": 5,
+              "title": "Your Focus",
+              "type": "quiz",
+              "interaction": "single-select",
+              "key": "focus_met",
+              "minutes": 1,
+              "body": [],
+              "notes": [],
+              "prompt": "How far did you get with the ONE focus you set on Day 0?",
+              "options": ["All the way", "Part of the way", "Not yet"]
+            },
+            {
+              "n": 6,
+              "title": "Your Goals",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "goals_moved",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "Did each goal you set on Day 0 move forward?"
+            },
+            {
+              "n": 7,
+              "title": "Planning",
+              "type": "lesson",
+              "minutes": 2,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "Structure creates freedom. A plan for the week means fewer decisions in the moment."
+                },
+                {
+                  "kind": "p",
+                  "text": "Put your frog first each day, book a Hermit Hour on most days, add a daily reset, and leave gaps, because something always comes up. Plan in blocks of time, not just a list."
+                }
+              ],
+              "notes": []
+            },
+            {
+              "n": 8,
+              "title": "Next Week's Plan",
+              "type": "exercise",
+              "interaction": "input-table",
+              "key": "weekly_schedule",
+              "minutes": 5,
+              "body": [],
+              "notes": [
+                {
+                  "kind": "text",
+                  "text": "Available to the user for ever, on demand."
+                }
+              ],
+              "prompt": "Plan your next week, one block at a time."
+            },
+            {
+              "n": 9,
+              "title": "Commitment",
+              "type": "reflection",
+              "key": "weekly_commitment",
+              "minutes": 2,
+              "body": [],
+              "notes": [],
+              "prompt": "One promise I make to myself next week"
+            },
+            {
+              "n": 10,
+              "title": "Conclusion",
+              "type": "conclude",
+              "minutes": 1,
+              "body": [
+                {
+                  "kind": "p",
+                  "text": "That's the reset. You now have a frog habit, a Hermit Hour, a reset break, a swap for your phone and a plan for the week, and they're yours to keep using. Come back to them whenever you need them."
+                }
+              ],
+              "notes": []
+            }
+          ]
+        }
+      ],
+      "notes": []
+    }
+  ]
+}
