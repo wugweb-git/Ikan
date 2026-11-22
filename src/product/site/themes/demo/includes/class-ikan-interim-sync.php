@@ -26,10 +26,16 @@ class Ikan_Interim_Sync {
 	 */
 	public static function init() {
 		// Register Action Scheduler callback
-		add_action( self::HOOK_NAME, array( __CLASS__, 'execute_sync' ) );
+		add_action( self::HOOK_NAME, array( __CLASS__, 'execute_sync' ), 10, 1 );
 
-		// Ensure scheduled action exists on init
-		add_action( 'init', array( __CLASS__, 'ensure_scheduled' ) );
+		// Event-driven: Trigger sync on user login
+		add_action( 'wp_login', array( __CLASS__, 'on_user_login' ), 10, 2 );
+
+		// Clean up recurring hourly schedule (switched to event-driven login triggers)
+		add_action( 'init', array( __CLASS__, 'cleanup_recurring_schedule' ) );
+
+		// Register REST endpoint for client/app login triggers
+		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
 
 		// Register WP-CLI command if running under CLI
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -38,22 +44,93 @@ class Ikan_Interim_Sync {
 	}
 
 	/**
-	 * Ensure the scheduled action exists in Action Scheduler queue.
+	 * Clean up legacy recurring hourly schedule so only event-driven login triggers run.
 	 */
-	public static function ensure_scheduled() {
-		if ( ! function_exists( 'as_has_scheduled_action' ) || ! function_exists( 'as_schedule_recurring_action' ) ) {
+	public static function cleanup_recurring_schedule() {
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			// Unschedules recurring hourly triggers
+			as_unschedule_all_actions( self::HOOK_NAME, null, self::ACTION_GROUP );
+		}
+	}
+
+	/**
+	 * Triggered whenever a user logs in (WP-Admin, frontend login, or SSO).
+	 * Enqueues an asynchronous background job so user login remains instant and non-blocking.
+	 *
+	 * @param string  $user_login Username.
+	 * @param WP_User $user       WP_User object.
+	 */
+	public static function on_user_login( $user_login, $user ) {
+		if ( ! $user || empty( $user->ID ) ) {
 			return;
 		}
 
-		if ( ! as_has_scheduled_action( self::HOOK_NAME ) ) {
-			as_schedule_recurring_action(
-				time() + 180,
-				self::RECURRENCE_SEC,
+		$payload = array(
+			'user_id' => $user->ID,
+			'email'   => $user->user_email,
+			'login'   => $user_login,
+		);
+
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action(
 				self::HOOK_NAME,
-				array(),
+				array( $payload ),
 				self::ACTION_GROUP
 			);
+		} else {
+			add_action( 'shutdown', function() use ( $payload ) {
+				self::execute_sync( $payload );
+			} );
 		}
+	}
+
+	/**
+	 * Register REST routes for app-driven login events (e.g. ikan2 PWA sign-in).
+	 */
+	public static function register_rest_routes() {
+		register_rest_route( 'ikan/v1', '/sync/trigger', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'rest_trigger_sync' ),
+			'permission_callback' => '__return_true',
+		) );
+	}
+
+	/**
+	 * REST callback to queue or execute sync on login.
+	 */
+	public static function rest_trigger_sync( $request ) {
+		$params  = $request->get_json_params();
+		$email   = ! empty( $params['email'] ) ? sanitize_email( $params['email'] ) : '';
+		$user_id = 0;
+		if ( $email ) {
+			$u = get_user_by( 'email', $email );
+			if ( $u ) {
+				$user_id = $u->ID;
+			}
+		}
+
+		$payload = array(
+			'user_id' => $user_id,
+			'email'   => $email,
+		);
+
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action(
+				self::HOOK_NAME,
+				array( $payload ),
+				self::ACTION_GROUP
+			);
+			return rest_ensure_response( array(
+				'queued'  => true,
+				'message' => 'Sync job enqueued asynchronously via Action Scheduler on login.',
+			) );
+		}
+
+		$res = self::execute_sync( $payload );
+		return rest_ensure_response( array(
+			'queued' => false,
+			'result' => $res,
+		) );
 	}
 
 	/**
@@ -69,9 +146,10 @@ class Ikan_Interim_Sync {
 	/**
 	 * Execute the background sync across all channels.
 	 *
+	 * @param array $args Optional context payload (e.g. user_id, email, login).
 	 * @return array Sync summary counts.
 	 */
-	public static function execute_sync() {
+	public static function execute_sync( $args = array() ) {
 		$start_time = microtime( true );
 
 		// Ensure destination tables exist
@@ -79,8 +157,11 @@ class Ikan_Interim_Sync {
 			Ikan_DB_Schema::create_tables();
 		}
 
+		$trigger = ! empty( $args['email'] ) ? 'login:' . $args['email'] : 'all';
+
 		$log = array(
 			'started_at'   => current_time( 'mysql' ),
+			'trigger'      => $trigger,
 			'newsletter'   => 0,
 			'contacts'     => 0,
 			'partners'     => 0,
