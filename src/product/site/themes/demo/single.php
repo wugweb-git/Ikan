@@ -121,22 +121,22 @@ get_header(); ?>
 </div>
 
 <main class="site-page-below-nav w-full flex-1 pt-20 sm:pt-24 pb-24 bg-background ikan2-theme ikan2-type">
-  <div class="max-w-app mx-auto md:max-w-4xl px-0 sm:px-4">
+  <div class="max-w-app sm:max-w-3xl lg:max-w-4xl mx-auto px-0 sm:px-6">
     
     <article style="--accent-strong: #10B981;" aria-labelledby="article-title">
       
       <!-- Cover Header with SVG Art from ikan2 -->
       <header id="cover" class="relative overflow-hidden sm:rounded-[28px]" aria-label="Cover">
-        <div class="h-60 sm:h-72 overflow-hidden">
+        <div class="h-60 sm:h-80 md:h-96 overflow-hidden">
           <?php echo ikan_render_art_svg( $art, 'w-full h-full object-cover' ); ?>
         </div>
 
         <!-- Floating Action Icons (Back & Share/Bookmark) -->
-        <div class="absolute inset-x-0 top-0 flex items-center justify-between p-3 sm:p-4">
+        <div class="absolute inset-x-0 top-0 flex items-center justify-between p-3 sm:p-5">
           <a
             href="<?php echo esc_url( home_url( '/resources/' ) ); ?>"
             aria-label="Back to resources"
-            class="grid h-10 w-10 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors"
+            class="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors"
           >
             <i data-lucide="arrow-left" class="h-5 w-5"></i>
           </a>
@@ -145,15 +145,15 @@ get_header(); ?>
             type="button"
             aria-label="Share article"
             onclick="if (navigator.share) { navigator.share({title: document.title, url: window.location.href}); } else { navigator.clipboard.writeText(window.location.href); alert('Article link copied to clipboard!'); }"
-            class="grid h-10 w-10 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors cursor-pointer"
+            class="grid h-10 w-10 sm:h-11 sm:w-11 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors cursor-pointer"
           >
             <i data-lucide="bookmark" class="h-5 w-5"></i>
           </button>
         </div>
       </header>
 
-      <!-- Article Body Card: exact rounded-t-[28px] -mt-8 overlap from ikan2 -->
-      <div id="article" class="relative -mt-8 rounded-t-[28px] bg-background px-5 sm:px-8 pt-6 sm:pt-8 shadow-xs sm:rounded-[28px] sm:mt-0">
+      <!-- Article Body Card: exact rounded-t-[28px] -mt-8 overlap from ikan2 on mobile, comfortable paper card on desktop -->
+      <div id="article" class="relative -mt-8 sm:-mt-10 rounded-t-[28px] sm:rounded-[28px] bg-background px-5 sm:px-10 lg:px-14 pt-6 sm:pt-10 shadow-xs border border-foreground/5">
         
         <!-- Category Eyebrow -->
         <p class="type-body-sm font-semibold text-[var(--accent-strong,#10B981)]">
@@ -161,13 +161,13 @@ get_header(); ?>
         </p>
 
         <!-- Headline / Title -->
-        <h1 id="article-title" class="type-headline-md mt-1 text-balance font-semibold text-foreground">
+        <h1 id="article-title" class="type-headline-md sm:type-headline-lg mt-1 text-balance font-semibold text-foreground">
           <?php the_title(); ?>
         </h1>
 
         <!-- Standfirst / Description -->
         <?php if ( has_excerpt() ) : ?>
-          <p class="type-title-lg mt-3 font-medium text-muted-foreground text-balance">
+          <p class="type-title-lg sm:type-subhead mt-3 font-medium text-muted-foreground text-balance">
             <?php echo esc_html( get_the_excerpt() ); ?>
           </p>
         <?php endif; ?>
@@ -330,7 +330,7 @@ get_header(); ?>
           </section>
         <?php endif; ?>
 
-        <!-- Keep Reading / Related Resources: 3 items using exact ResourceRow styling from ikan2 -->
+        <!-- Keep Reading / Related Resources: 1-column mobile list, 3-column grid on desktop -->
         <?php
         $related_query = new WP_Query( [
           'post_type'      => 'post',
@@ -351,8 +351,8 @@ get_header(); ?>
 
         if ( $related_query->have_posts() ) :
         ?>
-          <section class="mt-12 border-t border-foreground/10 pt-8 pb-4" aria-label="Keep Reading">
-            <div class="flex items-center justify-between mb-4">
+          <section class="mt-12 sm:mt-16 border-t border-foreground/10 pt-8 pb-4" aria-label="Keep Reading">
+            <div class="flex items-center justify-between mb-6">
               <h2 class="type-title-lg font-semibold text-foreground">Keep reading</h2>
               <a href="<?php echo esc_url( home_url( '/resources/' ) ); ?>" class="type-label-lg font-semibold text-[var(--accent-strong,#10B981)] hover:underline inline-flex items-center gap-1">
                 <span>All resources</span>
@@ -360,7 +360,7 @@ get_header(); ?>
               </a>
             </div>
 
-            <ul class="divide-y divide-foreground/10">
+            <ul class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <?php while ( $related_query->have_posts() ) : $related_query->the_post(); 
                 $rel_id      = get_the_ID();
                 $rel_meta    = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $rel_id ) : [];
@@ -370,9 +370,9 @@ get_header(); ?>
                 $rel_minutes = $rel_meta['minutes'] ?? ( get_post_meta( $rel_id, 'minutes', true ) ?: 5 );
                 $rel_medium  = $rel_meta['medium'] ?? ( get_post_meta( $rel_id, 'medium', true ) ?: 'article' );
               ?>
-                <li class="py-3">
-                  <a href="<?php the_permalink(); ?>" class="flex items-center gap-3 text-left group">
-                    <span class="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-[16px] bg-secondary">
+                <li class="rounded-2xl p-2.5 hover:bg-secondary/60 transition-colors">
+                  <a href="<?php the_permalink(); ?>" class="flex md:flex-col items-center md:items-start gap-3 text-left group">
+                    <span class="h-[84px] w-[84px] md:h-36 md:w-full shrink-0 overflow-hidden rounded-[16px] bg-secondary">
                       <?php echo ikan_render_art_svg( $rel_art, 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-200' ); ?>
                     </span>
                     <span class="min-w-0 flex-1">
@@ -388,17 +388,8 @@ get_header(); ?>
                           <span><?php echo get_the_date( 'j M' ); ?></span>
                         </span>
                         <span class="inline-flex items-center gap-1.5">
-                          <?php if ( $rel_medium === 'video' ) : ?>
-                            <i data-lucide="play" class="h-3.5 w-3.5"></i> Watch
-                          <?php elseif ( $rel_medium === 'audio' ) : ?>
-                            <i data-lucide="headphones" class="h-3.5 w-3.5"></i> Listen
-                          <?php else : ?>
-                            <i data-lucide="book-open" class="h-3.5 w-3.5"></i> Read
-                          <?php endif; ?>
-                        </span>
-                        <span class="inline-flex items-center gap-1.5">
                           <i data-lucide="clock-3" class="h-3.5 w-3.5"></i>
-                          <span><?php echo esc_html( $rel_minutes ); ?> min</span>
+                          <span><?php echo esc_html( $rel_minutes ); ?>m</span>
                         </span>
                       </p>
                     </span>

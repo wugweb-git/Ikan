@@ -75,24 +75,24 @@ if ( ! empty( $resources_list ) ) {
 ?>
 
 <main class="site-page-below-nav w-full flex-1 pt-20 sm:pt-24 pb-24 bg-background ikan2-theme ikan2-type">
-  <div class="max-w-app mx-auto md:max-w-3xl" style="--accent-strong: #10B981; --accent-container: #E6F4EA; --on-accent-container: #0D652D;">
+  <div class="max-w-app sm:max-w-4xl lg:max-w-5xl mx-auto px-0 sm:px-6" style="--accent-strong: #10B981; --accent-container: #E6F4EA; --on-accent-container: #0D652D;">
     
     <!-- Page Header (safe-top px-4 pb-1) -->
-    <header class="px-4 pb-1">
-      <h1 class="type-headline-lg font-semibold text-foreground">Resources</h1>
-      <p class="type-action mt-1 text-muted-foreground font-normal">
+    <header class="px-4 sm:px-0 pb-1">
+      <h1 class="type-headline-lg sm:type-display-sm font-semibold text-foreground">Resources</h1>
+      <p class="type-action sm:type-body-xl mt-1 text-muted-foreground font-normal">
         Articles and guides to support your mental health journey
       </p>
     </header>
 
-    <!-- Featured Horizontal Snap Carousel (matching ikan2 exactly) -->
+    <!-- Featured Horizontal Snap Carousel (matching ikan2 exactly on mobile, responsive track on desktop) -->
     <?php if ( ! empty( $carousel_items ) ) : ?>
-      <section class="mt-5" aria-label="Featured">
-        <div class="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
+      <section class="mt-5 sm:mt-8" aria-label="Featured">
+        <div class="no-scrollbar flex snap-x snap-mandatory gap-3 sm:gap-4 overflow-x-auto px-4 sm:px-0 pb-1">
           <?php foreach ( $carousel_items as $i => $r ) : ?>
             <a
               href="<?php echo esc_url( $r['permalink'] ); ?>"
-              class="relative block h-[232px] w-[86%] sm:w-[320px] shrink-0 snap-center overflow-hidden rounded-[28px] text-left text-white shadow-xs group"
+              class="relative block h-[232px] sm:h-[260px] w-[86%] sm:w-[340px] lg:w-[360px] shrink-0 snap-center overflow-hidden rounded-[28px] text-left text-white shadow-xs group"
             >
               <div class="absolute inset-0">
                 <?php echo ikan_render_art_svg( $r['art'], 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300' ); ?>
@@ -150,12 +150,12 @@ if ( ! empty( $resources_list ) ) {
       </section>
     <?php endif; ?>
 
-    <!-- Search & Filter Controls (exact bar from ikan2) -->
-    <div class="mt-6 px-4">
-      <div class="flex items-center gap-2">
+    <!-- Search & Filter Controls (exact bar from ikan2 on mobile, comfortable desktop controls) -->
+    <div class="mt-6 sm:mt-8 px-4 sm:px-0">
+      <div class="flex items-center gap-3">
         
         <!-- Live Search Input -->
-        <div class="flex h-10 flex-1 items-center gap-2 rounded-[10px] border border-foreground/20 pr-2 pl-3 bg-white">
+        <div class="flex h-10 sm:h-11 flex-1 sm:max-w-md items-center gap-2 rounded-[10px] border border-foreground/20 pr-2 pl-3 bg-white">
           <i data-lucide="search" class="h-4 w-4 shrink-0 text-muted-foreground"></i>
           <input
             type="text"
@@ -177,7 +177,7 @@ if ( ! empty( $resources_list ) ) {
       </div>
 
       <!-- Tabbed Filter Buttons (All, Read, Listen, Watch) -->
-      <div class="no-scrollbar flex gap-2 overflow-x-auto mt-3" role="tablist" aria-label="Filter resources">
+      <div class="no-scrollbar flex gap-2 overflow-x-auto mt-3 sm:mt-4" role="tablist" aria-label="Filter resources">
         <button
           type="button"
           data-filter="all"
@@ -213,21 +213,21 @@ if ( ! empty( $resources_list ) ) {
     </div>
 
     <!-- Count indicator -->
-    <p id="resources-count" class="type-body-sm mt-4 px-4 text-muted-foreground">
+    <p id="resources-count" class="type-body-sm mt-4 px-4 sm:px-0 text-muted-foreground">
       <?php echo count( $resources_list ); ?> resources
     </p>
 
     <!-- Empty State Container -->
-    <div id="resources-empty" class="hidden mx-4 mt-3 overflow-hidden rounded-[24px] bg-secondary p-8 text-center">
+    <div id="resources-empty" class="hidden mx-4 sm:mx-0 mt-3 overflow-hidden rounded-[24px] bg-secondary p-8 text-center">
       <p class="type-subhead font-semibold text-foreground">Nothing matches that</p>
       <p class="type-body-md mt-1 text-muted-foreground">Try another word, like sleep, stress, or anxiety.</p>
     </div>
 
-    <!-- Resource Row List: 1:1 ResourceRow component from ikan2 -->
-    <ul id="resources-list" class="mt-2 px-4 divide-y divide-foreground/10">
+    <!-- Resource List: 1-column mobile list, 2-column grid on desktop >= 640px -->
+    <ul id="resources-list" class="mt-2 px-4 sm:px-0 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
       <?php foreach ( $resources_list as $r ) : ?>
         <li 
-          class="res-item py-3" 
+          class="res-item rounded-[20px] p-2.5 sm:p-3 hover:bg-secondary/60 transition-colors" 
           data-title="<?php echo esc_attr( strtolower( $r['title'] ) ); ?>" 
           data-category="<?php echo esc_attr( strtolower( $r['category'] ) ); ?>" 
           data-medium="<?php echo esc_attr( strtolower( $r['medium'] ) ); ?>"
