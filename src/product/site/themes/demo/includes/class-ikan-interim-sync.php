@@ -548,24 +548,16 @@ class Ikan_Interim_Sync {
 			$seconds   = isset( $r['seconds'] ) ? intval( $r['seconds'] ) : 0;
 			$completed = ! empty( $r['completedAt'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( $r['completedAt'] ) ) : current_time( 'mysql' );
 
-			// Compute approximate score and severity band
-			$score = 0;
-			$severity = 'normal';
-			if ( ! empty( $r['snapshot']['score'] ) ) {
-				$score = intval( $r['snapshot']['score'] );
-			} elseif ( isset( $r['answers'] ) && is_array( $r['answers'] ) ) {
-				foreach ( $r['answers'] as $ans_val ) {
-					if ( is_numeric( $ans_val ) ) {
-						$score += intval( $ans_val );
-					}
-				}
-			}
-
-			if ( ! empty( $r['snapshot']['band'] ) ) {
-				$severity = sanitize_text_field( strtolower( $r['snapshot']['band'] ) );
-			} elseif ( ! empty( $r['snapshot']['severity'] ) ) {
-				$severity = sanitize_text_field( strtolower( $r['snapshot']['severity'] ) );
-			}
+			// Compute score, severity band, and clinical risk adhering 1:1 to ikan2
+			$computed_res   = self::compute_clinical_result(
+				$slug,
+				isset( $r['answers'] ) ? (array) $r['answers'] : array(),
+				isset( $r['snapshot'] ) ? (array) $r['snapshot'] : null
+			);
+			$score          = $computed_res['score'];
+			$severity       = $computed_res['severity'];
+			$band_label     = $computed_res['band_label'];
+			$has_risk       = $computed_res['risk'];
 
 			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE assessment_result_id = %s", $res_id ) );
 
@@ -596,22 +588,22 @@ class Ikan_Interim_Sync {
 			$inst_code      = $inst['code'];
 			$inst_name      = $inst['name'];
 			$matrix_spec    = $inst['matrix'];
-			$severity_label = self::format_severity_label( $severity );
+			$severity_label = self::format_severity_label( $band_label ? $band_label : $severity );
 
 			// FluentCRM Tagging & Meta
 			if ( ! empty( $user_info['fc_sub_id'] ) ) {
-				// Canonical clinical tag e.g. assess:PHQ-9:Moderate
+				// Canonical clinical tag e.g. assess:PHQ-9:Moderately-Severe
 				self::add_fluentcrm_tag( $user_info['fc_sub_id'], "assess:{$inst_code}:{$severity_label}" );
 				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_assessment', $inst_name );
 				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'assessment_id', $clean_id );
 				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_score', $score );
 				self::update_fluentcrm_meta( $user_info['fc_sub_id'], 'latest_severity', $severity_label );
 
-				if ( 'severe' === $severity || 'high' === $severity ) {
+				if ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) {
 					self::add_fluentcrm_tag( $user_info['fc_sub_id'], 'clinical:high-risk' );
 					self::add_fluentcrm_note(
 						$user_info['fc_sub_id'],
-						sprintf( 'High-Risk Alert: Member completed %s with score %d (%s)', $inst_name, $score, $severity_label )
+						sprintf( 'Clinical Attention: Member completed %s with score %s (%s)%s', $inst_name, (string) $score, $severity_label, $has_risk ? ' [Risk Flag Endorsed]' : '' )
 					);
 				}
 			}
@@ -624,7 +616,7 @@ class Ikan_Interim_Sync {
 				update_user_meta( $user_info['wp_user_id'], 'latest_score', $score );
 				update_user_meta( $user_info['wp_user_id'], 'latest_severity', $severity );
 				update_user_meta( $user_info['wp_user_id'], 'scoring_matrix', $matrix_spec );
-				if ( 'severe' === $severity || 'high' === $severity ) {
+				if ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) {
 					update_user_meta( $user_info['wp_user_id'], 'clinical_risk_flag', 1 );
 				}
 			}
@@ -841,51 +833,252 @@ class Ikan_Interim_Sync {
 	}
 
 	/**
-	 * Canonical mapping of raw assessment concern slugs to validated clinical instruments.
+	 * Cached clinical instruments bundle from assets/data/clinical-instruments.json.
+	 *
+	 * @var array|null
+	 */
+	private static $clinical_instruments_bundle = null;
+
+	/**
+	 * Retrieve and cache the clinical instruments bundle (questions, scales, profiles, and cutoffs).
+	 *
+	 * @return array
+	 */
+	public static function get_instruments_bundle() {
+		if ( null !== self::$clinical_instruments_bundle ) {
+			return self::$clinical_instruments_bundle;
+		}
+		$file = get_template_directory() . '/assets/data/clinical-instruments.json';
+		if ( file_exists( $file ) ) {
+			$json = json_decode( file_get_contents( $file ), true );
+			if ( is_array( $json ) ) {
+				self::$clinical_instruments_bundle = $json;
+				return self::$clinical_instruments_bundle;
+			}
+		}
+		self::$clinical_instruments_bundle = array( 'assessments' => array(), 'profiles' => array() );
+		return self::$clinical_instruments_bundle;
+	}
+
+	/**
+	 * Compute clinical assessment result adhering 1:1 to ikan2 instruments.ts and frozen.ts.
+	 *
+	 * @param string $slug Assessment slug.
+	 * @param array $answers Answers map [question_id => option_value].
+	 * @param array|null $snapshot Optional snapshot from ikan2.
+	 * @return array Clinical result data [score, severity, band_label, risk].
+	 */
+	public static function compute_clinical_result( $slug, $answers = array(), $snapshot = null ) {
+		// 1. If snapshot already contains scores and headline from ikan2, read verbatim
+		if ( ! empty( $snapshot ) && is_array( $snapshot ) && ! empty( $snapshot['scores'] ) && is_array( $snapshot['scores'] ) ) {
+			$headline_id = ! empty( $snapshot['headline'] ) ? $snapshot['headline'] : null;
+			$head_score  = null;
+
+			foreach ( $snapshot['scores'] as $sc ) {
+				if ( $headline_id && isset( $sc['score']['id'] ) && $sc['score']['id'] === $headline_id ) {
+					$head_score = $sc;
+					break;
+				}
+			}
+
+			if ( ! $head_score && ! empty( $snapshot['scores'][0] ) ) {
+				$head_score = $snapshot['scores'][0];
+			}
+
+			if ( $head_score && isset( $head_score['value'] ) ) {
+				$score      = $head_score['value'];
+				$severity   = ! empty( $head_score['band']['severity'] ) ? $head_score['band']['severity'] : 'minimal';
+				$band_label = ! empty( $head_score['band']['label'] ) ? $head_score['band']['label'] : ucfirst( $severity );
+				$risk       = ! empty( $snapshot['risk'] );
+
+				return array(
+					'score'      => $score,
+					'severity'   => $severity,
+					'band_label' => $band_label,
+					'risk'       => $risk,
+				);
+			}
+		}
+
+		// 2. Otherwise compute from ikan2 clinical instrument specs
+		$bundle      = self::get_instruments_bundle();
+		$assessments = isset( $bundle['assessments'] ) ? $bundle['assessments'] : array();
+		$profiles    = isset( $bundle['profiles'] ) ? $bundle['profiles'] : array();
+
+		$assessment = null;
+		foreach ( $assessments as $a ) {
+			if ( $a['slug'] === $slug || $a['id'] === $slug ) {
+				$assessment = $a;
+				break;
+			}
+		}
+
+		if ( ! $assessment || empty( $answers ) || ! is_array( $answers ) ) {
+			// Fallback: sum raw answers
+			$raw_sum = 0;
+			if ( is_array( $answers ) ) {
+				foreach ( $answers as $v ) {
+					if ( is_numeric( $v ) ) {
+						$raw_sum += intval( $v );
+					}
+				}
+			}
+			return array(
+				'score'      => $raw_sum,
+				'severity'   => 'minimal',
+				'band_label' => 'Minimal',
+				'risk'       => false,
+			);
+		}
+
+		// Execute ikan2 scoreAll() logic
+		$headline_id = isset( $assessment['headline'] ) ? $assessment['headline'] : null;
+		$head_result = null;
+		$risk        = false;
+
+		// Check risk items (e.g. self-harm depression-q9)
+		if ( ! empty( $assessment['questions'] ) && is_array( $assessment['questions'] ) ) {
+			foreach ( $assessment['questions'] as $q ) {
+				if ( ! empty( $q['risk'] ) && isset( $answers[ $q['id'] ] ) && intval( $answers[ $q['id'] ] ) > 0 ) {
+					$risk = true;
+				}
+			}
+		}
+
+		if ( ! empty( $assessment['scores'] ) && is_array( $assessment['scores'] ) ) {
+			foreach ( $assessment['scores'] as $sc ) {
+				$sc_id     = $sc['id'];
+				$prof_id   = $sc['profile'];
+				$profile   = isset( $profiles[ $prof_id ] ) ? $profiles[ $prof_id ] : null;
+				if ( ! $profile ) {
+					continue;
+				}
+
+				// Find questions contributing to this score
+				$contributing = array();
+				foreach ( $assessment['questions'] as $q ) {
+					if ( in_array( $sc_id, $q['scores'], true ) ) {
+						$contributing[] = $q;
+					}
+				}
+
+				$sum_val   = 0;
+				$answered  = 0;
+
+				foreach ( $contributing as $q ) {
+					$qid = $q['id'];
+					if ( isset( $answers[ $qid ] ) && is_numeric( $answers[ $qid ] ) ) {
+						$val = intval( $answers[ $qid ] );
+						// Handle reverse scoring
+						if ( ! empty( $q['reversed'] ) && isset( $assessment['scales'][ $q['scale'] ]['options'] ) ) {
+							$scale_options = $assessment['scales'][ $q['scale'] ]['options'];
+							$vals = array_column( $scale_options, 'value' );
+							if ( ! empty( $vals ) ) {
+								$val = min( $vals ) + max( $vals ) - $val;
+							}
+						}
+						$sum_val += $val;
+						$answered++;
+					}
+				}
+
+				$calc_value = null;
+				if ( $answered === count( $contributing ) && count( $contributing ) > 0 ) {
+					if ( 'sum' === $profile['calc'] ) {
+						$calc_value = $sum_val;
+					} elseif ( 'mean' === $profile['calc'] ) {
+						$calc_value = round( $sum_val / count( $contributing ), 2 );
+					} elseif ( 'sum4' === $profile['calc'] ) {
+						$calc_value = $sum_val * 4;
+					}
+				}
+
+				// Match band
+				$matched_band = null;
+				if ( null !== $calc_value && ! empty( $profile['bands'] ) ) {
+					$bands_count = count( $profile['bands'] );
+					foreach ( $profile['bands'] as $idx => $b ) {
+						$is_last = ( $idx === $bands_count - 1 );
+						if ( $calc_value >= $b['min'] && ( $is_last ? $calc_value <= $b['max'] : $calc_value < $b['max'] ) ) {
+							$matched_band = $b;
+							break;
+						}
+					}
+				}
+
+				$result_item = array(
+					'score_id'   => $sc_id,
+					'value'      => $calc_value,
+					'band'       => $matched_band,
+				);
+
+				if ( $headline_id && $sc_id === $headline_id ) {
+					$head_result = $result_item;
+					break;
+				} elseif ( ! $head_result ) {
+					$head_result = $result_item;
+				}
+			}
+		}
+
+		$final_score = ( $head_result && null !== $head_result['value'] ) ? $head_result['value'] : 0;
+		$severity    = ( $head_result && ! empty( $head_result['band']['severity'] ) ) ? $head_result['band']['severity'] : 'minimal';
+		$band_label  = ( $head_result && ! empty( $head_result['band']['label'] ) ) ? $head_result['band']['label'] : ucfirst( $severity );
+
+		return array(
+			'score'      => $final_score,
+			'severity'   => $severity,
+			'band_label' => $band_label,
+			'risk'       => $risk,
+		);
+	}
+
+	/**
+	 * Canonical mapping of raw assessment concern slugs to validated clinical instruments matching ikan2.
 	 *
 	 * Maps internal concern slugs to standardized clinical names, acronyms, and scoring matrix specs.
 	 */
 	public static function get_clinical_instrument( $slug ) {
 		$map = array(
 			'feeling-depressed-and-hopeless' => array(
-				'id'     => 'phq-9',
+				'id'     => 'asm_1767129862254_frzeigbdb',
 				'code'   => 'PHQ-9',
 				'name'   => 'PHQ-9 (Depression & Low Mood)',
 				'matrix' => 'PHQ-9: Sum of 9 items, 0–27 (Minimal 0–4, Mild 5–9, Moderate 10–14, Moderately Severe 15–19, Severe 20–27)',
 			),
-			'feeling-worried-and-stressed' => array(
-				'id'     => 'gad-7',
-				'code'   => 'GAD-7',
-				'name'   => 'GAD-7 (Anxiety & Worry)',
-				'matrix' => 'GAD-7: Sum of 7 items, 0–21 (Minimal 0–4, Mild 5–9, Moderate 10–14, Severe 15–21)',
-			),
 			'feeling-overwhelmed-and-anxious' => array(
-				'id'     => 'pss-10',
+				'id'     => 'asm_1767129765741_wse9aeprv',
+				'code'   => 'GAD-7',
+				'name'   => 'GAD-7 (Anxiety & Panic)',
+				'matrix' => 'GAD-7: Sum of 7 items, 0–21 (Minimal 0–4, Mild 5–7, Moderate 8–9, Moderately Severe 10–14, Severe 15–21)',
+			),
+			'feeling-worried-and-stressed' => array(
+				'id'     => 'asm_1767129926263_ru3v6dozh',
 				'code'   => 'PSS-10',
 				'name'   => 'PSS-10 (Perceived Stress)',
-				'matrix' => 'PSS-10: 10 items with reverse scoring on 4,5,7,8, 0–40 (Low 0–13, Moderate 14–26, High 27–40)',
-			),
-			'feeling-drained-and-burned-out' => array(
-				'id'     => 'bat-23',
-				'code'   => 'BAT-23',
-				'name'   => 'BAT-23 (Burnout Assessment Tool)',
-				'matrix' => 'BAT-23: Mean score 1.0–5.0 across 4 core burnout dimensions (No Risk <2.59, At Risk 2.59–3.01, High Risk >3.01)',
+				'matrix' => 'PSS-10: 10 items, 0–40 (Low Stress 0–13, Moderate Stress 14–26, High Stress 27–40)',
 			),
 			'struggling-with-quality-sleep' => array(
-				'id'     => 'sci',
-				'code'   => 'SCI',
-				'name'   => 'SCI (Sleep Condition Indicator)',
-				'matrix' => 'SCI: 8 items, 0–32 (Clinical Insomnia <=16, Subthreshold 17–24, Good Sleep 25–32)',
+				'id'     => 'asm_1767130007889_mewy939gi',
+				'code'   => 'ISI',
+				'name'   => 'Sleep Health (Insomnia Severity)',
+				'matrix' => 'Insomnia Themes: 8 items, 8–40 (Healthy Sleep 8–16, Poor Sleep 17–31, Very Poor Sleep 32–40)',
 			),
 			'struggling-to-balance-life' => array(
-				'id'     => 'who-5',
-				'code'   => 'WHO-5',
-				'name'   => 'WHO-5 (Work-Life Well-being)',
-				'matrix' => 'WHO-5: Sum of 5 items x 4, 0–100% (Poor Well-being <=50%, Risk of Depression <=28%, Optimal >50%)',
+				'id'     => 'asm_1767130043662_wc4qpivfl',
+				'code'   => 'Work-Strain',
+				'name'   => 'Workplace Strain (Life Balance)',
+				'matrix' => 'Workplace Strain: 8 items, 8–40 (Nil 8–15, Fairly Low 16–20, Moderate 21–25, Severe 26–30, Potentially Dangerous 31–40)',
+			),
+			'feeling-drained-and-burned-out' => array(
+				'id'     => 'asm_1767129964930_bv8cqgm16',
+				'code'   => 'BAT-23',
+				'name'   => 'BAT-23 (Burnout Assessment Tool)',
+				'matrix' => 'BAT-23: Mean score 1.0–5.0 across core burnout dimensions (Low 1.0–2.58, Normal 2.59–3.01, High 3.02–5.0)',
 			),
 			'unsure-or-general-concern' => array(
-				'id'     => 'general-concern',
-				'code'   => 'General-Concern',
+				'id'     => 'asm_1767129718791_zj1t8hx3c',
+				'code'   => 'General',
 				'name'   => 'General Holistic Concern',
 				'matrix' => 'General Battery: Composite screening covering GAD-2, PHQ-2, WHO-5, NGSE, and BRS',
 			),
@@ -895,8 +1088,33 @@ class Ikan_Interim_Sync {
 			return $map[ $slug ];
 		}
 
+		// Alias handling for codes/IDs
+		$aliases = array(
+			'phq-9'   => 'feeling-depressed-and-hopeless',
+			'phq9'    => 'feeling-depressed-and-hopeless',
+			'gad-7'   => 'feeling-overwhelmed-and-anxious',
+			'gad7'    => 'feeling-overwhelmed-and-anxious',
+			'pss-10'  => 'feeling-worried-and-stressed',
+			'pss10'   => 'feeling-worried-and-stressed',
+			'isi'     => 'struggling-with-quality-sleep',
+			'sci'     => 'struggling-with-quality-sleep',
+			'sleep'   => 'struggling-with-quality-sleep',
+			'balance' => 'struggling-to-balance-life',
+			'who-5'   => 'struggling-to-balance-life',
+			'who5'    => 'struggling-to-balance-life',
+			'bat-23'  => 'feeling-drained-and-burned-out',
+			'bat23'   => 'feeling-drained-and-burned-out',
+			'burnout' => 'feeling-drained-and-burned-out',
+			'general' => 'unsure-or-general-concern',
+		);
+
+		$clean_key = strtolower( trim( $slug ) );
+		if ( isset( $aliases[ $clean_key ] ) && isset( $map[ $aliases[ $clean_key ] ] ) ) {
+			return $map[ $aliases[ $clean_key ] ];
+		}
+
 		foreach ( $map as $item ) {
-			if ( $item['id'] === $slug || strtolower( $item['code'] ) === strtolower( $slug ) ) {
+			if ( $item['id'] === $slug || strtolower( $item['code'] ) === $clean_key ) {
 				return $item;
 			}
 		}
@@ -916,19 +1134,31 @@ class Ikan_Interim_Sync {
 	public static function format_severity_label( $band ) {
 		$band = strtolower( trim( (string) $band ) );
 		$map  = array(
-			'normal'            => 'Normal',
-			'minimal'           => 'Minimal',
-			'mild'              => 'Mild',
-			'moderate'          => 'Moderate',
-			'moderately-severe' => 'Moderately-Severe',
-			'severe'            => 'Severe',
-			'high'              => 'High',
-			'low'               => 'Low',
-			'at-risk'           => 'At-Risk',
-			'no-risk'           => 'No-Risk',
-			'optimal'           => 'Optimal',
+			'normal'                => 'Normal',
+			'minimal'               => 'Minimal',
+			'mild'                  => 'Mild',
+			'moderate'              => 'Moderate',
+			'moderately-severe'     => 'Moderately-Severe',
+			'moderately severe'     => 'Moderately-Severe',
+			'severe'                => 'Severe',
+			'high'                  => 'High',
+			'low'                   => 'Low',
+			'at-risk'               => 'At-Risk',
+			'no-risk'               => 'No-Risk',
+			'healthy sleep'         => 'Healthy-Sleep',
+			'poor sleep'            => 'Poor-Sleep',
+			'very poor sleep'       => 'Very-Poor-Sleep',
+			'low stress'            => 'Low-Stress',
+			'moderate stress'       => 'Moderate-Stress',
+			'high stress'           => 'High-Stress',
+			'fairly low'            => 'Fairly-Low',
+			'potentially dangerous' => 'Potentially-Dangerous',
+			'nil'                   => 'Nil',
 		);
-		return isset( $map[ $band ] ) ? $map[ $band ] : ucfirst( $band );
+		if ( isset( $map[ $band ] ) ) {
+			return $map[ $band ];
+		}
+		return ucwords( str_replace( array( '-', '_' ), ' ', $band ) );
 	}
 
 	/**
@@ -949,9 +1179,13 @@ class Ikan_Interim_Sync {
 			 WHERE slug LIKE 'assess-feeling-%' 
 			    OR slug LIKE 'assess-struggling-%' 
 			    OR slug LIKE 'assess-unsure-%'
+			    OR slug LIKE 'assess-sci-%'
+			    OR slug LIKE 'assess-who-5-%'
 			    OR title LIKE 'assess:feeling-%' 
 			    OR title LIKE 'assess:struggling-%'
-			    OR title LIKE 'assess:unsure-%'"
+			    OR title LIKE 'assess:unsure-%'
+			    OR title LIKE 'assess:SCI:%'
+			    OR title LIKE 'assess:WHO-5:%'"
 		);
 
 		if ( ! empty( $legacy_tags ) ) {
