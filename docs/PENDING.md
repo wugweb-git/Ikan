@@ -2,7 +2,7 @@
 
 Single source of truth for outstanding work across sessions. Update this file whenever a deployment or major change completes — see [`docs/GOVERNANCE.md`](GOVERNANCE.md).
 
-*Last updated: 2026-11-22*
+*Last updated: 2026-11-23*
 
 ---
 
@@ -14,18 +14,31 @@ Single source of truth for outstanding work across sessions. Update this file wh
   - Hostinger already performs automated daily hosting snapshots and database backups.
   - UpdraftPlus on WordPress provides direct off-site backup destinations (Google Drive/S3) with zero dependency on GitHub Actions runners.
 
-- [x] **Database & Sync Infrastructure (Interim Buffer -> WordPress & FluentCRM)**:
-  - **Architecture Confirmed**: UI stays in `ikan2` (React/PWA/M3), Supabase acts as interim buffer, WordPress MySQL & FluentCRM on Hostinger act as main authoritative DB.
+- [x] **Database & Clinical Sync Infrastructure (Interim Buffer -> WordPress & FluentCRM)**:
+  - **Architecture Confirmed**: UI lives in `ikan2` (React/PWA/M3), Supabase acts as interim buffer/shock absorber, WordPress MySQL & FluentCRM on Hostinger act as main authoritative DB.
   - **4 Custom Clinical Tables Created (`class-ikan-db-schema.php`)**:
     - `wp_ikan_assessment_results` (scores, severity bands, answers, snapshots)
     - `wp_ikan_program_progress` (completed days, answers, feedback ratings, tracker data)
     - `wp_ikan_journals` (mood/sleep/stress ratings, tags, encrypted reflections)
     - `wp_ikan_wellness_scores` (daily longitudinal wellness scores)
-  - **Full Ingestion Worker Implemented (`class-ikan-interim-sync.php`)**:
-    - Maps Supabase user state (`assessments.v1`, `equip.*.v2`, `journal.v1`, `wellness.v1`) to destination tables.
-    - Syncs contact profile, tags (`prog:day-N`, `assess:phq9:band`), and custom fields in FluentCRM.
-    - Automated alerts for high-risk assessments (`assess:phq9:severe`) and clinician feedback notes.
-    - Background Action Scheduler hourly job active on Hostinger (Action ID `1893`).
+  - **Canonical Clinical Assessment Naming & Tagging (`class-ikan-interim-sync.php`)**:
+    - Maps concern slugs to canonical instruments: `PHQ-9` (Depression), `GAD-7` (Anxiety), `PSS-10` (Stress), `BAT-23` (Burnout), `SCI` (Sleep), `WHO-5` (Well-being), `General-Concern` (General Screening).
+    - FluentCRM tags format: `assess:{$CODE}:{$SEVERITY}` (e.g. `assess:PHQ-9:Normal`, `assess:GAD-7:Normal`).
+    - Purged legacy slug tags (`assess:feeling-...`, `assess:struggling-...`).
+  - **Secure Custom Fields (SCF) Clinical Field Group on `wp_users` (`class-ikan-scf-fields.php`)**:
+    - Registered `group_ikan_member_clinical` with 15 clinical fields across Equip pacing, assessments, scoring matrices, and wellness scores.
+    - Synchronized user meta on `wp_users` on member login / sync.
+  - **Clinical Admin Visual Reference Hub (`class-ikan-clinical-admin.php`)**:
+    - Assessment instruments, Equip curricula, and mood journal steps are strictly locked/immutable.
+    - WP-Admin provides a read-only visual reference for clinicians under **iKAN Clinical** (`wp-admin/admin.php?page=ikan-clinical`).
+  - **Event-Driven Login Sync Worker**:
+    - Sync triggers automatically on `wp_login` via asynchronous Action Scheduler jobs, plus REST endpoint `POST /wp-json/ikan/v1/sync/trigger`.
+
+- [x] **Resources Catalog, Tags, Labels & Authors Synchronization**:
+  - Enriched all 28 resources in `assets/resources.json` with verified authors, 4–6 topical & clinical `tags`, badge `labels`, duration, and linked clinical assessments/programs.
+  - Ingested all tags, labels, and authors into WordPress database posts via `ingest_resources.php`.
+  - Exposed complete `tags`, `labels`, and `author` in `/wp-json/ikan/v1/resources` and `/wp-json/ikan/v1/resources/<slug>`.
+  - Updated `resources.php` with author credits, read/watch duration, interactive `#tag` pills, and real-time instant search across tags and authors.
 
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.
@@ -42,7 +55,12 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 2. Recent Completed Milestones (2026-11-23)
 
-- [x] **Action Scheduler Autonomous Interim Sync Worker (Part 1 Automated)**:
+- [x] **Canonical Clinical Assessment Naming, SCF Field Group, and Resources Sync**:
+  - Replaced raw concern slugs (`assess:feeling-depressed-and-hopeless:normal`) with validated clinical instrument names and codes (`assess:PHQ-9:Normal`, `assess:GAD-7:Normal`, `assess:PSS-10:Normal`, `assess:BAT-23:Normal`, `assess:SCI:Normal`, `assess:WHO-5:Normal`, `assess:General-Concern:Normal`).
+  - Automatically purged old slug tags from `wp_fc_tags` and `wp_fc_subscriber_pivot`.
+  - Registered SCF Clinical Field Group (`group_ikan_member_clinical`) on `wp_users` with 15 clinical fields.
+  - Synchronized all 28 resources with complete `tags`, `labels`, and verified `authors` across `assets/resources.json`, WordPress database posts, the REST API, and `resources.php`.
+  - Deployed to Hostinger Cloud production and verified live with clean CI run.
   - Authored and deployed `class-ikan-interim-sync.php` powered by WordPress Action Scheduler (`group: ikan-sync`).
   - Schedules autonomous hourly synchronization of zero-effort datasets (Newsletters, Contacts, Partners, Member Profiles) into FluentCRM, Fluent Forms, and `wp_users` with zero AI token consumption.
   - Verified live on Hostinger with Action Scheduler task ID `1893` and WP-CLI command `wp ikan-sync`.

@@ -8,16 +8,15 @@ This file is read by AI coding assistants. It documents the conventions, archite
 
 ## Stack (current)
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend | React + TypeScript | 18.3.1 / TS 5 |
-| Styling | Tailwind CSS v4 + Radix UI | 4.1.12 |
-| Animation | Framer Motion | 12.x |
-| Build | Vite | 6.4.x |
-| Backend | Supabase Edge Function (Deno + Hono) | single function |
-| Database | Supabase Postgres KV table | `kv_store_cc205da9` |
-| Auth | Supabase Auth | v2, email confirmation ON |
-| Deployment | Vercel (frontend) + Supabase (backend) | |
+| Layer | Technology | Hosting / Surface |
+|-------|-----------|-------------------|
+| Primary Website & Theme | WordPress (Block Theme `demo`) | Hostinger Cloud (`ikanhealth.in`) |
+| Backend Services | FluentCRM, Fluent Forms, Rank Math | WordPress Admin (`ikanhealth.in`) |
+| Custom Clinical DB | MySQL tables `wp_ikan_*` | Hostinger Cloud MySQL |
+| Custom Profile Fields | Secure Custom Fields (SCF) on `wp_users` | WordPress Admin |
+| Member PWA & Buffer | React 18 + TS + M3 (`ikan2`) | Supabase (`app.ikanhealth.in`) |
+| Build Tooling | Vite + Tailwind CSS v4 | Local & CI |
+| Deployment | `bash scripts/deploy-prod.sh` | Hostinger Cloud (SSH: `65002`) |
 
 ---
 
@@ -31,27 +30,60 @@ Production previously lived on `main`.
 If you are reading an older doc, a commit message or a changelog entry that
 names `main`, it means what is now `wordpress`.
 
-### Deploy method — the guarded scripts
+### Deploy method — the guarded script to Hostinger
 
-**A push to `main` DOES deploy production.** `vercel.json` sets
-`git.deploymentEnabled: { main: true }` with `github.enabled: true`, and commit `82f08723`
-turned `autoJobCancelation` off on purpose. Observed on 2026-10-03: a production build appeared
-within three minutes of a push, before the deploy script was run at all.
-
-This file used to say the opposite — "git-pushed builds auto-cancel at the project level" — which
-was true before that commit and has been wrong since.
-
-So the push is the risky step, not the deploy. Still use the scripts, because they are what runs
-the guard (right branch, level with origin, CI green) and what verifies the served bundle matches
-the local build. Never run the CLI directly:
+Deploy production only via:
 
 ```bash
-bash scripts/deploy-prod.sh    # frontend (Vercel)
-bash scripts/deploy-edge.sh    # edge function — run whenever a merge touches src/supabase/functions/server/
+bash scripts/deploy-prod.sh
 ```
 
-Both run `scripts/deploy-guard.sh` first, which refuses unless you are on `main`,
+This runs `scripts/deploy-guard.sh` first, which refuses unless you are on `wordpress`,
 level with origin, with no uncommitted changes in what ships, and CI is green on that exact commit.
+It compiles the local build, verifies the theme manifest, rsyncs the WordPress theme (`src/product/site/themes/demo/`)
+and built Vite assets (`dist/assets/`) to Hostinger production (`u544169507@46.28.45.135:65002`),
+purges LiteSpeed & CDN caches, and verifies live HTTP 200 smoke tests across all 12 core routes.
+
+---
+
+## Clinical Architecture & Interim Sync (Locked Clinical Core)
+
+1. **Locked Clinical Model**:
+   - Clinical assessment instruments, scoring formulas, cutoffs, Equip 14/28-day curricula, and mood journal steps are **strictly immutable and locked**.
+   - WordPress Admin provides only a read-only visual reference for clinicians under **iKAN Clinical** (`wp-admin/admin.php?page=ikan-clinical`). Do not build or look for editable curriculum CPTs or dynamic form editors — clinical logic is code-defined.
+2. **Authority & Interim DB Buffer**:
+   - Members and authoritative patient records live in **WordPress / FluentCRM** (`ikanhealth.in`).
+   - The Supabase database (`ikan2`) acts as the shock absorber / interim buffer for the PWA client.
+   - User states are unmarshaled into 4 dedicated WordPress tables via `class-ikan-db-schema.php`:
+     - `wp_ikan_assessment_results` (scores, severity bands, answers, snapshots)
+     - `wp_ikan_program_progress` (completed days, answers, feedback ratings, tracker data)
+     - `wp_ikan_journals` (mood/sleep/stress ratings, tags, encrypted reflections)
+     - `wp_ikan_wellness_scores` (longitudinal wellness trajectory)
+3. **Canonical Assessment Mapping & Tagging (`class-ikan-interim-sync.php`)**:
+   - Internal concern slugs are mapped to validated clinical instruments:
+     - `feeling-depressed-and-hopeless` ➔ `PHQ-9` (Depression & Low Mood)
+     - `feeling-worried-and-stressed` ➔ `GAD-7` (Anxiety & Worry)
+     - `feeling-overwhelmed-and-anxious` ➔ `PSS-10` (Perceived Stress)
+     - `feeling-drained-and-burned-out` ➔ `BAT-23` (Burnout Assessment Tool)
+     - `struggling-with-quality-sleep` ➔ `SCI` (Sleep Condition Indicator)
+     - `struggling-to-balance-life` ➔ `WHO-5` (Work-Life Well-being)
+     - `unsure-or-general-concern` ➔ `General-Concern` (General Screening Battery)
+   - FluentCRM subscriber tags are strictly canonical: `assess:{$CODE}:{$SEVERITY}` (e.g. `assess:PHQ-9:Normal`, `assess:GAD-7:Normal`).
+   - Never use raw slug tags like `assess:feeling-depressed-and-hopeless:normal` (cleaned up via `cleanup_legacy_fluentcrm_tags()`).
+4. **Secure Custom Fields (SCF) on `wp_users` (`class-ikan-scf-fields.php`)**:
+   - Field group `group_ikan_member_clinical` registers 15 clinical fields on `wp_users` for member profiles:
+     - Equip Pacing: `current_program`, `program_id`, `program_current_day`, `program_status`, `last_active_at`, `last_journal_date`.
+     - Assessment & Severity: `latest_assessment`, `assessment_id`, `assessment_result_id`, `latest_score`, `latest_severity`, `scoring_matrix`, `clinical_risk_flag`.
+     - Wellness: `wellness_index_score`.
+   - Populated automatically on member login or sync.
+5. **Event-Driven Login Sync Worker**:
+   - Sync is event-driven: triggered on `wp_login` hook (`Ikan_Interim_Sync::on_user_login`) queueing asynchronous Action Scheduler jobs (`as_enqueue_async_action`), plus REST endpoint `POST /wp-json/ikan/v1/sync/trigger` for client/PWA logins.
+6. **Resources Catalog & Synchronization**:
+   - All 28 resources in `assets/resources.json` carry complete `tags`, `labels`, `author`, `medium`, `minutes`, `programme`, and `assessment` bridges.
+   - Database posts are kept in sync via `wp eval-file wp-content/themes/demo/ingest_resources.php`.
+   - REST API endpoints `/wp-json/ikan/v1/resources` and `/wp-json/ikan/v1/resources/<slug>` expose all metadata to `ikan` and `ikan2`.
+
+---
 
 **Why this is not optional.** `vercel deploy --prod` ships whatever branch is checked out, and a
 stale branch builds, passes every ratchet and reports `● Ready`. On 2026-09-15 a session opened on
