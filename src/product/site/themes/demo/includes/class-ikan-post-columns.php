@@ -3,12 +3,12 @@
  * iKAN Health — Enhanced WordPress Admin Posts Table.
  *
  * Enriches `wp-admin/edit.php` with:
- * 1. Clinical Author (Dr. Divya Jain, Kartik, Vedanshu, etc.) + System Ingest Worker
+ * 1. Post Author (Vedanshu or Kartik)
  * 2. Medium / Format badges (Article, Video, Audio)
  * 3. Read Time & Duration (e.g. 4 min, 106 min podcast, 6 min watch)
  * 4. Clinical Tags & Topics badges
  * 5. Equip / Assessment links & Featured highlights
- * 6. Admin quick filters for Format & Clinical Author
+ * 6. Admin quick filters for Format
  *
  * @package iKAN_Health
  */
@@ -41,9 +41,9 @@ class Ikan_Post_Columns {
 			$new_columns['cb'] = $columns['cb'];
 		}
 
-		$new_columns['title']           = __( 'Title', 'ikan' );
-		$new_columns['clinical_author'] = __( 'Clinical Author', 'ikan' );
-		$new_columns['content_format']  = __( 'Format', 'ikan' );
+		$new_columns['title']          = __( 'Title', 'ikan' );
+		$new_columns['author']         = __( 'Author', 'ikan' );
+		$new_columns['content_format'] = __( 'Format', 'ikan' );
 		$new_columns['read_time']       = __( 'Read Time', 'ikan' );
 		$new_columns['categories']      = __( 'Categories', 'ikan' );
 		$new_columns['tags']            = __( 'Tags & Topics', 'ikan' );
@@ -58,23 +58,23 @@ class Ikan_Post_Columns {
 	 */
 	public static function render_column_content( $column, $post_id ) {
 		switch ( $column ) {
-			case 'clinical_author':
-				$author = get_post_meta( $post_id, 'author', true );
-				if ( empty( $author ) ) {
-					$author = get_post_meta( $post_id, 'author_name', true );
-				}
-				if ( empty( $author ) ) {
-					$post = get_post( $post_id );
-					if ( $post && $post->post_author ) {
-						$user = get_userdata( $post->post_author );
-						$author = $user ? $user->display_name : 'iKAN Ingest Worker';
-					} else {
-						$author = 'iKAN Clinical Team';
-					}
+			case 'author':
+				$post = get_post( $post_id );
+				$author_name = '—';
+				if ( $post && $post->post_author ) {
+					$user = get_userdata( $post->post_author );
+					$author_name = $user ? $user->display_name : 'User #' . $post->post_author;
 				}
 
-				echo '<div style="font-weight: 600; color: #1E293B;">' . esc_html( $author ) . '</div>';
-				echo '<div style="font-size: 11px; color: #64748B;">Worker: <span style="background: #F1F5F9; padding: 1px 6px; border-radius: 4px; font-family: monospace;">#3 ingest</span></div>';
+				$edit_url = add_query_arg(
+					array(
+						'post_type' => 'post',
+						'author'    => $post ? $post->post_author : 0,
+					),
+					admin_url( 'edit.php' )
+				);
+
+				echo '<a href="' . esc_url( $edit_url ) . '" style="font-weight: 600; color: #1E293B; text-decoration: none;">' . esc_html( $author_name ) . '</a>';
 				break;
 
 			case 'content_format':
@@ -139,9 +139,9 @@ class Ikan_Post_Columns {
 	 * Make custom columns sortable.
 	 */
 	public static function sortable_columns( $columns ) {
-		$columns['clinical_author'] = 'clinical_author';
-		$columns['content_format']  = 'content_format';
-		$columns['read_time']       = 'read_time';
+		$columns['author']         = 'author';
+		$columns['content_format'] = 'content_format';
+		$columns['read_time']      = 'read_time';
 		return $columns;
 	}
 
@@ -190,12 +190,12 @@ class Ikan_Post_Columns {
 		}
 		?>
 		<style>
-			.column-clinical_author { width: 15%; }
+			.column-author { width: 11%; }
 			.column-content_format { width: 9%; }
 			.column-read_time { width: 10%; }
 			.column-highlights { width: 13%; }
-			.column-tags { width: 18%; }
-			.column-categories { width: 12%; }
+			.column-tags { width: 20%; }
+			.column-categories { width: 13%; }
 			.column-tags a {
 				background: #F1F5F9;
 				border: 1px solid #E2E8F0;
