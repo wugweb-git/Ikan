@@ -2090,8 +2090,39 @@ Text Domain: demo
   height: 18px;
 }
 
-.pb-safe {
-  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+/* ── Mobile Ergonomics & Safe Areas (mirrored 1:1 from ikan2) ─── */
+button,
+a,
+label,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
+}
+
+.pb-safe,
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-top,
+@utility safe-top {
+  padding-top: max(1.25rem, calc(var(--safe-top, env(safe-area-inset-top)) + 0.5rem));
+}
+
+.safe-top-sm,
+@utility safe-top-sm {
+  padding-top: max(0.25rem, var(--safe-top, env(safe-area-inset-top)));
+}
+
+.safe-pin,
+@utility safe-pin {
+  top: max(0.75rem, calc(var(--safe-top, env(safe-area-inset-top)) + 0.25rem));
 }
 
 /* ── Shimmer Skeleton Loading Framework ─────────────────────── */
