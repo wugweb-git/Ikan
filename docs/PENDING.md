@@ -8,6 +8,10 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [ ] **GitHub `main` is now a single commit (`a1d51aa0`, "Add Rank Math SEO bulk fix script", 23 Nov)** with no shared history; the full site history is on `wordpress`. `scripts/deploy-guard.sh` requires `main`, so `scripts/deploy-prod.sh` would build `fix-seo.php` alone. Vedanshu to decide: restore `main` from `wordpress` (last good main was `d2dd473f`), or point the deploy script at `wordpress`.
+- [ ] **Burnout calculator follow-ups**: mark GA4 key events (`calc_contact_click`, pilot submit); agree the email alert inbox, sender and triggers for calculator leads; Notion build page not yet updated for v2.1. The stray Vercel project `ikan-partner-table` is kept on purpose (Vedanshu said no to deleting it).
+- [ ] **Local `~/.zshrc` (Vedanshu's Mac, not the repo)**: down to 2 lines, so `GEMINI_API_KEY` is unset in new shells. Restore with `cp ~/.zshrc.bak-20261119 ~/.zshrc`. Rotate the Gemini key; it was exposed once.
+
 - [ ] **Database & Backup Architecture: Move to WordPress Admin & Hostinger (Off GitHub)**:
   - Rather than storing database dumps in GitHub Actions artifacts (which require secrets and expose health dumps to runner logs), map the database and backups directly into **WordPress Admin on Hostinger**.
   - **Interim DB Naming & Boundary**: The `ikan2` Supabase database is formally designated as the **Interim DB** (interim buffer for member app state). GitHub only interfaces with code and interim/buffer orchestration — never with clinical health records.
