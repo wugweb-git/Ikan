@@ -40,6 +40,15 @@ Single source of truth for outstanding work across sessions. Update this file wh
   - Exposed complete `tags`, `labels`, and `author` in `/wp-json/ikan/v1/resources` and `/wp-json/ikan/v1/resources/<slug>`.
   - Updated `resources.php` with author credits, read/watch duration, interactive `#tag` pills, and real-time instant search across tags and authors.
 
+- [x] **Clinical Assessment Parity & Analytics Aligned with ikan2 (Golden Source of Truth)**:
+  - Ensured `ikan2` is strictly preserved with zero changes, and `ikan` mirrors `ikan2` 1:1.
+  - Rectified swapped instruments: `feeling-overwhelmed-and-anxious` is `GAD-7` (not PSS-10), and `feeling-worried-and-stressed` is `PSS-10` (not GAD-7).
+  - Aligned sleep & strain: `struggling-with-quality-sleep` is Insomnia Severity Index themes (`ISI`), and `struggling-to-balance-life` is Workplace Strain (`Work-Strain`), removing synthetic "SCI" and "WHO-5" labels.
+  - Implemented 1:1 clinical scoring engine in `Ikan_Interim_Sync::compute_clinical_result()` reading from `clinical-instruments.json` (transpiled verbatim from `ikan2/instruments.ts`), computing actual scale scores, reverse item weightings, mean/sum/sum4 calculations, band lookups, and risk endorsements.
+  - Re-scored all existing records and regenerated clean, accurate FluentCRM tags (e.g. `assess:PHQ-9:Moderately-Severe`, `assess:GAD-7:Severe`, `assess:PSS-10:Moderate`, `assess:Work-Strain:Severe`).
+  - Added cross-domain Google Analytics linker (`domains: ['ikanhealth.in', 'app.ikanhealth.in']`) into `header.php` to match `ikan2/src/lib/analytics.ts`.
+  - Updated SCF choices and clinical visual reference categories to match `ikan2`.
+
 - [ ] **Clinical Data & Sync Architecture Review (Section 5 — Flagged for Discussion)**:
   - User flagged that the current implementation/design described in `docs/SESSIONS.md` Section 5 (Interim Boundary, SCF user meta keys, and resource taxonomy sync) has issues that need detailed review and redesign in an upcoming discussion.
   - Hold off on further architectural coupling or expansion of SCF user meta mappings until this discussion takes place.

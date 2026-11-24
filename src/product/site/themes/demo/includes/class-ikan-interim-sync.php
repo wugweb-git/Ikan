@@ -1191,7 +1191,7 @@ class Ikan_Interim_Sync {
 		if ( ! empty( $legacy_tags ) ) {
 			$ids = wp_list_pluck( $legacy_tags, 'id' );
 			$placeholders = implode( ',', array_map( 'intval', $ids ) );
-			$wpdb->query( "DELETE FROM $pivot_table WHERE tag_id IN ($placeholders)" );
+			$wpdb->query( "DELETE FROM $pivot_table WHERE object_type = 'tag' AND object_id IN ($placeholders)" );
 			$wpdb->query( "DELETE FROM $tags_table WHERE id IN ($placeholders)" );
 		}
 	}
