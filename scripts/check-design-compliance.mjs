@@ -177,10 +177,31 @@ if (existsSync(styleCssFile)) {
   }
 
   // tap highlight suppression
-  if (styleCss.includes('-webkit-tap-highlight-color') || styleCss.includes('touch-action')) {
+  if (styleCss.includes('-webkit-tap-highlight-color') && styleCss.includes('touch-action')) {
     pass('Mobile Touch Ergonomics', '-webkit-tap-highlight-color and touch-action configured');
   } else {
-    pass('Mobile Touch Ergonomics', 'touch-action recommended on button/a');
+    fail('Mobile Touch Ergonomics', 'touch-action and -webkit-tap-highlight-color required on button/a');
+  }
+
+  // Safe area top & pin
+  if (styleCss.includes('safe-top') && styleCss.includes('safe-pin')) {
+    pass('Safe Area Top & Pin', 'safe-top and safe-pin utilities present for notch/island clearance');
+  } else {
+    fail('Safe Area Top & Pin', 'Missing safe-top or safe-pin in style.css');
+  }
+
+  // iOS zoom prevention
+  if (styleCss.includes('max(16px, 1em)')) {
+    pass('iOS Auto-Zoom Prevention', 'input font-size: max(16px, 1em) present');
+  } else {
+    fail('iOS Auto-Zoom Prevention', 'Missing input/select/textarea max(16px, 1em) rule');
+  }
+
+  // Phone Column Measures
+  if (styleCss.includes('max-w-app') && styleCss.includes('max-w-read')) {
+    pass('Mobile Phone Measure', 'max-w-app and max-w-read utilities present');
+  } else {
+    fail('Mobile Phone Measure', 'Missing max-w-app or max-w-read in style.css');
   }
 }
 
