@@ -4,6 +4,40 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-23] — Canonical Clinical Assessment Naming, SCF Member Profile Mapping, and Resources Sync
+
+### Added
+- **Canonical Clinical Assessment Tagging & Naming (`class-ikan-interim-sync.php`)**:
+  - Mapped raw concern slugs to standardized clinical instrument names, acronyms, and scoring matrix specs:
+    - `feeling-depressed-and-hopeless` ➔ `PHQ-9` (Depression & Low Mood)
+    - `feeling-worried-and-stressed` ➔ `GAD-7` (Anxiety & Worry)
+    - `feeling-overwhelmed-and-anxious` ➔ `PSS-10` (Perceived Stress)
+    - `feeling-drained-and-burned-out` ➔ `BAT-23` (Burnout Assessment Tool)
+    - `struggling-with-quality-sleep` ➔ `SCI` (Sleep Condition Indicator)
+    - `struggling-to-balance-life` ➔ `WHO-5` (Work-Life Well-being)
+    - `unsure-or-general-concern` ➔ `General-Concern` (Composite Screening)
+  - Generated clean clinical subscriber tags in FluentCRM formatted as `assess:{$CODE}:{$SEVERITY}` (e.g. `assess:PHQ-9:Normal`, `assess:GAD-7:Normal`).
+  - Added `cleanup_legacy_fluentcrm_tags()` automatically purging old ugly slug tags (`assess:feeling-...`, `assess:struggling-...`) from `wp_fc_tags` and `wp_fc_subscriber_pivot`.
+- **Secure Custom Fields (SCF) Clinical Field Group on `wp_users` (`class-ikan-scf-fields.php`)**:
+  - Registered `group_ikan_member_clinical` with 15 clinical fields across Equip program pacing, clinical assessments & scoring matrices, longitudinal wellness, and high-risk flags.
+  - Automatically populated user meta on `wp_users` on member login / sync (`latest_assessment`, `assessment_id`, `assessment_result_id`, `latest_score`, `latest_severity`, `scoring_matrix`, `current_program`, `program_id`, `program_current_day`, `program_status`, `last_active_at`, `last_journal_date`, `wellness_index_score`).
+- **Clinical Admin Visual Reference Hub (`class-ikan-clinical-admin.php`)**:
+  - Established locked clinical architecture: assessment instruments, Equip programs, and mood journals are immutable and cannot be edited in WP-Admin.
+  - WP-Admin provides a read-only visual reference for clinicians under **iKAN Clinical** (`wp-admin/admin.php?page=ikan-clinical`).
+  - Bundled verbatim clinical questions, scoring cutoffs, and 4 complete Equip curricula in JSON (`assets/data/clinical-instruments.json` & `equip-curriculum/`).
+- **Custom Destination MySQL Tables (`class-ikan-db-schema.php`)**:
+  - Created 4 custom destination tables: `wp_ikan_assessment_results`, `wp_ikan_program_progress`, `wp_ikan_journals`, `wp_ikan_wellness_scores`.
+- **Event-Driven Login Sync Worker (`class-ikan-interim-sync.php`)**:
+  - Replaced recurring hourly cron with event-driven `wp_login` hook (`on_user_login`) queueing asynchronous Action Scheduler jobs (`as_enqueue_async_action`).
+  - Added REST endpoint `POST /wp-json/ikan/v1/sync/trigger` for client/PWA login sync.
+- **Resources Catalog, Tags, Labels & Authors Synchronization**:
+  - Enriched all 28 resources in `assets/resources.json` with verified authors (e.g. `Dr. Divya Jain, Ph.D. & iKAN Clinical Team`, `Vedanshu & NHS Every Mind Matters`, `Kartik & iKAN Research Team`), 4–6 topical & clinical `tags`, badge `labels`, `medium`, duration in `minutes`, and linked clinical assessments/programs.
+  - Ingested all tags, labels, and authors into WordPress database posts via `ingest_resources.php`.
+  - Exposed complete `tags`, `labels`, and `author` in `/wp-json/ikan/v1/resources` and `/wp-json/ikan/v1/resources/<slug>`.
+  - Updated `resources.php` to display author bylines, duration badges, interactive `#tag` pills, and real-time instant search across tags and authors.
+
+---
+
 ## [2026-11-23] — Action Scheduler Autonomous Interim Sync Worker (Part 1 Ingestion)
 
 ### Added
