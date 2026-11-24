@@ -2,7 +2,12 @@
 /**
  * Template Name: Legal Page
  * Template Post Type: page
- * Description: Unified Legal page template with horizontal tab switcher
+ * Description: Exact 1:1 replica of iKAN 2 PWA Legal layout (ikan2/src/routes/legal.$slug.tsx)
+ *
+ * Matches InfoShell wide container, horizontal tab bar, font-display heading,
+ * and prose-ikan body styling across Terms, Privacy Policy, Cancellation Policy, and Return Policy.
+ *
+ * @package iKAN_Health
  */
 
 get_header();
@@ -10,124 +15,115 @@ get_header();
 // Determine current slug
 $slug = get_query_var( 'legal_slug' );
 if ( empty( $slug ) ) {
-  $path = trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
-  if ( in_array( $path, [ 'privacy-policy', 'privacy' ] ) ) $slug = 'privacy-policy';
-  elseif ( in_array( $path, [ 'terms-of-use', 'terms' ] ) ) $slug = 'terms';
-  elseif ( $path === 'cancellation-policy' ) $slug = 'cancellation-policy';
-  elseif ( $path === 'return-policy' ) $slug = 'return-policy';
-  elseif ( $path === 'workplace-privacy' ) $slug = 'workplace-privacy';
-  else $slug = 'privacy-policy';
+  $raw_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+  $path = preg_replace( '#^legal/#', '', $raw_path );
+
+  if ( in_array( $path, [ 'privacy-policy', 'privacy' ], true ) ) {
+    $slug = 'privacy-policy';
+  } elseif ( in_array( $path, [ 'terms-of-use', 'terms-of-service', 'terms' ], true ) ) {
+    $slug = 'terms';
+  } elseif ( in_array( $path, [ 'cancellation-policy', 'cancellation' ], true ) ) {
+    $slug = 'cancellation-policy';
+  } elseif ( in_array( $path, [ 'return-policy', 'refund-policy', 'refund' ], true ) ) {
+    $slug = 'return-policy';
+  } else {
+    $slug = 'terms';
+  }
 }
 
-// Load from pages.json as fallback
+// Canonical slug normalization
+if ( $slug === 'privacy' ) $slug = 'privacy-policy';
+if ( $slug === 'terms-of-use' || $slug === 'terms-of-service' ) $slug = 'terms';
+if ( $slug === 'refund-policy' || $slug === 'refund' ) $slug = 'return-policy';
+
+// Load canonical legal content from assets/pages.json (byte-identical to ikan2)
 $pages_file = get_template_directory() . '/assets/pages.json';
 $pages_data = [];
 if ( file_exists( $pages_file ) ) {
   $pages_data = json_decode( file_get_contents( $pages_file ), true ) ?: [];
 }
 
-$legal_data = $pages_data['legal'] ?? [];
+$legal_pages = $pages_data['legal'] ?? [];
+$legal_order = [ 'terms', 'privacy-policy', 'cancellation-policy', 'return-policy' ];
 
-$legal_tabs = [
-  'privacy-policy'       => [ 'label' => 'Privacy Policy', 'url' => home_url( '/privacy-policy' ) ],
-  'terms'                => [ 'label' => 'Terms of Use', 'url' => home_url( '/terms-of-use' ) ],
-  'workplace-privacy'    => [ 'label' => 'Workplace Privacy', 'url' => home_url( '/workplace-privacy' ) ],
-  'cancellation-policy'  => [ 'label' => 'Cancellation', 'url' => home_url( '/cancellation-policy' ) ],
-  'return-policy'        => [ 'label' => 'Return Policy', 'url' => home_url( '/return-policy' ) ],
+// Fallback if slug not found
+$page = $legal_pages[ $slug ] ?? ( $legal_pages['terms'] ?? [] );
+
+$page_title    = $page['title'] ?? 'Terms of Service';
+$page_subtitle = $page['subtitle'] ?? '';
+$page_html     = $page['html'] ?? '';
+
+// Fallback to post content if html is empty
+if ( empty( $page_html ) ) {
+  $page_html = apply_filters( 'the_content', get_the_content() );
+}
+
+// Route mapping for tabs matching ikan2
+$tab_routes = [
+  'terms'               => home_url( '/terms' ),
+  'privacy-policy'      => home_url( '/privacy-policy' ),
+  'cancellation-policy' => home_url( '/cancellation-policy' ),
+  'return-policy'       => home_url( '/return-policy' ),
 ];
-
-// Content resolution
-$current_item = $legal_data[ $slug ] ?? [];
-$title = $current_item['title'] ?? ( $legal_tabs[ $slug ]['label'] ?? 'Legal Notice' );
-$effective_date = $current_item['effectiveDate'] ?? 'October 2026';
-$sections = $current_item['sections'] ?? [];
-$summary = $current_item['summary'] ?? '';
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-28 pb-20" style="background-color: var(--canvas); font-family: var(--font-sans);">
-  
-  <div class="max-w-4xl mx-auto px-6">
+<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
+  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
     
-    <!-- Top Pill Navigation Bar -->
-    <div class="flex items-center justify-start sm:justify-center overflow-x-auto gap-2 mb-10 pb-2 no-scrollbar">
-      <?php foreach ( $legal_tabs as $tab_key => $tab ) : 
-        $is_active = ( $tab_key === $slug || ( $slug === 'privacy' && $tab_key === 'privacy-policy' ) || ( $slug === 'terms-of-use' && $tab_key === 'terms' ) );
+    <!-- Top Bar with Back Button -->
+    <div class="flex items-center h-14 px-3">
+      <a
+        href="<?php echo esc_url( home_url( '/' ) ); ?>"
+        aria-label="Back"
+        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
+      >
+        <i data-lucide="arrow-left" class="h-6 w-6"></i>
+      </a>
+    </div>
+
+    <!-- Legal Tabs Switcher (matching ikan2 exactly) -->
+    <div
+      class="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-2"
+      role="navigation"
+      aria-label="Legal pages"
+    >
+      <?php foreach ( $legal_order as $s ) : 
+        $tab_info  = $legal_pages[ $s ] ?? [];
+        $is_active = ( $s === $slug );
+        $tab_url   = $tab_routes[ $s ] ?? home_url( '/' . $s );
       ?>
-        <a 
-          href="<?php echo esc_url( $tab['url'] ); ?>" 
-          class="px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all <?php echo $is_active ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'; ?>"
+        <a
+          href="<?php echo esc_url( $tab_url ); ?>"
+          class="type-label-lg inline-flex h-9 shrink-0 items-center rounded-[8px] border px-3.5 font-medium transition-colors <?php echo $is_active ? 'border-transparent bg-foreground text-background' : 'border-foreground/20 text-foreground hover:bg-secondary'; ?>"
         >
-          <?php echo esc_html( $tab['label'] ); ?>
+          <?php echo esc_html( $tab_info['title'] ?? ucfirst( str_replace( '-', ' ', $s ) ) ); ?>
         </a>
       <?php endforeach; ?>
     </div>
 
-    <!-- Main Content Card -->
-    <article class="bg-white rounded-3xl p-8 sm:p-12 border border-gray-100 shadow-sm space-y-8">
-      
-      <div class="border-b border-gray-100 pb-6">
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full mb-3 inline-block">
-          Official Policy
-        </span>
-        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mb-2" style="font-family: var(--font-display);">
-          <?php echo esc_html( $title ); ?>
-        </h1>
-        <p class="text-xs text-gray-400">
-          Effective date: <?php echo esc_html( $effective_date ); ?> • iKAN Health Platform
-        </p>
-      </div>
-
-      <?php if ( ! empty( $summary ) ) : ?>
-        <div class="p-5 rounded-2xl bg-gray-50 border-l-4 border-emerald-600 text-sm text-gray-700 leading-relaxed">
-          <?php echo esc_html( $summary ); ?>
-        </div>
+    <!-- Header -->
+    <header class="px-5 pt-4">
+      <h1 class="font-display text-[30px] font-semibold leading-9 text-foreground"><?php echo esc_html( $page_title ); ?></h1>
+      <?php if ( ! empty( $page_subtitle ) ) : ?>
+        <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $page_subtitle ); ?></p>
       <?php endif; ?>
+    </header>
 
-      <!-- Sections -->
-      <?php
-      $post_has_content = trim( get_the_content() );
-      if ( ! empty( $post_has_content ) ) : ?>
-        <div class="prose max-w-none text-gray-700 space-y-6">
-          <?php the_content(); ?>
-        </div>
-      <?php elseif ( ! empty( $sections ) && is_array( $sections ) ) : ?>
-        <div class="space-y-8">
-          <?php foreach ( $sections as $sec ) : ?>
-            <div class="space-y-2">
-              <h2 class="text-lg font-bold text-gray-900" style="font-family: var(--font-display);">
-                <?php echo esc_html( $sec['title'] ?? '' ); ?>
-              </h2>
-              <div class="text-sm text-gray-600 leading-relaxed space-y-2">
-                <?php if ( ! empty( $sec['content'] ) ) : ?>
-                  <p><?php echo nl2br( esc_html( $sec['content'] ) ); ?></p>
-                <?php endif; ?>
-                <?php if ( ! empty( $sec['bullets'] ) && is_array( $sec['bullets'] ) ) : ?>
-                  <ul class="list-disc pl-5 space-y-1">
-                    <?php foreach ( $sec['bullets'] as $bullet ) : ?>
-                      <li><?php echo esc_html( $bullet ); ?></li>
-                    <?php endforeach; ?>
-                  </ul>
-                <?php endif; ?>
-              </div>
-            </div>
-          <?php endforeach; ?>
-        </div>
-      <?php else : ?>
-        <div class="prose max-w-none text-gray-700">
-          <?php the_content(); ?>
-        </div>
-      <?php endif; ?>
+    <!-- Legal Prose Content (prose-ikan: exact styling from ikan2) -->
+    <div class="prose-ikan mt-6 px-5">
+      <?php echo $page_html; ?>
+    </div>
 
-      <!-- Contact Helpline Card -->
-      <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-        <p>Questions about this policy? Contact our data governance officer at <a href="mailto:support@ikanhealth.in" class="underline font-semibold text-gray-900">support@ikanhealth.in</a>.</p>
-        <a href="tel:+918527545503" class="font-semibold text-gray-900 hover:underline shrink-0">+91 85275 45503</a>
-      </div>
-
-    </article>
-
+    <div class="h-8"></div>
   </div>
-
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.lucide && lucide.createIcons) {
+    lucide.createIcons();
+  }
+});
+</script>
 
 <?php get_footer(); ?>
