@@ -74,8 +74,8 @@ if ( ! empty( $resources_list ) ) {
 }
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-20 sm:pt-24 pb-24 bg-background ikan2-theme ikan2-type">
-  <div class="max-w-app sm:max-w-4xl lg:max-w-5xl mx-auto px-0 sm:px-6" style="--accent-strong: #10B981; --accent-container: #E6F4EA; --on-accent-container: #0D652D;">
+<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
+  <div class="max-w-app sm:max-w-4xl lg:max-w-5xl mx-auto px-0 sm:px-6" style="--accent-strong: #2B634D; --accent-container: #DFF0E8; --on-accent-container: #173D2F;">
     
     <!-- Page Header (safe-top px-4 pb-1) -->
     <header class="px-4 sm:px-0 pb-1">
