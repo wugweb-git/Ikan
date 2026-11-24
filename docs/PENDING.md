@@ -40,6 +40,10 @@ Single source of truth for outstanding work across sessions. Update this file wh
   - Exposed complete `tags`, `labels`, and `author` in `/wp-json/ikan/v1/resources` and `/wp-json/ikan/v1/resources/<slug>`.
   - Updated `resources.php` with author credits, read/watch duration, interactive `#tag` pills, and real-time instant search across tags and authors.
 
+- [ ] **Clinical Data & Sync Architecture Review (Section 5 — Flagged for Discussion)**:
+  - User flagged that the current implementation/design described in `docs/SESSIONS.md` Section 5 (Interim Boundary, SCF user meta keys, and resource taxonomy sync) has issues that need detailed review and redesign in an upcoming discussion.
+  - Hold off on further architectural coupling or expansion of SCF user meta mappings until this discussion takes place.
+
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.
   - Zero emails are sent until explicit approval.
