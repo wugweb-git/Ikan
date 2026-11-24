@@ -928,37 +928,26 @@ Text Domain: demo
  * loads these same pages in a WebView, and an installed app should fill the
  * device like a native one rather than sit in a 36rem column.
  */
-@utility max-w-app {
-  max-width: 100%;
-  @media (min-width: 640px) {
-    max-width: 36rem;
-  }
-  @media (min-width: 1024px) {
-    max-width: 30rem;
-  }
-  @media (display-mode: standalone) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-  @media (display-mode: fullscreen) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-}
+/* @utility is Tailwind v4 compile-time only — browsers ignore it.
+ * These plain class rules are the browser-parseable equivalents.
+ * Keep the @utility blocks below for reference but add class selectors here. */
 
-@utility max-w-read {
-  max-width: 100%;
-  @media (min-width: 640px) {
-    max-width: 36rem;
-  }
-  @media (min-width: 1024px) {
-    max-width: 38rem;
-  }
-  @media (display-mode: standalone) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-  @media (display-mode: fullscreen) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-}
+/* max-w-app: app column, 100% → 36rem → 30rem */
+.max-w-app { max-width: 100%; }
+@media (min-width: 640px)  { .max-w-app { max-width: 36rem; } }
+@media (min-width: 1024px) { .max-w-app { max-width: 30rem; } }
+@media (display-mode: standalone) and (max-width: 1023px) { .max-w-app { max-width: 100%; } }
+@media (display-mode: fullscreen)  and (max-width: 1023px) { .max-w-app { max-width: 100%; } }
+
+/* max-w-read: reading column, 100% → 36rem → 38rem */
+.max-w-read { max-width: 100%; }
+@media (min-width: 640px)  { .max-w-read { max-width: 36rem; } }
+@media (min-width: 1024px) { .max-w-read { max-width: 38rem; } }
+@media (display-mode: standalone) and (max-width: 1023px) { .max-w-read { max-width: 100%; } }
+@media (display-mode: fullscreen)  and (max-width: 1023px) { .max-w-read { max-width: 100%; } }
+
+/* bg-canvas: page canvas background — missing from compiled tailwind.css */
+.bg-canvas { background-color: var(--canvas, oklch(0.955 0.006 250)); }
 
 /* ─────────────────────────────────────────────────────────────────
  * iKAN 2 component utilities

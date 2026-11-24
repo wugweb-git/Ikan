@@ -69,7 +69,7 @@ function demo_enqueue_styles() {
   wp_enqueue_script( 'lucide-js', 'https://unpkg.com/lucide@latest/dist/umd/lucide.js', [], null, true );
   
   // Theme stylesheet with iKAN design system
-  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.3' );
+  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.5' );
 
   // Pass AJAX URL and Nonce to frontend scripts
   wp_localize_script( 'lucide-js', 'ikanAjax', [
