@@ -1,9 +1,14 @@
 <?php
 /**
  * Single post template for demo block theme (iKAN Health)
- * Comprehensive Clinical Resource Template with Schema.org JSON-LD,
- * Lucide Icons, Clinical Authors & Advisory Review, Read Time & Progress,
- * Source Attributions, Linked Assessments, and Equip Programs.
+ * Styled 1:1 with iKAN 2 PWA (ikan2/src/routes/resources.$slug.tsx)
+ *
+ * Matches exact mobile ergonomics, cover layout (-mt-8 rounded-t-[28px]),
+ * typography hierarchy (type-headline-md, type-title-lg, type-label-lg, prose-ikan),
+ * inline Lucide icons, sticky reading progress, source attribution cards,
+ * related assessment & equip cards, and Keep Reading list.
+ *
+ * @package iKAN_Health
  */
 
 get_header(); ?>
@@ -15,11 +20,14 @@ get_header(); ?>
 
   $medium    = $meta['medium'] ?? get_post_meta( $post_id, 'medium', true ) ?: 'article';
   $minutes   = $meta['minutes'] ?? intval( get_post_meta( $post_id, 'minutes', true ) ?: 5 );
-  $author    = $meta['author'] ?? get_post_meta( $post_id, 'author', true ) ?: 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board';
+  $author    = $meta['author'] ?? 'Vedanshu';
+  $art       = $meta['art'] ?? 'checkup';
   $source    = $meta['source'] ?? null;
   $assessment = $meta['assessment'] ?? null;
   $assessmentRole = $meta['assessmentRole'] ?? 'explains';
   $programme = $meta['programme'] ?? null;
+  $journal   = $meta['journal'] ?? false;
+  $consult   = $meta['consult'] ?? false;
   $tags      = $meta['tags'] ?? [];
 
   $video_url = get_post_meta( $post_id, 'video_url', true );
@@ -28,13 +36,7 @@ get_header(); ?>
   $cat_name  = ! empty( $categories ) ? $categories[0]->name : 'Mental Wellbeing';
   $cat_slug  = ! empty( $categories ) ? $categories[0]->slug : 'mental-wellbeing';
 
-  // Cover image
-  $cover_url = function_exists('ikan_get_resource_cover_url') ? ikan_get_resource_cover_url( $post_id ) : ( has_post_thumbnail() ? get_the_post_thumbnail_url( $post_id, 'full' ) : '' );
-  if ( ! $cover_url ) {
-    $cover_url = get_theme_file_uri( 'assets/img/photo-1758272422634-e8ed8e252a14' );
-  }
-
-  // Parse YouTube ID
+  // Parse YouTube embed if video
   $youtube_embed = '';
   if ( $video_url ) {
     if ( preg_match( '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $video_url, $match ) ) {
@@ -42,10 +44,27 @@ get_header(); ?>
     }
   }
 
-  // Schema.org Structured Data
+  // Split post content into body and sources section (matching ikan2)
+  $raw_content = get_the_content();
+  $raw_content = apply_filters( 'the_content', $raw_content );
+
+  $cut = strpos( $raw_content, '<section class="sources">' );
+  if ( false === $cut ) {
+    $cut = strpos( $raw_content, '<section class=\'sources\'>' );
+  }
+
+  if ( false !== $cut ) {
+    $body_content    = substr( $raw_content, 0, $cut );
+    $sources_content = substr( $raw_content, $cut );
+  } else {
+    $body_content    = $raw_content;
+    $sources_content = '';
+  }
+
+  // Schema.org Structured Data (matching ikan2)
   $schema_type = ( $medium === 'video' ) ? 'VideoObject' : ( ( $medium === 'audio' ) ? 'AudioObject' : 'Article' );
   $post_url    = get_permalink();
-  $post_excerpt = get_the_excerpt() ?: wp_trim_words( wp_strip_all_tags( get_the_content() ), 30 );
+  $post_excerpt = get_the_excerpt() ?: wp_trim_words( wp_strip_all_tags( $raw_content ), 30 );
   $date_published = get_the_date( 'c' );
   $date_modified  = get_the_modified_date( 'c' );
 
@@ -65,18 +84,8 @@ get_header(); ?>
     'articleSection'    => $cat_name,
     'timeRequired'      => 'PT' . $minutes . 'M',
     'author'            => [
-      '@type'  => 'Person',
-      'name'   => $author,
-      'jobTitle' => 'Clinical Psychologist & Researcher',
-      'worksFor' => [
-        '@type' => 'Organization',
-        'name'  => 'iKAN Health',
-      ],
-    ],
-    'reviewedBy'        => [
-      '@type'    => 'Person',
-      'name'     => 'Dr. Divya Jain, Ph.D.',
-      'jobTitle' => 'Head of Psychological Services & Senior Consultant Psychologist',
+      '@type' => 'Person',
+      'name'  => $author,
     ],
     'publisher'         => [
       '@type' => 'Organization',
@@ -87,15 +96,13 @@ get_header(); ?>
         'url'   => get_theme_file_uri( 'assets/img/favicon.svg' ),
       ],
     ],
-    'image'             => $cover_url,
   ];
 
   if ( $medium === 'video' && $video_url ) {
-    $schema_data['uploadDate']    = $date_published;
-    $schema_data['contentUrl']    = $video_url;
-    $schema_data['embedUrl']      = $youtube_embed ?: $video_url;
-    $schema_data['thumbnailUrl']  = $cover_url;
-    $schema_data['duration']      = 'PT' . $minutes . 'M';
+    $schema_data['uploadDate'] = $date_published;
+    $schema_data['contentUrl'] = $video_url;
+    $schema_data['embedUrl']   = $youtube_embed ?: $video_url;
+    $schema_data['duration']   = 'PT' . $minutes . 'M';
   } elseif ( $medium === 'audio' && $audio_url ) {
     $schema_data['contentUrl']    = $audio_url;
     $schema_data['duration']      = 'PT' . $minutes . 'M';
@@ -108,337 +115,308 @@ get_header(); ?>
 <?php echo wp_json_encode( $schema_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ); ?>
 </script>
 
-<!-- Sticky Reading Progress Bar -->
-<div id="reading-progress-container" class="fixed top-0 left-0 w-full h-1 z-50 bg-gray-100 pointer-events-none">
-  <div id="reading-progress-bar" class="h-full bg-emerald-600 transition-all duration-75" style="width: 0%;"></div>
+<!-- Reading Progress Bar -->
+<div id="reading-progress-container" class="fixed top-0 left-0 w-full h-1 z-50 bg-foreground/10 pointer-events-none">
+  <div id="reading-progress-bar" class="h-full bg-[var(--accent-strong,#10B981)] transition-all duration-75" style="width: 0%;"></div>
 </div>
 
-<main class="site-page-below-nav w-full flex-1 pt-24 sm:pt-28 pb-24 bg-white" style="font-family: var(--font-sans);">
-  <article class="max-w-4xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
+<main class="site-page-below-nav w-full flex-1 pt-20 sm:pt-24 pb-24 bg-background ikan2-theme ikan2-type">
+  <div class="max-w-app mx-auto md:max-w-4xl px-0 sm:px-4">
     
-    <!-- Top Navigation / Breadcrumbs -->
-    <div class="flex items-center justify-between mb-6 pb-2">
-      <a href="<?php echo esc_url( home_url( '/resources' ) ); ?>" class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-900 transition-colors">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        <span>Back to Resources &amp; Guides</span>
-      </a>
-
-      <!-- Share Link Action -->
-      <button 
-        type="button" 
-        id="copy-share-btn" 
-        onclick="navigator.clipboard.writeText(window.location.href); alert('Article link copied to clipboard!');"
-        class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-emerald-700 transition-colors px-2.5 py-1 rounded-full hover:bg-gray-100 cursor-pointer"
-        title="Share this article"
-      >
-        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-        <span class="hidden sm:inline">Share</span>
-      </button>
-    </div>
-
-    <!-- Category & Metadata Badges -->
-    <div class="flex flex-wrap items-center gap-2.5 mb-5">
-      <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-100 inline-flex items-center gap-1.5">
-        <i data-lucide="tag" class="w-3 h-3 text-emerald-600"></i>
-        <?php echo esc_html( $cat_name ); ?>
-      </span>
-
-      <?php if ( $medium === 'video' ) : ?>
-        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-800 border border-rose-100 inline-flex items-center gap-1.5">
-          <i data-lucide="play" class="w-3.5 h-3.5 text-rose-600"></i>
-          Video • <?php echo esc_html( $minutes ); ?> min watch
-        </span>
-      <?php elseif ( $medium === 'audio' ) : ?>
-        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-800 border border-purple-100 inline-flex items-center gap-1.5">
-          <i data-lucide="headphones" class="w-3.5 h-3.5 text-purple-600"></i>
-          Audio • <?php echo esc_html( $minutes ); ?> min listen
-        </span>
-      <?php else : ?>
-        <span class="px-3 py-1 rounded-full text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 inline-flex items-center gap-1.5">
-          <i data-lucide="book-open" class="w-3.5 h-3.5 text-gray-500"></i>
-          Article • <?php echo esc_html( $minutes ); ?> min read
-        </span>
-      <?php endif; ?>
-
-      <span class="inline-flex items-center gap-1.5 text-xs text-gray-400">
-        <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-        <?php echo get_the_date( 'M j, Y' ); ?>
-      </span>
-    </div>
-
-    <!-- Title -->
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-6 leading-[1.18]" style="font-family: var(--font-display); letter-spacing: -0.02em;">
-      <?php the_title(); ?>
-    </h1>
-
-    <!-- Author & Clinical Review Byline -->
-    <div class="flex items-center justify-between flex-wrap gap-4 pb-6 border-b border-gray-100 mb-8">
-      <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-base shadow-xs" style="background-color: var(--brand-teal, #006A60);">
-          <?php echo esc_html( strtoupper( substr( $author, 0, 1 ) ) ); ?>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-            <span><?php echo esc_html( $author ); ?></span>
-            <i data-lucide="badge-check" class="w-4 h-4 text-emerald-600" title="Verified Author"></i>
-          </p>
-          <p class="text-xs text-gray-500">Clinical Review &amp; Advisory Board • iKAN Health</p>
-        </div>
-      </div>
-
-      <div class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-        <span>Medically Reviewed</span>
-      </div>
-    </div>
-
-    <!-- Video Player Embed -->
-    <?php if ( $medium === 'video' && $youtube_embed ) : ?>
-      <div class="mb-10 rounded-3xl overflow-hidden shadow-lg border border-black/5 aspect-video w-full bg-black">
-        <iframe 
-          src="<?php echo esc_url( $youtube_embed ); ?>" 
-          title="<?php the_title_attribute(); ?>"
-          class="w-full h-full border-0" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen
-        ></iframe>
-      </div>
-    <?php endif; ?>
-
-    <!-- Audio Player Box -->
-    <?php if ( $medium === 'audio' && $audio_url ) : ?>
-      <div class="mb-10 p-6 sm:p-8 rounded-3xl border border-purple-100 bg-gradient-to-r from-purple-50/70 to-indigo-50/40 shadow-xs space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
-            <i data-lucide="headphones" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-gray-900">Audio Experience &amp; Guided Practice</h3>
-            <p class="text-xs text-gray-600">Clinical Mindfulness &amp; Psychological Guidance</p>
-          </div>
+    <article style="--accent-strong: #10B981;" aria-labelledby="article-title">
+      
+      <!-- Cover Header with SVG Art from ikan2 -->
+      <header id="cover" class="relative overflow-hidden sm:rounded-[28px]" aria-label="Cover">
+        <div class="h-60 sm:h-72 overflow-hidden">
+          <?php echo ikan_render_art_svg( $art, 'w-full h-full object-cover' ); ?>
         </div>
 
-        <?php if ( strpos( $audio_url, "spotify.com" ) !== false ) : 
-          $spotify_embed = str_replace( "open.spotify.com/episode/", "open.spotify.com/embed/episode/", $audio_url );
-        ?>
-          <div class="rounded-2xl overflow-hidden shadow-xs">
-            <iframe src="<?php echo esc_url( $spotify_embed ); ?>" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-          </div>
-        <?php else : ?>
-          <audio controls class="w-full mt-2 rounded-xl focus:outline-none">
-            <source src="<?php echo esc_url( $audio_url ); ?>" type="audio/mpeg">
-            Your browser does not support the audio element.
-          </audio>
-        <?php endif; ?>
+        <!-- Floating Action Icons (Back & Share/Bookmark) -->
+        <div class="absolute inset-x-0 top-0 flex items-center justify-between p-3 sm:p-4">
+          <a
+            href="<?php echo esc_url( home_url( '/resources/' ) ); ?>"
+            aria-label="Back to resources"
+            class="grid h-10 w-10 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors"
+          >
+            <i data-lucide="arrow-left" class="h-5 w-5"></i>
+          </a>
+
+          <button
+            type="button"
+            aria-label="Share article"
+            onclick="if (navigator.share) { navigator.share({title: document.title, url: window.location.href}); } else { navigator.clipboard.writeText(window.location.href); alert('Article link copied to clipboard!'); }"
+            class="grid h-10 w-10 place-items-center rounded-full bg-background/85 backdrop-blur text-foreground shadow-xs hover:bg-background transition-colors cursor-pointer"
+          >
+            <i data-lucide="bookmark" class="h-5 w-5"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Article Body Card: exact rounded-t-[28px] -mt-8 overlap from ikan2 -->
+      <div id="article" class="relative -mt-8 rounded-t-[28px] bg-background px-5 sm:px-8 pt-6 sm:pt-8 shadow-xs sm:rounded-[28px] sm:mt-0">
         
-        <p class="text-[11px] text-gray-400">Headphones recommended. Best practiced in a quiet, undisturbed posture.</p>
-      </div>
-    <?php endif; ?>
-
-    <!-- Featured Image (for standard articles or when no video embed) -->
-    <?php if ( $medium !== 'video' ) : ?>
-      <div class="mb-10 rounded-3xl overflow-hidden shadow-xs border border-gray-100">
-        <img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-auto object-cover max-h-[500px]" loading="eager" decoding="async">
-      </div>
-    <?php endif; ?>
-
-    <!-- Article Excerpt Standfirst -->
-    <?php if ( has_excerpt() ) : ?>
-      <div class="text-lg text-gray-700 leading-relaxed font-medium mb-8 p-6 rounded-2xl bg-[#F8FAF9] border-l-4 border-emerald-600">
-        <?php the_excerpt(); ?>
-      </div>
-    <?php endif; ?>
-
-    <!-- Post HTML Body -->
-    <div id="article-body" class="prose-ikan prose prose-lg max-w-none text-gray-800 leading-relaxed space-y-6">
-      <?php the_content(); ?>
-    </div>
-
-    <!-- Tags Section -->
-    <?php if ( ! empty( $tags ) ) : ?>
-      <div class="mt-10 pt-6 border-t border-gray-100">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1 mr-1">
-            <i data-lucide="tags" class="w-3.5 h-3.5"></i>
-            Tags:
-          </span>
-          <?php foreach ( $tags as $t ) : ?>
-            <a href="<?php echo esc_url( home_url( '/resources?search=' . urlencode( $t ) ) ); ?>" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200/60 transition-colors">
-              #<?php echo esc_html( $t ); ?>
-            </a>
-          <?php endforeach; ?>
-        </div>
-      </div>
-    <?php endif; ?>
-
-    <!-- Source Attribution Card (SourceCard from ikan2) -->
-    <?php if ( ! empty( $source ) && ! empty( $source['name'] ) ) : 
-      $facts = array_filter( [ $source['cost'] ?? '', $source['language'] ?? '', $source['licence'] ?? '' ] );
-    ?>
-      <section class="mt-10 block rounded-2xl bg-[#f8faf9] border border-gray-200/80 p-5 sm:p-6" aria-label="Original Source Attribution">
-        <span class="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-          <i data-lucide="info" class="w-3.5 h-3.5"></i> Source Attribution
-        </span>
-        <div class="mt-2 flex items-start justify-between gap-4">
-          <div class="min-w-0 flex-1">
-            <h3 class="text-base font-bold text-gray-900"><?php echo esc_html( $source['name'] ); ?></h3>
-            <?php if ( ! empty( $source['note'] ) ) : ?>
-              <p class="text-xs text-gray-500 mt-1"><?php echo esc_html( $source['note'] ); ?></p>
-            <?php endif; ?>
-            <?php if ( ! empty( $facts ) ) : ?>
-              <div class="mt-3 flex flex-wrap gap-2">
-                <?php foreach ( $facts as $f ) : ?>
-                  <span class="text-xs font-medium bg-white px-2.5 py-1 rounded-full border border-gray-200 text-gray-700 shadow-2xs">
-                    <?php echo esc_html( $f ); ?>
-                  </span>
-                <?php endforeach; ?>
-              </div>
-            <?php endif; ?>
-          </div>
-          <?php if ( ! empty( $source['url'] ) ) : ?>
-            <a href="<?php echo esc_url( $source['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="shrink-0 p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-emerald-700 shadow-2xs hover:shadow-xs transition-all" title="Open source">
-              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-            </a>
-          <?php endif; ?>
-        </div>
-        <?php if ( ! empty( $source['url'] ) ) : ?>
-          <a href="<?php echo esc_url( $source['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-900 mt-4 transition-colors">
-            <span>Open the original source publication</span>
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-          </a>
-        <?php endif; ?>
-      </section>
-    <?php endif; ?>
-
-    <!-- Related in iKAN Section -->
-    <?php if ( $assessment || $programme ) : ?>
-      <section class="mt-12 pt-8 border-t border-gray-100" aria-label="Related in iKAN">
-        <h2 class="text-lg font-bold text-gray-900 mb-4" style="font-family: var(--font-display);">Related in iKAN Health</h2>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Stacked Assessment Card -->
-          <?php if ( $assessment ) : ?>
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full inline-block mb-2">
-                  <?php echo ( $assessmentRole === 'next' ) ? 'Fuller Screener Next' : 'Assessment Explained'; ?>
-                </span>
-                <h3 class="text-base font-bold text-gray-900 mb-1"><?php echo esc_html( $assessment['title'] ); ?></h3>
-                <p class="text-xs text-gray-500 mb-3"><?php echo esc_html( $assessment['category'] ); ?> • <?php echo esc_html( $assessment['questions'] ); ?> questions</p>
-              </div>
-              <a href="<?php echo esc_url( home_url( '/assessments/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 transition-colors pt-2 border-t border-gray-100">
-                <span>Take free screening</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-              </a>
-            </div>
-          <?php endif; ?>
-
-          <!-- Equip Program Card -->
-          <?php if ( $programme ) : ?>
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full inline-block mb-2">
-                  Equip 14-Day Micro-Cadence
-                </span>
-                <h3 class="text-base font-bold text-gray-900 mb-1"><?php echo esc_html( $programme['title'] ); ?></h3>
-                <p class="text-xs text-gray-500 mb-3"><?php echo esc_html( $programme['tagline'] ); ?></p>
-              </div>
-              <a href="<?php echo esc_url( home_url( '/equip-programs/' ) ); ?>" class="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-900 transition-colors pt-2 border-t border-gray-100">
-                <span>Explore program curriculum</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-              </a>
-            </div>
-          <?php endif; ?>
-        </div>
-      </section>
-    <?php endif; ?>
-
-    <!-- Clinical Review & Crisis Notice Box -->
-    <div class="mt-12 p-6 sm:p-7 rounded-3xl bg-[#F8FAF9] border border-gray-200/80 text-xs sm:text-sm text-gray-600 space-y-3">
-      <div class="flex items-center gap-2">
-        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-700 shrink-0"></i>
-        <p class="font-bold text-gray-900 text-sm">
-          Medically Reviewed by Dr. Divya Jain, Ph.D. &amp; iKAN Advisory Board
+        <!-- Category Eyebrow -->
+        <p class="type-body-sm font-semibold text-[var(--accent-strong,#10B981)]">
+          <?php echo esc_html( $cat_name ); ?>
         </p>
-      </div>
-      <p class="leading-relaxed text-xs sm:text-xs text-gray-500">
-        All iKAN Health articles and educational guides are written in accordance with clinically validated psychological benchmarks (DSM-5, ICD-11, and WHO guidelines). This material is intended for psychoeducation and does not replace professional clinical evaluation.
-      </p>
-      <div class="pt-3 border-t border-gray-200/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <span class="text-gray-500">In crisis? Immediate free support:</span>
-        <div class="flex items-center gap-4 font-semibold text-gray-700">
-          <span>KIRAN: <a href="tel:18005990019" class="text-emerald-700 hover:underline">1800-599-0019</a></span>
-          <span>iCALL: <a href="tel:9152987821" class="text-emerald-700 hover:underline">9152987821</a></span>
-          <span>Tele-MANAS: <a href="tel:14416" class="text-emerald-700 hover:underline">14416</a></span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Keep Reading / Related Resources Section -->
-    <?php
-    $related_query = new WP_Query( [
-      'post_type'      => 'post',
-      'posts_per_page' => 3,
-      'post_status'    => 'publish',
-      'post__not_in'   => [ $post_id ],
-      'category_name'  => $cat_slug,
-    ] );
+        <!-- Headline / Title -->
+        <h1 id="article-title" class="type-headline-md mt-1 text-balance font-semibold text-foreground">
+          <?php the_title(); ?>
+        </h1>
 
-    if ( ! $related_query->have_posts() ) {
-      $related_query = new WP_Query( [
-        'post_type'      => 'post',
-        'posts_per_page' => 3,
-        'post_status'    => 'publish',
-        'post__not_in'   => [ $post_id ],
-      ] );
-    }
+        <!-- Standfirst / Description -->
+        <?php if ( has_excerpt() ) : ?>
+          <p class="type-title-lg mt-3 font-medium text-muted-foreground text-balance">
+            <?php echo esc_html( get_the_excerpt() ); ?>
+          </p>
+        <?php endif; ?>
 
-    if ( $related_query->have_posts() ) :
-    ?>
-      <section class="mt-14 pt-8 border-t border-gray-100" aria-label="Keep Reading">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-gray-900" style="font-family: var(--font-display);">Keep Reading</h2>
-          <a href="<?php echo esc_url( home_url( '/resources' ) ); ?>" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 transition-colors flex items-center gap-1">
-            <span>View all resources</span>
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
+        <!-- Metadata Row: Author, Date, Medium, Read Time (lucide icons) -->
+        <p class="type-label-lg mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-foreground/10 pb-5 text-muted-foreground">
+          <?php if ( ! empty( $author ) ) : ?>
+            <span class="inline-flex items-center gap-1.5 text-foreground font-medium">
+              <i data-lucide="user-round" class="h-4 w-4 text-muted-foreground"></i>
+              <span><?php echo esc_html( $author ); ?></span>
+            </span>
+          <?php endif; ?>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <?php while ( $related_query->have_posts() ) : $related_query->the_post(); 
-            $rel_id = get_the_ID();
-            $rel_cover = function_exists('ikan_get_resource_cover_url') ? ikan_get_resource_cover_url( $rel_id ) : ( has_post_thumbnail() ? get_the_post_thumbnail_url( $rel_id, 'medium' ) : '' );
-            $rel_minutes = get_post_meta( $rel_id, 'minutes', true ) ?: 5;
-            $rel_medium = get_post_meta( $rel_id, 'medium', true ) ?: 'article';
-          ?>
-            <a href="<?php the_permalink(); ?>" class="group block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-2xs hover:shadow-md transition-all">
-              <div class="relative aspect-16/10 overflow-hidden bg-gray-100">
-                <img src="<?php echo esc_url( $rel_cover ); ?>" alt="<?php the_title_attribute(); ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
-                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black/75 text-white backdrop-blur-xs">
-                  <?php echo esc_html( $rel_medium ); ?> • <?php echo esc_html( $rel_minutes ); ?>m
-                </span>
+          <span class="inline-flex items-center gap-1.5">
+            <i data-lucide="calendar-days" class="h-4 w-4"></i>
+            <span><?php echo get_the_date( 'j F Y' ); ?></span>
+          </span>
+
+          <span class="inline-flex items-center gap-1.5">
+            <?php if ( $medium === 'video' ) : ?>
+              <i data-lucide="play" class="h-4 w-4 text-rose-500"></i>
+              <span>Watch</span>
+            <?php elseif ( $medium === 'audio' ) : ?>
+              <i data-lucide="headphones" class="h-4 w-4 text-indigo-500"></i>
+              <span>Listen</span>
+            <?php else : ?>
+              <i data-lucide="book-open" class="h-4 w-4 text-emerald-600"></i>
+              <span>Read</span>
+            <?php endif; ?>
+          </span>
+
+          <span class="inline-flex items-center gap-1.5">
+            <i data-lucide="clock-3" class="h-4 w-4"></i>
+            <span><?php echo esc_html( $minutes ); ?> min</span>
+          </span>
+        </p>
+
+        <!-- Video Player Embed (if video resource) -->
+        <?php if ( $medium === 'video' && $youtube_embed ) : ?>
+          <div class="mt-6 rounded-2xl overflow-hidden aspect-video w-full bg-black shadow-xs">
+            <iframe 
+              src="<?php echo esc_url( $youtube_embed ); ?>" 
+              title="<?php the_title_attribute(); ?>"
+              class="w-full h-full border-0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowfullscreen
+            ></iframe>
+          </div>
+        <?php endif; ?>
+
+        <!-- Audio Player Box (if audio resource) -->
+        <?php if ( $medium === 'audio' && $audio_url ) : ?>
+          <div class="mt-6 p-5 rounded-2xl bg-secondary space-y-3">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-purple-600 text-white shadow-xs">
+                <i data-lucide="headphones" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <p class="type-body-sm font-semibold text-foreground">Audio Resource</p>
+                <p class="type-label-md text-muted-foreground"><?php echo esc_html( $minutes ); ?> minutes • Listen anytime</p>
               </div>
-              <div class="p-4">
-                <h3 class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-2 leading-snug">
-                  <?php the_title(); ?>
-                </h3>
-                <p class="text-[11px] text-gray-400 mt-2 flex items-center justify-between">
-                  <span><?php echo get_the_date( 'M j, Y' ); ?></span>
-                  <span class="text-emerald-700 font-semibold flex items-center gap-0.5">Read <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+            </div>
+            <audio controls class="w-full rounded-lg focus:outline-none">
+              <source src="<?php echo esc_url( $audio_url ); ?>" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        <?php endif; ?>
+
+        <!-- HTML Article Body (prose-ikan: exact h2, h3, lists, tables, charts from ikan2) -->
+        <div id="article-body" class="prose-ikan mt-6">
+          <?php echo $body_content; ?>
+        </div>
+
+        <div id="article-end" aria-hidden="true" class="h-1"></div>
+
+        <!-- External Source Attribution Card (SourceCard from ikan2) -->
+        <?php if ( ! empty( $source ) && ! empty( $source['name'] ) ) : 
+          $facts = array_filter( [ $source['cost'] ?? '', $source['language'] ?? '', $source['licence'] ?? '' ] );
+        ?>
+          <section id="source" class="mt-8" aria-label="Source">
+            <div class="rounded-2xl bg-secondary p-5 border border-foreground/5">
+              <p class="type-label-md font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <i data-lucide="info" class="h-3.5 w-3.5"></i>
+                <span>Source</span>
+              </p>
+              <div class="mt-2 flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <h3 class="type-title-md text-foreground"><?php echo esc_html( $source['name'] ); ?></h3>
+                  <?php if ( ! empty( $source['note'] ) ) : ?>
+                    <p class="type-body-sm text-muted-foreground mt-1"><?php echo esc_html( $source['note'] ); ?></p>
+                  <?php endif; ?>
+                  <?php if ( ! empty( $facts ) ) : ?>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <?php foreach ( $facts as $f ) : ?>
+                        <span class="type-label-md bg-background px-2.5 py-1 rounded-full border border-foreground/10 text-muted-foreground">
+                          <?php echo esc_html( $f ); ?>
+                        </span>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php endif; ?>
+                </div>
+                <?php if ( ! empty( $source['url'] ) ) : ?>
+                  <a href="<?php echo esc_url( $source['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="shrink-0 p-2 rounded-xl bg-background border border-foreground/10 text-foreground hover:text-[var(--accent-strong,#10B981)] transition-colors" title="Open source">
+                    <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
+                  </a>
+                <?php endif; ?>
+              </div>
+            </div>
+          </section>
+        <?php endif; ?>
+
+        <!-- Inline Sources Section (if present in article body) -->
+        <?php if ( ! empty( $sources_content ) ) : ?>
+          <div class="prose-ikan mt-4">
+            <?php echo $sources_content; ?>
+          </div>
+        <?php endif; ?>
+
+        <!-- Related in iKAN Section (Assessment / Programme / Journal) -->
+        <?php if ( $assessment || $programme || $journal ) : ?>
+          <section id="external" class="mt-10 border-t border-foreground/10 pt-8" aria-label="Related in iKAN">
+            
+            <?php if ( $assessment ) : ?>
+              <div class="rounded-2xl bg-secondary p-5 border border-foreground/5 mb-6">
+                <p class="type-body-sm font-semibold text-[var(--accent-strong,#10B981)]">
+                  <?php echo ( $assessmentRole === 'next' ) ? 'The fuller test this article points to' : 'The test this article explains'; ?>
                 </p>
+                <div class="mt-3 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 class="type-title-md text-foreground"><?php echo esc_html( $assessment['title'] ); ?></h3>
+                    <p class="type-body-sm text-muted-foreground mt-1"><?php echo esc_html( $assessment['category'] ); ?> • <?php echo esc_html( $assessment['questions'] ); ?> questions • <?php echo esc_html( $assessment['minutes'] ?? 3 ); ?> min</p>
+                  </div>
+                  <a href="<?php echo esc_url( home_url( '/assessments/' ) ); ?>" class="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity">
+                    <span>Take Test</span>
+                    <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+                  </a>
+                </div>
               </div>
-            </a>
-          <?php endwhile; wp_reset_postdata(); ?>
-        </div>
-      </section>
-    <?php endif; ?>
+            <?php endif; ?>
 
-  </article>
-<?php endwhile; endif; ?>
+            <?php if ( $programme ) : ?>
+              <div class="rounded-2xl bg-secondary p-5 border border-foreground/5 mb-6">
+                <p class="type-body-sm font-semibold text-[var(--accent-strong,#10B981)]">
+                  A programme that works on this
+                </p>
+                <div class="mt-3 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 class="type-title-md text-foreground"><?php echo esc_html( $programme['title'] ); ?></h3>
+                    <p class="type-body-sm text-muted-foreground mt-1"><?php echo esc_html( $programme['tagline'] ); ?></p>
+                  </div>
+                  <a href="<?php echo esc_url( home_url( '/equip-programs/' ) ); ?>" class="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity">
+                    <span>Explore</span>
+                    <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+                  </a>
+                </div>
+              </div>
+            <?php endif; ?>
+
+          </section>
+        <?php endif; ?>
+
+        <!-- Keep Reading / Related Resources: 3 items using exact ResourceRow styling from ikan2 -->
+        <?php
+        $related_query = new WP_Query( [
+          'post_type'      => 'post',
+          'posts_per_page' => 3,
+          'post_status'    => 'publish',
+          'post__not_in'   => [ $post_id ],
+          'category_name'  => $cat_slug,
+        ] );
+
+        if ( ! $related_query->have_posts() ) {
+          $related_query = new WP_Query( [
+            'post_type'      => 'post',
+            'posts_per_page' => 3,
+            'post_status'    => 'publish',
+            'post__not_in'   => [ $post_id ],
+          ] );
+        }
+
+        if ( $related_query->have_posts() ) :
+        ?>
+          <section class="mt-12 border-t border-foreground/10 pt-8 pb-4" aria-label="Keep Reading">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="type-title-lg font-semibold text-foreground">Keep reading</h2>
+              <a href="<?php echo esc_url( home_url( '/resources/' ) ); ?>" class="type-label-lg font-semibold text-[var(--accent-strong,#10B981)] hover:underline inline-flex items-center gap-1">
+                <span>All resources</span>
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+              </a>
+            </div>
+
+            <ul class="divide-y divide-foreground/10">
+              <?php while ( $related_query->have_posts() ) : $related_query->the_post(); 
+                $rel_id      = get_the_ID();
+                $rel_meta    = function_exists( 'ikan_get_resource_extra_meta' ) ? ikan_get_resource_extra_meta( $rel_id ) : [];
+                $rel_art     = $rel_meta['art'] ?? 'checkup';
+                $rel_cat     = get_the_category( $rel_id );
+                $rel_catname = ! empty( $rel_cat ) ? $rel_cat[0]->name : 'Resource';
+                $rel_minutes = $rel_meta['minutes'] ?? ( get_post_meta( $rel_id, 'minutes', true ) ?: 5 );
+                $rel_medium  = $rel_meta['medium'] ?? ( get_post_meta( $rel_id, 'medium', true ) ?: 'article' );
+              ?>
+                <li class="py-3">
+                  <a href="<?php the_permalink(); ?>" class="flex items-center gap-3 text-left group">
+                    <span class="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-[16px] bg-secondary">
+                      <?php echo ikan_render_art_svg( $rel_art, 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-200' ); ?>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="type-label-md font-semibold block text-[var(--accent-strong,#10B981)]">
+                        <?php echo esc_html( $rel_catname ); ?>
+                      </span>
+                      <h3 class="mt-0.5 line-clamp-2 text-[15px] font-semibold leading-5 text-foreground group-hover:text-[var(--accent-strong,#10B981)] transition-colors">
+                        <?php the_title(); ?>
+                      </h3>
+                      <p class="type-body-sm mt-1 flex items-center gap-3 text-muted-foreground">
+                        <span class="inline-flex items-center gap-1.5">
+                          <i data-lucide="calendar-days" class="h-3.5 w-3.5"></i>
+                          <span><?php echo get_the_date( 'j M' ); ?></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                          <?php if ( $rel_medium === 'video' ) : ?>
+                            <i data-lucide="play" class="h-3.5 w-3.5"></i> Watch
+                          <?php elseif ( $rel_medium === 'audio' ) : ?>
+                            <i data-lucide="headphones" class="h-3.5 w-3.5"></i> Listen
+                          <?php else : ?>
+                            <i data-lucide="book-open" class="h-3.5 w-3.5"></i> Read
+                          <?php endif; ?>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                          <i data-lucide="clock-3" class="h-3.5 w-3.5"></i>
+                          <span><?php echo esc_html( $rel_minutes ); ?> min</span>
+                        </span>
+                      </p>
+                    </span>
+                  </a>
+                </li>
+              <?php endwhile; wp_reset_postdata(); ?>
+            </ul>
+          </section>
+        <?php endif; ?>
+
+      </div>
+    </article>
+  </div>
 </main>
+<?php endwhile; endif; ?>
 
 <script>
-// Reading progress bar calculator
+// Scroll progress bar calculator (native, responsive)
 document.addEventListener('DOMContentLoaded', function() {
   var bar = document.getElementById('reading-progress-bar');
   if (bar) {

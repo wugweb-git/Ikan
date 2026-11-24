@@ -46,8 +46,6 @@ require_once get_template_directory() . '/includes/class-ikan-clinical-admin.php
 // Load iKAN Design System & Token Compliance Admin Hub
 require_once get_template_directory() . '/includes/class-ikan-design-admin.php';
 
-// Load iKAN Enhanced WordPress Admin Posts Table Columns (Clinical Author, Format, Read Time, Tags)
-require_once get_template_directory() . '/includes/class-ikan-post-columns.php';
 
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
@@ -353,6 +351,39 @@ add_filter( 'template_include', function( $template ) {
 }, 99 );
 
 /**
+ * Render Art SVG for a resource
+ * Uses 1:1 exported SVGs from ikan2/src/components/art.tsx
+ */
+function ikan_render_art_svg( $art, $class = '' ) {
+  static $svg_map = null;
+  static $counter = 0;
+  if ( $svg_map === null ) {
+    $file = get_template_directory() . '/assets/art-svgs.json';
+    if ( file_exists( $file ) ) {
+      $svg_map = json_decode( file_get_contents( $file ), true );
+    }
+    if ( ! is_array( $svg_map ) ) {
+      $svg_map = [];
+    }
+  }
+
+  $counter++;
+  $id = 'art_' . $counter . '_' . wp_generate_password( 6, false, false );
+  $template = $svg_map[ $art ] ?? ( $svg_map['checkup'] ?? '' );
+
+  if ( empty( $template ) ) {
+    return '<div class="w-full h-full bg-secondary"></div>';
+  }
+
+  $svg = str_replace( '{ID}', $id, $template );
+  if ( ! empty( $class ) ) {
+    $svg = str_replace( 'class="block h-full w-full"', 'class="block h-full w-full ' . esc_attr( $class ) . '"', $svg );
+  }
+
+  return $svg;
+}
+
+/**
  * Resolves authentic cover image URL for a resource post.
  * Checks post thumbnail, poster metadata, title-matched cover in assets/resources/covers,
  * and audio/video posters in assets/resources.
@@ -430,10 +461,18 @@ function ikan_get_resource_extra_meta( $post_id ) {
     $minutes = max( 1, (int) ceil( $word_count / 200 ) );
   }
 
-  $author = get_post_meta( $post_id, 'author', true ) ?: ( $json_meta['author'] ?? '' );
-  if ( empty( $author ) || $author === 'iKAN Clinical Team' ) {
-    $author = 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board';
+  $author = '';
+  if ( $post && $post->post_author ) {
+    $author_user = get_userdata( $post->post_author );
+    if ( $author_user && ! empty( $author_user->display_name ) ) {
+      $author = $author_user->display_name;
+    }
   }
+  if ( empty( $author ) ) {
+    $author = $json_meta['author'] ?? 'Vedanshu';
+  }
+
+  $art = $json_meta['art'] ?? 'checkup';
 
   $source = ! empty( $json_meta['source'] ) ? $json_meta['source'] : null;
   $assessment = ! empty( $json_meta['assessment'] ) ? $json_meta['assessment'] : null;
@@ -560,6 +599,7 @@ function ikan_get_resource_extra_meta( $post_id ) {
     'programme'          => $programme_details,
     'journal'            => $journal,
     'consult'            => $consult,
+    'art'                => $art,
     'tags'               => $tags,
     'labels'             => $labels,
     'reviewed_by'        => 'Dr. Divya Jain, Ph.D. & iKAN Advisory Board',
