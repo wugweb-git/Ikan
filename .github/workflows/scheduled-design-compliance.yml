@@ -1,0 +1,42 @@
+name: Scheduled Design & Token Compliance Worker
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (07:30 IST)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-compliance:
+    name: Cross-Surface Design, Token & Mobile Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Cross-Surface Compliance (Web, Mobile, PWA, Android)
+        run: npm run test:compliance
+
+      - name: Verify Contrast Ratchet (WCAG AA)
+        run: npm run contrast:ratchet
+
+      - name: Verify Token Consumption (Raw Hex Ratchet)
+        run: npm run lint:rawhex
+
+      - name: Verify Static Accessibility (a11y Ratchet)
+        run: npm run lint:a11y
+
+      - name: Verify Surface Boundaries
+        run: npm run lint:boundary

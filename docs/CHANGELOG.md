@@ -4,6 +4,18 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-24] — Burnout cost calculator: model v2.1 and contact links (status check)
+
+### Changed
+- **Model v2.1 (`burnout-cost-model.ts`)**: presenteeism now uses Kartik's workbook method by default: people in burnout who stay × 4 / 6 / 8% of average pay. The absenteeism × 3 / 3.5 / 4 method stays in the code as a tested alternative (`'multiplier'`). Attrition is total, not voluntary only; the Other sector uses 18% (Aon). A 75-person SaaS team now comes to about ₹40 lakh (4.5% of payroll), range ₹20 to 70 lakh. 15 model tests pass.
+- **Contact links**: the pilot block and the printed report list WhatsApp (+91 98998 43330), phone (+91 85275 45503) and the support email. Each click sends `calc_contact_click` with the channel.
+- Sources, FAQ text and `docs/burnout-calculator-proof-ledger.md` were updated to match.
+
+### Verified
+- Live on ikanhealth.in/burnout-cost-calculator on 24 Nov: the page shows ₹40 lakh, the WhatsApp link and the new presenteeism wording.
+
+---
+
 ## [2026-11-24] — Alert emails live in Supabase; WordPress sync check
 
 ### Added
