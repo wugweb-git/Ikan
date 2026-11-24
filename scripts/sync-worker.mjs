@@ -22,7 +22,8 @@ const ENDPOINTS = [
   { name: 'API App Config', path: '/wp-json/ikan/v1/app-config', expectJson: true },
   { name: 'API About Page', path: '/wp-json/ikan/v1/page/about', expectJson: true },
   { name: 'API Resources Catalog', path: '/wp-json/ikan/v1/resources', expectJson: true },
-  { name: 'API Writeups Catalog', path: '/wp-json/ikan/v1/writeups', expectJson: true }
+  { name: 'API Writeups Catalog', path: '/wp-json/ikan/v1/writeups', expectJson: true },
+  { name: 'Authenticated Ingest Worker Session', path: '/wp-json/wp/v2/users/me', expectJson: true }
 ];
 
 async function checkEndpoint(ep) {
