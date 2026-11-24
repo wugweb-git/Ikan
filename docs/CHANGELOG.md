@@ -4,6 +4,27 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-24] — React app line: Effort A removals, brand mark, mobile onboarding, a11y (session close-out)
+
+Work done in the React/PWA app under `src/` (PRs #13–#21 on the earlier Vercel line; all of it is in `wordpress` history). Recorded here so the next session does not redo it.
+
+### Removed
+- **Hero Banner** feature and the admin **Page Manager** module with its `/cms/pages*` routes (`bb9a16cd`, `31015ad5`, `abe060a9`). Pages render `DEFAULT_CMS_CONTENT`; `usePageContent` is unwired. Existing `cms_page:`/`page:` KV rows were deliberately **not** deleted.
+
+### Added
+- **`BrandMark`** (`src/components/BrandMark.tsx`): one SVG path for the icon everywhere (props: size, color, padding, animation, revealOnScroll). Theme-aware `favicon.svg`; five PWA PNGs regenerated (light tile, dark mark).
+- **Four mobile onboarding screens** (`/welcome`, `/onboarding`, `/verify-email`, `/get-started`) plus `src/lib/first-run.ts` flags and a clickable-prototype doc entry.
+
+### Changed
+- **Dashboard**: seven clickable cards converted from `div onClick` to real `button` elements (keyboard access).
+- Ratchet baselines lowered, never raised: typecheck 165, lint 884, rawhex 470, a11y 51. `/screens/` and `/_to_delete/` gitignored.
+
+### Not done / notes
+- No VAPID public key was recovered: it exists only as a Supabase secret and the CLI shows a SHA-256 digest, not the key.
+- Native-capabilities and `reminder` block work was designed but deliberately deferred until after the UX pass.
+
+---
+
 ## [2026-11-24] — Burnout cost calculator: model v2.1 and contact links (status check)
 
 ### Changed
