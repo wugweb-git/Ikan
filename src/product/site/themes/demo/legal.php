@@ -2,10 +2,10 @@
 /**
  * Template Name: Legal Page
  * Template Post Type: page
- * Description: Exact 1:1 replica of iKAN 2 PWA Legal layout (ikan2/src/routes/legal.$slug.tsx)
+ * Description: Authentic iKAN Health Legal page matching LegalPage.tsx and index-C1zkq2-P.css
  *
- * Matches InfoShell wide container, horizontal tab bar, font-display heading,
- * and prose-ikan body styling across Terms, Privacy Policy, Cancellation Policy, and Return Policy.
+ * Matches info-page, info-band, info-band__inner container, horizontal tab switcher,
+ * info-title, and prose-ikan info-prose across Terms, Privacy Policy, Cancellation Policy, and Return Policy.
  *
  * @package iKAN_Health
  */
@@ -27,7 +27,7 @@ if ( empty( $slug ) ) {
   } elseif ( in_array( $path, [ 'return-policy', 'refund-policy', 'refund' ], true ) ) {
     $slug = 'return-policy';
   } else {
-    $slug = 'terms';
+    $slug = 'privacy-policy';
   }
 }
 
@@ -44,12 +44,12 @@ if ( file_exists( $pages_file ) ) {
 }
 
 $legal_pages = $pages_data['legal'] ?? [];
-$legal_order = [ 'terms', 'privacy-policy', 'cancellation-policy', 'return-policy' ];
+$legal_order = [ 'privacy-policy', 'terms', 'cancellation-policy', 'return-policy' ];
 
 // Fallback if slug not found
-$page = $legal_pages[ $slug ] ?? ( $legal_pages['terms'] ?? [] );
+$page = $legal_pages[ $slug ] ?? ( $legal_pages['privacy-policy'] ?? [] );
 
-$page_title    = $page['title'] ?? 'Terms of Service';
+$page_title    = $page['title'] ?? 'Privacy Policy';
 $page_subtitle = $page['subtitle'] ?? '';
 $page_html     = $page['html'] ?? '';
 
@@ -58,72 +58,54 @@ if ( empty( $page_html ) ) {
   $page_html = apply_filters( 'the_content', get_the_content() );
 }
 
-// Route mapping for tabs matching ikan2
+// Clean any hardcoded utility classes from html so .prose-ikan styles it purely
+$page_html = preg_replace( '/\sclass="[^"]*"/', '', $page_html );
+
+// Route mapping for tabs
 $tab_routes = [
-  'terms'               => home_url( '/terms' ),
   'privacy-policy'      => home_url( '/privacy-policy' ),
+  'terms'               => home_url( '/terms' ),
   'cancellation-policy' => home_url( '/cancellation-policy' ),
   'return-policy'       => home_url( '/return-policy' ),
 ];
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
-  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
-    
-    <!-- Top Bar with Back Button -->
-    <div class="flex items-center h-14 px-3">
-      <a
-        href="<?php echo esc_url( home_url( '/' ) ); ?>"
-        aria-label="Back"
-        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
-      >
-        <i data-lucide="arrow-left" class="h-6 w-6"></i>
-      </a>
-    </div>
+<main id="main-content" tabindex="-1" class="flex-1 w-full relative outline-none p-[0px]" role="main" aria-label="Page content">
+  <div class="ikan2-theme info-page site-page-below-nav">
+    <section class="info-band">
+      <div class="info-band__inner">
+        
+        <p class="info-eyebrow">Legal</p>
+        <h1 class="info-title"><?php echo esc_html( $page_title ); ?></h1>
+        <?php if ( ! empty( $page_subtitle ) ) : ?>
+          <p class="info-subtitle"><?php echo esc_html( $page_subtitle ); ?></p>
+        <?php endif; ?>
 
-    <!-- Legal Tabs Switcher (matching ikan2 exactly) -->
-    <div
-      class="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-2"
-      role="navigation"
-      aria-label="Legal pages"
-    >
-      <?php foreach ( $legal_order as $s ) : 
-        $tab_info  = $legal_pages[ $s ] ?? [];
-        $is_active = ( $s === $slug );
-        $tab_url   = $tab_routes[ $s ] ?? home_url( '/' . $s );
-      ?>
-        <a
-          href="<?php echo esc_url( $tab_url ); ?>"
-          class="type-label-lg inline-flex h-9 shrink-0 items-center rounded-[8px] border px-3.5 font-medium transition-colors <?php echo $is_active ? 'border-transparent bg-foreground text-background' : 'border-foreground/20 text-foreground hover:bg-secondary'; ?>"
-        >
-          <?php echo esc_html( $tab_info['title'] ?? ucfirst( str_replace( '-', ' ', $s ) ) ); ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
+        <!-- Legal Tabs Switcher (matching LegalPage.tsx and ikan2) -->
+        <nav class="info-tabs" aria-label="Policies" style="margin-top: 24px;">
+          <?php foreach ( $legal_order as $s ) : 
+            $tab_info  = $legal_pages[ $s ] ?? [];
+            $is_active = ( $s === $slug );
+            $tab_url   = $tab_routes[ $s ] ?? home_url( '/' . $s );
+          ?>
+            <a
+              href="<?php echo esc_url( $tab_url ); ?>"
+              class="info-tab"
+              <?php if ( $is_active ) echo 'aria-current="page"'; ?>
+            >
+              <?php echo esc_html( $tab_info['title'] ?? ucfirst( str_replace( '-', ' ', $s ) ) ); ?>
+            </a>
+          <?php endforeach; ?>
+        </nav>
 
-    <!-- Header -->
-    <header class="px-5 pt-4">
-      <h1 class="font-display text-[30px] font-semibold leading-9 text-foreground"><?php echo esc_html( $page_title ); ?></h1>
-      <?php if ( ! empty( $page_subtitle ) ) : ?>
-        <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $page_subtitle ); ?></p>
-      <?php endif; ?>
-    </header>
+        <!-- Legal Prose Content -->
+        <div class="prose-ikan info-prose">
+          <?php echo $page_html; ?>
+        </div>
 
-    <!-- Legal Prose Content (prose-ikan: exact styling from ikan2) -->
-    <div class="prose-ikan mt-6 px-5">
-      <?php echo $page_html; ?>
-    </div>
-
-    <div class="h-8"></div>
+      </div>
+    </section>
   </div>
 </main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.lucide && lucide.createIcons) {
-    lucide.createIcons();
-  }
-});
-</script>
 
 <?php get_footer(); ?>

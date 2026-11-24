@@ -2,231 +2,186 @@
 /**
  * Template Name: FAQ
  * Template Post Type: page
- * Description: Exact 1:1 replica of iKAN 2 PWA FAQ layout (ikan2/src/routes/faq.tsx)
- *
- * Matches InfoShell wide container, search filter, topic tabs, grouped accordion disclosures,
- * and bottom CTA contact bridge.
+ * Description: Authentic iKAN Health FAQ page matching FAQ.tsx and index-C1zkq2-P.css
  *
  * @package iKAN_Health
  */
 
 get_header();
 
-// Load canonical FAQ content from pages.json
+// Load canonical FAQ data from assets/pages.json
 $pages_file = get_template_directory() . '/assets/pages.json';
 $pages_data = [];
 if ( file_exists( $pages_file ) ) {
   $pages_data = json_decode( file_get_contents( $pages_file ), true ) ?: [];
 }
-$f = $pages_data['faq'] ?? [];
 
-$hero_title        = $f['heroTitle'] ?? 'Frequently Asked Questions';
-$hero_subtitle     = $f['heroSubtitle'] ?? 'Everything you need to know about the product and billing.';
-$search_placeholder= $f['searchPlaceholder'] ?? 'Search FAQ...';
-$no_results_text   = $f['noResultsText'] ?? 'No questions match your search.';
-$cta_title         = $f['ctaTitle'] ?? 'Still have questions?';
-$cta_description   = $f['ctaDescription'] ?? 'Can’t find the answer you’re looking for? Please chat to our friendly team.';
-$cta_button_text   = $f['ctaButtonText'] ?? 'Get in touch';
-$categories        = $f['categories'] ?? [];
+$faq_data = $pages_data['faq'] ?? [];
+$hero_title = $faq_data['heroTitle'] ?? 'FAQs & Help Center';
+$hero_subtitle = $faq_data['heroSubtitle'] ?? 'Find answers to common questions about iKan, your account, programs, and more.';
+$search_placeholder = $faq_data['searchPlaceholder'] ?? 'Search for answers...';
+$categories = $faq_data['categories'] ?? [];
+$faq_cta = $faq_data['faqCard'] ?? [
+  'title' => 'Still have questions?',
+  'description' => "Can't find the answer you're looking for? Our support team is here to help.",
+  'buttonText' => 'Contact Support',
+  'buttonRoute' => '/contact',
+];
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
-  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
-    
-    <!-- Top Bar with Back Button -->
-    <div class="flex items-center h-14 px-3">
-      <a
-        href="<?php echo esc_url( home_url( '/' ) ); ?>"
-        aria-label="Back"
-        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
-      >
-        <i data-lucide="arrow-left" class="h-6 w-6"></i>
-      </a>
-    </div>
+<main id="main-content" tabindex="-1" class="flex-1 w-full relative outline-none p-[0px]" role="main" aria-label="Page content">
+  <div class="ikan2-theme info-page site-page-below-nav">
+    <section class="info-band">
+      <div class="info-band__inner">
+        
+        <p class="info-eyebrow">Help</p>
+        <h1 class="info-title"><?php echo esc_html( $hero_title ); ?></h1>
+        <?php if ( ! empty( $hero_subtitle ) ) : ?>
+          <p class="info-subtitle"><?php echo esc_html( $hero_subtitle ); ?></p>
+        <?php endif; ?>
 
-    <!-- Header -->
-    <header class="px-5">
-      <h1 class="type-headline-lg font-semibold text-foreground"><?php echo esc_html( $hero_title ); ?></h1>
-      <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $hero_subtitle ); ?></p>
-    </header>
+        <!-- Search Bar -->
+        <div class="faq-search">
+          <svg class="faq-search__icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input
+            id="faq-search-input"
+            type="search"
+            placeholder="<?php echo esc_attr( $search_placeholder ); ?>"
+            aria-label="<?php echo esc_attr( $search_placeholder ); ?>"
+          />
+        </div>
 
-    <!-- Search Field -->
-    <div class="mx-5 mt-5 relative">
-      <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none"></i>
-      <input
-        type="search"
-        id="faq-search-input"
-        placeholder="<?php echo esc_attr( $search_placeholder ); ?>"
-        aria-label="<?php echo esc_attr( $search_placeholder ); ?>"
-        class="w-full h-12 pl-11 pr-4 rounded-[16px] bg-secondary border border-transparent focus:border-foreground/30 focus:bg-background outline-none text-foreground placeholder:text-muted-foreground text-[15px] transition-colors"
-      >
-    </div>
+        <!-- Topics Switcher Tabs -->
+        <div class="info-tabs faq-topics" role="tablist" aria-label="Topics">
+          <button
+            type="button"
+            role="tab"
+            class="info-tab"
+            data-cat="all"
+            aria-selected="true"
+            aria-current="page"
+          >
+            All
+          </button>
+          <?php foreach ( $categories as $cat ) : ?>
+            <button
+              type="button"
+              role="tab"
+              class="info-tab"
+              data-cat="<?php echo esc_attr( $cat['id'] ); ?>"
+              aria-selected="false"
+            >
+              <?php echo esc_html( $cat['title'] ); ?>
+            </button>
+          <?php endforeach; ?>
+        </div>
 
-    <!-- Category Tabs -->
-    <div class="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-5" role="tablist" aria-label="Topics">
-      <button
-        type="button"
-        role="tab"
-        aria-selected="true"
-        data-cat-filter="all"
-        class="faq-tab type-label-lg inline-flex h-9 shrink-0 items-center rounded-[8px] border px-3.5 border-transparent bg-foreground text-background font-medium cursor-pointer transition-colors"
-      >
-        All
-      </button>
-      <?php foreach ( $categories as $cat ) : ?>
-        <button
-          type="button"
-          role="tab"
-          aria-selected="false"
-          data-cat-filter="<?php echo esc_attr( $cat['id'] ); ?>"
-          class="faq-tab type-label-lg inline-flex h-9 shrink-0 items-center rounded-[8px] border px-3.5 border-foreground/20 text-foreground font-medium hover:bg-secondary cursor-pointer transition-colors"
-        >
-          <?php echo esc_html( $cat['title'] ); ?>
-        </button>
-      <?php endforeach; ?>
-    </div>
+        <!-- FAQ Accordion Groups -->
+        <div id="faq-groups-container">
+          <?php foreach ( $categories as $cat ) : ?>
+            <div class="faq-group" data-category="<?php echo esc_attr( $cat['id'] ); ?>">
+              <h2 class="faq-group__title"><?php echo esc_html( $cat['title'] ); ?></h2>
+              <div class="faq-list">
+                <?php foreach ( $cat['items'] as $item ) : ?>
+                  <details class="faq-item" data-question="<?php echo esc_attr( strtolower( $item['question'] ) ); ?>" data-answer="<?php echo esc_attr( strtolower( $item['answer'] ) ); ?>">
+                    <summary><?php echo esc_html( $item['question'] ); ?></summary>
+                    <p><?php echo esc_html( $item['answer'] ); ?></p>
+                  </details>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
 
-    <!-- No results message -->
-    <p id="faq-no-results" class="type-action mx-5 mt-8 hidden text-center text-muted-foreground">
-      <?php echo esc_html( $no_results_text ); ?>
-    </p>
+        <!-- Empty Search State -->
+        <div id="faq-no-results" class="faq-empty" style="display: none;">
+          <p>No questions match your search.</p>
+        </div>
 
-    <!-- FAQ Category Groups & Disclosures -->
-    <div id="faq-groups-container">
-      <?php foreach ( $categories as $cat ) : ?>
-        <section class="faq-group mt-7 px-5" data-category="<?php echo esc_attr( $cat['id'] ); ?>">
-          <h2 class="type-subhead font-semibold text-foreground mb-1"><?php echo esc_html( $cat['title'] ); ?></h2>
-          <div class="divide-y divide-foreground/10">
-            <?php foreach ( ( $cat['items'] ?? [] ) as $item ) : ?>
-              <details
-                class="faq-item group py-3.5 cursor-pointer list-none"
-                <?php if ( strpos( strtolower( $item['question'] ), 'emergency' ) !== false ) echo 'id="helplines"'; ?>
-              >
-                <summary class="flex items-center justify-between font-medium text-foreground text-[16px] list-none select-none">
-                  <span class="faq-q pr-3"><?php echo esc_html( $item['question'] ); ?></span>
-                  <i data-lucide="chevron-down" class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"></i>
-                </summary>
-                <p class="faq-a type-body text-muted-foreground mt-2 text-[15px] leading-relaxed">
-                  <?php echo esc_html( $item['answer'] ); ?>
-                </p>
-              </details>
-            <?php endforeach; ?>
+        <!-- Bottom Contact CTA -->
+        <?php if ( ! empty( $faq_cta ) ) : ?>
+          <div class="faq-cta">
+            <p class="faq-cta__title"><?php echo esc_html( $faq_cta['title'] ); ?></p>
+            <p class="faq-cta__body"><?php echo esc_html( $faq_cta['description'] ); ?></p>
+            <a href="<?php echo esc_url( home_url( '/contact' ) ); ?>" class="info-button">
+              <?php echo esc_html( $faq_cta['buttonText'] ); ?>
+            </a>
           </div>
-        </section>
-      <?php endforeach; ?>
-    </div>
+        <?php endif; ?>
 
-    <!-- Still Have Questions? CTA Card -->
-    <section class="mx-5 mt-10 rounded-[24px] bg-secondary p-5">
-      <p class="font-display text-[19px] font-semibold text-foreground"><?php echo esc_html( $cta_title ); ?></p>
-      <p class="type-body mt-1 text-muted-foreground"><?php echo esc_html( $cta_description ); ?></p>
-      <a
-        href="<?php echo esc_url( home_url( '/contact' ) ); ?>"
-        class="type-action mt-4 inline-flex h-11 items-center rounded-full bg-foreground px-5 text-background font-medium hover:opacity-90 active:scale-[0.99] transition-all"
-      >
-        <?php echo esc_html( $cta_button_text ); ?>
-      </a>
+      </div>
     </section>
-
-    <div class="h-6"></div>
   </div>
 </main>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.lucide && lucide.createIcons) {
-    lucide.createIcons();
-  }
-
   var searchInput = document.getElementById('faq-search-input');
-  var tabs = document.querySelectorAll('.faq-tab');
+  var tabButtons = document.querySelectorAll('.faq-topics .info-tab');
   var groups = document.querySelectorAll('.faq-group');
-  var items = document.querySelectorAll('.faq-item');
   var noResults = document.getElementById('faq-no-results');
+  var currentCat = 'all';
 
-  var currentTab = 'all';
+  function filterFAQs() {
+    var query = (searchInput.value || '').trim().toLowerCase();
+    var totalVisible = 0;
 
-  function filterFaq() {
-    var query = (searchInput ? searchInput.value : '').trim().toLowerCase();
-    var visibleGroupsCount = 0;
+    groups.forEach(function(group) {
+      var groupCat = group.getAttribute('data-category');
+      var matchesCat = (currentCat === 'all' || groupCat === currentCat);
 
-    groups.forEach(function(grp) {
-      var catId = grp.getAttribute('data-category');
-      var matchesTab = (currentTab === 'all' || currentTab === catId);
-
-      if (!matchesTab) {
-        grp.classList.add('hidden');
+      if (!matchesCat) {
+        group.style.display = 'none';
         return;
       }
 
-      var grpItems = grp.querySelectorAll('.faq-item');
-      var visibleItemsCount = 0;
+      var items = group.querySelectorAll('.faq-item');
+      var groupVisibleCount = 0;
 
-      grpItems.forEach(function(it) {
-        var qText = it.querySelector('.faq-q') ? it.querySelector('.faq-q').textContent.toLowerCase() : '';
-        var aText = it.querySelector('.faq-a') ? it.querySelector('.faq-a').textContent.toLowerCase() : '';
-        var matchesQuery = (!query || qText.indexOf(query) !== -1 || aText.indexOf(query) !== -1);
+      items.forEach(function(item) {
+        var qText = item.getAttribute('data-question') || '';
+        var aText = item.getAttribute('data-answer') || '';
+        var matchesQuery = !query || qText.indexOf(query) !== -1 || aText.indexOf(query) !== -1;
 
         if (matchesQuery) {
-          it.classList.remove('hidden');
-          visibleItemsCount++;
-          if (query) {
-            it.setAttribute('open', '');
-          }
+          item.style.display = '';
+          groupVisibleCount++;
         } else {
-          it.classList.add('hidden');
-          if (query) {
-            it.removeAttribute('open');
-          }
+          item.style.display = 'none';
         }
       });
 
-      if (visibleItemsCount > 0) {
-        grp.classList.remove('hidden');
-        visibleGroupsCount++;
+      if (groupVisibleCount > 0) {
+        group.style.display = '';
+        totalVisible += groupVisibleCount;
       } else {
-        grp.classList.add('hidden');
+        group.style.display = 'none';
       }
     });
 
-    if (noResults) {
-      if (visibleGroupsCount === 0) {
-        noResults.classList.remove('hidden');
-      } else {
-        noResults.classList.add('hidden');
-      }
+    if (totalVisible === 0) {
+      noResults.style.display = 'block';
+    } else {
+      noResults.style.display = 'none';
     }
   }
 
   if (searchInput) {
-    searchInput.addEventListener('input', filterFaq);
+    searchInput.addEventListener('input', filterFAQs);
   }
 
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      tabs.forEach(function(t) {
-        t.setAttribute('aria-selected', 'false');
-        t.classList.remove('border-transparent', 'bg-foreground', 'text-background');
-        t.classList.add('border-foreground/20', 'text-foreground');
+  tabButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      tabButtons.forEach(function(b) {
+        b.removeAttribute('aria-current');
+        b.setAttribute('aria-selected', 'false');
       });
-
-      tab.setAttribute('aria-selected', 'true');
-      tab.classList.remove('border-foreground/20', 'text-foreground');
-      tab.classList.add('border-transparent', 'bg-foreground', 'text-background');
-
-      currentTab = tab.getAttribute('data-cat-filter') || 'all';
-      filterFaq();
+      btn.setAttribute('aria-current', 'page');
+      btn.setAttribute('aria-selected', 'true');
+      currentCat = btn.getAttribute('data-cat') || 'all';
+      filterFAQs();
     });
   });
-
-  // If URL has #helplines, scroll and open it
-  if (window.location.hash === '#helplines') {
-    var helpItem = document.getElementById('helplines');
-    if (helpItem) {
-      helpItem.setAttribute('open', '');
-      helpItem.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
 });
 </script>
 
