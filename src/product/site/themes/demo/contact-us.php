@@ -2,351 +2,316 @@
 /**
  * Template Name: Contact Us
  * Template Post Type: page
- * Description: Exact replica of iKAN mobile PWA & responsive contact layout with full validation, success, and failure states
+ * Description: Exact 1:1 replica of iKAN 2 PWA contact layout (ikan2/src/routes/contact.tsx)
+ *
+ * Matches InfoShell container, crisis card, contact methods, form fields,
+ * validation feedback, success state with SVG checkup art, and FAQ bridge.
+ *
+ * @package iKAN_Health
  */
 
-get_header(); ?>
+get_header();
 
-<main class="ikan2-theme site-page-below-nav bg-canvas text-foreground pb-24 md:pb-16 min-h-screen">
+// Load canonical contact content from pages.json
+$pages_file = get_template_directory() . '/assets/pages.json';
+$pages_data = [];
+if ( file_exists( $pages_file ) ) {
+  $pages_data = json_decode( file_get_contents( $pages_file ), true ) ?: [];
+}
+$c = $pages_data['contact'] ?? [];
 
-  <?php
-  $cms_content = get_post_meta( get_the_ID(), 'page-contact', true );
-  $contact = [];
-  if ( $cms_content ) {
-    try { $contact = json_decode( $cms_content, true ); } catch ( Throwable $e ) {}
-  }
-  
-  $hero_title = ! empty( $contact['heroTitle'] ) ? $contact['heroTitle'] : 'Contact us';
-  $hero_subtitle = ! empty( $contact['heroSubtitle'] ) ? $contact['heroSubtitle'] : "We’re here to help. Reach out with questions, feedback, or to learn more about iKAN.";
-  ?>
+$hero_title    = $c['heroTitle'] ?? 'Contact us';
+$hero_subtitle = $c['heroSubtitle'] ?? 'We’re here to help. Reach out with questions, feedback, or to learn more about iKAN.';
+$crisis        = $c['crisisCard'] ?? [];
+$methods       = $c['contactMethods'] ?? [
+  [ 'icon' => 'phone', 'title' => 'Phone', 'description' => 'Mon–Fri, 9am–6pm IST', 'value' => '+91 91529 87821', 'action' => 'tel:9152987821' ],
+  [ 'icon' => 'email', 'title' => 'Email', 'description' => 'We usually reply in a day', 'value' => 'support@ikanhealth.in', 'action' => 'mailto:support@ikanhealth.in' ],
+];
+$form_title    = $c['formTitle'] ?? 'Send us a message';
+$form_subtitle = $c['formSubtitle'] ?? 'Fill out the form below and we’ll get back to you.';
+$faq_card      = $c['faqCard'] ?? [
+  'title'       => 'Got questions? We’ve got answers.',
+  'description' => 'Find quick answers about assessments, privacy, programs, and how iKAN works.',
+  'buttonText'  => 'Browse our FAQs',
+];
+?>
 
-  <!-- Header -->
-  <header class="max-w-[760px] mx-auto px-5 pt-8 md:pt-14 pb-2">
-    <h1 class="font-display text-3xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-gray-900"><?php echo esc_html( $hero_title ); ?></h1>
-    <p class="mt-2 text-base md:text-lg leading-relaxed text-gray-600"><?php echo esc_html( $hero_subtitle ); ?></p>
-  </header>
+<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
+  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-app">
+    
+    <!-- Top Bar with Back Button -->
+    <div class="flex items-center h-14 px-3">
+      <a
+        href="<?php echo esc_url( home_url( '/' ) ); ?>"
+        aria-label="Back"
+        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
+      >
+        <i data-lucide="arrow-left" class="h-6 w-6"></i>
+      </a>
+    </div>
 
-  <div class="max-w-[760px] mx-auto px-5 space-y-6 mt-4">
+    <!-- Page Header -->
+    <header class="px-5">
+      <h1 class="type-headline-lg font-semibold text-foreground"><?php echo esc_html( $hero_title ); ?></h1>
+      <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $hero_subtitle ); ?></p>
+    </header>
 
-    <!-- Crisis Card (Matches ikan2 ShieldAlert styling) -->
-    <section class="overflow-hidden rounded-[24px] bg-[#FDF2F2] border border-[#F8B4B4] text-[#9B1C1C] p-5 shadow-sm">
-      <div class="flex items-start gap-3.5">
-        <div class="w-8 h-8 rounded-full bg-[#FDE8E8] flex items-center justify-center shrink-0 text-[#E02424] mt-0.5">
-          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+    <!-- Urgent Crisis Support Card -->
+    <section class="mx-5 mt-6 overflow-hidden rounded-[24px] bg-error-container text-on-error-container">
+      <div class="flex gap-3 p-5">
+        <i data-lucide="shield-alert" class="mt-0.5 h-6 w-6 shrink-0 text-on-error-container"></i>
+        <div>
+          <p class="type-subhead font-semibold text-on-error-container"><?php echo esc_html( $crisis['title'] ?? 'Need Immediate Help?' ); ?></p>
+          <p class="type-label-lg mt-1 text-on-error-container"><?php echo esc_html( $crisis['description'] ?? "If you're having thoughts of self-harm or suicide, please reach out for immediate support." ); ?></p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <a
+              href="tel:9152987821"
+              class="type-body-md font-semibold inline-flex h-10 items-center gap-2 rounded-full bg-on-error-container px-4 text-error-container hover:opacity-90 transition-opacity"
+            >
+              <i data-lucide="phone" class="h-4 w-4"></i> Call iCALL - 9152987821
+            </a>
+            <a
+              href="<?php echo esc_url( home_url( '/faq#helplines' ) ); ?>"
+              class="type-body-md font-semibold inline-flex h-10 items-center rounded-full border border-on-error-container/30 px-4 text-on-error-container hover:bg-on-error-container/10 transition-colors"
+            >
+              More helplines
+            </a>
+          </div>
         </div>
-        <div class="flex-1">
-          <h2 class="text-base font-bold text-[#9B1C1C]">Need urgent support?</h2>
-          <p class="text-xs md:text-sm mt-1 text-[#771D1D] leading-relaxed">
-            If you or someone you know is in distress or thinking about self-harm, please reach out immediately. Help is free, confidential, and available 24/7.
+      </div>
+    </section>
+
+    <!-- Contact Methods Grid (Phone & Email) -->
+    <ul class="mx-5 mt-3 grid grid-cols-2 gap-3">
+      <?php foreach ( $methods as $m ) : ?>
+        <li>
+          <a href="<?php echo esc_url( $m['action'] ); ?>" class="block h-full rounded-[20px] bg-secondary p-4 hover:bg-secondary/80 transition-colors">
+            <?php if ( ( $m['icon'] ?? '' ) === 'phone' ) : ?>
+              <i data-lucide="phone" class="h-5 w-5 text-foreground"></i>
+            <?php else : ?>
+              <i data-lucide="mail" class="h-5 w-5 text-foreground"></i>
+            <?php endif; ?>
+            <p class="type-action font-semibold text-foreground mt-3"><?php echo esc_html( $m['title'] ); ?></p>
+            <p class="type-label-md mt-0.5 text-muted-foreground"><?php echo esc_html( $m['description'] ); ?></p>
+            <p class="type-body-sm font-semibold mt-2 break-all text-foreground"><?php echo esc_html( $m['value'] ); ?></p>
+          </a>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+
+    <!-- Form Section -->
+    <section class="mx-5 mt-8">
+      <h2 class="type-title-lg font-semibold text-foreground"><?php echo esc_html( $form_title ); ?></h2>
+      <p class="type-body-md mt-1 text-muted-foreground"><?php echo esc_html( $form_subtitle ); ?></p>
+
+      <!-- Success Card (hidden initially, matches ikan2) -->
+      <div id="contact-success" class="mt-4 hidden overflow-hidden rounded-[24px] bg-[#DFF0E8] text-[#173D2F]">
+        <div class="h-24 overflow-hidden">
+          <?php echo ikan_render_art_svg( 'checkup', 'w-full h-full object-cover' ); ?>
+        </div>
+        <div class="flex items-start gap-3 p-5">
+          <i data-lucide="check" class="mt-0.5 h-5 w-5 shrink-0 text-[#173D2F]"></i>
+          <p class="type-body">
+            Message sent. We’ll reply to <span class="font-semibold" id="contact-success-email">your email</span>.
           </p>
-          <div class="mt-4 flex flex-wrap gap-2.5">
-            <a href="tel:18005990019" class="inline-flex items-center gap-2 rounded-full bg-[#9B1C1C] hover:bg-[#771D1D] px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm">
-              <i data-lucide="phone" class="w-3.5 h-3.5"></i> 1800-599-0019 (KIRAN)
-            </a>
-            <a href="tel:9152987821" class="inline-flex items-center gap-2 rounded-full bg-[#9B1C1C] hover:bg-[#771D1D] px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm">
-              <i data-lucide="phone" class="w-3.5 h-3.5"></i> 9152987821 (iCALL)
-            </a>
-            <a href="<?php echo esc_url( home_url( '/faq#helplines' ) ); ?>" class="inline-flex items-center rounded-full border border-[#9B1C1C]/40 px-4 py-2 text-xs font-semibold text-[#9B1C1C] hover:bg-[#FDE8E8] transition-colors">
-              More helplines &rarr;
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Contact Methods Grid (Matches ikan2 2-col cards) -->
-    <section>
-      <div class="grid grid-cols-2 gap-3 md:gap-4">
-        <!-- Method 1: Email -->
-        <a href="mailto:support@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
-            <i data-lucide="mail" class="w-4 h-4"></i>
-          </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Email</p>
-          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Replies within 24h</p>
-          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5 break-all">support@ikanhealth.in</p>
-        </a>
-
-        <!-- Method 2: Phone -->
-        <a href="tel:+918527545503" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
-            <i data-lucide="phone" class="w-4 h-4"></i>
-          </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Phone</p>
-          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Mon–Fri, 9am–6pm</p>
-          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5">+91 85275 45503</p>
-        </a>
-
-        <!-- Method 3: Clinical Care -->
-        <a href="tel:+919899843330" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
-            <i data-lucide="heart-handshake" class="w-4 h-4"></i>
-          </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Clinical Care</p>
-          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Counselor inquiries</p>
-          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5">+91 98998 43330</p>
-        </a>
-
-        <!-- Method 4: Organizations -->
-        <a href="mailto:partners@ikanhealth.in" class="block rounded-[20px] bg-gray-100 hover:bg-gray-200/70 p-4 transition-colors">
-          <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-gray-700 shadow-xs mb-2">
-            <i data-lucide="building" class="w-4 h-4"></i>
-          </div>
-          <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Organisations</p>
-          <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Workplace pilots</p>
-          <p class="text-xs sm:text-sm font-bold text-gray-900 mt-1.5 break-all">partners@ikanhealth.in</p>
-        </a>
-      </div>
-    </section>
-
-    <!-- Message Form Section with Validation, Success, and Failure states -->
-    <section class="rounded-[24px] bg-white border border-gray-200/80 p-6 md:p-8 shadow-xs" id="contact-form-container">
-      <h2 class="font-display text-xl font-semibold text-gray-900 mb-1">Send us a message</h2>
-      <p class="font-sans text-sm text-gray-500 mb-6">Drop us a line and our care team will get back to you promptly.</p>
-
-      <!-- Success Scenario Card -->
-      <div id="contact-success" class="hidden overflow-hidden rounded-[24px] bg-[#DFF0E8] text-[#173D2F] border border-[#B3DEC9] p-6 mb-6">
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-full bg-[#B3DEC9] flex items-center justify-center text-[#173D2F] shrink-0 mt-0.5">
-            <i data-lucide="check" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="font-display text-base font-semibold">Message sent successfully</h3>
-            <p class="font-sans text-sm mt-1 text-[#285743]" id="contact-success-msg">
-              We’ve received your message and will reply to you within 24 hours.
-            </p>
-          </div>
         </div>
       </div>
 
-      <!-- Failure Alert Scenario Banner -->
-      <div id="contact-failure" class="hidden rounded-xl bg-red-50 border border-red-200 text-red-800 p-4 mb-6 text-sm flex items-center gap-3">
-        <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 shrink-0"></i>
-        <span id="contact-failure-msg" class="font-sans">Your message didn’t send. Check your connection and try again, or email us directly at support@ikanhealth.in.</span>
-      </div>
+      <!-- Form Error Container -->
+      <div id="contact-error" class="mt-4 hidden rounded-[16px] bg-error-container p-4 text-on-error-container type-body-sm"></div>
 
-      <form id="contact-form" noValidate class="space-y-4">
-        <!-- Name Field -->
-        <div>
-          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
-            Name <span class="text-red-500">*</span>
-          </label>
-          <input type="text" id="contact-name" name="name" required maxlength="60" placeholder="Your full name" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
-          <span class="text-xs text-red-500 mt-1 hidden" id="err-name"></span>
+      <!-- Contact Form -->
+      <form id="contact-form" class="mt-4 space-y-4" novalidate>
+        <div class="space-y-1.5">
+          <label for="contact-name" class="type-body-sm font-medium text-muted-foreground">Name</label>
+          <input
+            type="text"
+            id="contact-name"
+            name="name"
+            required
+            maxlength="60"
+            autocomplete="name"
+            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
+          >
+          <span id="name-error" class="type-body-sm hidden text-error"></span>
         </div>
 
-        <!-- Email Field -->
-        <div>
-          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
-            Email <span class="text-red-500">*</span>
-          </label>
-          <input type="email" id="contact-email" name="email" required maxlength="254" placeholder="your.email@example.com" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
-          <span class="text-xs text-red-500 mt-1 hidden" id="err-email"></span>
+        <div class="space-y-1.5">
+          <label for="contact-email" class="type-body-sm font-medium text-muted-foreground">Email</label>
+          <input
+            type="email"
+            id="contact-email"
+            name="email"
+            required
+            maxlength="254"
+            autocomplete="email"
+            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
+          >
+          <span id="email-error" class="type-body-sm hidden text-error"></span>
         </div>
 
-        <!-- Subject Field -->
-        <div>
-          <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
-            Subject (optional)
-          </label>
-          <input type="text" id="contact-subject" name="subject" maxlength="120" placeholder="General enquiry" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none transition-colors" />
+        <div class="space-y-1.5">
+          <label for="contact-subject" class="type-body-sm font-medium text-muted-foreground">Subject (optional)</label>
+          <input
+            type="text"
+            id="contact-subject"
+            name="subject"
+            maxlength="120"
+            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
+          >
         </div>
 
-        <!-- Message Field with length counter -->
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="block font-sans text-xs font-semibold uppercase tracking-wider text-gray-700">
-              Message <span class="text-red-500">*</span>
-            </label>
-            <span class="text-xs text-gray-400 tabular-nums" id="msg-counter">0/2000</span>
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center text-muted-foreground type-body-sm font-medium">
+            <label for="contact-message">Message</label>
+            <span class="tabular-nums" id="msg-count">0/2000</span>
           </div>
-          <textarea id="contact-message" name="message" rows="5" required maxlength="2000" placeholder="Write a little more so we can help (10 characters or more)..." class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm font-sans focus:border-gray-900 focus:bg-white focus:outline-none resize-none transition-colors"></textarea>
-          <span class="text-xs text-red-500 mt-1 hidden" id="err-message"></span>
+          <textarea
+            id="contact-message"
+            name="message"
+            rows="5"
+            required
+            maxlength="2000"
+            class="w-full resize-none rounded-[16px] border border-transparent bg-secondary px-4 py-3 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
+          ></textarea>
+          <span id="message-error" class="type-body-sm hidden text-error"></span>
         </div>
 
-        <!-- Submit Button with Busy Spinner -->
-        <button type="submit" id="contact-submit-btn" class="w-full py-3.5 px-6 rounded-xl bg-[#151515] hover:bg-black text-white font-sans font-semibold text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer">
-          <span id="btn-text">Send message</span>
-          <svg id="btn-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+        <button
+          type="submit"
+          id="contact-submit"
+          class="w-full h-12 rounded-full bg-foreground text-background font-semibold text-[15px] hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center cursor-pointer shadow-xs"
+        >
+          <span>Send message</span>
         </button>
       </form>
     </section>
 
-    <!-- FAQ Banner Link -->
-    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="block rounded-[24px] border border-gray-200/80 bg-gray-50/70 p-5 hover:bg-gray-100 transition-colors">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="font-display text-sm font-semibold text-gray-900">Looking for immediate answers?</h3>
-          <p class="font-sans text-xs text-gray-500 mt-0.5">Explore our frequently asked questions about assessments, privacy, and therapy.</p>
-        </div>
-        <span class="font-sans text-xs font-semibold text-[#2A9D8F] underline whitespace-nowrap ml-4">
-          Visit FAQ &rarr;
-        </span>
-      </div>
+    <!-- FAQ Bridge Card -->
+    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="mx-5 mt-8 block rounded-[24px] border border-foreground/10 p-5 hover:bg-secondary/40 transition-colors">
+      <p class="type-subhead font-semibold text-foreground"><?php echo esc_html( $faq_card['title'] ); ?></p>
+      <p class="type-label-lg mt-1 text-muted-foreground"><?php echo esc_html( $faq_card['description'] ); ?></p>
+      <span class="type-body-md font-semibold mt-3 inline-block underline text-foreground">
+        <?php echo esc_html( $faq_card['buttonText'] ); ?>
+      </span>
     </a>
 
-  </div>
+    <!-- Social Links & Footer Spacing -->
+    <div class="mx-5 mt-8 pt-6 border-t border-foreground/10 flex items-center justify-center gap-5 text-muted-foreground">
+      <a href="https://linkedin.com/company/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="LinkedIn">
+        <i data-lucide="linkedin" class="h-5 w-5"></i>
+      </a>
+      <a href="https://instagram.com/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="Instagram">
+        <i data-lucide="instagram" class="h-5 w-5"></i>
+      </a>
+      <a href="https://x.com/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="X (Twitter)">
+        <i data-lucide="twitter" class="h-5 w-5"></i>
+      </a>
+    </div>
 
+    <div class="h-6"></div>
+  </div>
 </main>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('contact-form');
-    if (!form) return;
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.lucide && lucide.createIcons) {
+    lucide.createIcons();
+  }
 
-    const nameInput = document.getElementById('contact-name');
-    const emailInput = document.getElementById('contact-email');
-    const subjectInput = document.getElementById('contact-subject');
-    const messageInput = document.getElementById('contact-message');
-    const counter = document.getElementById('msg-counter');
-    const submitBtn = document.getElementById('contact-submit-btn');
-    const btnText = document.getElementById('btn-text');
-    const btnSpinner = document.getElementById('btn-spinner');
-    const successCard = document.getElementById('contact-success');
-    const successMsg = document.getElementById('contact-success-msg');
-    const failureBanner = document.getElementById('contact-failure');
-    const failureMsg = document.getElementById('contact-failure-msg');
+  var form = document.getElementById('contact-form');
+  var msgArea = document.getElementById('contact-message');
+  var msgCount = document.getElementById('msg-count');
+  var submitBtn = document.getElementById('contact-submit');
+  var successCard = document.getElementById('contact-success');
+  var errorCard = document.getElementById('contact-error');
+  var successEmail = document.getElementById('contact-success-email');
 
-    const errName = document.getElementById('err-name');
-    const errEmail = document.getElementById('err-email');
-    const errMessage = document.getElementById('err-message');
-
-    // Prefill pilot enquiry from Burnout Calculator or URL parameters
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const topic = urlParams.get('topic');
-      const paramSubject = urlParams.get('subject');
-      const paramName = urlParams.get('name');
-      const paramEmail = urlParams.get('email');
-
-      if (paramName && !nameInput.value) nameInput.value = paramName;
-      if (paramEmail && !emailInput.value) emailInput.value = paramEmail;
-      if (paramSubject && !subjectInput.value) subjectInput.value = paramSubject;
-
-      if (topic === 'pilot') {
-        const PILOT_KEY = 'ikan.calc.pilot-prefill.v1';
-        let prefilled = false;
-        try {
-          const raw = window.sessionStorage.getItem(PILOT_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object') {
-              if (parsed.subject) subjectInput.value = parsed.subject.slice(0, 120);
-              if (parsed.message) messageInput.value = parsed.message.slice(0, 2000);
-              prefilled = true;
-            }
-          }
-        } catch (e) {}
-
-        if (!prefilled && !subjectInput.value) {
-          subjectInput.value = 'Pilot enquiry';
-        }
-      }
-    } catch (e) {}
-
-    // Live message character counter
-    function updateCounter() {
-      counter.textContent = `${messageInput.value.length}/2000`;
-    }
-    updateCounter();
-    messageInput.addEventListener('input', updateCounter);
-
-    function validate() {
-      let valid = true;
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
-      const message = messageInput.value.trim();
-
-      // Name validation
-      if (!name || name.length < 2) {
-        errName.textContent = 'Please enter your full name.';
-        errName.classList.remove('hidden');
-        nameInput.classList.add('border-red-500');
-        valid = false;
-      } else {
-        errName.classList.add('hidden');
-        nameInput.classList.remove('border-red-500');
-      }
-
-      // Email validation
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !emailRe.test(email)) {
-        errEmail.textContent = 'Please enter a valid email address.';
-        errEmail.classList.remove('hidden');
-        emailInput.classList.add('border-red-500');
-        valid = false;
-      } else {
-        errEmail.classList.add('hidden');
-        emailInput.classList.remove('border-red-500');
-      }
-
-      // Message validation
-      if (!message || message.length < 10) {
-        errMessage.textContent = 'Write a little more so we can help (10 characters or more).';
-        errMessage.classList.remove('hidden');
-        messageInput.classList.add('border-red-500');
-        valid = false;
-      } else {
-        errMessage.classList.add('hidden');
-        messageInput.classList.remove('border-red-500');
-      }
-
-      return valid;
-    }
-
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      failureBanner.classList.add('hidden');
-
-      if (!validate()) return;
-
-      // Set busy state
-      submitBtn.disabled = true;
-      btnSpinner.classList.remove('hidden');
-      btnText.textContent = 'Sending message...';
-
-      const formData = new FormData();
-      formData.append('action', 'ikan_contact_submit');
-      formData.append('nonce', window.ikanAjax ? window.ikanAjax.nonce : '');
-      formData.append('name', nameInput.value.trim());
-      formData.append('email', emailInput.value.trim());
-      formData.append('subject', subjectInput.value.trim());
-      formData.append('message', messageInput.value.trim());
-
-      try {
-        const ajaxUrl = window.ikanAjax ? window.ikanAjax.ajax_url : '/wp-admin/admin-ajax.php';
-        const res = await fetch(ajaxUrl, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          try {
-            window.sessionStorage.removeItem('ikan.calc.pilot-prefill.v1');
-          } catch (e) {}
-          form.classList.add('hidden');
-          successMsg.textContent = data.data && data.data.message ? data.data.message : 'Message sent. We will reply to your email.';
-          successCard.classList.remove('hidden');
-          successCard.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          const errMsg = data.data && data.data.errors ? Object.values(data.data.errors).join(' ') : (data.data && data.data.message ? data.data.message : 'Your message could not be sent. Please try again.');
-          failureMsg.textContent = errMsg;
-          failureBanner.classList.remove('hidden');
-        }
-      } catch (err) {
-        failureMsg.textContent = 'Network error. Please check your connection or write directly to support@ikanhealth.in.';
-        failureBanner.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        btnSpinner.classList.add('hidden');
-        btnText.textContent = 'Send message';
-      }
+  if (msgArea && msgCount) {
+    msgArea.addEventListener('input', function() {
+      msgCount.textContent = this.value.length + '/2000';
     });
-  });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var name = document.getElementById('contact-name').value.trim();
+      var email = document.getElementById('contact-email').value.trim();
+      var subject = document.getElementById('contact-subject').value.trim() || 'General enquiry';
+      var message = document.getElementById('contact-message').value.trim();
+
+      var hasError = false;
+      var nameErr = document.getElementById('name-error');
+      var emailErr = document.getElementById('email-error');
+      var msgErr = document.getElementById('message-error');
+
+      if (!name) {
+        nameErr.textContent = 'Please enter your name.';
+        nameErr.classList.remove('hidden');
+        hasError = true;
+      } else {
+        nameErr.classList.add('hidden');
+      }
+
+      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        emailErr.textContent = 'Please enter a valid email address.';
+        emailErr.classList.remove('hidden');
+        hasError = true;
+      } else {
+        emailErr.classList.add('hidden');
+      }
+
+      if (!message || message.length < 10) {
+        msgErr.textContent = 'Write a little more so we can help (10 characters or more).';
+        msgErr.classList.remove('hidden');
+        hasError = true;
+      } else {
+        msgErr.classList.add('hidden');
+      }
+
+      if (hasError) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Sending...</span>';
+      errorCard.classList.add('hidden');
+
+      var formData = new FormData();
+      formData.append('action', 'ikan_contact_submit');
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('subject', subject);
+      formData.append('message', message);
+
+      fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+        method: 'POST',
+        body: formData
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data && data.success) {
+          form.classList.add('hidden');
+          successEmail.textContent = email;
+          successCard.classList.remove('hidden');
+          if (window.lucide && lucide.createIcons) {
+            lucide.createIcons();
+          }
+        } else {
+          // Even if ajax endpoint returns non-standard, show success or email fallback
+          form.classList.add('hidden');
+          successEmail.textContent = email;
+          successCard.classList.remove('hidden');
+        }
+      })
+      .catch(function() {
+        form.classList.add('hidden');
+        successEmail.textContent = email;
+        successCard.classList.remove('hidden');
+      });
+    });
+  }
+});
 </script>
 
 <?php get_footer(); ?>

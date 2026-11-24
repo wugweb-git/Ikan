@@ -1280,6 +1280,16 @@ add_action( 'init', function() {
   add_rewrite_rule( '^program/?$', 'index.php?ikan_program_page=1', 'top' );
   // Parity with ikan2: /resources/<slug> -> Single resource post
   add_rewrite_rule( '^resources/([^/]+)/?$', 'index.php?name=$matches[1]', 'top' );
+  // Parity with ikan2 & vercel URLs: /contact -> Contact Us page
+  add_rewrite_rule( '^contact/?$', 'index.php?ikan_contact_page=1', 'top' );
+  // Parity with ikan2: /terms -> Terms of Service
+  add_rewrite_rule( '^terms/?$', 'index.php?ikan_legal_page=terms', 'top' );
+  // Parity with ikan2: /privacy -> Privacy Policy
+  add_rewrite_rule( '^privacy/?$', 'index.php?ikan_legal_page=privacy-policy', 'top' );
+  // Parity with ikan2: /refund-policy -> Return Policy
+  add_rewrite_rule( '^refund-policy/?$', 'index.php?ikan_legal_page=return-policy', 'top' );
+  // Parity with ikan2: /legal/<slug> -> Legal page
+  add_rewrite_rule( '^legal/([^/]+)/?$', 'index.php?ikan_legal_page=$matches[1]', 'top' );
 
   $allowed_origins = [
     'https://app.ikanhealth.in',
@@ -1314,6 +1324,8 @@ add_filter( 'post_link', function( $permalink, $post ) {
 add_filter( 'query_vars', function( $vars ) {
   $vars[] = 'ikan_portal';
   $vars[] = 'ikan_program_page';
+  $vars[] = 'ikan_contact_page';
+  $vars[] = 'ikan_legal_page';
   return $vars;
 } );
 
@@ -1328,6 +1340,18 @@ add_action( 'template_redirect', function() {
     } else {
       wp_safe_redirect( wp_login_url( admin_url() ) );
     }
+    exit;
+  }
+  if ( get_query_var( 'ikan_contact_page' ) ) {
+    locate_template( 'contact-us.php', true );
+    exit;
+  }
+  if ( $legal_slug = get_query_var( 'ikan_legal_page' ) ) {
+    if ( $legal_slug === 'terms-of-service' || $legal_slug === 'terms-of-use' ) $legal_slug = 'terms';
+    if ( $legal_slug === 'privacy' ) $legal_slug = 'privacy-policy';
+    if ( $legal_slug === 'refund-policy' || $legal_slug === 'refund' ) $legal_slug = 'return-policy';
+    set_query_var( 'legal_slug', $legal_slug );
+    locate_template( 'legal.php', true );
     exit;
   }
 
