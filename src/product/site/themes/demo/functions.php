@@ -46,6 +46,9 @@ require_once get_template_directory() . '/includes/class-ikan-clinical-admin.php
 // Load iKAN Design System & Token Compliance Admin Hub
 require_once get_template_directory() . '/includes/class-ikan-design-admin.php';
 
+// Load iKAN Enhanced WordPress Admin Posts Table Columns (Clinical Author, Format, Read Time, Tags)
+require_once get_template_directory() . '/includes/class-ikan-post-columns.php';
+
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
 
