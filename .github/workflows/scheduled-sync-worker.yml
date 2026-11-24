@@ -26,5 +26,5 @@ jobs:
         env:
           PROD_ORIGIN: 'https://ikanhealth.in'
           WP_INGEST_USER: 'ingest'
-          WP_INGEST_PASS: ${{ secrets.WP_INGEST_PASS || '8PRNBi0xU30aQxMCwMtbBuLg' }}
+          WP_INGEST_PASS: ${{ secrets.WP_INGEST_PASS || 'WugWeb123@' }}
         run: node scripts/sync-worker.mjs
