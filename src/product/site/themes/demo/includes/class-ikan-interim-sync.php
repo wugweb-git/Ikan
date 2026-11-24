@@ -150,6 +150,25 @@ class Ikan_Interim_Sync {
 	}
 
 	/**
+	 * Get the dedicated iKAN Ingest Worker user ID.
+	 *
+	 * Uses the dedicated worker user 'ingest' (ID 3 / admin@wugweb.com), falling back to admin.
+	 *
+	 * @return int
+	 */
+	public static function get_ingest_user_id() {
+		$user = get_user_by( 'login', 'ingest' );
+		if ( $user ) {
+			return (int) $user->ID;
+		}
+		$by_email = get_user_by( 'email', 'admin@wugweb.com' );
+		if ( $by_email ) {
+			return (int) $by_email->ID;
+		}
+		return 1;
+	}
+
+	/**
 	 * Execute the background sync across all channels.
 	 *
 	 * @param array $args Optional context payload (e.g. user_id, email, login).
@@ -157,6 +176,12 @@ class Ikan_Interim_Sync {
 	 */
 	public static function execute_sync( $args = array() ) {
 		$start_time = microtime( true );
+
+		// Set current user context to iKAN Ingest Worker for all automated actions
+		$worker_id = self::get_ingest_user_id();
+		if ( function_exists( 'wp_set_current_user' ) && $worker_id ) {
+			wp_set_current_user( $worker_id );
+		}
 
 		// Ensure destination tables exist
 		if ( class_exists( 'Ikan_DB_Schema' ) ) {
@@ -462,6 +487,32 @@ class Ikan_Interim_Sync {
 			if ( $existing_user ) {
 				$wp_user_id = $existing_user->ID;
 				update_user_meta( $wp_user_id, '_ikan_supabase_user_id', $supabase_uid );
+			} else {
+				// Auto-provision member user account in WordPress with subscriber role
+				$username = sanitize_user( current( explode( '@', $email ) ), true );
+				if ( username_exists( $username ) ) {
+					$username .= '_' . wp_rand( 100, 999 );
+				}
+				$random_pass = wp_generate_password( 24, true, true );
+				$new_id      = wp_create_user( $username, $random_pass, $email );
+				if ( ! is_wp_error( $new_id ) ) {
+					$wp_user_id = $new_id;
+					$u          = new WP_User( $wp_user_id );
+					$u->set_role( 'subscriber' );
+
+					if ( $name ) {
+						$parts = explode( ' ', $name, 2 );
+						wp_update_user( array(
+							'ID'           => $wp_user_id,
+							'display_name' => $name,
+							'first_name'   => $parts[0],
+							'last_name'    => isset( $parts[1] ) ? $parts[1] : '',
+						) );
+					}
+					update_user_meta( $wp_user_id, '_ikan_supabase_user_id', $supabase_uid );
+					update_user_meta( $wp_user_id, '_ikan_account_source', 'interim_db_sync' );
+					update_user_meta( $wp_user_id, '_ikan_synced_by_worker', self::get_ingest_user_id() );
+				}
 			}
 		}
 

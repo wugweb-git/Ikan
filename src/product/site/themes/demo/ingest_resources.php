@@ -26,7 +26,9 @@ if ( empty( $resources ) ) {
     exit( 1 );
 }
 
-WP_CLI::line( sprintf( "Found %d resources to ingest.", count( $resources ) ) );
+$worker = get_user_by( 'login', 'ingest' ) ?: get_user_by( 'email', 'admin@wugweb.com' );
+$worker_id = $worker ? $worker->ID : 1;
+WP_CLI::line( sprintf( "Found %d resources to ingest (Author: iKAN Ingest Worker #%d).", count( $resources ), $worker_id ) );
 
 $covers_dir = $theme_dir . '/assets/resources/covers';
 
@@ -54,7 +56,7 @@ foreach ( $resources as $r ) {
         'post_status'  => 'publish',
         'post_type'    => 'post',
         'post_date'    => $date,
-        'post_author'  => 1,
+        'post_author'  => $worker_id,
     ];
 
     if ( $existing ) {

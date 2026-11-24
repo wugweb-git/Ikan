@@ -2,7 +2,7 @@
 
 Single source of truth for outstanding work across sessions. Update this file whenever a deployment or major change completes — see [`docs/GOVERNANCE.md`](GOVERNANCE.md).
 
-*Last updated: 2026-11-23*
+*Last updated: 2026-11-24*
 
 ---
 
@@ -52,6 +52,13 @@ Single source of truth for outstanding work across sessions. Update this file wh
 - [ ] **Clinical Data & Sync Architecture Review (Section 5 — Flagged for Discussion)**:
   - User flagged that the current implementation/design described in `docs/SESSIONS.md` Section 5 (Interim Boundary, SCF user meta keys, and resource taxonomy sync) has issues that need detailed review and redesign in an upcoming discussion.
   - Hold off on further architectural coupling or expansion of SCF user meta mappings until this discussion takes place.
+
+- [ ] **Alert emails: one sender, not two (decision needed)**:
+  - Live since 2026-11-19: Supabase `ikan2-alerts` emails the team (ALERT_TO secret) an iKAN-branded alert on every new pilot lead, contact message, partner application, newsletter sign-up and new app user, through database triggers on the `ikan2_*` tables and `auth.users` (ikan2 migration `20261119140000_alert_triggers.sql`, ikan2 commit `e990499`). Sent from the ikanhealth.in mailbox over Hostinger SMTP; test run accepted for both inboxes.
+  - **Risk 1, duplicates**: WordPress (FluentCRM / Fluent Forms / FluentSMTP) can also notify on the same submissions. Pick one: turn the Supabase triggers off, or switch off the matching Fluent Forms / FluentCRM notifications.
+  - **Risk 2, sync may read nothing**: `class-ikan-interim-sync.php` ships the public anon key. `ikan2_contact_messages` and `ikan2_newsletter_subscribers` only allow anonymous INSERT, and `ikan2_partner_applications` has no policies, so an anon read returns an empty list without an error. Confirm `IKAN_SUPABASE_SERVICE_KEY` is defined in wp-config on Hostinger, then check `ikan_last_interim_sync_log` or run `wp ikan-sync`.
+  - **Risk 3, outbox hold**: the Email Design Review hold below says no automated mail until approval; the Supabase alerts go only to the team, but are not covered by that hold.
+- [ ] **Delete two temporary Supabase notebooks** ("tmp – current users", "tmp – user activity") in the dashboard; the connector cannot delete them.
 
 - [ ] **Email Design Review (In Progress - STRICT OUTBOX HOLD)**:
   - User reviewing all 6 email templates in the interactive preview gallery ([`EMAIL_DESIGN_GALLERY.html`](file:///Users/abcom/.gemini/antigravity/brain/2ceffaaa-858b-414d-9fee-daf13c0a21c6/EMAIL_DESIGN_GALLERY.html)) and FluentCRM editor before any live test or automated dispatches.

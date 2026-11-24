@@ -4,6 +4,16 @@ All notable changes to the iKAN Health platform are documented in this file.
 
 ---
 
+## [2026-11-24] — Alert emails live in Supabase; WordPress sync check
+
+### Added
+- **Branded alert emails (ikan2)**: `ikan2-alerts` edge function renders an iKAN-branded HTML email for five kinds (pilot lead, contact, partner application, newsletter, new user) and sends it through the ikanhealth.in mailbox (Hostinger SMTP). `AFTER INSERT` triggers on `ikan2_contact_messages`, `ikan2_newsletter_subscribers`, `ikan2_partner_applications` and `auth.users` post to it with the `x-cron-secret` header. Partner alerts omit verification answers. Recipients come from the `ALERT_TO` Supabase secret.
+
+### Found (no code change here)
+- The WordPress interim sync reads Supabase with the public anon key by default, which cannot read the three form tables (insert-only or no policies). It works only if `IKAN_SUPABASE_SERVICE_KEY` is set on Hostinger. Possible duplicate notifications with Fluent Forms / FluentCRM. See PENDING.md.
+
+---
+
 ## [2026-11-23] — Canonical Clinical Assessment Naming, SCF Member Profile Mapping, and Resources Sync
 
 ### Added
