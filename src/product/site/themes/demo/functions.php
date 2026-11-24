@@ -1278,6 +1278,8 @@ add_action( 'init', function() {
   add_rewrite_rule( '^portal/?$', 'index.php?ikan_portal=1', 'top' );
   // Unified naming across repos: /program -> Equip Programs overview
   add_rewrite_rule( '^program/?$', 'index.php?ikan_program_page=1', 'top' );
+  // Parity with ikan2: /resources/<slug> -> Single resource post
+  add_rewrite_rule( '^resources/([^/]+)/?$', 'index.php?name=$matches[1]', 'top' );
 
   $allowed_origins = [
     'https://app.ikanhealth.in',
@@ -1299,6 +1301,16 @@ add_action( 'init', function() {
   }
 } );
 
+/**
+ * Filter post permalinks to prepend /resources/ matching ikan2 1:1.
+ */
+add_filter( 'post_link', function( $permalink, $post ) {
+  if ( is_object( $post ) && 'post' === $post->post_type ) {
+    return home_url( '/resources/' . $post->post_name . '/' );
+  }
+  return $permalink;
+}, 10, 2 );
+
 add_filter( 'query_vars', function( $vars ) {
   $vars[] = 'ikan_portal';
   $vars[] = 'ikan_program_page';
@@ -1316,6 +1328,48 @@ add_action( 'template_redirect', function() {
     } else {
       wp_safe_redirect( wp_login_url( admin_url() ) );
     }
+    exit;
+  }
+
+  // Canonical /resources/<slug>/ routing for single posts
+  if ( is_singular( 'post' ) && ! is_preview() ) {
+    $post = get_queried_object();
+    if ( $post && 'post' === $post->post_type ) {
+      $req_uri = $_SERVER['REQUEST_URI'] ?? '';
+      $target_path = '/resources/' . $post->post_name . '/';
+      if ( 0 !== strpos( $req_uri, '/resources/' . $post->post_name ) ) {
+        wp_safe_redirect( home_url( $target_path ), 301 );
+        exit;
+      }
+    }
+  }
+
+  // Legacy slug alias mapping for direct 301 redirects
+  $legacy_map = [
+    'personal-cost'          => 'mental-health-has-a-personal-cost-and-it-is',
+    'mood-tracking'          => 'the-pros-and-pros-of-tracking-your-mood',
+    'payroll-hidden-cost'    => 'the-people-who-run-the-payroll-are-paying-more',
+    'country-development'    => 'a-countrys-development-depends-on-the-health-of-its',
+    'india-open-data'        => 'mental-health-in-india',
+    'five-minutes-stress'    => 'five-minutes-that-can-change-how-you-handle-stress',
+    'breathing-five-minutes' => 'a-five-minute-guided-breathing-exercise-for-anxious-moments',
+    'stress-performance'     => 'stress-performance-and-why-the-usual-advice-misses',
+    'stress-takes-over'      => 'what-happens-when-stress-takes-over',
+    'great-practices'        => 'practical-ways-to-manage-stress-and-anxiety',
+    'can-we-talk'            => 'how-to-cope-with-anxiety-a-relaxation-technique',
+    'not-always-visible'     => 'being-kind-to-yourself',
+    'india-numbers'          => 'indias-mental-health-crisis-the-numbers-we-can-no',
+    'who-5'                  => 'what-is-the-who-5-well-being-index-a',
+    'ngse'                   => 'what-is-the-new-general-self-efficacy-scale-a',
+    'brs'                    => 'what-is-the-brief-resilience-scale-a-simple-guide',
+    'gad-2'                  => 'what-is-generalized-anxiety-disorder-2-a-simple-guide',
+    'phq-2'                  => 'what-is-the-patient-health-questionnaire-2-a-simple',
+  ];
+
+  $raw_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+  $candidate_slug = preg_replace( '#^resources/#', '', $raw_path );
+  if ( isset( $legacy_map[ $candidate_slug ] ) ) {
+    wp_safe_redirect( home_url( '/resources/' . $legacy_map[ $candidate_slug ] . '/' ), 301 );
     exit;
   }
 } );
