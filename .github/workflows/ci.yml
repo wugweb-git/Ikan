@@ -58,6 +58,10 @@ jobs:
       - name: Static a11y (ratchet)
         run: npm run lint:a11y
 
+      # Cross-surface design tokens, mobile ergonomics, PWA and Android compliance
+      - name: Cross-surface design & token compliance
+        run: npm run test:compliance
+
       # admin/, app/ and site/ may not import each other; shared/ imports no
       # surface. Fails when the number of crossings rises above scripts/baselines/boundary.
       - name: Surface boundary (ratchet)

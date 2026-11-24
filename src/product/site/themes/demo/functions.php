@@ -43,6 +43,9 @@ require_once get_template_directory() . '/includes/class-ikan-scf-fields.php';
 // Load iKAN Clinical Admin Hub (Assessments Catalog, Questions, Equip Curriculum, Results Reviewer)
 require_once get_template_directory() . '/includes/class-ikan-clinical-admin.php';
 
+// Load iKAN Design System & Token Compliance Admin Hub
+require_once get_template_directory() . '/includes/class-ikan-design-admin.php';
+
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
 
