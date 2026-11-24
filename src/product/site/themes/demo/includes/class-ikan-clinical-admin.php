@@ -119,12 +119,12 @@ class Ikan_Clinical_Admin {
 		$landing_map = $data['landing'];
 		$writeup_map = $data['writeups'];
 
-		// Grouped Layout definitions
+		// Grouped Layout definitions matching ikan2
 		$grouped_categories = array(
-			'Clinical Mood & Affect'  => array( 'feeling-depressed-and-hopeless', 'feeling-worried-and-stressed' ),
-			'Stress & Exhaustion'     => array( 'feeling-overwhelmed-and-anxious', 'feeling-drained-and-burned-out' ),
-			'Sleep & Life Balance'    => array( 'struggling-with-quality-sleep', 'struggling-to-balance-life' ),
-			'Holistic Triage'         => array( 'unsure-or-general-concern' ),
+			'Clinical Mood & Affect'      => array( 'feeling-depressed-and-hopeless', 'feeling-overwhelmed-and-anxious' ),
+			'Stress & Workplace Burnout'  => array( 'feeling-worried-and-stressed', 'feeling-drained-and-burned-out' ),
+			'Sleep & Life Balance'        => array( 'struggling-with-quality-sleep', 'struggling-to-balance-life' ),
+			'Holistic Triage'             => array( 'unsure-or-general-concern' ),
 		);
 
 		$current_slug = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : '';
