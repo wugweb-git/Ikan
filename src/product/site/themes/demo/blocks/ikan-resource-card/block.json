@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/resource-card",
+  "version": "1.0.0",
+  "title": "iKAN Resource Card",
+  "category": "ikan",
+  "description": "Resource card matching ikan2 ResourceCard component — article/guide preview with tag, title, read time, and thumbnail.",
+  "keywords": ["resource", "article", "card", "ikan", "guide"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "postId": {
+      "type": "number",
+      "default": 0,
+      "description": "WP post ID of the ikan_resource CPT to display. 0 = use attributes below."
+    },
+    "title": {
+      "type": "string",
+      "default": "Resource title"
+    },
+    "tag": {
+      "type": "string",
+      "default": ""
+    },
+    "readTime": {
+      "type": "string",
+      "default": ""
+    },
+    "url": {
+      "type": "string",
+      "default": ""
+    },
+    "thumbnailId": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "title": "5 ways to reduce workplace stress",
+      "tag": "Stress",
+      "readTime": "4 min read",
+      "url": "/resources/5-ways-to-reduce-workplace-stress/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

@@ -79,6 +79,39 @@ function demo_enqueue_styles() {
 }
 add_action( 'wp_enqueue_scripts', 'demo_enqueue_styles' );
 
+// ── iKAN Custom Gutenberg Blocks ──────────────────────────────────────────────
+// Registers all server-side rendered blocks defined in /blocks/ikan-*/block.json
+// Source of truth for block attributes: block.json; HTML output: render.php
+add_action( 'init', function() {
+	$blocks = [
+		'ikan-hero',
+		'ikan-disclosure',
+		'ikan-resource-card',
+		'ikan-cta-banner',
+	];
+	foreach ( $blocks as $block_name ) {
+		$block_dir = get_template_directory() . '/blocks/' . $block_name;
+		if ( is_dir( $block_dir ) ) {
+			register_block_type( $block_dir );
+		}
+	}
+} );
+
+// Register 'iKAN' block category so our blocks appear together in the inserter
+add_filter( 'block_categories_all', function( $categories ) {
+	array_unshift( $categories, [
+		'slug'  => 'ikan',
+		'title' => 'iKAN Health',
+		'icon'  => null,
+	] );
+	return $categories;
+} );
+
+// Disclosure block: add minimal CSS for the chevron rotate animation
+add_action( 'wp_head', function() {
+	echo '<style>details.disclosure-item summary::-webkit-details-marker{display:none}details.disclosure-item[open] .disclosure-chevron svg{transform:rotate(180deg)}details.disclosure-item .disclosure-chevron svg{transition:transform .2s ease}</style>' . "\n";
+} );
+
 // Custom sidebar support
 function demo_register_sidebars() {
   register_sidebar(

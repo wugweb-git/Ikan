@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/cta-banner",
+  "version": "1.0.0",
+  "title": "iKAN CTA Banner",
+  "category": "ikan",
+  "description": "Call-to-action banner with headline, subtitle, and primary/secondary buttons — matches the bottom-of-page CTA pattern used on about, resources, and marketing pages.",
+  "keywords": ["cta", "banner", "button", "ikan", "action"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "headline": {
+      "type": "string",
+      "default": "Ready to get started?"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": ""
+    },
+    "primaryLabel": {
+      "type": "string",
+      "default": "Get started"
+    },
+    "primaryUrl": {
+      "type": "string",
+      "default": "/join/"
+    },
+    "secondaryLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "secondaryUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "variant": {
+      "type": "string",
+      "default": "dark",
+      "description": "dark | light | brand — controls background color treatment"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["full"]
+  },
+  "example": {
+    "attributes": {
+      "headline": "Your mental health journey starts here",
+      "subtitle": "Take a free assessment and connect with the right support — in minutes.",
+      "primaryLabel": "Start your assessment",
+      "primaryUrl": "/assessments/",
+      "secondaryLabel": "Learn more",
+      "secondaryUrl": "/about/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}
