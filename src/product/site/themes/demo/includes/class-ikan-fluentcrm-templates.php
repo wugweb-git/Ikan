@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ikan_FluentCRM_Templates {
 
-	const TEMPLATE_VERSION = '2.4.0';
+	const TEMPLATE_VERSION = '2.6.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
 
 	/**
@@ -132,6 +132,11 @@ class Ikan_FluentCRM_Templates {
 	 * - Google Email Schema (Schema.org EmailMessage + ViewAction JSON-LD)
 	 * - Mobile-first viewport priority: fluid max-width 560px, fits mobile screens without horizontal scroll
 	 * - Full compliance: 24/7 Helplines (Tele-MANAS 14416), disclaimer, address, unsubscribe tag
+	 * Unified responsive email shell matching ikan2.css design system tokens:
+	 * Canvas (#EDF0F4), Card (#FFFFFF, 20px radius, 1px solid #E3E7EC),
+	 * Floating Logo + Wordmark, Sora headings, Manrope body, black pill button (#0E1217),
+	 * Left-aligned layout, hosted social icons, Schema.org JSON-LD,
+	 * and strict preservation of horizontal table rows without stacking.
 	 *
 	 * @param array<string, mixed> $args Template parameters.
 	 * @return string HTML email document.
@@ -139,18 +144,23 @@ class Ikan_FluentCRM_Templates {
 	public static function render_shell( $args = array() ) {
 		$badge_label  = $args['badge_label'] ?? 'Personal Wellbeing Summary';
 		$badge_bg     = $args['badge_bg'] ?? '#F2F9F7';
-		$badge_border = $args['badge_border'] ?? '#D1ECE5';
+		$badge_border = $args['badge_border'] ?? $args['badge_bg'] ?? '#D1ECE5';
 		$badge_color  = $args['badge_color'] ?? '#2A9D8F';
 		$heading      = $args['heading'] ?? 'Your Wellbeing Assessment & Insights Summary';
-		$greeting     = $args['greeting'] ?? 'Hi ##contact.first_name|there##,';
+		$greeting     = $args['greeting'] ?? '';
 		$intro        = $args['intro'] ?? '';
 		$content_html = $args['content_html'] ?? '';
 		$cta_label    = $args['cta_label'] ?? '';
 		$cta_url      = $args['cta_url'] ?? '';
+		$show_crisis  = $args['show_crisis'] ?? true;
+		$card_time    = $args['card_time'] ?? '';
+		$footer_note  = $args['footer_note'] ?? '';
 		$disclaimer   = $args['disclaimer'] ?? 'iKAN supports, but never replaces, care from a qualified professional. If you are experiencing acute distress or a medical crisis, please contact your local healthcare emergency provider immediately.';
 
-		$font_family = "'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-		$font_title  = "'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+		$font_family  = "Manrope, 'Segoe UI', Helvetica, Arial, sans-serif";
+		$font_title   = "Sora, 'Segoe UI', Helvetica, Arial, sans-serif";
+		$font_body    = $font_family;
+		$font_display = $font_title;
 
 		// Left-aligned CTA Button (ikan2 style black pill)
 		$cta_html = '';
@@ -165,11 +175,11 @@ class Ikan_FluentCRM_Templates {
 
 		// Google Schema.org JSON-LD (EmailMessage / ViewAction for Google to sync in)
 		$target_action_url = $cta_url ?: 'https://app.ikanhealth.in';
-		$action_name       = $cta_label ?: 'Open iKAN';
+		$action_name       = $cta_label ?: ( $heading ? wp_strip_all_tags( $heading ) : 'Open iKAN' );
 		$schema_json       = wp_json_encode( array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'EmailMessage',
-			'description'     => wp_strip_all_tags( $heading ),
+			'description'     => wp_strip_all_tags( $heading ?: $badge_label ),
 			'potentialAction' => array(
 				'@type'  => 'ViewAction',
 				'target' => $target_action_url,
@@ -183,6 +193,41 @@ class Ikan_FluentCRM_Templates {
 			),
 		), JSON_UNESCAPED_SLASHES );
 
+		// 24/7 Crisis Support Box (Left Aligned)
+		$crisis_html = '';
+		if ( $show_crisis ) {
+			$crisis_html = '
+			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F6F8FA;border:1px solid #E3E7EC;border-radius:12px;margin-top:24px;margin-bottom:16px;text-align:left">
+			  <tr>
+			    <td style="padding:12px 14px;font-family:' . $font_family . ';font-size:12px;line-height:1.55;color:#344054;text-align:left">
+			      <strong style="color:#0E1217;display:block;margin-bottom:3px">24/7 National Emergency Crisis Support (India):</strong>
+			      Tele-MANAS: <a href="tel:14416" style="color:#0E9384;font-weight:700;text-decoration:none">14416</a> &bull;
+			      Vandrevala Foundation: <a href="tel:+919999666555" style="color:#0E9384;font-weight:700;text-decoration:none">+91 9999 666 555</a> &bull;
+			      KIRAN: <a href="tel:18005990019" style="color:#0E9384;font-weight:700;text-decoration:none">1800-599-0019</a>
+			    </td>
+			  </tr>
+			</table>';
+		}
+
+		// Card timestamp or date
+		$card_time_html = '';
+		if ( $card_time ) {
+			$card_time_html = '
+			<div style="font-family:' . $font_family . ';font-size:12px;line-height:18px;color:#5B6470;margin-top:14px;text-align:left">
+			  ' . esc_html( $card_time ) . '
+			</div>';
+		}
+
+		// Outside footer
+		$disclaimer_html = '';
+		if ( $disclaimer ) {
+			$disclaimer_html = '<p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left"><strong style="color:#0E1217">Clinical Notice:</strong> ' . esc_html( $disclaimer ) . '</p>';
+		}
+		$footer_note_html = '';
+		if ( $footer_note ) {
+			$footer_note_html = '<p style="font-family:' . $font_family . ';font-size:12px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left">' . esc_html( $footer_note ) . '</p>';
+		}
+
 		return '<!DOCTYPE html>
 <html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -193,23 +238,22 @@ class Ikan_FluentCRM_Templates {
   <meta name="supported-color-schemes" content="light only" />
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>' . esc_html( $heading ) . '</title>
+  <title>' . esc_html( $heading ?: $badge_label ) . '</title>
   <script type="application/ld+json">' . $schema_json . '</script>
   <style type="text/css">
-    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; }
+    *, *:before, *:after { box-sizing: border-box; }
+    html, body { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; box-sizing: border-box; }
     img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
-    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #EDF0F4; font-family: ' . $font_family . '; color: #0E1217; }
+    body { height: 100% !important; background-color: #EDF0F4; font-family: ' . $font_family . '; color: #0E1217; }
     
-    /* Strict Mobile-First Viewport Rules (<600px) */
+    /* Strict Mobile-First Viewport Rules (<600px) — Rows remain side-by-side as columns */
     @media only screen and (max-width: 600px) {
       .email-wrapper { padding: 16px 10px !important; }
       .email-container { width: 100% !important; max-width: 100% !important; }
-      .card-cell { padding: 20px 16px !important; border-radius: 16px !important; }
-      .metric-col { display: block !important; width: 100% !important; border-right: none !important; border-bottom: 1px solid #E3E7EC !important; padding: 10px 0 !important; text-align: left !important; }
-      .metric-col:last-child { border-bottom: none !important; }
+      .card-cell { padding: 20px 14px !important; border-radius: 16px !important; }
       .mobile-btn { display: inline-block !important; width: auto !important; max-width: 100% !important; box-sizing: border-box !important; text-align: left !important; }
-      .footer-cell { padding: 18px 4px !important; }
+      .footer-cell { padding: 14px 4px !important; }
     }
   </style>
 </head>
@@ -220,11 +264,11 @@ class Ikan_FluentCRM_Templates {
   </div>
 
   <!-- Outer background canvas (#EDF0F4 from ikan2) -->
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EDF0F4;margin:0;padding:24px 0 32px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EDF0F4;margin:0;padding:24px 0 32px;table-layout:fixed;">
     <tr>
       <td align="center" class="email-wrapper" style="padding:0 12px">
         <!-- 560px Fluid Container to fit perfectly in viewport -->
-        <table role="presentation" class="email-container" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;text-align:left">
+        <table role="presentation" class="email-container" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;margin:0 auto;text-align:left;table-layout:fixed;">
 
           <!-- Left-aligned Brand Header Floating Above Card -->
           <tr>
@@ -244,7 +288,7 @@ class Ikan_FluentCRM_Templates {
 
           <!-- Main White Card (#FFFFFF, border-radius: 20px, border: 1px solid #E3E7EC) -->
           <tr>
-            <td class="card-cell" style="background-color:#FFFFFF;border-radius:20px;border:1px solid #E3E7EC;padding:28px 24px;box-shadow:0 1px 3px rgba(0,0,0,0.02);text-align:left">
+            <td class="card-cell" style="background-color:#FFFFFF;border-radius:20px;border:1px solid #E3E7EC;padding:28px 24px;box-shadow:0 1px 3px rgba(0,0,0,0.02);text-align:left;word-break:break-word;overflow-wrap:break-word;box-sizing:border-box">
 
               <!-- Left-Aligned Context Badge -->
               <div style="margin-bottom:14px;text-align:left">
@@ -254,15 +298,15 @@ class Ikan_FluentCRM_Templates {
               </div>
 
               <!-- Main Heading (Left Aligned) -->
-              <h1 style="font-family:' . $font_title . ';color:#0E1217;font-size:22px;line-height:1.35;font-weight:700;letter-spacing:-0.015em;margin:0 0 12px 0;text-align:left">
+              <h1 style="font-family:' . $font_title . ';color:#0E1217;font-size:22px;line-height:1.35;font-weight:700;letter-spacing:-0.015em;margin:0 0 12px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">
                 ' . $heading . '
               </h1>
 
-              ' . ( $greeting ? '<p style="font-family:' . $font_family . ';color:#0E1217;font-size:15px;line-height:1.6;font-weight:600;margin:0 0 10px 0;text-align:left">' . $greeting . '</p>' : '' ) . '
+              ' . ( $greeting ? '<p style="font-family:' . $font_family . ';color:#0E1217;font-size:15px;line-height:1.6;font-weight:600;margin:0 0 10px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $greeting . '</p>' : '' ) . '
 
-              ' . ( $intro ? '<p style="font-family:' . $font_family . ';color:#5B6470;font-size:14px;line-height:1.65;margin:0 0 16px 0;text-align:left">' . $intro . '</p>' : '' ) . '
+              ' . ( $intro ? '<p style="font-family:' . $font_family . ';color:#5B6470;font-size:14px;line-height:1.65;margin:0 0 16px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $intro . '</p>' : '' ) . '
 
-              <!-- Specialized Content Section (Left Aligned) -->
+              <!-- Specialized Content Section (Left Aligned, Preserves Rows) -->
               <div style="text-align:left">
                 ' . $content_html . '
               </div>
@@ -270,40 +314,32 @@ class Ikan_FluentCRM_Templates {
               <!-- Left-Aligned Call to Action -->
               ' . $cta_html . '
 
-              <!-- 24/7 National Emergency & Crisis Support Box (Left Aligned) -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F6F8FA;border:1px solid #E3E7EC;border-radius:12px;margin-top:24px;margin-bottom:16px;text-align:left">
-                <tr>
-                  <td style="padding:12px 14px;font-family:' . $font_family . ';font-size:12px;line-height:1.55;color:#344054;text-align:left">
-                    <strong style="color:#0E1217;display:block;margin-bottom:3px">24/7 National Emergency Crisis Support (India):</strong>
-                    Tele-MANAS: <a href="tel:14416" style="color:#0E9384;font-weight:700;text-decoration:none">14416</a> &bull;
-                    Vandrevala Foundation: <a href="tel:+919999666555" style="color:#0E9384;font-weight:700;text-decoration:none">+91 9999 666 555</a> &bull;
-                    KIRAN: <a href="tel:18005990019" style="color:#0E9384;font-weight:700;text-decoration:none">1800-599-0019</a>
-                  </td>
-                </tr>
-              </table>
+              ' . $card_time_html . '
+
+              ' . $crisis_html . '
 
               <!-- Left-Aligned Social Media Icons (Hosted SVGs) -->
-              <div style="margin-top:18px;margin-bottom:8px;text-align:left">
+              <div style="margin-top:20px;margin-bottom:8px;text-align:left">
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="text-align:left">
                   <tr>
                     <td style="padding-right:12px;vertical-align:middle">
                       <a href="https://www.linkedin.com/company/ikan-mental-health/" target="_blank" aria-label="iKAN on LinkedIn" style="text-decoration:none;display:inline-block">
-                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-linkedin.svg" alt="LinkedIn" width="22" height="22" style="display:block;border:0" />
+                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-linkedin.svg" alt="LinkedIn" width="20" height="20" style="display:block;border:0" />
                       </a>
                     </td>
                     <td style="padding-right:12px;vertical-align:middle">
                       <a href="https://x.com/ikanhealth_in" target="_blank" aria-label="iKAN on X" style="text-decoration:none;display:inline-block">
-                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-x.svg" alt="X" width="22" height="22" style="display:block;border:0" />
+                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-x.svg" alt="X" width="20" height="20" style="display:block;border:0" />
                       </a>
                     </td>
                     <td style="padding-right:12px;vertical-align:middle">
                       <a href="https://www.instagram.com/ikanhealth_in/" target="_blank" aria-label="iKAN on Instagram" style="text-decoration:none;display:inline-block">
-                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-instagram.svg" alt="Instagram" width="22" height="22" style="display:block;border:0" />
+                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-instagram.svg" alt="Instagram" width="20" height="20" style="display:block;border:0" />
                       </a>
                     </td>
                     <td style="vertical-align:middle">
                       <a href="https://ikanhealth.in" target="_blank" aria-label="iKAN Website" style="text-decoration:none;display:inline-block">
-                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-web.svg" alt="Website" width="22" height="22" style="display:block;border:0" />
+                        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-web.svg" alt="Website" width="20" height="20" style="display:block;border:0" />
                       </a>
                     </td>
                   </tr>
@@ -316,9 +352,8 @@ class Ikan_FluentCRM_Templates {
           <!-- Left-Aligned Outside Footer Compliance -->
           <tr>
             <td class="footer-cell" style="padding:18px 4px 0;text-align:left">
-              <p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left">
-                <strong style="color:#0E1217">Clinical Notice:</strong> ' . esc_html( $disclaimer ) . '
-              </p>
+              ' . $disclaimer_html . '
+              ' . $footer_note_html . '
               <p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 6px 0;text-align:left">
                 &copy; ' . gmdate( 'Y' ) . ' iKAN Health &bull; ##crm.business_address##<br>
                 Sent via <code>noreply@ikanhealth.in</code>. Monitored support: <a href="mailto:support@ikanhealth.in" style="color:#0E9384;text-decoration:none">support@ikanhealth.in</a>
@@ -339,8 +374,8 @@ class Ikan_FluentCRM_Templates {
 
 	/**
 	 * Render an authentic iKAN team alert email matching ikan2-alerts.
-	 * Left-aligned, includes hosted social icons, Google Schema.org JSON-LD,
-	 * and strict ikan2 design system tokens.
+	 * Delegates directly to render_shell() so all 15 emailers share the exact
+	 * same master header, card, typography, buttons, social icons, and footer style.
 	 *
 	 * @param array<string, mixed> $args Alert parameters.
 	 * @return string HTML email document.
@@ -356,104 +391,36 @@ class Ikan_FluentCRM_Templates {
 		$cta_url      = $args['cta_url'] ?? 'https://app.ikanhealth.in';
 		$footer_note  = $args['footer_note'] ?? 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.';
 
-		$font_body    = "'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-		$font_display = "'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+		$font_family = "Manrope, 'Segoe UI', Helvetica, Arial, sans-serif";
 
-		$facts_html = '';
+		$facts_html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;border-top:1px solid #E3E7EC;text-align:left;table-layout:fixed">';
 		foreach ( $facts as $i => $row ) {
 			$rule       = $i > 0 ? 'border-top:1px solid #E3E7EC;' : '';
 			$facts_html .= '<tr>'
-				. '<td style="padding:12px 0;' . $rule . 'width:38%;vertical-align:top;font-family:' . $font_body . ';font-size:13px;line-height:20px;color:#5B6470;font-weight:500;text-align:left;">' . esc_html( $row[0] ) . '</td>'
-				. '<td style="padding:12px 0;' . $rule . 'vertical-align:top;font-family:' . $font_body . ';font-size:14px;line-height:20px;color:#0E1217;font-weight:600;word-break:break-word;text-align:left;">' . $row[1] . '</td>'
+				. '<td style="padding:12px 0;' . $rule . 'width:38%;vertical-align:top;font-family:' . $font_family . ';font-size:13px;line-height:20px;color:#5B6470;font-weight:500;text-align:left;word-break:break-word;overflow-wrap:anywhere;">' . esc_html( $row[0] ) . '</td>'
+				. '<td style="padding:12px 0;' . $rule . 'vertical-align:top;font-family:' . $font_family . ';font-size:14px;line-height:20px;color:#0E1217;font-weight:600;word-break:break-word;overflow-wrap:anywhere;text-align:left;">' . $row[1] . '</td>'
 				. '</tr>';
 		}
+		$facts_html .= '</table>';
 
-		$cta_html = '';
-		if ( $cta_label && $cta_url ) {
-			$cta_html = '<tr><td class="alert-card-pad" style="padding:24px 32px 4px;text-align:left;">'
-				. '<a href="' . esc_url( $cta_url ) . '" style="display:inline-block;background:#0E1217;color:#FFFFFF !important;text-decoration:none !important;font-family:' . $font_body . ';font-size:14px;line-height:20px;font-weight:600;padding:12px 24px;border-radius:999px;text-align:left;">' . esc_html( $cta_label ) . '</a>'
-				. '</td></tr>';
-		}
-
-		// Google Schema.org JSON-LD (EmailMessage / ViewAction for Google to sync in)
-		$schema_json = wp_json_encode( array(
-			'@context'        => 'https://schema.org',
-			'@type'           => 'EmailMessage',
-			'description'     => wp_strip_all_tags( $title ),
-			'potentialAction' => array(
-				'@type'  => 'ViewAction',
-				'target' => $cta_url ?: 'https://app.ikanhealth.in',
-				'name'   => $cta_label ?: 'Open the app',
-			),
-			'publisher'       => array(
-				'@type' => 'Organization',
-				'name'  => 'iKAN Health',
-				'url'   => 'https://ikanhealth.in',
-				'logo'  => 'https://app.ikanhealth.in/pwa-192x192.png',
-			),
-		), JSON_UNESCAPED_SLASHES );
-
-		return '<!doctype html>
-<html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">
-<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<meta name="x-apple-disable-message-reformatting"><title>' . esc_html( $title ) . '</title>
-<script type="application/ld+json">' . $schema_json . '</script>
-<style type="text/css">
-  body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; }
-  img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
-  body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #EDF0F4; }
-  @media only screen and (max-width: 600px) {
-    .alert-wrapper { padding: 16px 10px !important; }
-    .alert-container { width: 100% !important; max-width: 100% !important; }
-    .alert-card-pad { padding: 20px 16px !important; }
-  }
-</style>
-</head>
-<body style="margin:0;padding:0;background:#EDF0F4;">
-<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">' . esc_html( $intro ) . '</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EDF0F4;">
-  <tr><td align="center" class="alert-wrapper" style="padding:28px 12px;">
-    <table role="presentation" class="alert-container" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;text-align:left">
-      <tr><td style="padding:0 4px 18px;text-align:left">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="text-align:left"><tr>
-          <td style="vertical-align:middle;"><img src="https://app.ikanhealth.in/pwa-192x192.png" width="36" height="36" alt="iKAN" style="display:block;border:0;border-radius:999px;"></td>
-          <td style="vertical-align:middle;padding-left:10px;font-family:' . $font_display . ';font-size:18px;line-height:24px;font-weight:700;color:#0E1217;letter-spacing:-0.01em;text-align:left">iKAN</td>
-        </tr></table>
-      </td></tr>
-      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #E3E7EC;box-shadow:0 1px 3px rgba(0,0,0,0.02)">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="text-align:left">
-          <tr><td class="alert-card-pad" style="padding:28px 32px 0;text-align:left">
-            <span style="display:inline-block;background:' . esc_attr( $badge_tint ) . ';color:' . esc_attr( $badge_ink ) . ';font-family:' . $font_body . ';font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:6px 12px;border-radius:999px;text-align:left">' . esc_html( $badge_label ) . '</span>
-          </td></tr>
-          <tr><td class="alert-card-pad" style="padding:16px 32px 0;font-family:' . $font_display . ';font-size:24px;line-height:32px;font-weight:700;color:#0E1217;letter-spacing:-0.015em;text-align:left">' . $title . '</td></tr>
-          <tr><td class="alert-card-pad" style="padding:8px 32px 0;font-family:' . $font_body . ';font-size:15px;line-height:24px;font-weight:400;color:#5B6470;text-align:left">' . $intro . '</td></tr>
-          <tr><td class="alert-card-pad" style="padding:20px 32px 0;text-align:left">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="text-align:left">' . $facts_html . '</table>
-          </td></tr>' . $cta_html . '
-          <tr><td class="alert-card-pad" style="padding:20px 32px 0;text-align:left">
-            <!-- Left-Aligned Hosted Social Icons -->
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="text-align:left">
-              <tr>
-                <td style="padding-right:12px;vertical-align:middle"><a href="https://www.linkedin.com/company/ikan-mental-health/" target="_blank" aria-label="LinkedIn"><img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-linkedin.svg" alt="LinkedIn" width="20" height="20" style="display:block;border:0"></a></td>
-                <td style="padding-right:12px;vertical-align:middle"><a href="https://x.com/ikanhealth_in" target="_blank" aria-label="X"><img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-x.svg" alt="X" width="20" height="20" style="display:block;border:0"></a></td>
-                <td style="padding-right:12px;vertical-align:middle"><a href="https://www.instagram.com/ikanhealth_in/" target="_blank" aria-label="Instagram"><img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-instagram.svg" alt="Instagram" width="20" height="20" style="display:block;border:0"></a></td>
-                <td style="vertical-align:middle"><a href="https://ikanhealth.in" target="_blank" aria-label="Website"><img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/icon-web.svg" alt="Website" width="20" height="20" style="display:block;border:0"></a></td>
-              </tr>
-            </table>
-          </td></tr>
-          <tr><td class="alert-card-pad" style="padding:16px 32px 28px;font-family:' . $font_body . ';font-size:12px;line-height:18px;color:#5B6470;text-align:left">Received ##crm.date_time##</td></tr>
-        </table>
-      </td></tr>
-      <tr><td style="padding:18px 4px 0;font-family:' . $font_body . ';font-size:12px;line-height:18px;color:#5B6470;text-align:left">
-        ' . esc_html( $footer_note ) . '<br>
-        <span style="font-size:11px;color:#8A92A0">&copy; ' . gmdate( 'Y' ) . ' iKAN Health &bull; ##crm.business_address## &bull; ##crm.unsubscribe_to_manage##</span>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>';
+		return self::render_shell(
+			array(
+				'badge_label'  => $badge_label,
+				'badge_bg'     => $badge_tint,
+				'badge_border' => $badge_tint,
+				'badge_color'  => $badge_ink,
+				'heading'      => $title,
+				'greeting'     => '',
+				'intro'        => $intro,
+				'content_html' => $facts_html,
+				'cta_label'    => $cta_label,
+				'cta_url'      => $cta_url,
+				'show_crisis'  => false,
+				'card_time'    => 'Received ##crm.date_time##',
+				'footer_note'  => $footer_note,
+				'disclaimer'   => '',
+			)
+		);
 	}
 
 	/**
@@ -480,28 +447,28 @@ class Ikan_FluentCRM_Templates {
 						'heading'      => 'Your Wellbeing Assessment &amp; Insights Summary',
 						'intro'        => 'You requested an export of your wellbeing summary from the iKAN Health Member Portal. Below is your clinical baseline breakdown, cognitive resilience metrics, and recommended focus areas based on your latest self-assessment:',
 						'content_html' => '
-						<div style="background-color:#F8F9FA;border:1px solid #EBECEF;border-radius:14px;padding:18px;margin-top:16px;margin-bottom:20px">
-						  <div style="font-family:\'Manrope\',sans-serif;font-size:11px;font-weight:700;color:#717182;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Assessment Score Snapshot</div>
-						  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+						<div style="background-color:#F6F8FA;border:1px solid #E3E7EC;border-radius:14px;padding:18px;margin-top:16px;margin-bottom:20px;text-align:left">
+						  <div style="font-family:\'Manrope\',sans-serif;font-size:11px;font-weight:700;color:#5B6470;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;text-align:left">Assessment Score Snapshot</div>
+						  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed;text-align:left">
 						    <tr>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;border-right:1px solid #E5E7EB;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#2A9D8F">##contact.custom.latest_score|--##</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Scale Score</div>
+						      <td width="33%" style="text-align:left;padding:8px 8px 8px 0;border-right:1px solid #E3E7EC;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#2A9D8F;text-align:left">##contact.custom.latest_score|--##</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Scale Score</div>
 						      </td>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;border-right:1px solid #E5E7EB;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#15803D">##contact.custom.latest_severity|Optimal##</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Severity Band</div>
+						      <td width="33%" style="text-align:left;padding:8px 8px;border-right:1px solid #E3E7EC;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#15803D;text-align:left">##contact.custom.latest_severity|Optimal##</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Severity Band</div>
 						      </td>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#151515">Verified</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Clinical Status</div>
+						      <td width="33%" style="text-align:left;padding:8px 0 8px 8px;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#0E1217;text-align:left">Verified</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Clinical Status</div>
 						      </td>
 						    </tr>
 						  </table>
 
-						  <div style="background-color:#FFFFFF;border:1px solid #EBECEF;border-radius:10px;padding:14px;margin-top:14px">
-						    <div style="font-family:\'Sora\',sans-serif;font-size:13px;font-weight:600;color:#151515;margin-bottom:6px">Instrument: ##contact.custom.latest_assessment##</div>
-						    <p style="margin:0;font-family:\'Manrope\',sans-serif;font-size:13px;line-height:1.55;color:#4A4A5A">
+						  <div style="background-color:#FFFFFF;border:1px solid #E3E7EC;border-radius:10px;padding:14px;margin-top:14px;text-align:left">
+						    <div style="font-family:\'Sora\',sans-serif;font-size:13px;font-weight:600;color:#0E1217;margin-bottom:6px;text-align:left">Instrument: ##contact.custom.latest_assessment##</div>
+						    <p style="margin:0;font-family:\'Manrope\',sans-serif;font-size:13px;line-height:1.55;color:#5B6470;text-align:left">
 						      Your screening indicates current emotional and cognitive functioning. Fluctuations across work weeks are completely natural; tracking over 14-day intervals provides the most reliable trajectory.
 						    </p>
 						  </div>
@@ -529,28 +496,28 @@ class Ikan_FluentCRM_Templates {
 						'heading'      => 'Strong Work on Your Resilience Journey',
 						'intro'        => 'Hi ##contact.first_name|there##, building psychological resilience is an incremental daily practice. Here is your Equip milestone summary and tomorrow\'s focus area:',
 						'content_html' => '
-						<div style="background-color:#F8F9FA;border:1px solid #EBECEF;border-radius:14px;padding:18px;margin-top:16px;margin-bottom:20px">
-						  <div style="font-family:\'Manrope\',sans-serif;font-size:11px;font-weight:700;color:#717182;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">Equip Curriculum Snapshot</div>
-						  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+						<div style="background-color:#F6F8FA;border:1px solid #E3E7EC;border-radius:14px;padding:18px;margin-top:16px;margin-bottom:20px;text-align:left">
+						  <div style="font-family:\'Manrope\',sans-serif;font-size:11px;font-weight:700;color:#5B6470;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;text-align:left">Equip Curriculum Snapshot</div>
+						  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed;text-align:left">
 						    <tr>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;border-right:1px solid #E5E7EB;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#D97706">Day ##contact.custom.current_day|7##</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Of 21 Days</div>
+						      <td width="33%" style="text-align:left;padding:8px 8px 8px 0;border-right:1px solid #E3E7EC;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#D97706;text-align:left">Day ##contact.custom.current_day|7##</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Of 21 Days</div>
 						      </td>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;border-right:1px solid #E5E7EB;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#2A9D8F">Active</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Daily Streak</div>
+						      <td width="33%" style="text-align:left;padding:8px 8px;border-right:1px solid #E3E7EC;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#2A9D8F;text-align:left">Active</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Daily Streak</div>
 						      </td>
-						      <td class="metric-col" width="33%" style="text-align:center;padding:8px 4px;vertical-align:top">
-						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#151515">100%</div>
-						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#717182;margin-top:4px">Completion Rate</div>
+						      <td width="33%" style="text-align:left;padding:8px 0 8px 8px;vertical-align:top">
+						        <div style="font-family:\'Sora\',sans-serif;font-size:22px;font-weight:700;color:#0E1217;text-align:left">100%</div>
+						        <div style="font-family:\'Manrope\',sans-serif;font-size:11px;color:#5B6470;margin-top:4px;text-align:left">Completion Rate</div>
 						      </td>
 						    </tr>
 						  </table>
 
-						  <div style="background-color:#FFFFFF;border:1px solid #EBECEF;border-radius:10px;padding:14px;margin-top:14px">
-						    <div style="font-family:\'Sora\',sans-serif;font-size:13px;font-weight:600;color:#151515;margin-bottom:6px">Active Track: ##contact.custom.current_program|Stress Buster##</div>
-						    <p style="margin:0;font-family:\'Manrope\',sans-serif;font-size:13px;line-height:1.55;color:#4A4A5A">
+						  <div style="background-color:#FFFFFF;border:1px solid #E3E7EC;border-radius:10px;padding:14px;margin-top:14px;text-align:left">
+						    <div style="font-family:\'Sora\',sans-serif;font-size:13px;font-weight:600;color:#0E1217;margin-bottom:6px;text-align:left">Active Track: ##contact.custom.current_program|Stress Buster##</div>
+						    <p style="margin:0;font-family:\'Manrope\',sans-serif;font-size:13px;line-height:1.55;color:#5B6470;text-align:left">
 						      Tomorrow\'s practice introduces targeted cognitive reframing and physiological sigh breathing to calm sympathetic autonomic arousal during high-pressure work blocks.
 						    </p>
 						  </div>
