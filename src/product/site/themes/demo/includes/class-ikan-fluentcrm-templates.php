@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ikan_FluentCRM_Templates {
 
-	const TEMPLATE_VERSION = '2.1.0';
+	const TEMPLATE_VERSION = '2.3.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
 
 	/**
@@ -144,7 +144,6 @@ class Ikan_FluentCRM_Templates {
 		$content_html = $args['content_html'] ?? '';
 		$cta_label    = $args['cta_label'] ?? '';
 		$cta_url      = $args['cta_url'] ?? '';
-		$show_founder = $args['show_founder'] ?? true;
 		$disclaimer   = $args['disclaimer'] ?? 'iKAN supports, but never replaces, care from a qualified professional. If you are experiencing acute distress or a medical crisis, please contact your local healthcare emergency provider immediately.';
 
 		$font_family = "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -163,26 +162,6 @@ class Ikan_FluentCRM_Templates {
 			    </td>
 			  </tr>
 			</table>';
-		}
-
-		// Founder Signature Card
-		$founder_html = '';
-		if ( $show_founder ) {
-			$founder_html = '
-			<div class="wp-block-group" style="background-color:#FFFFFF;border:1px solid #EBECEF;border-radius:14px;padding:14px 18px;margin-top:28px;margin-bottom:24px">
-			  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-			    <tr>
-			      <td width="44" style="vertical-align:middle;padding-right:14px">
-			        <img src="https://ikanhealth.in/wp-content/themes/demo/assets/img/kartik-avatar.jpg" alt="Kartik" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #EBECEF" />
-			      </td>
-			      <td style="vertical-align:middle">
-			        <div style="font-family:' . $font_title . ';font-size:14px;font-weight:600;color:#151515;line-height:1.3">Kartik</div>
-			        <div style="font-family:' . $font_family . ';font-size:12px;font-weight:500;color:#2A9D8F;line-height:1.4;margin-top:1px">Founder &amp; Clinical Director | iKAN Health</div>
-			        <div style="font-family:' . $font_family . ';font-size:11px;color:#717182;line-height:1.4;margin-top:2px"><a href="https://ikanhealth.in" style="color:#717182;text-decoration:none">ikanhealth.in</a> &bull; <a href="mailto:support@ikanhealth.in" style="color:#2A9D8F;text-decoration:none">support@ikanhealth.in</a></div>
-			      </td>
-			    </tr>
-			  </table>
-			</div>';
 		}
 
 		return '<!DOCTYPE html>
@@ -258,9 +237,6 @@ class Ikan_FluentCRM_Templates {
 
               <!-- Call to Action -->
               ' . $cta_html . '
-
-              <!-- Founder Signature Card -->
-              ' . $founder_html . '
             </td>
           </tr>
 
@@ -330,6 +306,76 @@ class Ikan_FluentCRM_Templates {
   </table>
 </body>
 </html>';
+	}
+
+	/**
+	 * Render an authentic iKAN team alert email matching ikan2-alerts.
+	 * Matches the exact design of the ikan2 notification emails (such as "New app user").
+	 *
+	 * @param array<string, mixed> $args Alert parameters.
+	 * @return string HTML email document.
+	 */
+	public static function render_alert_shell( $args = array() ) {
+		$badge_label  = $args['badge_label'] ?? 'New app user';
+		$badge_tint   = $args['badge_tint'] ?? '#FBE6E4';
+		$badge_ink    = $args['badge_ink'] ?? '#A83E38';
+		$title        = $args['title'] ?? 'New Account';
+		$intro        = $args['intro'] ?? 'Someone created an account in the iKAN app.';
+		$facts        = $args['facts'] ?? array();
+		$cta_label    = $args['cta_label'] ?? 'Open the app';
+		$cta_url      = $args['cta_url'] ?? 'https://app.ikanhealth.in';
+		$footer_note  = $args['footer_note'] ?? 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.';
+
+		$font_body    = "Manrope, 'Segoe UI', Helvetica, Arial, sans-serif";
+		$font_display = "Sora, 'Segoe UI', Helvetica, Arial, sans-serif";
+
+		$facts_html = '';
+		foreach ( $facts as $i => $row ) {
+			$rule       = $i > 0 ? 'border-top:1px solid #E3E7EC;' : '';
+			$facts_html .= '<tr>'
+				. '<td style="padding:12px 0;' . $rule . 'width:38%;vertical-align:top;font-family:' . $font_body . ';font-size:13px;line-height:20px;color:#5B6470;font-weight:500;">' . esc_html( $row[0] ) . '</td>'
+				. '<td style="padding:12px 0;' . $rule . 'vertical-align:top;font-family:' . $font_body . ';font-size:14px;line-height:20px;color:#0E1217;font-weight:600;word-break:break-word;">' . $row[1] . '</td>'
+				. '</tr>';
+		}
+
+		$cta_html = '';
+		if ( $cta_label && $cta_url ) {
+			$cta_html = '<tr><td style="padding:28px 32px 4px;">'
+				. '<a href="' . esc_url( $cta_url ) . '" style="display:inline-block;background:#0E1217;color:#FFFFFF !important;text-decoration:none !important;font-family:' . $font_body . ';font-size:14px;line-height:20px;font-weight:600;padding:12px 22px;border-radius:999px;">' . esc_html( $cta_label ) . '</a>'
+				. '</td></tr>';
+		}
+
+		return '<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only"><title>' . esc_html( $title ) . '</title></head>
+<body style="margin:0;padding:0;background:#EDF0F4;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EDF0F4;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+      <tr><td style="padding:0 4px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td style="vertical-align:middle;"><img src="https://app.ikanhealth.in/pwa-192x192.png" width="36" height="36" alt="iKAN" style="display:block;border:0;border-radius:999px;"></td>
+          <td style="vertical-align:middle;padding-left:10px;font-family:' . $font_display . ';font-size:18px;line-height:24px;font-weight:700;color:#0E1217;letter-spacing:-0.01em;">iKAN</td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:28px 32px 0;">
+            <span style="display:inline-block;background:' . esc_attr( $badge_tint ) . ';color:' . esc_attr( $badge_ink ) . ';font-family:' . $font_body . ';font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:6px 12px;border-radius:999px;">' . esc_html( $badge_label ) . '</span>
+          </td></tr>
+          <tr><td style="padding:16px 32px 0;font-family:' . $font_display . ';font-size:24px;line-height:32px;font-weight:700;color:#0E1217;letter-spacing:-0.015em;">' . $title . '</td></tr>
+          <tr><td style="padding:8px 32px 0;font-family:' . $font_body . ';font-size:15px;line-height:24px;font-weight:400;color:#5B6470;">' . $intro . '</td></tr>
+          <tr><td style="padding:20px 32px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $facts_html . '</table>
+          </td></tr>' . $cta_html . '
+          <tr><td style="padding:28px 32px;font-family:' . $font_body . ';font-size:12px;line-height:18px;color:#5B6470;">Received ##crm.date_time##</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:20px 4px 0;font-family:' . $font_body . ';font-size:12px;line-height:18px;color:#5B6470;">' . esc_html( $footer_note ) . '</td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>';
 	}
 
 	/**
@@ -470,7 +516,6 @@ class Ikan_FluentCRM_Templates {
 						</table>',
 						'cta_label'    => 'Open Member in FluentCRM',
 						'cta_url'      => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
-						'show_founder' => false,
 						'disclaimer'   => 'Confidential internal clinical alert intended solely for iKAN Health clinical staff.',
 					)
 				),
@@ -689,6 +734,139 @@ class Ikan_FluentCRM_Templates {
 						</div>',
 						'cta_label'    => 'Learn More About Our Clinical Protocol',
 						'cta_url'      => 'https://ikanhealth.in/join/partner/',
+					)
+				),
+			),
+
+			// 11. iKAN Alert — New App User (Internal Team Alert matching ikan2-alerts)
+			array(
+				'slug'      => 'ikan-alert-new-app-user',
+				'title'     => 'iKAN Alert — New App User',
+				'subject'   => 'New user: ##contact.full_name|New Member##',
+				'excerpt'   => 'Internal team notification sent whenever someone creates an account in the iKAN app.',
+				'preheader' => 'Someone created an account in the iKAN app.',
+				'html'      => self::render_alert_shell(
+					array(
+						'badge_label' => 'New app user',
+						'badge_tint'  => '#FBE6E4',
+						'badge_ink'   => '#A83E38',
+						'title'       => '##contact.full_name|New Account##',
+						'intro'       => 'Someone created an account in the iKAN app.',
+						'facts'       => array(
+							array( 'Name', '##contact.full_name##' ),
+							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
+							array( 'Signed up with', '##contact.custom.auth_provider|Email and password##' ),
+						),
+						'cta_label'   => 'Open the app',
+						'cta_url'     => 'https://app.ikanhealth.in',
+						'footer_note' => 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.',
+					)
+				),
+			),
+
+			// 12. iKAN Alert — Pilot Lead (Internal Team Alert matching ikan2-alerts)
+			array(
+				'slug'      => 'ikan-alert-pilot-lead',
+				'title'     => 'iKAN Alert — Pilot Lead',
+				'subject'   => 'Pilot lead: ##contact.custom.company_name|Corporate Enquiry##',
+				'excerpt'   => 'Internal notification when an organization requests a pilot via the burnout cost calculator.',
+				'preheader' => 'New corporate pilot enquiry received.',
+				'html'      => self::render_alert_shell(
+					array(
+						'badge_label' => 'Pilot lead',
+						'badge_tint'  => '#FBF0DC',
+						'badge_ink'   => '#8A5A00',
+						'title'       => '##contact.custom.company_name|Corporate Enquiry##',
+						'intro'       => 'Someone asked about a pilot from the burnout cost calculator.',
+						'facts'       => array(
+							array( 'Name', '##contact.full_name##' ),
+							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
+							array( 'Company', '##contact.custom.company_name|--##' ),
+							array( 'Team size', '##contact.custom.team_size|--##' ),
+							array( 'From', 'ikanhealth.in' ),
+						),
+						'cta_label'   => 'Reply to Lead',
+						'cta_url'     => 'mailto:##contact.email##?subject=Re:%20your%20iKAN%20pilot%20enquiry',
+						'footer_note' => 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.',
+					)
+				),
+			),
+
+			// 13. iKAN Alert — Contact Message (Internal Team Alert matching ikan2-alerts)
+			array(
+				'slug'      => 'ikan-alert-contact-message',
+				'title'     => 'iKAN Alert — Contact Message',
+				'subject'   => 'Contact: General enquiry, from ##contact.full_name##',
+				'excerpt'   => 'Internal notification when someone submits the website contact form.',
+				'preheader' => 'New message received from the contact form.',
+				'html'      => self::render_alert_shell(
+					array(
+						'badge_label' => 'Contact message',
+						'badge_tint'  => '#E8ECF8',
+						'badge_ink'   => '#455B9E',
+						'title'       => '##contact.custom.subject|General enquiry##',
+						'intro'       => 'Someone sent a message through the contact form.',
+						'facts'       => array(
+							array( 'Name', '##contact.full_name##' ),
+							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
+							array( 'From', 'ikanhealth.in' ),
+						),
+						'cta_label'   => 'Reply to Message',
+						'cta_url'     => 'mailto:##contact.email##',
+						'footer_note' => 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.',
+					)
+				),
+			),
+
+			// 14. iKAN Alert — Partner Application (Internal Team Alert matching ikan2-alerts)
+			array(
+				'slug'      => 'ikan-alert-partner-application',
+				'title'     => 'iKAN Alert — Partner Application',
+				'subject'   => 'Partner application: ##contact.full_name##',
+				'excerpt'   => 'Internal notification when a clinician or wellness partner applies to join the iKAN network.',
+				'preheader' => 'New clinical partner credential submission received.',
+				'html'      => self::render_alert_shell(
+					array(
+						'badge_label' => 'Partner application',
+						'badge_tint'  => '#DFF3EE',
+						'badge_ink'   => '#356B5A',
+						'title'       => '##contact.full_name##',
+						'intro'       => 'A new clinical partner applied to join iKAN. Expected response within 3–5 business days.',
+						'facts'       => array(
+							array( 'Name', '##contact.full_name##' ),
+							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
+							array( 'Phone', '##contact.phone|--##' ),
+							array( 'Specialty / Category', '##contact.custom.category|Counselor##' ),
+						),
+						'cta_label'   => 'Review in Admin',
+						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
+						'footer_note' => 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.',
+					)
+				),
+			),
+
+			// 15. iKAN Alert — Newsletter Sign-up (Internal Team Alert matching ikan2-alerts)
+			array(
+				'slug'      => 'ikan-alert-newsletter-signup',
+				'title'     => 'iKAN Alert — Newsletter Sign-up',
+				'subject'   => 'Newsletter: ##contact.email##',
+				'excerpt'   => 'Internal notification when a new subscriber signs up for the iKAN newsletter.',
+				'preheader' => 'New newsletter subscriber registered.',
+				'html'      => self::render_alert_shell(
+					array(
+						'badge_label' => 'Newsletter sign-up',
+						'badge_tint'  => '#DAF6E9',
+						'badge_ink'   => '#0C6B4D',
+						'title'       => '##contact.email##',
+						'intro'       => 'A new subscriber joined the iKAN newsletter list.',
+						'facts'       => array(
+							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
+							array( 'Name', '##contact.full_name|Reader##' ),
+							array( 'From', 'ikanhealth.in' ),
+						),
+						'cta_label'   => 'Open Subscribers',
+						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
+						'footer_note' => 'An automatic alert from iKAN, sent to the team when something new arrives. Replying goes to the person who sent it, where there is one.',
 					)
 				),
 			),
