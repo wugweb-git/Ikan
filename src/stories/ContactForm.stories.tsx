@@ -2,8 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Input } from '../product/site/ui/input';
 import { Label } from '../product/site/ui/label';
-import { Button } from '../product/site/ui/button';
-import { Checkbox } from '../product/site/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../product/site/ui/select';
 
 /**
