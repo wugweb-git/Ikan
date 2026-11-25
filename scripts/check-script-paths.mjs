@@ -11,7 +11,7 @@
  * A guard that reads like a pass while proving nothing is worse than no guard.
  * This makes the next move fail loudly instead.
  *
- * Paths beginning `src/lib/` are skipped: they belong to the iKAN 2 repo, which
+ * Paths beginning `src/lib/`, and `src/styles.css`, are skipped: they belong to the iKAN 2 repo, which
  * `sync-about.mjs` reaches through `--ikan2`, not to this one.
  */
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -19,7 +19,7 @@ import { join } from 'node:path';
 
 const DIR = 'scripts';
 const PATH_RE = /['"]((?:\.\/)?src\/[A-Za-z0-9/._-]+)['"]/g;
-const FOREIGN = /^(?:src\/lib\/|.*\/vendor\/)/;
+const FOREIGN = /^(?:src\/lib\/|src\/styles\.css$|.*\/vendor\/)/;
 
 let bad = 0;
 let checked = 0;
