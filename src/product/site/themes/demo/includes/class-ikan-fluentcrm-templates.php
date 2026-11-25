@@ -34,10 +34,20 @@ class Ikan_FluentCRM_Templates {
 	}
 
 	/**
+	 * Check if FluentCRM is active or its models are available.
+	 * Note: FluentCRM uses 'fc_template' in wp_posts without registering it via register_post_type().
+	 *
+	 * @return bool
+	 */
+	public static function is_fluentcrm_installed() {
+		return defined( 'FLUENTCRM' ) || class_exists( '\FluentCrm\App\Models\Template' ) || function_exists( 'fluentcrmTemplateCPTSlug' );
+	}
+
+	/**
 	 * Run template push if version updated or forced.
 	 */
 	public static function maybe_push_templates() {
-		if ( ! post_type_exists( 'fc_template' ) ) {
+		if ( ! self::is_fluentcrm_installed() ) {
 			return;
 		}
 
@@ -54,16 +64,22 @@ class Ikan_FluentCRM_Templates {
 	 * @return int Number of templates created or updated.
 	 */
 	public static function push_templates() {
-		if ( ! post_type_exists( 'fc_template' ) ) {
+		if ( ! self::is_fluentcrm_installed() ) {
 			return 0;
 		}
 
+		global $wpdb;
 		$templates = self::get_templates();
 		$synced    = 0;
 
 		foreach ( $templates as $tpl ) {
-			$existing = get_page_by_path( $tpl['slug'], OBJECT, 'fc_template' );
-			$post_id  = 0;
+			$existing_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type = 'fc_template' LIMIT 1",
+					$tpl['slug']
+				)
+			);
+			$post_id = 0;
 
 			$post_data = array(
 				'post_type'    => 'fc_template',
@@ -74,10 +90,10 @@ class Ikan_FluentCRM_Templates {
 				'post_excerpt' => $tpl['excerpt'] ?? $tpl['subject'],
 			);
 
-			if ( $existing && ! empty( $existing->ID ) ) {
-				$post_data['ID'] = $existing->ID;
+			if ( $existing_id > 0 ) {
+				$post_data['ID'] = $existing_id;
 				wp_update_post( $post_data );
-				$post_id = $existing->ID;
+				$post_id = $existing_id;
 			} else {
 				$new_id = wp_insert_post( $post_data, true );
 				if ( ! is_wp_error( $new_id ) ) {
@@ -694,11 +710,17 @@ class Ikan_FluentCRM_Templates {
 				break;
 
 			case 'list':
+				global $wpdb;
 				$templates = self::get_templates();
 				WP_CLI::line( '=== iKAN FluentCRM Email Templates Catalog ===' );
 				foreach ( $templates as $tpl ) {
-					$existing = get_page_by_path( $tpl['slug'], OBJECT, 'fc_template' );
-					$status   = $existing ? "Synced (ID: {$existing->ID})" : 'Pending Sync';
+					$existing_id = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type = 'fc_template' LIMIT 1",
+							$tpl['slug']
+						)
+					);
+					$status = $existing_id > 0 ? "Synced (ID: {$existing_id})" : 'Pending Sync';
 					WP_CLI::line( sprintf( '- [%s] %s (Slug: %s)', $status, $tpl['title'], $tpl['slug'] ) );
 				}
 				break;
