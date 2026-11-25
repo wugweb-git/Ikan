@@ -190,7 +190,6 @@
         || get_query_var( 'ikan_contact_page' )
         || get_query_var( 'ikan_legal_page' )
         || get_query_var( 'ikan_about_page' )
-        || is_page( [ 'resources', 'resource' ] )
         || is_singular( 'post' );
       ?>
       <?php if ( ! $is_app_shell ) : ?>
