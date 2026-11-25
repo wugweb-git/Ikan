@@ -727,10 +727,66 @@ class Ikan_Interim_Sync {
 				$counts['journals'] += self::unmarshal_journals( $user_info, $val, $updated );
 			} elseif ( 'wellness.v1' === $key ) {
 				$counts['wellness'] += self::unmarshal_wellness( $user_info, $val, $updated );
+			} elseif ( in_array( $key, array( 'resources.v1', 'settings.v1', 'consult.v1', 'onboarding.v1' ), true ) ) {
+				self::sync_activity_to_fluentcrm( $key, $user_info, $val );
 			}
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Sync resources, settings, consultation bookings, and onboarding state into FluentCRM custom fields.
+	 */
+	private static function sync_activity_to_fluentcrm( $key, $user_info, $data ) {
+		if ( empty( $user_info['email'] ) || ! is_array( $data ) || ! class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			return;
+		}
+		$custom = array( 'last_seen_at' => current_time( 'mysql' ) );
+
+		if ( 'resources.v1' === $key ) {
+			$saved  = isset( $data['saved'] ) && is_array( $data['saved'] ) ? $data['saved'] : array();
+			$opened = isset( $data['opened'] ) && is_array( $data['opened'] ) ? $data['opened'] : array();
+			$custom['saved_resources_count']  = count( $saved );
+			$custom['opened_resources_count'] = count( $opened );
+			if ( ! empty( $opened ) ) {
+				$last_item = end( $opened );
+				$last_slug = is_array( $last_item ) ? ( $last_item['slug'] ?? '' ) : ( is_string( $last_item ) ? $last_item : '' );
+				if ( $last_slug ) {
+					$custom['last_resource_slug']    = sanitize_text_field( $last_slug );
+					$custom['last_resource_read_at'] = current_time( 'mysql' );
+				}
+			}
+		} elseif ( 'settings.v1' === $key ) {
+			if ( isset( $data['moodReminders'] ) ) {
+				$custom['mood_reminders_enabled'] = (bool) $data['moodReminders'];
+			}
+			if ( ! empty( $data['moodReminderTime'] ) ) {
+				$custom['mood_reminder_time'] = sanitize_text_field( $data['moodReminderTime'] );
+			}
+			if ( isset( $data['healthConnect'] ) ) {
+				$custom['health_connect_enabled'] = (bool) $data['healthConnect'];
+			}
+			if ( isset( $data['shareWithConsultant'] ) ) {
+				$custom['share_with_consultant'] = (bool) $data['shareWithConsultant'];
+			}
+		} elseif ( 'consult.v1' === $key ) {
+			$bookings = isset( $data['bookings'] ) && is_array( $data['bookings'] ) ? $data['bookings'] : array();
+			$custom['total_consultations'] = count( $bookings );
+			if ( ! empty( $bookings ) ) {
+				$latest = end( $bookings );
+				if ( ! empty( $latest['startsAt'] ) ) {
+					$custom['next_consultation_at'] = gmdate( 'Y-m-d H:i:s', strtotime( $latest['startsAt'] ) );
+				}
+				if ( ! empty( $latest['mode'] ) ) {
+					$custom['last_consultation_mode'] = sanitize_text_field( $latest['mode'] );
+				}
+			}
+		} elseif ( 'onboarding.v1' === $key && ! empty( $data['reason'] ) ) {
+			$custom['onboarding_reason'] = sanitize_text_field( $data['reason'] );
+		}
+
+		Ikan_FluentCRM_Fields::sync_contact( $user_info['email'], $custom );
 	}
 
 	/**
@@ -983,6 +1039,19 @@ class Ikan_Interim_Sync {
 				}
 			}
 
+			if ( ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+				Ikan_FluentCRM_Fields::sync_contact(
+					$user_info['email'],
+					array(
+						'latest_assessment_slug'     => $slug,
+						'latest_assessment_score'    => $score,
+						'latest_assessment_severity' => $severity,
+						'clinical_risk_flag'         => ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) ? 'yes' : 'no',
+						'last_assessment_at'         => $completed,
+					)
+				);
+			}
+
 			// Automatic Transactional Email & Clinical Alert Dispatch
 			if ( class_exists( 'Ikan_Mailer' ) ) {
 				$member_name = ! empty( $user_info['name'] ) ? $user_info['name'] : '';
@@ -1117,6 +1186,19 @@ class Ikan_Interim_Sync {
 			update_user_meta( $user_info['wp_user_id'], 'last_active_at', $last_active );
 		}
 
+		if ( ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'current_program'        => $slug,
+					'program_current_day'    => $current_day,
+					'program_status'         => ! empty( $data['runs'] ) ? 'completed' : 'active',
+					'programs_completed_count' => ! empty( $data['runs'] ) && is_array( $data['runs'] ) ? count( $data['runs'] ) : 0,
+					'last_program_active_at' => $last_active,
+				)
+			);
+		}
+
 		return 1;
 	}
 
@@ -1129,6 +1211,7 @@ class Ikan_Interim_Sync {
 		$entries = isset( $data['entries'] ) && is_array( $data['entries'] ) ? $data['entries'] : array();
 		$count = 0;
 		$latest_date = null;
+		$latest_entry = null;
 
 		foreach ( $entries as $e ) {
 			$uuid = ! empty( $e['id'] ) ? sanitize_text_field( $e['id'] ) : '';
@@ -1167,8 +1250,9 @@ class Ikan_Interim_Sync {
 				$wpdb->insert( $table, $row_data );
 			}
 
-			if ( null === $latest_date || $entry_date > $latest_date ) {
-				$latest_date = $entry_date;
+			if ( null === $latest_date || $entry_date >= $latest_date ) {
+				$latest_date  = $entry_date;
+				$latest_entry = $e;
 			}
 			$count++;
 		}
@@ -1180,6 +1264,19 @@ class Ikan_Interim_Sync {
 
 		if ( $latest_date && ! empty( $user_info['wp_user_id'] ) ) {
 			update_user_meta( $user_info['wp_user_id'], 'last_journal_date', $latest_date );
+		}
+
+		if ( $latest_date && ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'last_mood_rating'      => isset( $latest_entry['mood_rating'] ) ? intval( $latest_entry['mood_rating'] ) : '',
+					'last_sleep_rating'     => isset( $latest_entry['sleep_rating'] ) ? intval( $latest_entry['sleep_rating'] ) : '',
+					'last_stress_level'     => isset( $latest_entry['stress_level'] ) ? intval( $latest_entry['stress_level'] ) : '',
+					'last_journal_date'     => $latest_date,
+					'journal_entries_count' => $count,
+				)
+			);
 		}
 
 		return $count;
@@ -1231,6 +1328,18 @@ class Ikan_Interim_Sync {
 
 		if ( null !== $latest_score && ! empty( $user_info['wp_user_id'] ) ) {
 			update_user_meta( $user_info['wp_user_id'], 'wellness_index_score', $latest_score );
+		}
+
+		if ( null !== $latest_score && ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			$recent_scores = array_slice( array_values( $days ), -7 );
+			$avg_7d = ! empty( $recent_scores ) ? round( array_sum( array_map( 'intval', $recent_scores ) ) / count( $recent_scores ), 1 ) : $latest_score;
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'latest_wellness_score' => $latest_score,
+					'wellness_7d_avg'       => $avg_7d,
+				)
+			);
 		}
 
 		return $count;
