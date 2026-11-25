@@ -36,6 +36,7 @@ class Ikan_Interim_Sync {
 
 		// Register REST endpoint for client/app login triggers
 		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
+		add_filter( 'rest_pre_serve_request', array( __CLASS__, 'send_cors_headers' ), 10, 4 );
 
 		// Register WP-CLI command if running under CLI
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -160,11 +161,158 @@ class Ikan_Interim_Sync {
 	}
 
 	/**
+	 * Send CORS headers for app.ikanhealth.in and Capacitor origins on /ikan/v1 routes.
+	 */
+	public static function send_cors_headers( $served, $result, $request, $server ) {
+		if ( strpos( $request->get_route(), '/ikan/v1' ) !== 0 ) {
+			return $served;
+		}
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+		if ( preg_match( '#^https?://(app\.ikanhealth\.in|ikanhealth\.in|localhost(:\d+)?)$#i', $origin ) || strpos( $origin, 'capacitor://' ) === 0 ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+			header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Ikan-Key' );
+		}
+		return $served;
+	}
+
+	/**
 	 * Process arbitrary JSON payload from ikan2.
 	 */
 	public static function process_json_payload( $data ) {
 		if ( class_exists( 'Ikan_DB_Schema' ) ) {
 			Ikan_DB_Schema::create_tables();
+		}
+
+		// Mode 0a: Contact form submission from ikan2
+		if ( isset( $data['type'] ) && 'contact' === $data['type'] ) {
+			$name    = sanitize_text_field( $data['name'] ?? '' );
+			$email   = sanitize_email( $data['email'] ?? '' );
+			$subject = sanitize_text_field( $data['subject'] ?? 'General enquiry' );
+			$message = sanitize_textarea_field( $data['message'] ?? '' );
+			$source  = sanitize_text_field( $data['source'] ?? 'app' );
+
+			if ( empty( $email ) || empty( $message ) ) {
+				return array( 'status' => 'error', 'message' => 'Missing email or message.' );
+			}
+
+			if ( function_exists( 'wpFluent' ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'       => 1,
+						'response'      => wp_json_encode( array( 'name' => $name, 'email' => $email, 'subject' => $subject, 'message' => $message, 'source' => $source ) ),
+						'source_url'    => 'https://app.ikanhealth.in/contact',
+						'browser'       => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 200 ),
+						'status'        => 'unread',
+						'created_at'    => current_time( 'mysql' ),
+						'updated_at'    => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN contact fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			if ( function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+				$parts = explode( ' ', $name, 2 );
+				ikan_record_lead_in_fluentcrm( array(
+					'email'      => $email,
+					'first_name' => $parts[0] ?? '',
+					'last_name'  => $parts[1] ?? '',
+					'list_title' => 'Contact Inquiries',
+					'list_slug'  => 'contact-inquiries',
+					'tag_title'  => 'App Contact',
+					'tag_slug'   => 'app-contact',
+					'note_title' => 'App Contact: ' . $subject,
+					'note_desc'  => $message,
+				) );
+			}
+
+			return array( 'status' => 'success', 'type' => 'contact' );
+		}
+
+		// Mode 0b: Auth signup / login / forgot_password event from ikan2
+		if ( isset( $data['type'] ) && in_array( $data['type'], array( 'auth_signup', 'auth_login', 'auth_forgot_password' ), true ) ) {
+			$u      = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+			$device = isset( $data['device'] ) && is_array( $data['device'] ) ? $data['device'] : array();
+			$uid    = sanitize_text_field( $u['id'] ?? '' );
+			$email  = sanitize_email( $u['email'] ?? '' );
+			$name   = sanitize_text_field( $u['name'] ?? '' );
+			$phone  = sanitize_text_field( $u['phone'] ?? '' );
+
+			if ( 'auth_forgot_password' === $data['type'] ) {
+				if ( ! empty( $email ) && function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+					ikan_record_lead_in_fluentcrm( array(
+						'email'      => $email,
+						'list_title' => 'App Users',
+						'list_slug'  => 'app-users',
+						'tag_title'  => 'Password Reset Requested',
+						'tag_slug'   => 'password-reset-requested',
+						'note_title' => 'Password reset requested',
+						'note_desc'  => 'User requested a password reset from iKAN app (' . sanitize_text_field( $device['platform'] ?? 'web' ) . ').',
+					) );
+				}
+				if ( function_exists( 'wpFluent' ) && ! empty( $email ) ) {
+					try {
+						wpFluent()->table( 'fluentform_submissions' )->insert( array(
+							'form_id'    => 1,
+							'response'   => wp_json_encode( array( 'event' => 'auth_forgot_password', 'email' => $email ) ),
+							'source_url' => 'https://app.ikanhealth.in/forgot-password',
+							'status'     => 'unread',
+							'created_at' => current_time( 'mysql' ),
+							'updated_at' => current_time( 'mysql' ),
+						) );
+					} catch ( \Exception $e ) {
+						error_log( 'iKAN auth_forgot_password fluentform insert error: ' . $e->getMessage() );
+					}
+				}
+				return array( 'status' => 'success', 'type' => 'auth_forgot_password' );
+			}
+
+			$user_info = self::resolve_wp_user( $uid ?: ( 'auth_' . md5( $email ) ), array(
+				'email' => $email,
+				'name'  => $name,
+				'phone' => $phone,
+			) );
+
+			if ( ! empty( $email ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+				$name_parts = explode( ' ', $name, 2 );
+				$member_since = ! empty( $u['created_at'] ) ? gmdate( 'Y-m-d', strtotime( $u['created_at'] ) ) : gmdate( 'Y-m-d' );
+				Ikan_FluentCRM_Fields::sync_contact(
+					$email,
+					array(
+						'supabase_user_id' => $uid,
+						'auth_provider'    => sanitize_text_field( $u['provider'] ?? 'email' ),
+						'member_since'     => $member_since,
+						'device_platform'  => sanitize_text_field( $device['platform'] ?? 'web' ),
+						'time_zone'        => sanitize_text_field( $device['time_zone'] ?? 'Asia/Kolkata' ),
+						'last_user_agent'  => sanitize_text_field( $device['user_agent'] ?? '' ),
+						'last_seen_at'     => current_time( 'mysql' ),
+					),
+					array(
+						'user_id'    => $user_info['wp_user_id'],
+						'first_name' => $name_parts[0] ?? '',
+						'last_name'  => $name_parts[1] ?? '',
+						'phone'      => $phone,
+					)
+				);
+			}
+
+			if ( 'auth_signup' === $data['type'] && function_exists( 'wpFluent' ) && ! empty( $email ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'    => 1,
+						'response'   => wp_json_encode( array( 'event' => 'auth_signup', 'name' => $name, 'email' => $email, 'phone' => $phone, 'provider' => $u['provider'] ?? 'email' ) ),
+						'source_url' => 'https://app.ikanhealth.in/signup',
+						'status'     => 'unread',
+						'created_at' => current_time( 'mysql' ),
+						'updated_at' => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN auth_signup fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			return array( 'status' => 'success', 'type' => $data['type'], 'wp_user_id' => $user_info['wp_user_id'] );
 		}
 
 		// Mode 1: Assessment Result object { "result": { ... }, "user": { ... } }
