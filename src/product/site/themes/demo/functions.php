@@ -56,6 +56,9 @@ require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
 // Load FluentCRM Custom Contact Fields & Sync Helper
 require_once get_template_directory() . '/includes/class-ikan-fluentcrm-fields.php';
 
+// Load FluentCRM Branded Email Templates One-Time Push
+require_once get_template_directory() . '/includes/class-ikan-fluentcrm-templates.php';
+
 // Enqueue Block Editor Assets (Fonts & Design System for Gutenberg)
 add_action( 'enqueue_block_editor_assets', function() {
   wp_enqueue_style( 'demo-editor-fonts', 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap', [], null );
