@@ -101,10 +101,10 @@ $categories        = $f['categories'] ?? [];
           <div class="divide-y divide-foreground/10">
             <?php foreach ( ( $cat['items'] ?? [] ) as $item ) : ?>
               <details
-                class="faq-item group py-3.5 cursor-pointer list-none"
+                class="group border-b border-foreground/10 last:border-0 py-3.5 cursor-pointer list-none [&>summary::after]:hidden"
                 <?php if ( strpos( strtolower( $item['question'] ), 'emergency' ) !== false ) echo 'id="helplines"'; ?>
               >
-                <summary class="flex items-center justify-between font-medium text-foreground text-[16px] list-none select-none">
+                <summary class="flex items-center justify-between font-medium text-foreground text-[16px] list-none select-none [&::-webkit-details-marker]:hidden">
                   <span class="faq-q pr-3"><?php echo esc_html( $item['question'] ); ?></span>
                   <i data-lucide="chevron-down" class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"></i>
                 </summary>

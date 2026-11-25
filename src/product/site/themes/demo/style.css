@@ -2409,6 +2409,10 @@ details > summary {
 details > summary::marker {
   display: none !important;
 }
+details.group > summary::after {
+  display: none !important;
+  content: none !important;
+}
 
 .wp-block-details summary::-webkit-details-marker {
   display: none;
