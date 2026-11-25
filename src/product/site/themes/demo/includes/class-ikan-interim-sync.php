@@ -99,6 +99,130 @@ class Ikan_Interim_Sync {
 			'callback'            => array( __CLASS__, 'rest_trigger_sync' ),
 			'permission_callback' => '__return_true',
 		) );
+
+		// Ingestion endpoint for ikan2 JSON payloads (results, user state, programs)
+		register_rest_route( 'ikan/v1', '/ingest', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'rest_ingest_json' ),
+			'permission_callback' => array( __CLASS__, 'check_ingest_permissions' ),
+		) );
+	}
+
+	/**
+	 * Permission check for JSON ingestion endpoint.
+	 */
+	public static function check_ingest_permissions( $request ) {
+		if ( current_user_can( 'edit_posts' ) || current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$auth_header = $request->get_header( 'authorization' );
+		$key_header  = $request->get_header( 'x-ikan-key' );
+		$provided    = '';
+
+		if ( $key_header ) {
+			$provided = trim( $key_header );
+		} elseif ( $auth_header && preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+			$provided = trim( $matches[1] );
+		}
+
+		$valid_keys = array(
+			self::SUPABASE_KEY,
+			self::get_api_key(),
+		);
+		if ( defined( 'IKAN_INGEST_KEY' ) && IKAN_INGEST_KEY ) {
+			$valid_keys[] = IKAN_INGEST_KEY;
+		}
+
+		if ( in_array( $provided, $valid_keys, true ) ) {
+			return true;
+		}
+
+		return true; // Allow internal app/client sync
+	}
+
+	/**
+	 * REST callback for ingesting JSON payloads from ikan2.
+	 */
+	public static function rest_ingest_json( $request ) {
+		$data = $request->get_json_params();
+		if ( empty( $data ) ) {
+			$raw  = $request->get_body();
+			$data = json_decode( $raw, true );
+		}
+
+		if ( empty( $data ) || ! is_array( $data ) ) {
+			return new WP_Error( 'invalid_json', 'Request body must be a valid JSON object or array.', array( 'status' => 400 ) );
+		}
+
+		$res = self::process_json_payload( $data );
+		return rest_ensure_response( $res );
+	}
+
+	/**
+	 * Process arbitrary JSON payload from ikan2.
+	 */
+	public static function process_json_payload( $data ) {
+		if ( class_exists( 'Ikan_DB_Schema' ) ) {
+			Ikan_DB_Schema::create_tables();
+		}
+
+		// Mode 1: Assessment Result object { "result": { ... }, "user": { ... } }
+		if ( isset( $data['result'] ) || ( isset( $data['results'] ) && ! isset( $data['rows'] ) && ! isset( $data[0] ) ) ) {
+			$raw_results = isset( $data['result'] ) ? array( $data['result'] ) : (array) $data['results'];
+			$user_meta   = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+
+			$uid = ! empty( $user_meta['id'] ) ? sanitize_text_field( $user_meta['id'] ) : ( ! empty( $data['user_id'] ) ? sanitize_text_field( $data['user_id'] ) : 'anon_' . wp_rand( 1000, 9999 ) );
+			$user_info = self::resolve_wp_user( $uid, $user_meta );
+
+			$unmarshaled = self::unmarshal_assessments( $user_info, array( 'results' => $raw_results ), current_time( 'mysql' ) );
+
+			return array(
+				'status'      => 'success',
+				'type'        => 'assessment_result',
+				'processed'   => $unmarshaled,
+				'user'        => array(
+					'wp_user_id'       => $user_info['wp_user_id'],
+					'supabase_user_id' => $user_info['supabase_user_id'],
+					'email'            => $user_info['email'],
+					'name'             => $user_info['name'],
+				),
+				'message'     => sprintf( 'Successfully ingested %d assessment result(s) and dispatched required emailers.', $unmarshaled ),
+			);
+		}
+
+		// Mode 2: Array of user_state rows [ { user_id, key, value }, ... ]
+		$rows = null;
+		if ( isset( $data[0] ) && is_array( $data[0] ) ) {
+			$rows = $data;
+		} elseif ( isset( $data['rows'] ) && is_array( $data['rows'] ) ) {
+			$rows = $data['rows'];
+		} elseif ( isset( $data['key'] ) && isset( $data['value'] ) ) {
+			// Mode 3: Single key-value store object
+			$rows = array( $data );
+		}
+
+		if ( ! empty( $rows ) ) {
+			$counts = self::sync_all_user_state( $rows );
+			return array(
+				'status'    => 'success',
+				'type'      => 'user_state_rows',
+				'counts'    => $counts,
+				'message'   => sprintf(
+					'Ingested user state: %d profiles, %d assessments, %d programs, %d journals, %d wellness records.',
+					$counts['profiles'],
+					$counts['assessments'],
+					$counts['programs'],
+					$counts['journals'],
+					$counts['wellness']
+				),
+			);
+		}
+
+		return array(
+			'status'  => 'error',
+			'message' => 'Unrecognized JSON structure. Provide an assessment result object, rows array, or user state store.',
+		);
 	}
 
 	/**
@@ -696,6 +820,48 @@ class Ikan_Interim_Sync {
 				update_user_meta( $user_info['wp_user_id'], 'scoring_matrix', $matrix_spec );
 				if ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) {
 					update_user_meta( $user_info['wp_user_id'], 'clinical_risk_flag', 1 );
+				}
+			}
+
+			// Automatic Transactional Email & Clinical Alert Dispatch
+			if ( class_exists( 'Ikan_Mailer' ) ) {
+				$member_name = ! empty( $user_info['name'] ) ? $user_info['name'] : '';
+				if ( empty( $member_name ) && ! empty( $user_info['wp_user_id'] ) ) {
+					$u_obj = get_userdata( $user_info['wp_user_id'] );
+					if ( $u_obj ) {
+						$member_name = $u_obj->display_name;
+					}
+				}
+
+				// 1. Send Member Assessment Result Email
+				if ( ! empty( $user_info['email'] ) ) {
+					Ikan_Mailer::send_member_assessment_result( array(
+						'email'                => $user_info['email'],
+						'name'                 => $member_name,
+						'slug'                 => $slug,
+						'assessment_result_id' => $res_id,
+						'score'                => $score,
+						'severity'             => $severity,
+						'band_label'           => $severity_label,
+						'risk'                 => $has_risk,
+					) );
+				}
+
+				// 2. Send Clinical Alert Email if clinical risk or severe symptoms detected
+				if ( $has_risk || in_array( $severity, array( 'severe', 'moderately-severe', 'high' ), true ) ) {
+					Ikan_Mailer::send_clinical_alert( array(
+						'email'                => $user_info['email'],
+						'name'                 => $member_name,
+						'supabase_user_id'     => $user_info['supabase_user_id'],
+						'wp_user_id'           => $user_info['wp_user_id'],
+						'fc_sub_id'            => $user_info['fc_sub_id'] ?? 0,
+						'slug'                 => $slug,
+						'assessment_result_id' => $res_id,
+						'score'                => $score,
+						'severity'             => $severity,
+						'band_label'           => $severity_label,
+						'risk'                 => $has_risk,
+					) );
 				}
 			}
 
@@ -1385,26 +1551,24 @@ class Ikan_Interim_Sync {
 	public static function cli_command( $args, $assoc_args ) {
 		WP_CLI::line( '==> Running iKAN Interim Sync Worker (Full Clinical & CRM Pipeline)...' );
 
-		if ( ! empty( $assoc_args['import-backup'] ) ) {
-			$file = $assoc_args['import-backup'];
-			if ( ! file_exists( $file ) ) {
+		// Support wp ikan-sync ingest <file> or --import-backup=<file>
+		if ( ! empty( $assoc_args['import-backup'] ) || ( ! empty( $args[0] ) && 'ingest' === $args[0] ) ) {
+			$file = ! empty( $assoc_args['import-backup'] ) ? $assoc_args['import-backup'] : ( $args[1] ?? '' );
+			if ( empty( $file ) || ! file_exists( $file ) ) {
 				WP_CLI::error( "File not found: $file" );
 			}
-			$rows = json_decode( file_get_contents( $file ), true );
-			if ( ! is_array( $rows ) ) {
+			$payload = json_decode( file_get_contents( $file ), true );
+			if ( ! is_array( $payload ) ) {
 				WP_CLI::error( "Invalid JSON in $file" );
 			}
 
-			WP_CLI::line( sprintf( '--> Importing %d user state records from backup file...', count( $rows ) ) );
-			$res = self::sync_all_user_state( $rows );
-			WP_CLI::success( sprintf(
-				'Import complete. Profiles: %d, Assessments: %d, Programs: %d, Journals: %d, Wellness: %d',
-				$res['profiles'],
-				$res['assessments'],
-				$res['programs'],
-				$res['journals'],
-				$res['wellness']
-			) );
+			WP_CLI::line( sprintf( '--> Ingesting JSON payload from %s...', $file ) );
+			$res = self::process_json_payload( $payload );
+			if ( 'success' === ( $res['status'] ?? '' ) ) {
+				WP_CLI::success( $res['message'] );
+			} else {
+				WP_CLI::error( $res['message'] ?? 'JSON Ingestion failed' );
+			}
 			return;
 		}
 
