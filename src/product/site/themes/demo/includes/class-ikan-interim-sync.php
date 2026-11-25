@@ -761,6 +761,18 @@ class Ikan_Interim_Sync {
 			$band_label     = $computed_res['band_label'];
 			$has_risk       = $computed_res['risk'];
 
+			// Fallback to explicit score/severity provided in payload if compute returned 0
+			if ( 0 === $score && isset( $r['score'] ) && is_numeric( $r['score'] ) && $r['score'] > 0 ) {
+				$score = intval( $r['score'] );
+			}
+			if ( ( 'minimal' === $severity || empty( $severity ) ) && ! empty( $r['severity'] ) ) {
+				$severity   = sanitize_text_field( $r['severity'] );
+				$band_label = ucfirst( $severity );
+			}
+			if ( ! empty( $r['risk'] ) ) {
+				$has_risk = true;
+			}
+
 			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE assessment_result_id = %s", $res_id ) );
 
 			$row_data = array(
