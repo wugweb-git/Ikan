@@ -69,7 +69,7 @@ function demo_enqueue_styles() {
   wp_enqueue_script( 'lucide-js', 'https://unpkg.com/lucide@latest/dist/umd/lucide.js', [], null, true );
   
   // Theme stylesheet with iKAN design system
-  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.5' );
+  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.7' );
 
   // Pass AJAX URL and Nonce to frontend scripts
   wp_localize_script( 'lucide-js', 'ikanAjax', [
@@ -87,6 +87,15 @@ add_action( 'init', function() {
 		'ikan-hero',
 		'ikan-disclosure',
 		'ikan-resource-card',
+		'ikan-assessment-card',
+		'ikan-equip-card',
+		'ikan-dashboard-card',
+		'ikan-profile-card',
+		'ikan-summary-card',
+		'ikan-settings-card',
+		'ikan-mood-journal-card',
+		'ikan-consultant-card',
+		'ikan-support-card',
 		'ikan-cta-banner',
 		'ikan-header',
 		'ikan-footer',
