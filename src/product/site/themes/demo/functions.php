@@ -1313,8 +1313,12 @@ add_action( 'init', function() {
   add_rewrite_rule( '^program/?$', 'index.php?ikan_program_page=1', 'top' );
   // Parity with ikan2: /resources/<slug> -> Single resource post
   add_rewrite_rule( '^resources/([^/]+)/?$', 'index.php?name=$matches[1]', 'top' );
+  // Parity with ikan2 & vercel URLs: /about -> About page
+  add_rewrite_rule( '^about/?$', 'index.php?ikan_about_page=1', 'top' );
   // Parity with ikan2 & vercel URLs: /contact -> Contact Us page
   add_rewrite_rule( '^contact/?$', 'index.php?ikan_contact_page=1', 'top' );
+  // Parity with ikan2: /resource -> Resources library
+  add_rewrite_rule( '^resource/?$', 'index.php?ikan_resources_page=1', 'top' );
   // Parity with ikan2: /terms -> Terms of Service
   add_rewrite_rule( '^terms/?$', 'index.php?ikan_legal_page=terms', 'top' );
   // Parity with ikan2: /privacy -> Privacy Policy
@@ -1357,7 +1361,9 @@ add_filter( 'post_link', function( $permalink, $post ) {
 add_filter( 'query_vars', function( $vars ) {
   $vars[] = 'ikan_portal';
   $vars[] = 'ikan_program_page';
+  $vars[] = 'ikan_about_page';
   $vars[] = 'ikan_contact_page';
+  $vars[] = 'ikan_resources_page';
   $vars[] = 'ikan_legal_page';
   return $vars;
 } );
@@ -1373,6 +1379,14 @@ add_action( 'template_redirect', function() {
     } else {
       wp_safe_redirect( wp_login_url( admin_url() ) );
     }
+    exit;
+  }
+  if ( get_query_var( 'ikan_about_page' ) ) {
+    locate_template( 'about-us.php', true );
+    exit;
+  }
+  if ( get_query_var( 'ikan_resources_page' ) ) {
+    locate_template( 'resources.php', true );
     exit;
   }
   if ( get_query_var( 'ikan_contact_page' ) ) {

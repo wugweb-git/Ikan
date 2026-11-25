@@ -10,6 +10,7 @@
  * @package iKAN_Health
  */
 
+$GLOBALS['ikan_app_shell'] = true;
 get_header();
 
 // Load canonical FAQ content from pages.json
@@ -30,19 +31,20 @@ $cta_button_text   = $f['ctaButtonText'] ?? 'Get in touch';
 $categories        = $f['categories'] ?? [];
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
-  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
+<div class="min-h-dvh bg-canvas text-foreground ikan2-theme ikan2-type">
+  <main class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
     
-    <!-- Top Bar with Back Button -->
-    <div class="flex items-center h-14 px-3">
-      <a
-        href="<?php echo esc_url( home_url( '/' ) ); ?>"
+    <!-- TopAppBar: thin, compact sticky header with back button (matching ikan2 exactly) -->
+    <header class="safe-top-sm sticky top-0 z-30 flex min-h-16 items-center gap-1 bg-background px-1 print:hidden">
+      <button
+        type="button"
         aria-label="Back"
+        onclick="if(window.history.length>1){window.history.back();}else{window.location.href='<?php echo esc_url( home_url( '/' ) ); ?>';}"
         class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
       >
         <i data-lucide="arrow-left" class="h-6 w-6"></i>
-      </a>
-    </div>
+      </button>
+    </header>
 
     <!-- Header -->
     <header class="px-5">
@@ -129,8 +131,8 @@ $categories        = $f['categories'] ?? [];
     </section>
 
     <div class="h-6"></div>
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

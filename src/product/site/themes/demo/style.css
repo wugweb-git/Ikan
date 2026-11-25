@@ -2398,6 +2398,18 @@ p.wp-block-paragraph {
   padding-right: 2rem;
 }
 
+/* Global reset for native disclosure marker across all details/summary elements */
+details > summary::-webkit-details-marker,
+summary::-webkit-details-marker {
+  display: none !important;
+}
+details > summary {
+  list-style: none !important;
+}
+details > summary::marker {
+  display: none !important;
+}
+
 .wp-block-details summary::-webkit-details-marker {
   display: none;
 }

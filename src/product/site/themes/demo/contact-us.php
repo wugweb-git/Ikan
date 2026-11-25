@@ -10,6 +10,7 @@
  * @package iKAN_Health
  */
 
+$GLOBALS['ikan_app_shell'] = true;
 get_header();
 
 // Load canonical contact content from pages.json
@@ -36,62 +37,62 @@ $faq_card      = $c['faqCard'] ?? [
 ];
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
-  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-app">
+<div class="min-h-dvh bg-canvas text-foreground ikan2-theme ikan2-type">
+  <main class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-app">
     
-    <!-- Top Bar with Back Button -->
-    <div class="flex items-center h-14 px-3">
-      <a
-        href="<?php echo esc_url( home_url( '/' ) ); ?>"
+    <!-- TopAppBar: thin, compact sticky header with back button (matching ikan2 exactly) -->
+    <header class="safe-top-sm sticky top-0 z-30 flex min-h-16 items-center gap-1 bg-background px-1 print:hidden">
+      <button
+        type="button"
         aria-label="Back"
+        onclick="if(window.history.length>1){window.history.back();}else{window.location.href='<?php echo esc_url( home_url( '/' ) ); ?>';}"
         class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
       >
         <i data-lucide="arrow-left" class="h-6 w-6"></i>
-      </a>
-    </div>
+      </button>
+    </header>
 
-    <!-- Page Header -->
+    <!-- Page Header (px-5) -->
     <header class="px-5">
       <h1 class="type-headline-lg font-semibold text-foreground"><?php echo esc_html( $hero_title ); ?></h1>
       <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $hero_subtitle ); ?></p>
     </header>
 
-    <!-- Urgent Crisis Support Card -->
+    <!-- Urgent Crisis Support Card (mx-5 mt-6 rounded-[24px] bg-error-container text-on-error-container) -->
     <section class="mx-5 mt-6 overflow-hidden rounded-[24px] bg-error-container text-on-error-container">
       <div class="flex gap-3 p-5">
-        <i data-lucide="shield-alert" class="mt-0.5 h-6 w-6 shrink-0 text-on-error-container"></i>
+        <i data-lucide="shield-alert" class="mt-0.5 h-6 w-6 shrink-0 text-error"></i>
         <div>
-          <p class="type-subhead font-semibold text-on-error-container"><?php echo esc_html( $crisis['title'] ?? 'Need Immediate Help?' ); ?></p>
-          <p class="type-label-lg mt-1 text-on-error-container"><?php echo esc_html( $crisis['description'] ?? "If you're having thoughts of self-harm or suicide, please reach out for immediate support." ); ?></p>
+          <p class="type-subhead font-semibold text-error"><?php echo esc_html( $crisis['title'] ?? 'Urgent crisis support' ); ?></p>
+          <p class="type-label-lg mt-1 text-on-error-container"><?php echo esc_html( $crisis['description'] ?? 'If you or someone you know is in immediate danger, please reach out to emergency services right away.' ); ?></p>
           <div class="mt-3 flex flex-wrap gap-2">
-            <a
-              href="tel:9152987821"
-              class="type-body-md font-semibold inline-flex h-10 items-center gap-2 rounded-full bg-on-error-container px-4 text-error-container hover:opacity-90 transition-opacity"
-            >
-              <i data-lucide="phone" class="h-4 w-4"></i> Call iCALL - 9152987821
-            </a>
-            <a
-              href="<?php echo esc_url( home_url( '/faq#helplines' ) ); ?>"
-              class="type-body-md font-semibold inline-flex h-10 items-center rounded-full border border-on-error-container/30 px-4 text-on-error-container hover:bg-on-error-container/10 transition-colors"
-            >
-              More helplines
-            </a>
+            <?php foreach ( (array) ( $crisis['buttons'] ?? [
+              [ 'label' => 'KIRAN (24/7): 1800-599-0019', 'action' => 'tel:18005990019' ],
+              [ 'label' => 'Tele-MANAS: 14416', 'action' => 'tel:14416' ],
+            ] ) as $btn ) : ?>
+              <a
+                href="<?php echo esc_url( $btn['action'] ?? '#' ); ?>"
+                class="type-body-md font-semibold inline-flex h-10 items-center gap-2 rounded-full bg-on-error-container px-4 text-error-container hover:opacity-90 transition-opacity"
+              >
+                <i data-lucide="phone" class="h-4 w-4"></i>
+                <span><?php echo esc_html( $btn['label'] ?? '' ); ?></span>
+              </a>
+            <?php endforeach; ?>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Contact Methods Grid (Phone & Email) -->
+    <!-- Contact Methods Grid (mx-5 mt-3 grid grid-cols-2 gap-3) -->
     <ul class="mx-5 mt-3 grid grid-cols-2 gap-3">
       <?php foreach ( $methods as $m ) : ?>
         <li>
-          <a href="<?php echo esc_url( $m['action'] ); ?>" class="block h-full rounded-[20px] bg-secondary p-4 hover:bg-secondary/80 transition-colors">
-            <?php if ( ( $m['icon'] ?? '' ) === 'phone' ) : ?>
-              <i data-lucide="phone" class="h-5 w-5 text-foreground"></i>
-            <?php else : ?>
-              <i data-lucide="mail" class="h-5 w-5 text-foreground"></i>
-            <?php endif; ?>
-            <p class="type-action font-semibold text-foreground mt-3"><?php echo esc_html( $m['title'] ); ?></p>
+          <a
+            href="<?php echo esc_url( $m['action'] ); ?>"
+            class="block h-full rounded-[20px] bg-secondary p-4 transition-transform hover:-translate-y-0.5"
+          >
+            <i data-lucide="<?php echo $m['icon'] === 'phone' ? 'phone' : 'mail'; ?>" class="h-5 w-5 text-foreground"></i>
+            <p class="type-action mt-3 font-semibold text-foreground"><?php echo esc_html( $m['title'] ); ?></p>
             <p class="type-label-md mt-0.5 text-muted-foreground"><?php echo esc_html( $m['description'] ); ?></p>
             <p class="type-body-sm font-semibold mt-2 break-all text-foreground"><?php echo esc_html( $m['value'] ); ?></p>
           </a>
@@ -99,218 +100,215 @@ $faq_card      = $c['faqCard'] ?? [
       <?php endforeach; ?>
     </ul>
 
-    <!-- Form Section -->
-    <section class="mx-5 mt-8">
-      <h2 class="type-title-lg font-semibold text-foreground"><?php echo esc_html( $form_title ); ?></h2>
-      <p class="type-body-md mt-1 text-muted-foreground"><?php echo esc_html( $form_subtitle ); ?></p>
+    <!-- Contact Form (mx-5 mt-6) -->
+    <section class="mx-5 mt-6">
+      <div id="contact-form-wrapper">
+        <h2 class="type-headline-sm font-semibold text-foreground"><?php echo esc_html( $form_title ); ?></h2>
+        <p class="mt-1 text-[14px] leading-5 text-muted-foreground"><?php echo esc_html( $form_subtitle ); ?></p>
 
-      <!-- Success Card (hidden initially, matches ikan2) -->
-      <div id="contact-success" class="mt-4 hidden overflow-hidden rounded-[24px] bg-[#DFF0E8] text-[#173D2F]">
-        <div class="h-24 overflow-hidden">
-          <?php echo ikan_render_art_svg( 'checkup', 'w-full h-full object-cover' ); ?>
-        </div>
-        <div class="flex items-start gap-3 p-5">
-          <i data-lucide="check" class="mt-0.5 h-5 w-5 shrink-0 text-[#173D2F]"></i>
-          <p class="type-body">
-            Message sent. We’ll reply to <span class="font-semibold" id="contact-success-email">your email</span>.
-          </p>
-        </div>
+        <form id="ikan-contact-form" class="mt-4 space-y-4" novalidate>
+          <input type="hidden" name="action" value="ikan_contact_submit">
+          <input type="hidden" name="nonce" value="<?php echo wp_create_nonce( 'ikan_form_nonce' ); ?>">
+
+          <!-- General Alert banner (for submission feedback) -->
+          <div id="contact-general-error" class="hidden rounded-xl bg-error-container p-3 text-error-container text-xs font-semibold"></div>
+
+          <!-- Name -->
+          <div>
+            <label for="contact-name" class="type-label-md block font-medium text-foreground">Your Name</label>
+            <input
+              type="text"
+              id="contact-name"
+              name="name"
+              required
+              placeholder="Your full name"
+              class="mt-1.5 w-full h-12 rounded-[14px] border border-foreground/15 bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
+            >
+            <p id="err-name" class="hidden mt-1 text-xs font-medium text-destructive"></p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="contact-email" class="type-label-md block font-medium text-foreground">Email Address</label>
+            <input
+              type="email"
+              id="contact-email"
+              name="email"
+              required
+              placeholder="you@example.com"
+              class="mt-1.5 w-full h-12 rounded-[14px] border border-foreground/15 bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
+            >
+            <p id="err-email" class="hidden mt-1 text-xs font-medium text-destructive"></p>
+          </div>
+
+          <!-- Subject -->
+          <div>
+            <label for="contact-subject" class="type-label-md block font-medium text-foreground">Subject</label>
+            <input
+              type="text"
+              id="contact-subject"
+              name="subject"
+              placeholder="How can we help?"
+              class="mt-1.5 w-full h-12 rounded-[14px] border border-foreground/15 bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
+            >
+            <p id="err-subject" class="hidden mt-1 text-xs font-medium text-destructive"></p>
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label for="contact-message" class="type-label-md block font-medium text-foreground">Message</label>
+            <textarea
+              id="contact-message"
+              name="message"
+              rows="4"
+              required
+              placeholder="Write a little more so we can help (10 characters or more)..."
+              class="mt-1.5 w-full rounded-[14px] border border-foreground/15 bg-background p-4 text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors resize-none"
+            ></textarea>
+            <p id="err-message" class="hidden mt-1 text-xs font-medium text-destructive"></p>
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            id="contact-submit-btn"
+            class="type-action w-full h-12 rounded-full bg-foreground text-background font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Send message</span>
+          </button>
+        </form>
       </div>
 
-      <!-- Form Error Container -->
-      <div id="contact-error" class="mt-4 hidden rounded-[16px] bg-error-container p-4 text-on-error-container type-body-sm"></div>
-
-      <!-- Contact Form -->
-      <form id="contact-form" class="mt-4 space-y-4" novalidate>
-        <div class="space-y-1.5">
-          <label for="contact-name" class="type-body-sm font-medium text-muted-foreground">Name</label>
-          <input
-            type="text"
-            id="contact-name"
-            name="name"
-            required
-            maxlength="60"
-            autocomplete="name"
-            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
-          >
-          <span id="name-error" class="type-body-sm hidden text-error"></span>
+      <!-- Success State (hidden by default) -->
+      <div id="contact-success-state" class="hidden text-center py-6">
+        <div class="h-32 w-32 mx-auto overflow-hidden rounded-[24px]">
+          <?php echo function_exists( 'ikan_render_art_svg' ) ? ikan_render_art_svg( 'checkup', 'w-full h-full object-cover' ) : '<div class="size-20 mx-auto rounded-full bg-emerald-100 flex items-center justify-center"><i data-lucide="check" class="size-10 text-emerald-600"></i></div>'; ?>
         </div>
-
-        <div class="space-y-1.5">
-          <label for="contact-email" class="type-body-sm font-medium text-muted-foreground">Email</label>
-          <input
-            type="email"
-            id="contact-email"
-            name="email"
-            required
-            maxlength="254"
-            autocomplete="email"
-            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
-          >
-          <span id="email-error" class="type-body-sm hidden text-error"></span>
-        </div>
-
-        <div class="space-y-1.5">
-          <label for="contact-subject" class="type-body-sm font-medium text-muted-foreground">Subject (optional)</label>
-          <input
-            type="text"
-            id="contact-subject"
-            name="subject"
-            maxlength="120"
-            class="w-full h-12 rounded-[16px] border border-transparent bg-secondary px-4 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
-          >
-        </div>
-
-        <div class="space-y-1.5">
-          <div class="flex justify-between items-center text-muted-foreground type-body-sm font-medium">
-            <label for="contact-message">Message</label>
-            <span class="tabular-nums" id="msg-count">0/2000</span>
-          </div>
-          <textarea
-            id="contact-message"
-            name="message"
-            rows="5"
-            required
-            maxlength="2000"
-            class="w-full resize-none rounded-[16px] border border-transparent bg-secondary px-4 py-3 text-[16px] text-foreground outline-none focus:border-foreground/60 focus:bg-background transition-colors"
-          ></textarea>
-          <span id="message-error" class="type-body-sm hidden text-error"></span>
-        </div>
-
-        <button
-          type="submit"
-          id="contact-submit"
-          class="w-full h-12 rounded-full bg-foreground text-background font-semibold text-[15px] hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center cursor-pointer shadow-xs"
+        <h3 class="type-headline-sm font-semibold mt-4 text-foreground">Message sent</h3>
+        <p class="type-body-md mt-2 text-muted-foreground">We usually reply within one business day.</p>
+        <a
+          href="<?php echo esc_url( home_url( '/' ) ); ?>"
+          class="type-action inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-background font-semibold mt-5"
         >
-          <span>Send message</span>
-        </button>
-      </form>
+          Back to home
+        </a>
+      </div>
     </section>
 
-    <!-- FAQ Bridge Card -->
-    <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="mx-5 mt-8 block rounded-[24px] border border-foreground/10 p-5 hover:bg-secondary/40 transition-colors">
+    <!-- FAQ Help Card Bridge (mx-5 mt-8 rounded-[24px] bg-secondary p-5) -->
+    <section class="mx-5 mt-8 rounded-[24px] bg-secondary p-5 text-center">
       <p class="type-subhead font-semibold text-foreground"><?php echo esc_html( $faq_card['title'] ); ?></p>
-      <p class="type-label-lg mt-1 text-muted-foreground"><?php echo esc_html( $faq_card['description'] ); ?></p>
-      <span class="type-body-md font-semibold mt-3 inline-block underline text-foreground">
+      <p class="type-body mt-1 text-muted-foreground"><?php echo esc_html( $faq_card['description'] ); ?></p>
+      <a
+        href="<?php echo esc_url( home_url( '/faq' ) ); ?>"
+        class="type-action mt-4 inline-flex h-11 items-center justify-center rounded-full border border-foreground/20 px-5 text-foreground font-semibold hover:bg-background transition-colors"
+      >
         <?php echo esc_html( $faq_card['buttonText'] ); ?>
-      </span>
-    </a>
+      </a>
+    </section>
 
-    <!-- Social Links & Footer Spacing -->
-    <div class="mx-5 mt-8 pt-6 border-t border-foreground/10 flex items-center justify-center gap-5 text-muted-foreground">
-      <a href="https://linkedin.com/company/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="LinkedIn">
-        <i data-lucide="linkedin" class="h-5 w-5"></i>
-      </a>
-      <a href="https://instagram.com/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="Instagram">
-        <i data-lucide="instagram" class="h-5 w-5"></i>
-      </a>
-      <a href="https://x.com/ikanhealth" target="_blank" rel="noopener noreferrer" class="hover:text-foreground transition-colors" aria-label="X (Twitter)">
-        <i data-lucide="twitter" class="h-5 w-5"></i>
-      </a>
+    <!-- Social Links and Copyright Footer (matching ikan2 exactly) -->
+    <div class="mx-5 mt-8 border-t border-border pt-6 pb-2 text-center">
+      <div class="flex justify-center gap-3">
+        <a href="https://instagram.com/ikanhealth" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="grid h-10 w-10 place-items-center rounded-full bg-secondary text-foreground hover:bg-secondary/70 transition-colors">
+          <i data-lucide="instagram" class="h-5 w-5"></i>
+        </a>
+        <a href="https://linkedin.com/company/ikanhealth" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="grid h-10 w-10 place-items-center rounded-full bg-secondary text-foreground hover:bg-secondary/70 transition-colors">
+          <i data-lucide="linkedin" class="h-5 w-5"></i>
+        </a>
+        <a href="https://x.com/ikanhealth" target="_blank" rel="noopener noreferrer" aria-label="X" class="grid h-10 w-10 place-items-center rounded-full bg-secondary text-foreground hover:bg-secondary/70 transition-colors">
+          <i data-lucide="twitter" class="h-5 w-5"></i>
+        </a>
+      </div>
+      <p class="type-body-sm mt-3 text-muted-foreground">© <?php echo date('Y'); ?> iKAN Health. All rights reserved.</p>
     </div>
 
-    <div class="h-6"></div>
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.lucide && lucide.createIcons) {
-    lucide.createIcons();
-  }
+document.addEventListener("DOMContentLoaded", function() {
+  var form = document.getElementById("ikan-contact-form");
+  if (!form) return;
 
-  var form = document.getElementById('contact-form');
-  var msgArea = document.getElementById('contact-message');
-  var msgCount = document.getElementById('msg-count');
-  var submitBtn = document.getElementById('contact-submit');
-  var successCard = document.getElementById('contact-success');
-  var errorCard = document.getElementById('contact-error');
-  var successEmail = document.getElementById('contact-success-email');
+  var btn = document.getElementById("contact-submit-btn");
+  var wrapper = document.getElementById("contact-form-wrapper");
+  var success = document.getElementById("contact-success-state");
+  var generalErr = document.getElementById("contact-general-error");
 
-  if (msgArea && msgCount) {
-    msgArea.addEventListener('input', function() {
-      msgCount.textContent = this.value.length + '/2000';
+  function clearErrors() {
+    generalErr.classList.add("hidden");
+    generalErr.textContent = "";
+    ["name", "email", "subject", "message"].forEach(function(field) {
+      var errEl = document.getElementById("err-" + field);
+      if (errEl) {
+        errEl.classList.add("hidden");
+        errEl.textContent = "";
+      }
     });
   }
 
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var name = document.getElementById('contact-name').value.trim();
-      var email = document.getElementById('contact-email').value.trim();
-      var subject = document.getElementById('contact-subject').value.trim() || 'General enquiry';
-      var message = document.getElementById('contact-message').value.trim();
-
-      var hasError = false;
-      var nameErr = document.getElementById('name-error');
-      var emailErr = document.getElementById('email-error');
-      var msgErr = document.getElementById('message-error');
-
-      if (!name) {
-        nameErr.textContent = 'Please enter your name.';
-        nameErr.classList.remove('hidden');
-        hasError = true;
-      } else {
-        nameErr.classList.add('hidden');
-      }
-
-      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !emailRegex.test(email)) {
-        emailErr.textContent = 'Please enter a valid email address.';
-        emailErr.classList.remove('hidden');
-        hasError = true;
-      } else {
-        emailErr.classList.add('hidden');
-      }
-
-      if (!message || message.length < 10) {
-        msgErr.textContent = 'Write a little more so we can help (10 characters or more).';
-        msgErr.classList.remove('hidden');
-        hasError = true;
-      } else {
-        msgErr.classList.add('hidden');
-      }
-
-      if (hasError) return;
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span>Sending...</span>';
-      errorCard.classList.add('hidden');
-
-      var formData = new FormData();
-      formData.append('action', 'ikan_contact_submit');
-      formData.append('name', name);
-      formData.append('email', email);
-      formData.append('subject', subject);
-      formData.append('message', message);
-
-      fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-        method: 'POST',
-        body: formData
-      })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data && data.success) {
-          form.classList.add('hidden');
-          successEmail.textContent = email;
-          successCard.classList.remove('hidden');
-          if (window.lucide && lucide.createIcons) {
-            lucide.createIcons();
-          }
-        } else {
-          // Even if ajax endpoint returns non-standard, show success or email fallback
-          form.classList.add('hidden');
-          successEmail.textContent = email;
-          successCard.classList.remove('hidden');
-        }
-      })
-      .catch(function() {
-        form.classList.add('hidden');
-        successEmail.textContent = email;
-        successCard.classList.remove('hidden');
-      });
-    });
+  function showError(field, msg) {
+    var errEl = document.getElementById("err-" + field);
+    if (errEl) {
+      errEl.textContent = msg;
+      errEl.classList.remove("hidden");
+    }
   }
+
+  form.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    clearErrors();
+
+    var nameVal = form.name.value.trim();
+    var emailVal = form.email.value.trim();
+    var subjectVal = form.subject.value.trim();
+    var messageVal = form.message.value.trim();
+
+    var hasErr = false;
+    if (!nameVal) {
+      showError("name", "Please enter your name.");
+      hasErr = true;
+    }
+    if (!emailVal || emailVal.indexOf("@") === -1) {
+      showError("email", "Please enter a valid email address.");
+      hasErr = true;
+    }
+    if (!messageVal || messageVal.length < 10) {
+      showError("message", "Write a little more so we can help (10 characters or more).");
+      hasErr = true;
+    }
+
+    if (hasErr) return;
+
+    btn.disabled = true;
+    var origText = btn.innerHTML;
+    btn.textContent = "Sending...";
+
+    var fd = new FormData(form);
+
+    try {
+      var ajaxUrl = window.ikanAjax ? window.ikanAjax.ajax_url : "/wp-admin/admin-ajax.php";
+      var res = await fetch(ajaxUrl, { method: "POST", body: fd });
+      var data = await res.json();
+
+      if (data && data.success) {
+        wrapper.classList.add("hidden");
+        success.classList.remove("hidden");
+      } else {
+        var msg = (data && data.data && data.data.message) ? data.data.message : "Your message didn’t send. Check your connection and try again.";
+        generalErr.textContent = msg;
+        generalErr.classList.remove("hidden");
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    } catch(err) {
+      generalErr.textContent = "Network error. Check your connection and try again, or email us directly.";
+      generalErr.classList.remove("hidden");
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  });
 });
 </script>
 

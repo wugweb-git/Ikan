@@ -184,6 +184,16 @@
     <div class="flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground">
       <a href="#main-content" class="skip-to-main" style="position: absolute; left: -9999px; z-index: 9999; padding: var(--spacing-2) var(--spacing-4); background-color: var(--color-primary-default); color: var(--color-primary-on); border-radius: var(--radius-sm); font-weight: var(--font-weight-medium); text-decoration: none;">Skip to main content</a>
       
+      <?php
+      $is_app_shell = ! empty( $GLOBALS['ikan_app_shell'] )
+        || is_page( [ 'about', 'about-us', 'contact', 'contact-us', 'faq', 'terms', 'terms-of-use', 'privacy', 'privacy-policy', 'cancellation-policy', 'return-policy', 'legal' ] )
+        || get_query_var( 'ikan_contact_page' )
+        || get_query_var( 'ikan_legal_page' )
+        || get_query_var( 'ikan_about_page' )
+        || is_page( [ 'resources', 'resource' ] )
+        || is_singular( 'post' );
+      ?>
+      <?php if ( ! $is_app_shell ) : ?>
       <!-- Desktop Capsule Nav -->
       <header class="ikan2-theme nav-fixed-wrapper hidden lg:flex" role="banner">
         <nav class="ikan-capsule-nav px-[16px] py-[12px] m-[0px]" aria-label="Primary navigation" style="border-radius: 9999px;">
@@ -303,3 +313,4 @@
           </div>
         </div>
       </nav>
+      <?php endif; ?>

@@ -2,223 +2,250 @@
 /**
  * Template Name: About Us
  * Template Post Type: page
- * Description: Authentic iKAN Health About page matching AboutUs.tsx and index-C1zkq2-P.css
+ * Description: Exact 1:1 replica of iKAN 2 PWA About layout (ikan2/src/routes/about.tsx)
+ *
+ * Matches InfoShell wide container, mood illustration, story, mission/vision cards,
+ * values grid, how-it-works timeline, who-it-for cards, and founders/team showcase.
+ *
+ * @package iKAN_Health
  */
 
-get_header(); ?>
+$GLOBALS['ikan_app_shell'] = true;
+get_header();
 
-<main id="main-content" tabindex="-1" class="flex-1 w-full relative outline-none p-[0px]" role="main" aria-label="Page content">
-  <div class="ikan2-theme about-page site-page-below-nav">
-    <div class="about-sheet">
-      
-      <!-- ── Header ── -->
-      <header class="about-header">
-        <h1 class="about-title">To us, mental health matters.</h1>
-        <p class="about-subtitle">At iKAN, we believe mental health is for everyone.</p>
-      </header>
+// Load canonical About content from assets/pages.json (identical to ikan2)
+$pages_file = get_template_directory() . '/assets/pages.json';
+$pages_data = [];
+if ( file_exists( $pages_file ) ) {
+  $pages_data = json_decode( file_get_contents( $pages_file ), true ) ?: [];
+}
+$a = $pages_data['about'] ?? [];
 
-      <!-- ── Story ── -->
-      <div class="about-story">
-        <div>
-          <p class="about-eyebrow">Our Story</p>
-          <h2 class="about-story-heading">
-            Born from <span style="color: var(--ikan-brand-teal);">personal</span> experience
-          </h2>
-          <div class="about-prose">
-            <p>At some point everyone has struggled. Decades old friends Sachin, Vedanshu and Kartik have also faced their share of struggles, each one of us embarking on a personal journey to understand what we were going through. All of us witnessed first hand the barriers and gaps in mental healthcare in India and realised that the system is broken.</p>
-            <p>Conversations with people who had struggled and therapists who had learned mental healthcare is inaccessible, costly, episodic, fragmented and needs to be fixed. We realised mental healthcare needs to stop being treated as a blackbox. The only way forward is by bringing people and technology together while being open and transparent. So we created iKAN.</p>
-          </div>
-        </div>
-        <div class="about-art">
-          <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1522071820081-009f0129c71c" alt="Founders collaborating on iKAN" loading="lazy" decoding="async">
-        </div>
-      </div>
+$hero_title    = $a['hero']['title'] ?? 'To us, mental health matters.';
+$hero_subtitle = $a['hero']['subtitle'] ?? 'At iKAN, we believe mental health is for everyone.';
+$story         = $a['story'] ?? [];
+$mission       = $a['mission'] ?? [];
+$vision        = $a['vision'] ?? [];
+$values_head   = $a['valuesHeading'] ?? "Why you'll love iKAN";
+$values        = $a['values'] ?? [];
+$how_it_works  = $a['howItWorks'] ?? [];
+$who_for       = $a['whoFor'] ?? [];
+$team_head     = $a['teamHeading'] ?? 'The team behind iKAN';
+$team_desc     = $a['teamDescription'] ?? 'Built by clinicians, engineers, and researchers dedicated to changing mental healthcare in India.';
+$founders      = $a['founders'] ?? [];
+$team          = $a['team'] ?? [];
+
+// Helper to clean angle brackets: unmark() in ikan2
+function ikan_unmark( $str ) {
+  return str_replace( [ '<', '>' ], '', $str );
+}
+
+$value_icons = [
+  'heart'         => 'heart',
+  'shield'        => 'shield',
+  'flask-conical' => 'flask-conical',
+  'handshake'     => 'handshake',
+];
+
+$step_icons = [ 'clipboard-list', 'user-round-search', 'sparkles' ];
+$who_arts   = [ 'checkup', 'work', 'measure' ];
+?>
+
+<div class="min-h-dvh bg-canvas text-foreground ikan2-theme ikan2-type">
+  <main class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
+    
+    <!-- TopAppBar: thin, compact sticky header with back button (matching ikan2 exactly) -->
+    <header class="safe-top-sm sticky top-0 z-30 flex min-h-16 items-center gap-1 bg-background px-1 print:hidden">
+      <button
+        type="button"
+        aria-label="Back"
+        onclick="if(window.history.length>1){window.history.back();}else{window.location.href='<?php echo esc_url( home_url( '/' ) ); ?>';}"
+        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
+      >
+        <i data-lucide="arrow-left" class="h-6 w-6"></i>
+      </button>
+    </header>
+
+    <!-- Page Header (px-5) -->
+    <header class="px-5">
+      <h1 class="font-display text-[34px] font-semibold leading-[1.15] tracking-[-0.01em] text-foreground">
+        <?php echo esc_html( $hero_title ); ?>
+      </h1>
+      <p class="type-body-xl mt-3 text-muted-foreground"><?php echo esc_html( $hero_subtitle ); ?></p>
+    </header>
+
+    <!-- Mood Illustration (mx-5 mt-6 h-44 rounded-[28px]) -->
+    <div class="mx-5 mt-6 h-44 overflow-hidden rounded-[28px]">
+      <?php echo function_exists( 'ikan_render_art_svg' ) ? ikan_render_art_svg( 'mood', 'w-full h-full object-cover' ) : '<div class="w-full h-full bg-secondary"></div>'; ?>
     </div>
 
-    <!-- ── Mission / Vision ── -->
-    <section class="about-band about-band--canvas about-reveal is-in">
-      <div class="about-band__inner">
-        <div class="about-mv">
-          <div class="about-mv-card about-lift about-mv-card--dark">
-            <p class="about-mv-label">Mission</p>
-            <p class="about-mv-title">Making mental health care accessible, affordable, and stigma-free for every individual in India.</p>
-            <p class="about-mv-body">We are on a mission to bridge the gap between people and quality mental health support — through technology, compassion, and transparency.</p>
-          </div>
-          <div class="about-mv-card about-lift about-mv-card--calm">
-            <p class="about-mv-label">Vision</p>
-            <p class="about-mv-title">A world where seeking mental health support is as natural as visiting a doctor.</p>
-            <p class="about-mv-body">We envision a future where mental wellness is normalised, people have the tools they need at their fingertips, and no one suffers in silence.</p>
-          </div>
+    <!-- Story Section -->
+    <?php if ( ! empty( $story ) ) : ?>
+      <section class="mt-8 px-5">
+        <p class="type-body-sm font-semibold text-[#2B634D]"><?php echo esc_html( $story['label'] ?? 'Our Story' ); ?></p>
+        <h2 class="type-headline-sm mt-1"><?php echo esc_html( ikan_unmark( $story['heading'] ?? '' ) ); ?></h2>
+        <div class="mt-3 space-y-4 text-[16px] leading-7 text-foreground/85">
+          <?php foreach ( (array) ( $story['paragraphs'] ?? [] ) as $p ) : ?>
+            <p><?php echo esc_html( ikan_unmark( $p ) ); ?></p>
+          <?php endforeach; ?>
         </div>
-      </div>
+      </section>
+    <?php endif; ?>
+
+    <!-- Mission & Vision Cards (mt-8 space-y-3 px-5) -->
+    <section class="mt-8 space-y-3 px-5">
+      <?php if ( ! empty( $mission ) ) : ?>
+        <div class="rounded-[24px] bg-foreground p-5 text-background">
+          <p class="type-body-sm font-semibold opacity-75"><?php echo esc_html( $mission['label'] ?? 'Mission' ); ?></p>
+          <p class="type-title-lg mt-1"><?php echo esc_html( $mission['title'] ?? '' ); ?></p>
+          <p class="type-body mt-2 opacity-85"><?php echo esc_html( $mission['description'] ?? '' ); ?></p>
+        </div>
+      <?php endif; ?>
+      <?php if ( ! empty( $vision ) ) : ?>
+        <div class="rounded-[24px] bg-[#DFF0E8] p-5 text-[#173D2F]">
+          <p class="type-body-sm font-semibold opacity-75"><?php echo esc_html( $vision['label'] ?? 'Vision' ); ?></p>
+          <p class="type-title-lg mt-1"><?php echo esc_html( $vision['title'] ?? '' ); ?></p>
+          <p class="type-body mt-2 opacity-85"><?php echo esc_html( $vision['description'] ?? '' ); ?></p>
+        </div>
+      <?php endif; ?>
     </section>
 
-    <!-- ── Why you'll love iKAN ── -->
-    <section class="about-band about-band--white about-reveal is-in">
-      <div class="about-band__inner">
-        <h2 class="about-h2">Why you&#39;ll love iKAN</h2>
-        <div class="about-values">
-          <div class="about-value about-lift">
-            <span class="about-value-icon" style="color: var(--ikan-brand-teal);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
-            </span>
-            <h3 class="about-value-title type-title-lg">People Centric</h3>
-            <p class="about-value-body">At iKAN we keep you at the heart of everything, our sole focus is to empower you and make mental health care accessible for all.</p>
-          </div>
-          <div class="about-value about-lift">
-            <span class="about-value-icon" style="color: var(--ikan-brand-amber);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
-            </span>
-            <h3 class="about-value-title type-title-lg">Secure &amp; Confidential</h3>
-            <p class="about-value-body">Your privacy is our utmost priority. We employ high-end data encryption to safeguard your data and personal information.</p>
-          </div>
-          <div class="about-value about-lift">
-            <span class="about-value-icon" style="color: var(--ikan-brand-navy);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flask-conical" aria-hidden="true"><path d="M10 2v7.31L4.75 20.26A1 1 0 0 0 5.66 21.7h12.68a1 1 0 0 0 .91-1.44L14 9.31V2"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path><path d="M5.52 16h12.96"></path></svg>
-            </span>
-            <h3 class="about-value-title type-title-lg">Evidence-Based</h3>
-            <p class="about-value-body">Our programs are scientifically proven and clinically validated to deliver the highest care possible, backed by research.</p>
-          </div>
-          <div class="about-value about-lift">
-            <span class="about-value-icon" style="color: var(--ikan-brand-slate);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-handshake" aria-hidden="true"><path d="m11 17 2 2a1 1 0 0 0 1.42 0l6.58-6.59a1 1 0 0 0 0-1.41l-2.59-2.59a1 1 0 0 0-1.41 0L15 10.41"></path><path d="m13 15-2-2a1 1 0 0 0-1.42 0L3 19.59a1 1 0 0 0 0 1.41l2.59 2.59a1 1 0 0 0 1.41 0L9 21.59"></path><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path></svg>
-            </span>
-            <h3 class="about-value-title type-title-lg">Democratise</h3>
-            <p class="about-value-body">We believe mental health care is for everyone and we are eager to make it a reality.</p>
-          </div>
+    <!-- Values Grid (mt-10 px-5, grid-cols-2 gap-3) -->
+    <?php if ( ! empty( $values ) ) : ?>
+      <section class="mt-10 px-5">
+        <h2 class="type-title-lg"><?php echo esc_html( $values_head ); ?></h2>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <?php foreach ( $values as $v ) : 
+            $icon = $value_icons[ $v['iconName'] ?? '' ] ?? 'heart';
+          ?>
+            <div class="rounded-[20px] bg-secondary p-4">
+              <i data-lucide="<?php echo esc_attr( $icon ); ?>" class="h-6 w-6"></i>
+              <p class="type-title-md mt-3"><?php echo esc_html( $v['title'] ?? '' ); ?></p>
+              <p class="type-body-sm mt-1 text-muted-foreground"><?php echo esc_html( $v['description'] ?? '' ); ?></p>
+            </div>
+          <?php endforeach; ?>
         </div>
-      </div>
-    </section>
+      </section>
+    <?php endif; ?>
 
-    <!-- ── How it works ── -->
-    <section class="about-band about-band--invert about-reveal is-in">
-      <div class="about-band__inner">
-        <h2 class="about-h2">How it works</h2>
-        <ol class="about-steps">
-          <li class="about-step">
-            <span class="about-step-marker" aria-hidden="true">01</span>
-            <span class="about-step-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1650046825506-8901c4b837b1" alt="Mental health assessment on tablet" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-step-title type-title-lg">Take an Assessment</h3>
-            <span class="about-step-tagline">Understand where you are.</span>
-            <span class="about-step-body">Answer a few simple, clinically backed questions. Our assessments help you understand your emotional well-being — privately, at your own pace.</span>
-          </li>
-          <li class="about-step">
-            <span class="about-step-marker" aria-hidden="true">02</span>
-            <span class="about-step-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1758273241078-8eec353836be" alt="Therapy counseling session" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-step-title type-title-lg">Connect with a Professional</h3>
-            <span class="about-step-tagline">Find the right support for you.</span>
-            <span class="about-step-body">Browse therapists, psychiatrists, and counselors. Pick your preferred language, session mode, and availability — we handle the rest.</span>
-          </li>
-          <li class="about-step">
-            <span class="about-step-marker" aria-hidden="true">03</span>
-            <span class="about-step-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1758272422634-e8ed8e252a14" alt="Mindfulness and daily wellness" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-step-title type-title-lg">Build Daily Habits</h3>
-            <span class="about-step-tagline">Make wellness your ritual.</span>
-            <span class="about-step-body">Join an Equip program with self-paced modules. Track your mood, practice mindfulness, and build lasting habits — one day at a time.</span>
-          </li>
+    <!-- How iKAN Works (mt-10 px-5, vertical step timeline + Get started CTA) -->
+    <?php if ( ! empty( $how_it_works['steps'] ) ) : 
+      $step_list = $how_it_works['steps'];
+      $total_steps = count( $step_list );
+    ?>
+      <section class="mt-10 px-5">
+        <h2 class="type-title-lg"><?php echo esc_html( $how_it_works['heading'] ?? 'How iKAN works' ); ?></h2>
+        <ol class="mt-4 space-y-4">
+          <?php foreach ( $step_list as $i => $s ) : 
+            $icon = $step_icons[ $i ] ?? 'sparkles';
+          ?>
+            <li class="flex gap-4">
+              <span class="relative flex flex-col items-center">
+                <span class="grid h-11 w-11 place-items-center rounded-full bg-foreground text-background">
+                  <i data-lucide="<?php echo esc_attr( $icon ); ?>" class="h-5 w-5"></i>
+                </span>
+                <?php if ( $i < $total_steps - 1 ) : ?>
+                  <span class="mt-1 w-px flex-1 bg-foreground/15"></span>
+                <?php endif; ?>
+              </span>
+              <span class="pb-2">
+                <span class="type-subhead block"><?php echo esc_html( $s['title'] ?? '' ); ?></span>
+                <span class="type-label-lg block text-[#2B634D]"><?php echo esc_html( $s['tagline'] ?? '' ); ?></span>
+                <span class="type-body mt-1 block text-muted-foreground">
+                  <?php echo esc_html( $s['description'] ?? '' ); ?>
+                </span>
+              </span>
+            </li>
+          <?php endforeach; ?>
         </ol>
-        <a href="<?php echo esc_url( home_url( '/assessments' ) ); ?>" class="about-cta" style="text-decoration:none; display:inline-block; text-align:center;">
+        <a
+          href="<?php echo esc_url( home_url( '/assessments' ) ); ?>"
+          class="type-action mt-4 flex h-12 items-center justify-center rounded-full bg-foreground text-background font-semibold"
+        >
           Get started
         </a>
-      </div>
-    </section>
+      </section>
+    <?php endif; ?>
 
-    <!-- ── Who is it for ── -->
-    <section class="about-band about-band--white about-reveal is-in">
-      <div class="about-band__inner">
-        <h2 class="about-h2">Who is it for</h2>
-        <div class="about-who">
-          <div class="about-who-card about-lift">
-            <span class="about-who-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1726377240070-19b747fc9f19" alt="Person journaling for self care" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-who-title type-title-lg">For Individuals</h3>
-            <p class="about-who-tagline">Your mental wellness, your pace.</p>
-            <p class="about-who-body">Access self-guided programs, mood journaling, and professional consultations — all in a private, stigma-free space designed around your comfort.</p>
-          </div>
-          <div class="about-who-card about-lift">
-            <span class="about-who-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1758691737182-d42aefd6dee8" alt="Workplace wellness team meeting" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-who-title type-title-lg">For Organizations</h3>
-            <p class="about-who-tagline">Invest in your people.</p>
-            <p class="about-who-body">Bring mental wellness into the workplace. Equip your teams with assessments, curated programs, and professional support that scales with your organization.</p>
-          </div>
-          <div class="about-who-card about-lift">
-            <span class="about-who-photo">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>photo-1758691463610-3c2ecf5fb3fa" alt="Healthcare professional smiling" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-who-title type-title-lg">For Healthcare Providers</h3>
-            <p class="about-who-tagline">Extend care beyond the clinic.</p>
-            <p class="about-who-body">Use clinically validated assessments, track patient progress, and recommend structured programs — all on a platform built with privacy at its core.</p>
-          </div>
+    <!-- Who is iKAN for? (mt-10, horizontal snap carousel) -->
+    <?php if ( ! empty( $who_for['groups'] ) ) : ?>
+      <section class="mt-10">
+        <h2 class="type-title-lg px-5"><?php echo esc_html( $who_for['heading'] ?? 'Who is iKAN for?' ); ?></h2>
+        <div class="no-scrollbar mt-4 flex snap-x gap-3 overflow-x-auto px-5 pb-1">
+          <?php foreach ( $who_for['groups'] as $i => $g ) : 
+            $art = $who_arts[ $i ] ?? 'checkup';
+          ?>
+            <div class="w-[260px] shrink-0 snap-start overflow-hidden rounded-[24px] border border-foreground/10">
+              <div class="h-24">
+                <?php echo function_exists( 'ikan_render_art_svg' ) ? ikan_render_art_svg( $art, 'w-full h-full object-cover' ) : '<div class="w-full h-full bg-secondary"></div>'; ?>
+              </div>
+              <div class="p-4">
+                <p class="type-subhead"><?php echo esc_html( $g['title'] ?? '' ); ?></p>
+                <p class="type-label-lg text-[#2B634D]"><?php echo esc_html( $g['tagline'] ?? '' ); ?></p>
+                <p class="mt-2 text-[14px] leading-6 text-muted-foreground"><?php echo esc_html( $g['description'] ?? '' ); ?></p>
+              </div>
+            </div>
+          <?php endforeach; ?>
         </div>
-      </div>
-    </section>
+      </section>
+    <?php endif; ?>
 
-    <!-- ── Our Team ── -->
-    <section class="about-band about-band--canvas about-reveal is-in">
-      <div class="about-band__inner">
-        <h2 class="about-h2">Our Team</h2>
-        <p class="about-team-intro">The people behind iKAN, driven by personal experience and a shared belief that mental health care should be better.</p>
-
-        <ul class="about-team">
-          <li class="about-person about-person--lead">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>kartik.jpg" alt="Kartik Chandra" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Kartik Chandra</h3>
-            <p class="about-person-role">Co-Founder and CEO</p>
-            <p class="about-person-bio">Kartik has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKAN for growth and long term success.</p>
-          </li>
-          <li class="about-person about-person--lead">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>vedanshu.jpg" alt="Vedanshu Srivastava" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Vedanshu Srivastava</h3>
-            <p class="about-person-role">Co-Founder and Product Head</p>
-            <p class="about-person-bio">Vedanshu has a decade long experience in general and health insurance and health tech across various functions. He brings his experience and learnings from his personal journey to positioning iKAN for growth and long term success.</p>
-          </li>
-          <li class="about-person about-person--lead">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>sachin.jpg" alt="Sachin Vaishampayan" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Sachin Vaishampayan</h3>
-            <p class="about-person-role">Co-Founder and CTO</p>
-            <p class="about-person-bio">Sachin has worked in research and education for over a decade, leading and managing internationally funded projects across diverse landscapes. He has extensive experience in content creation and designing engaging learning modules, which he blends with his personal interest in developing mental health aids for growth and innovation at iKAN.</p>
-          </li>
-          <li class="about-person about-person--compact">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>vaibhav.jpg" alt="Vaibhav Shukla" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Vaibhav Shukla</h3>
-            <p class="about-person-role">System Architect</p>
-          </li>
-          <li class="about-person about-person--compact">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>amitabh.jpg" alt="Amitabh Bhatnagar" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Amitabh Bhatnagar</h3>
-            <p class="about-person-role">Dev Engineer</p>
-          </li>
-          <li class="about-person about-person--compact">
-            <span class="about-person-portrait">
-              <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/' ) ); ?>divyanshu.jpg" alt="Divyanshu Pundir" loading="lazy" decoding="async">
-            </span>
-            <h3 class="about-person-name type-title-lg">Divyanshu Pundir</h3>
-            <p class="about-person-role">UX Designer</p>
-          </li>
+    <!-- Team Behind iKAN (mt-10 px-5) -->
+    <?php if ( ! empty( $founders ) ) : ?>
+      <section class="mt-10 px-5">
+        <h2 class="type-title-lg"><?php echo esc_html( $team_head ); ?></h2>
+        <p class="type-body mt-1 text-muted-foreground"><?php echo esc_html( $team_desc ); ?></p>
+        
+        <!-- Founders -->
+        <ul class="mt-4 space-y-3">
+          <?php foreach ( $founders as $f ) : 
+            $fname = explode( ' ', $f['name'] ?? '' )[0] ?? 'team';
+            $initials = '';
+            foreach ( explode( ' ', $f['name'] ?? '' ) as $w ) {
+              $initials .= strtoupper( substr( $w, 0, 1 ) );
+            }
+            $initials = substr( $initials, 0, 2 );
+          ?>
+            <li class="rounded-[24px] bg-secondary p-4">
+              <div class="flex items-center gap-3">
+                <div class="size-16 rounded-full bg-foreground/10 flex items-center justify-center font-semibold text-lg text-foreground shrink-0 overflow-hidden">
+                  <?php echo esc_html( $initials ); ?>
+                </div>
+                <div>
+                  <p class="type-subhead"><?php echo esc_html( $f['name'] ?? '' ); ?></p>
+                  <p class="type-body-sm text-muted-foreground"><?php echo esc_html( $f['role'] ?? '' ); ?></p>
+                </div>
+              </div>
+              <p class="mt-3 text-[14px] leading-6 text-foreground/85"><?php echo esc_html( $f['bio'] ?? '' ); ?></p>
+            </li>
+          <?php endforeach; ?>
         </ul>
-      </div>
-    </section>
 
-  </div>
-</main>
+        <!-- Advisory Team -->
+        <?php if ( ! empty( $team ) ) : ?>
+          <ul class="mt-3 grid grid-cols-3 gap-2">
+            <?php foreach ( $team as $t ) : 
+              $initials = '';
+              foreach ( explode( ' ', $t['name'] ?? '' ) as $w ) {
+                $initials .= strtoupper( substr( $w, 0, 1 ) );
+              }
+              $initials = substr( $initials, 0, 2 );
+            ?>
+              <li class="flex flex-col items-center rounded-[20px] border border-foreground/10 p-3 text-center">
+                <div class="size-14 rounded-full bg-foreground/10 flex items-center justify-center font-semibold text-base text-foreground shrink-0 overflow-hidden">
+                  <?php echo esc_html( $initials ); ?>
+                </div>
+                <p class="mt-2 text-[13px] font-semibold leading-4"><?php echo esc_html( $t['name'] ?? '' ); ?></p>
+                <p class="mt-0.5 text-[11px] leading-4 text-muted-foreground"><?php echo esc_html( $t['role'] ?? '' ); ?></p>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
+
+    <div class="h-6"></div>
+  </main>
+</div>
 
 <?php get_footer(); ?>
