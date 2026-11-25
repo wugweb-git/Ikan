@@ -193,31 +193,6 @@ class Ikan_FluentCRM_Templates {
 				),
 			),
 			array(
-				'slug'    => 'ikan-alert-assessment-completed',
-				'title'   => 'iKAN Alert — Assessment Completed',
-				'subject' => 'Assessment completed: {{contact.full_name}} ({{contact.custom.latest_assessment_slug}})',
-				'html'    => self::render_shell(
-					array(
-						'badge_bg'    => '#E8ECF8',
-						'badge_color' => '#455B9E',
-						'badge_label' => 'Assessment result',
-						'heading'     => '{{contact.full_name}}',
-						'intro'       => 'A member completed a clinical screening in iKAN.',
-						'facts'       => array(
-							array( 'Email', '{{contact.email}}' ),
-							array( 'Assessment', '{{contact.custom.latest_assessment_slug}}' ),
-							array( 'Score', '{{contact.custom.latest_assessment_score}}' ),
-							array( 'Severity', '{{contact.custom.latest_assessment_severity}}' ),
-							array( 'Risk flag', '{{contact.custom.clinical_risk_flag}}' ),
-							array( 'Completed at', '{{contact.custom.last_assessment_at}}' ),
-						),
-						'cta_label'   => 'Review in wp-admin',
-						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
-						'footer_note' => 'An automatic clinical alert from iKAN via FluentCRM (noreply@ikanhealth.in).',
-					)
-				),
-			),
-			array(
 				'slug'    => 'ikan-welcome-member',
 				'title'   => 'iKAN Member — Welcome Email',
 				'subject' => 'Welcome to iKAN, {{contact.first_name}}',
