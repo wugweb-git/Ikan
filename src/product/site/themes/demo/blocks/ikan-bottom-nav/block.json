@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/bottom-nav",
+  "version": "1.0.0",
+  "title": "iKAN Bottom Dock Nav",
+  "category": "ikan",
+  "description": "Authentic iKAN 2 mobile bottom navigation dock with Home, Programs, Assess, Journal, and More drawer.",
+  "keywords": ["bottom-nav", "dock", "mobile", "navigation", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "appUrl": {
+      "type": "string",
+      "default": "https://app.ikanhealth.in"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["full"]
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

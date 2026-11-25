@@ -88,6 +88,9 @@ add_action( 'init', function() {
 		'ikan-disclosure',
 		'ikan-resource-card',
 		'ikan-cta-banner',
+		'ikan-header',
+		'ikan-footer',
+		'ikan-bottom-nav',
 	];
 	foreach ( $blocks as $block_name ) {
 		$block_dir = get_template_directory() . '/blocks/' . $block_name;
