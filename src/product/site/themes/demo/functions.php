@@ -34,6 +34,9 @@ add_action( 'after_setup_theme', 'demo_theme_features' );
 // Load Hostinger Mail Integration & PHP SDK
 require_once get_template_directory() . '/includes/class-hostinger-mail.php';
 
+// Load iKAN Transactional Mailer & Clinical Alert Engine
+require_once get_template_directory() . '/includes/class-ikan-mailer.php';
+
 // Load iKAN Database Schema Manager (Tables: Assessments, Programs, Journals, Wellness)
 require_once get_template_directory() . '/includes/class-ikan-db-schema.php';
 
@@ -49,6 +52,9 @@ require_once get_template_directory() . '/includes/class-ikan-design-admin.php';
 
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
+
+// Load FluentCRM Custom Contact Fields & Sync Helper
+require_once get_template_directory() . '/includes/class-ikan-fluentcrm-fields.php';
 
 // Enqueue Block Editor Assets (Fonts & Design System for Gutenberg)
 add_action( 'enqueue_block_editor_assets', function() {

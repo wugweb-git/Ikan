@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/support-card",
+  "version": "1.0.0",
+  "title": "iKAN Support Card",
+  "category": "ikan",
+  "description": "Support & consultation prompt card matching ikan2 SupportCard — warm alert container with Book a consultation CTA.",
+  "keywords": ["support", "consult", "consultation", "help", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "eyebrow": {
+      "type": "string",
+      "default": "Support"
+    },
+    "headline": {
+      "type": "string",
+      "default": "Let’s talk about it"
+    },
+    "description": {
+      "type": "string",
+      "default": "Consultants available with video, call and chat sessions."
+    },
+    "ctaLabel": {
+      "type": "string",
+      "default": "Book a consultation"
+    },
+    "url": {
+      "type": "string",
+      "default": "/consult/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "eyebrow": "Support",
+      "headline": "Let’s talk about it",
+      "description": "Consultants available with video, call and chat sessions.",
+      "ctaLabel": "Book a consultation",
+      "url": "/consult/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

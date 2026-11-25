@@ -569,6 +569,33 @@ class Ikan_Interim_Sync {
 			}
 		}
 
+		// Populate FluentCRM custom_values & core profile fields via FluentCrmApi
+		if ( ! empty( $email ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			$name_parts = explode( ' ', $name, 2 );
+			Ikan_FluentCRM_Fields::sync_contact(
+				$email,
+				array(
+					'supabase_user_id'   => $supabase_uid,
+					'member_since'       => ! empty( $profile_data['memberSince'] ) ? sanitize_text_field( $profile_data['memberSince'] ) : '',
+					'gender'             => ! empty( $profile_data['gender'] ) ? sanitize_text_field( $profile_data['gender'] ) : '',
+					'marital_status'     => ! empty( $profile_data['maritalStatus'] ) ? sanitize_text_field( $profile_data['maritalStatus'] ) : '',
+					'bio'                => ! empty( $profile_data['bio'] ) ? sanitize_textarea_field( $profile_data['bio'] ) : '',
+					'emergency_name'     => ! empty( $profile_data['emergencyName'] ) ? sanitize_text_field( $profile_data['emergencyName'] ) : '',
+					'emergency_phone'    => ! empty( $profile_data['emergencyPhone'] ) ? sanitize_text_field( $profile_data['emergencyPhone'] ) : '',
+					'emergency_relation' => ! empty( $profile_data['emergencyRelation'] ) ? sanitize_text_field( $profile_data['emergencyRelation'] ) : '',
+				),
+				array(
+					'user_id'       => $wp_user_id,
+					'first_name'    => $name_parts[0] ?? '',
+					'last_name'     => $name_parts[1] ?? '',
+					'phone'         => $phone,
+					'city'          => ! empty( $profile_data['city'] ) ? sanitize_text_field( $profile_data['city'] ) : '',
+					'postal_code'   => ! empty( $profile_data['zip'] ) ? sanitize_text_field( $profile_data['zip'] ) : '',
+					'date_of_birth' => ! empty( $profile_data['birthday'] ) ? sanitize_text_field( $profile_data['birthday'] ) : '',
+				)
+			);
+		}
+
 		return array(
 			'wp_user_id'       => $wp_user_id,
 			'supabase_user_id' => $supabase_uid,

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/settings-card",
+  "version": "1.0.0",
+  "title": "iKAN Settings Card",
+  "category": "ikan",
+  "description": "Settings group card matching ikan2 settings screen — section title, description, and action/preference rows.",
+  "keywords": ["settings", "preferences", "notifications", "privacy", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Preferences & Privacy"
+    },
+    "description": {
+      "type": "string",
+      "default": "Manage reminders, notifications, and your account data."
+    },
+    "items": {
+      "type": "array",
+      "default": [
+        { "label": "Daily check-in reminder", "sub": "Evening nudge at 8:00 PM", "status": "On", "url": "/settings/" },
+        { "label": "Notifications", "sub": "Programme & session updates", "status": "Enabled", "url": "/notifications/" },
+        { "label": "Privacy & account data", "sub": "Export or delete your data", "status": "", "url": "/delete-account/" }
+      ]
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "title": "Preferences & Privacy",
+      "description": "Manage reminders, notifications, and your account data."
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

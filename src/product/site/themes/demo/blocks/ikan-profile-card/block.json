@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/profile-card",
+  "version": "1.0.0",
+  "title": "iKAN Profile Card",
+  "category": "ikan",
+  "description": "User profile card matching ikan2 profile screen — avatar/initials, name, contact/city details, bio, and edit link. Can auto-load current WP user.",
+  "keywords": ["profile", "user", "account", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "useCurrentUser": {
+      "type": "boolean",
+      "default": true
+    },
+    "name": {
+      "type": "string",
+      "default": "Member"
+    },
+    "email": {
+      "type": "string",
+      "default": ""
+    },
+    "city": {
+      "type": "string",
+      "default": ""
+    },
+    "bio": {
+      "type": "string",
+      "default": ""
+    },
+    "avatarUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "editLabel": {
+      "type": "string",
+      "default": "Edit profile"
+    },
+    "editUrl": {
+      "type": "string",
+      "default": "/profile/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "useCurrentUser": false,
+      "name": "Kartik Choudhary",
+      "email": "kartik@example.com",
+      "city": "Bengaluru",
+      "bio": "Focusing on sleep consistency and stress recovery.",
+      "editUrl": "/profile/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/summary-card",
+  "version": "1.0.0",
+  "title": "iKAN Summary Card",
+  "category": "ikan",
+  "description": "Wellness / assessment / programme summary card matching ikan2 ScorePage and result views.",
+  "keywords": ["summary", "wellness", "score", "result", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "eyebrow": {
+      "type": "string",
+      "default": "iKAN Score"
+    },
+    "score": {
+      "type": "string",
+      "default": "74"
+    },
+    "scoreMax": {
+      "type": "string",
+      "default": "100"
+    },
+    "bandLabel": {
+      "type": "string",
+      "default": "Steady"
+    },
+    "summary": {
+      "type": "string",
+      "default": "One number over everything you have logged across assessments, check-ins, and programmes."
+    },
+    "deltaText": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaLabel": {
+      "type": "string",
+      "default": "View breakdown"
+    },
+    "ctaUrl": {
+      "type": "string",
+      "default": "/wellness/"
+    },
+    "variant": {
+      "type": "string",
+      "default": "dark",
+      "description": "dark | light"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "eyebrow": "iKAN Score",
+      "score": "74",
+      "scoreMax": "100",
+      "bandLabel": "Steady",
+      "summary": "Up 4 points from last week based on 5 check-ins and 1 assessment.",
+      "deltaText": "+4 this week",
+      "ctaLabel": "View breakdown",
+      "ctaUrl": "/wellness/",
+      "variant": "dark"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}
