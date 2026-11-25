@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ikan_FluentCRM_Templates {
 
-	const TEMPLATE_VERSION = '1.1.0';
+	const TEMPLATE_VERSION = '1.2.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
 
 	/**
@@ -281,6 +281,108 @@ class Ikan_FluentCRM_Templates {
 						'cta_label'   => 'Review in wp-admin',
 						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
 						'footer_note' => 'Sent from noreply@ikanhealth.in via iKAN Health.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-auth-verify-email',
+				'title'   => 'iKAN Auth — Verify Email',
+				'subject' => 'Confirm your iKAN email address',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#DAF6E9',
+						'badge_color' => '#0C6B4D',
+						'badge_label' => 'Verify email',
+						'heading'     => 'Confirm your email, {{contact.first_name}}',
+						'intro'       => 'Tap the button below to verify your email address and finish setting up your iKAN account.',
+						'facts'       => array(
+							array( 'Account email', '{{contact.email}}' ),
+							array( 'Verification code', '{{contact.custom.otp_code}}' ),
+						),
+						'cta_label'   => 'Verify email',
+						'cta_url'     => '{{contact.custom.auth_action_url}}',
+						'footer_note' => 'Sent from noreply@ikanhealth.in. If you did not create an iKAN account, you can ignore this email.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-auth-reset-password',
+				'title'   => 'iKAN Auth — Reset Password',
+				'subject' => 'Reset your iKAN password',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#FBF0DC',
+						'badge_color' => '#8A5A00',
+						'badge_label' => 'Password reset',
+						'heading'     => 'Reset your password',
+						'intro'       => 'We received a request to reset the password for your iKAN account. Use the link below to choose a new password.',
+						'facts'       => array(
+							array( 'Account email', '{{contact.email}}' ),
+						),
+						'cta_label'   => 'Reset password',
+						'cta_url'     => '{{contact.custom.auth_action_url}}',
+						'footer_note' => 'Sent from noreply@ikanhealth.in. If you did not request a password reset, you can safely ignore this email.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-auth-account-deleted',
+				'title'   => 'iKAN Auth — Account Deleted',
+				'subject' => 'Your iKAN account has been deleted',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#FBE6E4',
+						'badge_color' => '#A83E38',
+						'badge_label' => 'Account deleted',
+						'heading'     => 'Goodbye, {{contact.first_name}}',
+						'intro'       => 'Your iKAN account and personal data have been permanently deleted as requested.',
+						'facts'       => array(
+							array( 'Account email', '{{contact.email}}' ),
+						),
+						'footer_note' => 'Sent from noreply@ikanhealth.in via iKAN Health. You are always welcome back anytime.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-alert-contact-message',
+				'title'   => 'iKAN Alert — Contact Message',
+				'subject' => 'Contact message from {{contact.full_name}}',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#E8ECF8',
+						'badge_color' => '#455B9E',
+						'badge_label' => 'Contact message',
+						'heading'     => '{{contact.full_name}}',
+						'intro'       => 'Someone sent a message through the iKAN contact form.',
+						'facts'       => array(
+							array( 'Name', '{{contact.full_name}}' ),
+							array( 'Email', '{{contact.email}}' ),
+							array( 'Phone', '{{contact.phone}}' ),
+							array( 'Source', '{{contact.custom.utm_source}}' ),
+						),
+						'cta_label'   => 'Open wp-admin CRM',
+						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
+						'footer_note' => 'An automatic alert from iKAN via FluentCRM (noreply@ikanhealth.in).',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-alert-newsletter',
+				'title'   => 'iKAN Alert — Newsletter Sign-up',
+				'subject' => 'Newsletter sign-up: {{contact.email}}',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#DAF6E9',
+						'badge_color' => '#0C6B4D',
+						'badge_label' => 'Newsletter sign-up',
+						'heading'     => '{{contact.email}}',
+						'intro'       => 'A new subscriber joined the iKAN newsletter.',
+						'facts'       => array(
+							array( 'Email', '{{contact.email}}' ),
+							array( 'Name', '{{contact.full_name}}' ),
+							array( 'Source', '{{contact.custom.utm_source}}' ),
+						),
+						'footer_note' => 'An automatic alert from iKAN via FluentCRM (noreply@ikanhealth.in).',
 					)
 				),
 			),
