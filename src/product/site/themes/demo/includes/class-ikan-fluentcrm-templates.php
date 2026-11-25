@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ikan_FluentCRM_Templates {
 
-	const TEMPLATE_VERSION = '1.0.0';
+	const TEMPLATE_VERSION = '1.1.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
 
 	/**
@@ -209,6 +209,77 @@ class Ikan_FluentCRM_Templates {
 						),
 						'cta_label'   => 'Open iKAN',
 						'cta_url'     => 'https://app.ikanhealth.in',
+						'footer_note' => 'Sent from noreply@ikanhealth.in via iKAN Health.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-member-self-result',
+				'title'   => 'iKAN Member — My Assessment Result',
+				'subject' => 'Your {{contact.custom.latest_assessment_slug}} result from iKAN',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#E8ECF8',
+						'badge_color' => '#455B9E',
+						'badge_label' => 'Your result',
+						'heading'     => 'Hi {{contact.first_name}}, here is your assessment summary',
+						'intro'       => 'You requested a copy of your latest screening result for your personal records.',
+						'facts'       => array(
+							array( 'Assessment', '{{contact.custom.latest_assessment_slug}}' ),
+							array( 'Score', '{{contact.custom.latest_assessment_score}}' ),
+							array( 'Result band', '{{contact.custom.latest_assessment_severity}}' ),
+							array( 'Completed on', '{{contact.custom.last_assessment_at}}' ),
+						),
+						'cta_label'   => 'View in iKAN',
+						'cta_url'     => 'https://app.ikanhealth.in/history/assessments',
+						'footer_note' => 'Sent at your request from noreply@ikanhealth.in. This is a screening summary, not a medical diagnosis.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-burnout-calculator',
+				'title'   => 'iKAN — Burnout Cost Calculator',
+				'subject' => 'Burnout Cost Calculator enquiry: {{contact.full_name}}',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#FBF0DC',
+						'badge_color' => '#8A5A00',
+						'badge_label' => 'Burnout calculator',
+						'heading'     => '{{contact.full_name}}',
+						'intro'       => 'A burnout cost calculator submission or pilot enquiry was received.',
+						'facts'       => array(
+							array( 'Name', '{{contact.full_name}}' ),
+							array( 'Email', '{{contact.email}}' ),
+							array( 'Phone', '{{contact.phone}}' ),
+							array( 'City', '{{contact.city}}' ),
+							array( 'Source', '{{contact.custom.utm_source}}' ),
+						),
+						'cta_label'   => 'Open Burnout Calculator',
+						'cta_url'     => 'https://ikanhealth.in/burnout-cost-calculator/',
+						'footer_note' => 'Sent from noreply@ikanhealth.in via iKAN Health.',
+					)
+				),
+			),
+			array(
+				'slug'    => 'ikan-join-professional',
+				'title'   => 'iKAN — Join Professional Application',
+				'subject' => 'Partner application: {{contact.full_name}}',
+				'html'    => self::render_shell(
+					array(
+						'badge_bg'    => '#DFF3EE',
+						'badge_color' => '#356B5A',
+						'badge_label' => 'Join professional',
+						'heading'     => '{{contact.full_name}}',
+						'intro'       => 'A mental health professional applied to join the iKAN network.',
+						'facts'       => array(
+							array( 'Name', '{{contact.full_name}}' ),
+							array( 'Email', '{{contact.email}}' ),
+							array( 'Phone', '{{contact.phone}}' ),
+							array( 'City', '{{contact.city}}' ),
+							array( 'Notes / Bio', '{{contact.custom.bio}}' ),
+						),
+						'cta_label'   => 'Review in wp-admin',
+						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
 						'footer_note' => 'Sent from noreply@ikanhealth.in via iKAN Health.',
 					)
 				),
