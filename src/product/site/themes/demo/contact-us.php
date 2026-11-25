@@ -3,7 +3,7 @@
  * Template Name: Contact Us
  * Template Post Type: page
  * Description: Authentic iKAN Health Contact page
- * 1:1 parity with src/product/site/pages/ContactUs.tsx
+ * 1:1 parity with src/product/site/pages/ContactUs.tsx & iKAN 2 Design Tokens
  *
  * @package iKAN_Health
  */
@@ -32,6 +32,9 @@ get_header();
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               Call iCALL - 9152987821
             </a>
+            <a href="<?php echo esc_url( home_url( '/faq' ) ); ?>" class="contact-crisis__button contact-crisis__button--secondary">
+              More helplines
+            </a>
           </div>
         </div>
       </aside>
@@ -54,60 +57,84 @@ get_header();
 
       <!-- Contact Form Section -->
       <section class="contact-form-section">
-        <h2 class="contact-form__title font-display text-2xl font-semibold text-foreground">Send us a Message</h2>
-        <p class="contact-form__subtitle text-sm text-muted-foreground mt-1 mb-6">We typically respond within 24 hours during business days.</p>
+        <h2 class="contact-form__title">Send us a Message</h2>
+        <p class="contact-form__subtitle">We typically respond within 24 hours during business days.</p>
 
-        <form id="contact-form" class="space-y-4 max-w-xl" onsubmit="event.preventDefault(); alert('Thank you for reaching out. We will get back to you shortly.'); this.reset();">
-          <div>
-            <label for="contact-name" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Your Name</label>
+        <form id="contact-form" class="contact-form" onsubmit="event.preventDefault(); document.getElementById('contact-form-success').style.display='block'; this.style.display='none';">
+          <label class="contact-field">
+            <span>Name</span>
             <input
               type="text"
               id="contact-name"
               name="name"
               required
+              autocomplete="name"
+              maxlength="60"
               placeholder="Your full name"
-              class="w-full h-11 px-4 rounded-[12px] border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-teal,#2B634D)]"
             />
-          </div>
-          <div>
-            <label for="contact-email" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Email Address</label>
+          </label>
+          <label class="contact-field">
+            <span>Email</span>
             <input
               type="email"
               id="contact-email"
               name="email"
               required
+              autocomplete="email"
+              maxlength="254"
               placeholder="you@example.com"
-              class="w-full h-11 px-4 rounded-[12px] border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-teal,#2B634D)]"
             />
-          </div>
-          <div>
-            <label for="contact-subject" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Subject</label>
+          </label>
+          <label class="contact-field contact-field--wide">
+            <span>Subject (optional)</span>
             <input
               type="text"
               id="contact-subject"
               name="subject"
+              maxlength="120"
               placeholder="How can we help?"
-              class="w-full h-11 px-4 rounded-[12px] border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-teal,#2B634D)]"
             />
-          </div>
-          <div>
-            <label for="contact-message" class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Message</label>
+          </label>
+          <label class="contact-field contact-field--wide">
+            <span style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span>Message</span>
+              <span id="msg-counter" class="text-xs text-muted-foreground" style="font-variant-numeric: tabular-nums;">0/2000</span>
+            </span>
             <textarea
               id="contact-message"
               name="message"
-              rows="4"
+              rows="5"
+              maxlength="2000"
               required
-              placeholder="Tell us what's on your mind..."
-              class="w-full p-4 rounded-[12px] border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-teal,#2B634D)]"
+              placeholder="Write a little more so we can help..."
+              oninput="document.getElementById('msg-counter').textContent = this.value.length + '/2000'"
             ></textarea>
-          </div>
+          </label>
           <button
             type="submit"
-            class="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-background text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer"
+            class="info-button"
           >
-            Send Message
+            Send message
           </button>
         </form>
+
+        <div id="contact-form-success" class="contact-sent" style="display: none;" role="status">
+          <p style="font-weight: 600; margin: 0 0 4px 0;">Message sent.</p>
+          <p style="margin: 0; color: var(--muted-foreground);">We’ll reply within 24 hours to the email address you provided.</p>
+        </div>
+      </section>
+
+      <!-- FAQ Teaser Card -->
+      <section class="contact-faq">
+        <p class="contact-faq__title">Looking for Quick Answers?</p>
+        <p class="contact-faq__body">Check our FAQ section for instant answers to common questions about our programs, therapists, and platform.</p>
+        <a
+          href="<?php echo esc_url( home_url( '/faq' ) ); ?>"
+          class="info-button"
+          style="text-decoration: none; display: inline-flex;"
+        >
+          Visit FAQ Section
+        </a>
       </section>
 
     </div>

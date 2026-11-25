@@ -2452,4 +2452,49 @@ details.group > summary::after {
   margin-bottom: 0.5rem;
 }
 
+/* ══ RESPONSIVE H1 & DISPLAY HEADING SYSTEM (iKAN 2 PARITY) ══════════════ */
+/*
+ * Responsive scale:
+ * Desktop (≥1024px): 42px - 52px (clamp) / line-height: 1.15
+ * Tablet  (640-1023px): 34px - 38px
+ * Mobile  (<640px): 26px - 32px
+ */
+.info-title,
+.ikan2-theme h1:not(.calc-print__title) {
+  font-family: var(--font-display, 'Sora', sans-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  font-size: clamp(28px, 4.5vw, 42px);
+  line-height: 1.15;
+}
+
+@media (min-width: 1024px) {
+  .info-title,
+  .ikan2-theme h1:not(.calc-print__title) {
+    font-size: 42px;
+    line-height: 48px;
+  }
+}
+
+@media (max-width: 639px) {
+  .info-title,
+  .ikan2-theme h1:not(.calc-print__title) {
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Secondary crisis button outline */
+.contact-crisis__button--secondary {
+  background: transparent !important;
+  color: var(--on-error-container) !important;
+  border: 1px solid currentColor !important;
+}
+.contact-crisis__button--secondary:hover {
+  background: color-mix(in oklab, var(--on-error-container) 12%, transparent) !important;
+}
+
+
 
