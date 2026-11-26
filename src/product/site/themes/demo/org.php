@@ -645,7 +645,7 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
 
     <div class="org-login__form">
       <a class="org-bar__brand" href="<?php echo esc_url( home_url( '/' ) ); ?>" style="margin-bottom: 24px;">
-        <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>" alt="" width="32" height="32">
+        <img src="<?php echo esc_url( get_theme_file_uri( 'assets/img/favicon.svg' ) ); ?>" alt="iKAN Health logo" width="32" height="32">
         iKAN
       </a>
 
