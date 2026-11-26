@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/consultant-card",
+  "version": "1.0.0",
+  "title": "iKAN Consultant Card",
+  "category": "ikan",
+  "description": "Consultant profile card matching ikan2 ConsultantCard — avatar/photo, credentials, rating, city, specialties, fee, next slot, and Book CTA.",
+  "keywords": ["consultant", "therapist", "psychologist", "book", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "name": {
+      "type": "string",
+      "default": "Dr. Ananya Rao"
+    },
+    "credentials": {
+      "type": "string",
+      "default": "M.Phil Clinical Psychology"
+    },
+    "role": {
+      "type": "string",
+      "default": "Clinical Psychologist"
+    },
+    "rating": {
+      "type": "string",
+      "default": "4.9"
+    },
+    "reviews": {
+      "type": "number",
+      "default": 42
+    },
+    "years": {
+      "type": "number",
+      "default": 8
+    },
+    "city": {
+      "type": "string",
+      "default": "Bengaluru"
+    },
+    "photoUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "specialties": {
+      "type": "array",
+      "default": ["Anxiety", "Burnout", "Sleep"]
+    },
+    "priceLabel": {
+      "type": "string",
+      "default": "₹1,200"
+    },
+    "nextSlot": {
+      "type": "string",
+      "default": "Today, 5:00 PM"
+    },
+    "recommended": {
+      "type": "boolean",
+      "default": false
+    },
+    "url": {
+      "type": "string",
+      "default": "/consult/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "name": "Dr. Ananya Rao",
+      "credentials": "M.Phil Clinical Psychology",
+      "role": "Clinical Psychologist",
+      "rating": "4.9",
+      "reviews": 42,
+      "years": 8,
+      "city": "Bengaluru",
+      "specialties": ["Anxiety", "Burnout", "Sleep"],
+      "priceLabel": "₹1,200",
+      "nextSlot": "Today, 5:00 PM",
+      "recommended": true,
+      "url": "/consult/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

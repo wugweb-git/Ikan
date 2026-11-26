@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/assessment-card",
+  "version": "1.0.0",
+  "title": "iKAN Assessment Card",
+  "category": "ikan",
+  "description": "Assessment card matching ikan2 AssessmentCard — icon badge, assessment name, title, question count, duration, and progress/status.",
+  "keywords": ["assessment", "screening", "card", "ikan", "quiz"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "slug": {
+      "type": "string",
+      "default": ""
+    },
+    "name": {
+      "type": "string",
+      "default": "PHQ-9"
+    },
+    "title": {
+      "type": "string",
+      "default": "Depression screening"
+    },
+    "questionCount": {
+      "type": "number",
+      "default": 9
+    },
+    "minutes": {
+      "type": "number",
+      "default": 3
+    },
+    "statusText": {
+      "type": "string",
+      "default": ""
+    },
+    "accent": {
+      "type": "string",
+      "default": "mind",
+      "description": "mind | sleep | stress | calm"
+    },
+    "url": {
+      "type": "string",
+      "default": "/assessments/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "name": "GAD-7",
+      "title": "Anxiety screening",
+      "questionCount": 7,
+      "minutes": 2,
+      "url": "/assessments/gad-7/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

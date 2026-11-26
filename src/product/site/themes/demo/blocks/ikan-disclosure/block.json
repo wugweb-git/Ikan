@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/disclosure",
+  "version": "1.0.0",
+  "title": "iKAN Disclosure (FAQ Item)",
+  "category": "ikan",
+  "description": "Collapsible question-answer item matching ikan2 Disclosure/DisclosureGroup component. Use inside a Group block to build FAQ sections.",
+  "keywords": ["faq", "accordion", "disclosure", "ikan", "question"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "question": {
+      "type": "string",
+      "default": "Question"
+    },
+    "answer": {
+      "type": "string",
+      "default": ""
+    },
+    "open": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to render the disclosure pre-expanded"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "question": "How does iKAN protect my privacy?",
+      "answer": "All clinical data is encrypted at rest and in transit. Only your care team can access your session notes."
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

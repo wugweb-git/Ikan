@@ -133,9 +133,16 @@ foreach ( $resources as $r ) {
         }
     }
 
-    // RankMath Meta
+    // RankMath Meta (SEO title, description, focus keyword + secondary keywords)
     update_post_meta( $post_id, 'rank_math_title', $title . ' | iKAN Health' );
     update_post_meta( $post_id, 'rank_math_description', $desc );
+    $focus_kw = trim( implode( ', ', array_filter( [
+        strtolower( $title ),
+        ! empty( $r['category'] ) ? strtolower( $r['category'] ) : '',
+        'mental health India',
+        'iKAN Health',
+    ] ) ) );
+    update_post_meta( $post_id, 'rank_math_focus_keyword', $focus_kw );
 
     // Cover Image attachment
     // Match cover file in covers_dir
@@ -169,6 +176,7 @@ foreach ( $resources as $r ) {
                 $attach_id = wp_insert_attachment( $attachment, $upload_file['file'], $post_id );
                 $attach_data = wp_generate_attachment_metadata( $attach_id, $upload_file['file'] );
                 wp_update_attachment_metadata( $attach_id, $attach_data );
+                update_post_meta( $attach_id, '_wp_attachment_image_alt', $title . ' — iKAN Health' );
                 set_post_thumbnail( $post_id, $attach_id );
                 WP_CLI::line( "  -> Attached featured image: {$filename}" );
             }

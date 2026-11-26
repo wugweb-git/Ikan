@@ -2,12 +2,22 @@
 
 Single source of truth for outstanding work across sessions. Update this file whenever a deployment or major change completes — see [`docs/GOVERNANCE.md`](GOVERNANCE.md).
 
-*Last updated: 2026-11-24*
+*Last updated: 2026-11-26*
 
 ---
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [x] **Google Play Store Submission (`ikan2` / `com.ikan.wugweb`)**:
+  - Signed release AAB built with upload keystore (`/Users/abcom/ikan-upload.jks`): `ikan-health-release-v1.0.4.aab` (`versionCode 5`, `versionName 1.0.4`).
+  - Google Play Store screenshots generated at 1080×2400 portrait and uploaded.
+  - Policy Status / Privacy Policy resolution: Rank Math 301 redirection active on Hostinger (`/legal/privacy-policy` -> `/privacy-policy/`), `ikan2` route `/privacy-policy` active, and `PermissionsRationaleActivity.kt` updated.
+  - Release submitted for review on Google Play Console's Publishing Overview.
+
+- [ ] **VAPID public key for web push (needs Vedanshu)**: `ikan2-push` reads `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` only from Supabase secrets; the key is in no source file and `supabase secrets list` shows a digest, not the value. Supply it from wherever it was generated, or authorise regenerating the pair (this invalidates every existing push subscription).
+- [ ] **Deferred until after the UX pass (React app)**: native capabilities (Capacitor: share, camera, mic, calendar, Health Connect), a `reminder` activity block (frozen catalog id `cat-activity-reminder`, admin editor panel, renderer), digital-wellness incl. a screen-time feasibility spike, and the open question of making consent an interaction. Plan: `/Users/abcom/.claude/plans/velvety-wondering-perlis.md`.
+- [ ] **Design-system / a11y audit: 11 of 12 items open** (brand-hue `-text` call-site sweep, `--color-text-primary` in `.dark`, render-completeness test, 28 rogue font weights, radius-scale collision, axe in CI, `InputTable` consolidation, BlockShell split, block-vocabulary doc reconciliation, unreachable block types, dual mobile/desktop trees). Dashboard keyboard fix (#20) still needs a manual keyboard pass on live `/dashboard`.
+- [ ] **Remaining mobile screens**: auth-signup reshape, more/profile/settings reshape, `/notifications`, `/content` archive. **Effort B** (admin/product/shared restructure, prompts A–E + edge `_shared`) not started; needs an explicit go-ahead.
 - [ ] **GitHub `main` is now a single commit (`a1d51aa0`, "Add Rank Math SEO bulk fix script", 23 Nov)** with no shared history; the full site history is on `wordpress`. `scripts/deploy-guard.sh` requires `main`, so `scripts/deploy-prod.sh` would build `fix-seo.php` alone. Vedanshu to decide: restore `main` from `wordpress` (last good main was `d2dd473f`), or point the deploy script at `wordpress`.
 - [ ] **Burnout calculator follow-ups**: mark GA4 key events (`calc_contact_click`, pilot submit); agree the email alert inbox, sender and triggers for calculator leads; Notion build page not yet updated for v2.1. The stray Vercel project `ikan-partner-table` is kept on purpose (Vedanshu said no to deleting it).
 - [ ] **Local `~/.zshrc` (Vedanshu's Mac, not the repo)**: down to 2 lines, so `GEMINI_API_KEY` is unset in new shells. Restore with `cp ~/.zshrc.bak-20261119 ~/.zshrc`. Rotate the Gemini key; it was exposed once.

@@ -184,6 +184,12 @@
     <div class="flex flex-col min-h-[100dvh] bg-background font-sans antialiased text-foreground">
       <a href="#main-content" class="skip-to-main" style="position: absolute; left: -9999px; z-index: 9999; padding: var(--spacing-2) var(--spacing-4); background-color: var(--color-primary-default); color: var(--color-primary-on); border-radius: var(--radius-sm); font-weight: var(--font-weight-medium); text-decoration: none;">Skip to main content</a>
       
+      <?php
+      // All public marketing pages show the Desktop Capsule Nav and Mobile Capsule Nav.
+      // App shell suppression is only if explicitly requested via $GLOBALS['ikan_app_shell'].
+      $is_app_shell = ! empty( $GLOBALS['ikan_app_shell'] );
+      ?>
+      <?php if ( ! $is_app_shell ) : ?>
       <!-- Desktop Capsule Nav -->
       <header class="ikan2-theme nav-fixed-wrapper hidden lg:flex" role="banner">
         <nav class="ikan-capsule-nav px-[16px] py-[12px] m-[0px]" aria-label="Primary navigation" style="border-radius: 9999px;">
@@ -303,3 +309,4 @@
           </div>
         </div>
       </nav>
+      <?php endif; ?>

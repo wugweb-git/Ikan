@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/equip-card",
+  "version": "1.0.0",
+  "title": "iKAN Equip Programme Card",
+  "category": "ikan",
+  "description": "Equip programme card matching ikan2 ProgrammeCard — cover image, title, description, duration/level or progress bar.",
+  "keywords": ["equip", "program", "programme", "card", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "slug": {
+      "type": "string",
+      "default": ""
+    },
+    "name": {
+      "type": "string",
+      "default": "Sleep Tight"
+    },
+    "description": {
+      "type": "string",
+      "default": "Build steadier sleep habits in 10 short daily sessions."
+    },
+    "totalDays": {
+      "type": "number",
+      "default": 10
+    },
+    "completedDays": {
+      "type": "number",
+      "default": 0
+    },
+    "level": {
+      "type": "string",
+      "default": "Beginner"
+    },
+    "coverUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "coverId": {
+      "type": "number",
+      "default": 0
+    },
+    "accent": {
+      "type": "string",
+      "default": "calm"
+    },
+    "url": {
+      "type": "string",
+      "default": "/equip-programs/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "name": "Sleep Tight",
+      "description": "Build steadier sleep habits in 10 short daily sessions.",
+      "totalDays": 10,
+      "completedDays": 3,
+      "level": "Beginner",
+      "url": "/program/sleep-tight/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

@@ -34,6 +34,9 @@ add_action( 'after_setup_theme', 'demo_theme_features' );
 // Load Hostinger Mail Integration & PHP SDK
 require_once get_template_directory() . '/includes/class-hostinger-mail.php';
 
+// Load iKAN Transactional Mailer & Clinical Alert Engine
+require_once get_template_directory() . '/includes/class-ikan-mailer.php';
+
 // Load iKAN Database Schema Manager (Tables: Assessments, Programs, Journals, Wellness)
 require_once get_template_directory() . '/includes/class-ikan-db-schema.php';
 
@@ -49,6 +52,15 @@ require_once get_template_directory() . '/includes/class-ikan-design-admin.php';
 
 // Load Autonomous Interim DB Background Sync Worker (Action Scheduler)
 require_once get_template_directory() . '/includes/class-ikan-interim-sync.php';
+
+// Load FluentCRM Custom Contact Fields & Sync Helper
+require_once get_template_directory() . '/includes/class-ikan-fluentcrm-fields.php';
+
+// Load FluentCRM Branded Email Templates One-Time Push
+require_once get_template_directory() . '/includes/class-ikan-fluentcrm-templates.php';
+
+// Load Rank Math SEO & Google Site Kit / GTM Event Mapping
+require_once get_template_directory() . '/includes/class-ikan-seo-analytics.php';
 
 // Enqueue Block Editor Assets (Fonts & Design System for Gutenberg)
 add_action( 'enqueue_block_editor_assets', function() {
@@ -69,7 +81,7 @@ function demo_enqueue_styles() {
   wp_enqueue_script( 'lucide-js', 'https://unpkg.com/lucide@latest/dist/umd/lucide.js', [], null, true );
   
   // Theme stylesheet with iKAN design system
-  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.3' );
+  wp_enqueue_style( 'demo-style', get_stylesheet_uri(), [ 'demo-tailwind', 'demo-app' ], '1.0.7' );
 
   // Pass AJAX URL and Nonce to frontend scripts
   wp_localize_script( 'lucide-js', 'ikanAjax', [
@@ -78,6 +90,51 @@ function demo_enqueue_styles() {
   ] );
 }
 add_action( 'wp_enqueue_scripts', 'demo_enqueue_styles' );
+
+// ── iKAN Custom Gutenberg Blocks ──────────────────────────────────────────────
+// Registers all server-side rendered blocks defined in /blocks/ikan-*/block.json
+// Source of truth for block attributes: block.json; HTML output: render.php
+add_action( 'init', function() {
+	$blocks = [
+		'ikan-hero',
+		'ikan-disclosure',
+		'ikan-resource-card',
+		'ikan-assessment-card',
+		'ikan-equip-card',
+		'ikan-dashboard-card',
+		'ikan-profile-card',
+		'ikan-summary-card',
+		'ikan-settings-card',
+		'ikan-mood-journal-card',
+		'ikan-consultant-card',
+		'ikan-support-card',
+		'ikan-cta-banner',
+		'ikan-header',
+		'ikan-footer',
+		'ikan-bottom-nav',
+	];
+	foreach ( $blocks as $block_name ) {
+		$block_dir = get_template_directory() . '/blocks/' . $block_name;
+		if ( is_dir( $block_dir ) ) {
+			register_block_type( $block_dir );
+		}
+	}
+} );
+
+// Register 'iKAN' block category so our blocks appear together in the inserter
+add_filter( 'block_categories_all', function( $categories ) {
+	array_unshift( $categories, [
+		'slug'  => 'ikan',
+		'title' => 'iKAN Health',
+		'icon'  => null,
+	] );
+	return $categories;
+} );
+
+// Disclosure block: add minimal CSS for the chevron rotate animation
+add_action( 'wp_head', function() {
+	echo '<style>details.disclosure-item summary::-webkit-details-marker{display:none}details.disclosure-item[open] .disclosure-chevron svg{transform:rotate(180deg)}details.disclosure-item .disclosure-chevron svg{transition:transform .2s ease}</style>' . "\n";
+} );
 
 // Custom sidebar support
 function demo_register_sidebars() {
@@ -1280,8 +1337,12 @@ add_action( 'init', function() {
   add_rewrite_rule( '^program/?$', 'index.php?ikan_program_page=1', 'top' );
   // Parity with ikan2: /resources/<slug> -> Single resource post
   add_rewrite_rule( '^resources/([^/]+)/?$', 'index.php?name=$matches[1]', 'top' );
+  // Parity with ikan2 & vercel URLs: /about -> About page
+  add_rewrite_rule( '^about/?$', 'index.php?ikan_about_page=1', 'top' );
   // Parity with ikan2 & vercel URLs: /contact -> Contact Us page
   add_rewrite_rule( '^contact/?$', 'index.php?ikan_contact_page=1', 'top' );
+  // Parity with ikan2: /resource -> Resources library
+  add_rewrite_rule( '^resource/?$', 'index.php?ikan_resources_page=1', 'top' );
   // Parity with ikan2: /terms -> Terms of Service
   add_rewrite_rule( '^terms/?$', 'index.php?ikan_legal_page=terms', 'top' );
   // Parity with ikan2: /privacy -> Privacy Policy
@@ -1324,7 +1385,9 @@ add_filter( 'post_link', function( $permalink, $post ) {
 add_filter( 'query_vars', function( $vars ) {
   $vars[] = 'ikan_portal';
   $vars[] = 'ikan_program_page';
+  $vars[] = 'ikan_about_page';
   $vars[] = 'ikan_contact_page';
+  $vars[] = 'ikan_resources_page';
   $vars[] = 'ikan_legal_page';
   return $vars;
 } );
@@ -1340,6 +1403,14 @@ add_action( 'template_redirect', function() {
     } else {
       wp_safe_redirect( wp_login_url( admin_url() ) );
     }
+    exit;
+  }
+  if ( get_query_var( 'ikan_about_page' ) ) {
+    locate_template( 'about-us.php', true );
+    exit;
+  }
+  if ( get_query_var( 'ikan_resources_page' ) ) {
+    locate_template( 'resources.php', true );
     exit;
   }
   if ( get_query_var( 'ikan_contact_page' ) ) {

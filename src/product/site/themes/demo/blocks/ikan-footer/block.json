@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/footer",
+  "version": "1.0.0",
+  "title": "iKAN Footer (5-Column)",
+  "category": "ikan",
+  "description": "Authentic iKAN 5-column responsive site footer with brand blurb, social links, legal disclaimer, and policy links.",
+  "keywords": ["footer", "social", "copyright", "disclaimer", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "year": {
+      "type": "string",
+      "default": "2026"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["full"]
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

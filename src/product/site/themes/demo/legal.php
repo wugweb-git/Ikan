@@ -1,129 +1,102 @@
 <?php
 /**
- * Template Name: Legal Page
+ * Template Name: Legal Policy
  * Template Post Type: page
- * Description: Exact 1:1 replica of iKAN 2 PWA Legal layout (ikan2/src/routes/legal.$slug.tsx)
- *
- * Matches InfoShell wide container, horizontal tab bar, font-display heading,
- * and prose-ikan body styling across Terms, Privacy Policy, Cancellation Policy, and Return Policy.
+ * Description: Authentic iKAN Health Legal / Policies page (Terms, Privacy, Return, Cancellation)
+ * 1:1 parity with src/product/site/pages/LegalPage.tsx
  *
  * @package iKAN_Health
  */
 
 get_header();
 
-// Determine current slug
-$slug = get_query_var( 'legal_slug' );
-if ( empty( $slug ) ) {
-  $raw_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
-  $path = preg_replace( '#^legal/#', '', $raw_path );
-
-  if ( in_array( $path, [ 'privacy-policy', 'privacy' ], true ) ) {
-    $slug = 'privacy-policy';
-  } elseif ( in_array( $path, [ 'terms-of-use', 'terms-of-service', 'terms' ], true ) ) {
-    $slug = 'terms';
-  } elseif ( in_array( $path, [ 'cancellation-policy', 'cancellation' ], true ) ) {
-    $slug = 'cancellation-policy';
-  } elseif ( in_array( $path, [ 'return-policy', 'refund-policy', 'refund' ], true ) ) {
-    $slug = 'return-policy';
+// Determine current slug from query var or page slug
+$query_slug = get_query_var( 'ikan_legal_slug' );
+if ( ! $query_slug ) {
+  $post_name = get_post_field( 'post_name', get_the_ID() );
+  if ( strpos( $post_name, 'privacy' ) !== false ) {
+    $query_slug = 'privacy-policy';
+  } elseif ( strpos( $post_name, 'cancel' ) !== false ) {
+    $query_slug = 'cancellation-policy';
+  } elseif ( strpos( $post_name, 'return' ) !== false ) {
+    $query_slug = 'return-policy';
   } else {
-    $slug = 'terms';
+    $query_slug = 'terms';
   }
 }
 
-// Canonical slug normalization
-if ( $slug === 'privacy' ) $slug = 'privacy-policy';
-if ( $slug === 'terms-of-use' || $slug === 'terms-of-service' ) $slug = 'terms';
-if ( $slug === 'refund-policy' || $slug === 'refund' ) $slug = 'return-policy';
-
-// Load canonical legal content from assets/pages.json (byte-identical to ikan2)
-$pages_file = get_template_directory() . '/assets/pages.json';
-$pages_data = [];
-if ( file_exists( $pages_file ) ) {
-  $pages_data = json_decode( file_get_contents( $pages_file ), true ) ?: [];
-}
-
-$legal_pages = $pages_data['legal'] ?? [];
-$legal_order = [ 'terms', 'privacy-policy', 'cancellation-policy', 'return-policy' ];
-
-// Fallback if slug not found
-$page = $legal_pages[ $slug ] ?? ( $legal_pages['terms'] ?? [] );
-
-$page_title    = $page['title'] ?? 'Terms of Service';
-$page_subtitle = $page['subtitle'] ?? '';
-$page_html     = $page['html'] ?? '';
-
-// Fallback to post content if html is empty
-if ( empty( $page_html ) ) {
-  $page_html = apply_filters( 'the_content', get_the_content() );
-}
-
-// Route mapping for tabs matching ikan2
-$tab_routes = [
-  'terms'               => home_url( '/terms' ),
-  'privacy-policy'      => home_url( '/privacy-policy' ),
-  'cancellation-policy' => home_url( '/cancellation-policy' ),
-  'return-policy'       => home_url( '/return-policy' ),
+// Policies mapping
+$policies = [
+  'terms' => [
+    'title'    => 'Terms of Service',
+    'subtitle' => 'Important legal terms governing your use of iKan\'s mental health platform and services.',
+    'url'      => home_url( '/terms-of-use' ),
+  ],
+  'privacy-policy' => [
+    'title'    => 'Privacy Policy',
+    'subtitle' => 'How we collect, use, and protect your personal information and health data.',
+    'url'      => home_url( '/privacy-policy' ),
+  ],
+  'cancellation-policy' => [
+    'title'    => 'Cancellation Policy',
+    'subtitle' => 'Guidelines for booking, rescheduling, and cancelling appointments and services.',
+    'url'      => home_url( '/cancellation-policy' ),
+  ],
+  'return-policy' => [
+    'title'    => 'Return Policy',
+    'subtitle' => 'Our policy regarding refunds, satisfaction guarantees, and digital product returns.',
+    'url'      => home_url( '/return-policy' ),
+  ],
 ];
+
+$active_key = isset( $policies[ $query_slug ] ) ? $query_slug : 'terms';
+$current_policy = $policies[ $active_key ];
+
+// Clean post content from WordPress
+$content = '';
+if ( have_posts() ) {
+  while ( have_posts() ) {
+    the_post();
+    $content = get_the_content();
+  }
+}
+
+if ( empty( $content ) ) {
+  // Fallback to static legal content
+  $content = '<h3>1. Agreement to Terms</h3><p>By accessing or using the iKAN Health platform, you agree to be bound by these terms and conditions.</p><h3>2. Scope of Services</h3><p>iKAN Health provides evidence-based mental wellbeing tools, self-guided programs, professional consultations, and assessments. Our services do not constitute emergency medical care.</p><h3>3. Privacy & Confidentiality</h3><p>Your wellbeing data is held under strict confidentiality standards in compliance with applicable health data laws in India.</p>';
+}
+
+// Strip hardcoded Tailwind classes that fight .prose-ikan
+$clean_html = preg_replace( '/\sclass="[^"]*"/', '', $content );
 ?>
 
-<main class="site-page-below-nav w-full flex-1 pt-16 sm:pt-20 pb-24 bg-canvas text-foreground ikan2-theme ikan2-type">
-  <div class="mx-auto min-h-dvh w-full bg-background pb-12 shadow-app max-w-read">
-    
-    <!-- Top Bar with Back Button -->
-    <div class="flex items-center h-14 px-3">
-      <a
-        href="<?php echo esc_url( home_url( '/' ) ); ?>"
-        aria-label="Back"
-        class="grid h-12 w-12 place-items-center rounded-full text-foreground hover:bg-foreground/5 transition-colors"
-      >
-        <i data-lucide="arrow-left" class="h-6 w-6"></i>
-      </a>
+<div class="ikan2-theme info-page site-page-below-nav">
+  <section class="info-band">
+    <div class="info-band__inner">
+      <p class="info-eyebrow">Legal</p>
+      <h1 class="info-title"><?php echo esc_html( $current_policy['title'] ); ?></h1>
+      <p class="info-subtitle"><?php echo esc_html( $current_policy['subtitle'] ); ?></p>
+
+      <!-- 4-Policy Tab Switcher -->
+      <nav class="info-tabs" aria-label="Policies">
+        <?php foreach ( $policies as $slug => $p ) : ?>
+          <a
+            href="<?php echo esc_url( $p['url'] ); ?>"
+            class="info-tab no-underline"
+            <?php if ( $slug === $active_key ) echo 'aria-current="page"'; ?>
+          >
+            <?php echo esc_html( $p['title'] ); ?>
+          </a>
+        <?php endforeach; ?>
+      </nav>
+
+      <!-- Policy Body -->
+      <div class="prose-ikan info-prose mt-8">
+        <?php echo wp_kses_post( $clean_html ); ?>
+      </div>
+
     </div>
-
-    <!-- Legal Tabs Switcher (matching ikan2 exactly) -->
-    <div
-      class="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-2"
-      role="navigation"
-      aria-label="Legal pages"
-    >
-      <?php foreach ( $legal_order as $s ) : 
-        $tab_info  = $legal_pages[ $s ] ?? [];
-        $is_active = ( $s === $slug );
-        $tab_url   = $tab_routes[ $s ] ?? home_url( '/' . $s );
-      ?>
-        <a
-          href="<?php echo esc_url( $tab_url ); ?>"
-          class="type-label-lg inline-flex h-9 shrink-0 items-center rounded-[8px] border px-3.5 font-medium transition-colors <?php echo $is_active ? 'border-transparent bg-foreground text-background' : 'border-foreground/20 text-foreground hover:bg-secondary'; ?>"
-        >
-          <?php echo esc_html( $tab_info['title'] ?? ucfirst( str_replace( '-', ' ', $s ) ) ); ?>
-        </a>
-      <?php endforeach; ?>
-    </div>
-
-    <!-- Header -->
-    <header class="px-5 pt-4">
-      <h1 class="font-display text-[30px] font-semibold leading-9 text-foreground"><?php echo esc_html( $page_title ); ?></h1>
-      <?php if ( ! empty( $page_subtitle ) ) : ?>
-        <p class="mt-2 text-[16px] leading-6 text-muted-foreground"><?php echo esc_html( $page_subtitle ); ?></p>
-      <?php endif; ?>
-    </header>
-
-    <!-- Legal Prose Content (prose-ikan: exact styling from ikan2) -->
-    <div class="prose-ikan mt-6 px-5">
-      <?php echo $page_html; ?>
-    </div>
-
-    <div class="h-8"></div>
-  </div>
-</main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.lucide && lucide.createIcons) {
-    lucide.createIcons();
-  }
-});
-</script>
+  </section>
+</div>
 
 <?php get_footer(); ?>

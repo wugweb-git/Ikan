@@ -928,37 +928,26 @@ Text Domain: demo
  * loads these same pages in a WebView, and an installed app should fill the
  * device like a native one rather than sit in a 36rem column.
  */
-@utility max-w-app {
-  max-width: 100%;
-  @media (min-width: 640px) {
-    max-width: 36rem;
-  }
-  @media (min-width: 1024px) {
-    max-width: 30rem;
-  }
-  @media (display-mode: standalone) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-  @media (display-mode: fullscreen) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-}
+/* @utility is Tailwind v4 compile-time only — browsers ignore it.
+ * These plain class rules are the browser-parseable equivalents.
+ * Keep the @utility blocks below for reference but add class selectors here. */
 
-@utility max-w-read {
-  max-width: 100%;
-  @media (min-width: 640px) {
-    max-width: 36rem;
-  }
-  @media (min-width: 1024px) {
-    max-width: 38rem;
-  }
-  @media (display-mode: standalone) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-  @media (display-mode: fullscreen) and (max-width: 1023px) {
-    max-width: 100%;
-  }
-}
+/* max-w-app: app column, 100% → 36rem → 30rem */
+.max-w-app { max-width: 100%; }
+@media (min-width: 640px)  { .max-w-app { max-width: 36rem; } }
+@media (min-width: 1024px) { .max-w-app { max-width: 30rem; } }
+@media (display-mode: standalone) and (max-width: 1023px) { .max-w-app { max-width: 100%; } }
+@media (display-mode: fullscreen)  and (max-width: 1023px) { .max-w-app { max-width: 100%; } }
+
+/* max-w-read: reading column, 100% → 36rem → 38rem */
+.max-w-read { max-width: 100%; }
+@media (min-width: 640px)  { .max-w-read { max-width: 36rem; } }
+@media (min-width: 1024px) { .max-w-read { max-width: 38rem; } }
+@media (display-mode: standalone) and (max-width: 1023px) { .max-w-read { max-width: 100%; } }
+@media (display-mode: fullscreen)  and (max-width: 1023px) { .max-w-read { max-width: 100%; } }
+
+/* bg-canvas: page canvas background — missing from compiled tailwind.css */
+.bg-canvas { background-color: var(--canvas, oklch(0.955 0.006 250)); }
 
 /* ─────────────────────────────────────────────────────────────────
  * iKAN 2 component utilities
@@ -2409,6 +2398,22 @@ p.wp-block-paragraph {
   padding-right: 2rem;
 }
 
+/* Global reset for native disclosure marker across all details/summary elements */
+details > summary::-webkit-details-marker,
+summary::-webkit-details-marker {
+  display: none !important;
+}
+details > summary {
+  list-style: none !important;
+}
+details > summary::marker {
+  display: none !important;
+}
+details.group > summary::after {
+  display: none !important;
+  content: none !important;
+}
+
 .wp-block-details summary::-webkit-details-marker {
   display: none;
 }
@@ -2446,5 +2451,100 @@ p.wp-block-paragraph {
 .wp-block-list li {
   margin-bottom: 0.5rem;
 }
+
+/* ══ RESPONSIVE H1 & DISPLAY HEADING SYSTEM (iKAN 2 PARITY) ══════════════ */
+/*
+ * Responsive scale:
+ * Desktop (≥1024px): 42px - 52px (clamp) / line-height: 1.15
+ * Tablet  (640-1023px): 34px - 38px
+ * Mobile  (<640px): 26px - 32px
+ */
+.info-title,
+.ikan2-theme h1:not(.calc-print__title) {
+  font-family: var(--font-display, 'Sora', sans-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  font-size: clamp(28px, 4.5vw, 42px);
+  line-height: 1.15;
+}
+
+@media (min-width: 1024px) {
+  .info-title,
+  .ikan2-theme h1:not(.calc-print__title) {
+    font-size: 42px;
+    line-height: 48px;
+  }
+}
+
+@media (max-width: 639px) {
+  .info-title,
+  .ikan2-theme h1:not(.calc-print__title) {
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Secondary crisis button outline */
+.contact-crisis__button--secondary {
+  background: transparent !important;
+  color: var(--on-error-container) !important;
+  border: 1px solid currentColor !important;
+}
+.contact-crisis__button--secondary:hover {
+  background: color-mix(in oklab, var(--on-error-container) 12%, transparent) !important;
+}
+
+/* ══ iKAN 2 BOTTOM DOCK NAVIGATION ══════════════════════════════════════ */
+.shadow-dock {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.ikan-bottom-dock-wrapper .grid-cols-5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+}
+
+.ikan-bottom-dock-wrapper .nav-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 0;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.ikan-bottom-dock-wrapper .nav-icon {
+  display: grid;
+  width: 44px;
+  height: 30px;
+  place-items: center;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.ikan-bottom-dock-wrapper .nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+
 
 

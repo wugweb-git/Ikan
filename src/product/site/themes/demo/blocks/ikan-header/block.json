@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/header",
+  "version": "1.0.0",
+  "title": "iKAN Header (Capsule Nav)",
+  "category": "ikan",
+  "description": "Authentic iKAN desktop capsule navigation and compact mobile top bar matching iKAN 2 design system.",
+  "keywords": ["header", "navigation", "navbar", "capsule", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "ctaText": {
+      "type": "string",
+      "default": "Let's Talk"
+    },
+    "ctaUrl": {
+      "type": "string",
+      "default": "/contact-us"
+    },
+    "signInUrl": {
+      "type": "string",
+      "default": "https://app.ikanhealth.in/login"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["full"]
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

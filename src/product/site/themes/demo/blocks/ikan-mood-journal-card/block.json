@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/mood-journal-card",
+  "version": "1.0.0",
+  "title": "iKAN Mood Journal Card",
+  "category": "ikan",
+  "description": "Mood check-in & journal card matching ikan2 MoodCheckinCard — 5-point mood scale and log CTA.",
+  "keywords": ["mood", "journal", "checkin", "check-in", "diary", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "eyebrow": {
+      "type": "string",
+      "default": "Today’s check-in"
+    },
+    "headline": {
+      "type": "string",
+      "default": "How are you feeling?"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": "Mood, sleep, stress and pain in a few quick taps."
+    },
+    "badgeText": {
+      "type": "string",
+      "default": "40 sec"
+    },
+    "ctaLabel": {
+      "type": "string",
+      "default": "Log today’s mood"
+    },
+    "journalUrl": {
+      "type": "string",
+      "default": "/journal/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "eyebrow": "Today’s check-in",
+      "headline": "How are you feeling?",
+      "badgeText": "40 sec",
+      "ctaLabel": "Log today’s mood",
+      "journalUrl": "/journal/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

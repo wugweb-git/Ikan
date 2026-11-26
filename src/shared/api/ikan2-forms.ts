@@ -54,9 +54,31 @@ function headers(): HeadersInit {
 }
 
 /**
- * Shared tail of both posts. Treats anything other than the statuses the
- * caller names as a failure, and never surfaces the response body: a
- * PostgREST error is for the console, not for the page.
+ * Direct post to WordPress ingest API (Fluent Forms & FluentCRM).
+ * Guarantees submissions land in WP Admin and trigger notifications immediately.
+ */
+async function postToWordPress(payload: Record<string, unknown>): Promise<boolean> {
+  try {
+    const url = typeof window !== 'undefined' && window.location.origin.includes('ikanhealth.in')
+      ? '/wp-json/ikan/v1/ingest'
+      : 'https://ikanhealth.in/wp-json/ikan/v1/ingest';
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('[wp-ingest] network error:', err);
+    return false;
+  }
+}
+
+/**
+ * Shared tail of Supabase buffer posts.
  */
 async function post(
   table: string,
@@ -109,7 +131,26 @@ export async function submitContactMessage(input: ContactMessage): Promise<FormR
       error: `Please write a message of up to ${CONTACT_LIMITS.message} characters.`,
     };
 
-  return post('ikan2_contact_messages', { name, email, subject, message, source: SOURCE });
+  // 1. Direct native ingest into WordPress (Fluent Forms & FluentCRM)
+  const wpPromise = postToWordPress({
+    type: 'contact',
+    name,
+    email,
+    subject,
+    message,
+    source: SOURCE,
+  });
+
+  // 2. Dual-post to Supabase buffer for app records
+  const supaPromise = post('ikan2_contact_messages', { name, email, subject, message, source: SOURCE });
+
+  const [wpOk, supaResult] = await Promise.all([wpPromise, supaPromise]);
+
+  if (supaResult.ok || wpOk) {
+    return { ok: true };
+  }
+
+  return supaResult;
 }
 
 export async function subscribeToNewsletter(rawEmail: string, rawName?: string): Promise<FormResult> {
@@ -120,8 +161,25 @@ export async function subscribeToNewsletter(rawEmail: string, rawName?: string):
   const name = rawName?.trim();
   if (name) body.name = name;
 
-  return post('ikan2_newsletter_subscribers', body, () => ({
+  // 1. Direct native ingest into WordPress (Fluent Forms & FluentCRM)
+  const wpPromise = postToWordPress({
+    type: 'newsletter',
+    email,
+    name: name || '',
+    source: SOURCE,
+  });
+
+  // 2. Dual-post to Supabase buffer for app records
+  const supaPromise = post('ikan2_newsletter_subscribers', body, () => ({
     ok: true,
     alreadySubscribed: true,
   }));
+
+  const [wpOk, supaResult] = await Promise.all([wpPromise, supaPromise]);
+
+  if (supaResult.ok || wpOk) {
+    return supaResult;
+  }
+
+  return supaResult;
 }

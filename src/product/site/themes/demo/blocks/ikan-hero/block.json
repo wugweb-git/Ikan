@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/hero",
+  "version": "1.0.0",
+  "title": "iKAN Hero",
+  "category": "ikan",
+  "description": "Full-bleed page hero with eyebrow label, headline, subtitle, and optional CTA button — matches InfoShell header pattern from ikan2.",
+  "keywords": ["hero", "ikan", "header", "headline"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "eyebrow": {
+      "type": "string",
+      "default": ""
+    },
+    "headline": {
+      "type": "string",
+      "default": "Headline"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaLabel": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "wide": {
+      "type": "boolean",
+      "default": false,
+      "description": "Use max-w-read (38rem) instead of max-w-app (30rem) — matches InfoShell wide prop"
+    },
+    "align": {
+      "type": "string",
+      "default": "full"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": ["full"]
+  },
+  "example": {
+    "attributes": {
+      "eyebrow": "About",
+      "headline": "Mental health care that meets you where you are",
+      "subtitle": "iKAN connects you with clinically validated tools, real therapists, and peer community — all in one place.",
+      "ctaLabel": "Get started",
+      "ctaUrl": "/join/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

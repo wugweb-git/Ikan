@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ikan/dashboard-card",
+  "version": "1.0.0",
+  "title": "iKAN Dashboard Card",
+  "category": "ikan",
+  "description": "Dashboard quick-jump and status card matching ikan2 home/profile jump grid — tinted icon badge, label, metric/subtext, and link.",
+  "keywords": ["dashboard", "home", "card", "metric", "ikan"],
+  "textdomain": "ikan-health",
+  "attributes": {
+    "eyebrow": {
+      "type": "string",
+      "default": ""
+    },
+    "title": {
+      "type": "string",
+      "default": "iKAN Score"
+    },
+    "subtitle": {
+      "type": "string",
+      "default": "Check where you stand today"
+    },
+    "badge": {
+      "type": "string",
+      "default": ""
+    },
+    "tint": {
+      "type": "string",
+      "default": "#DFF0E8"
+    },
+    "url": {
+      "type": "string",
+      "default": "/wellness/"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "example": {
+    "attributes": {
+      "eyebrow": "Wellness",
+      "title": "iKAN Score",
+      "subtitle": "74 of 100",
+      "badge": "+4 this week",
+      "tint": "#DFF0E8",
+      "url": "/wellness/"
+    }
+  },
+  "editorScript": false,
+  "render": "file:./render.php"
+}

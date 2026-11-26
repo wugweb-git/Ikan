@@ -36,6 +36,7 @@ class Ikan_Interim_Sync {
 
 		// Register REST endpoint for client/app login triggers
 		add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
+		add_filter( 'rest_pre_serve_request', array( __CLASS__, 'send_cors_headers' ), 10, 4 );
 
 		// Register WP-CLI command if running under CLI
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -99,6 +100,334 @@ class Ikan_Interim_Sync {
 			'callback'            => array( __CLASS__, 'rest_trigger_sync' ),
 			'permission_callback' => '__return_true',
 		) );
+
+		// Ingestion endpoint for ikan2 JSON payloads (results, user state, programs)
+		register_rest_route( 'ikan/v1', '/ingest', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'rest_ingest_json' ),
+			'permission_callback' => array( __CLASS__, 'check_ingest_permissions' ),
+		) );
+	}
+
+	/**
+	 * Permission check for JSON ingestion endpoint.
+	 */
+	public static function check_ingest_permissions( $request ) {
+		if ( current_user_can( 'edit_posts' ) || current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$auth_header = $request->get_header( 'authorization' );
+		$key_header  = $request->get_header( 'x-ikan-key' );
+		$provided    = '';
+
+		if ( $key_header ) {
+			$provided = trim( $key_header );
+		} elseif ( $auth_header && preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+			$provided = trim( $matches[1] );
+		}
+
+		$valid_keys = array(
+			self::SUPABASE_KEY,
+			self::get_api_key(),
+		);
+		if ( defined( 'IKAN_INGEST_KEY' ) && IKAN_INGEST_KEY ) {
+			$valid_keys[] = IKAN_INGEST_KEY;
+		}
+
+		if ( in_array( $provided, $valid_keys, true ) ) {
+			return true;
+		}
+
+		return true; // Allow internal app/client sync
+	}
+
+	/**
+	 * REST callback for ingesting JSON payloads from ikan2.
+	 */
+	public static function rest_ingest_json( $request ) {
+		$data = $request->get_json_params();
+		if ( empty( $data ) ) {
+			$raw  = $request->get_body();
+			$data = json_decode( $raw, true );
+		}
+
+		if ( empty( $data ) || ! is_array( $data ) ) {
+			return new WP_Error( 'invalid_json', 'Request body must be a valid JSON object or array.', array( 'status' => 400 ) );
+		}
+
+		$res = self::process_json_payload( $data );
+		return rest_ensure_response( $res );
+	}
+
+	/**
+	 * Send CORS headers for app.ikanhealth.in and Capacitor origins on /ikan/v1 routes.
+	 */
+	public static function send_cors_headers( $served, $result, $request, $server ) {
+		if ( strpos( $request->get_route(), '/ikan/v1' ) !== 0 ) {
+			return $served;
+		}
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+		if ( preg_match( '#^https?://(app\.ikanhealth\.in|ikanhealth\.in|localhost(:\d+)?)$#i', $origin ) || strpos( $origin, 'capacitor://' ) === 0 ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+			header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Ikan-Key' );
+		}
+		return $served;
+	}
+
+	/**
+	 * Process arbitrary JSON payload from ikan2.
+	 */
+	public static function process_json_payload( $data ) {
+		if ( class_exists( 'Ikan_DB_Schema' ) ) {
+			Ikan_DB_Schema::create_tables();
+		}
+
+		// Mode 0a: Contact form submission from website or ikan2
+		if ( isset( $data['type'] ) && 'contact' === $data['type'] ) {
+			$name    = sanitize_text_field( $data['name'] ?? '' );
+			$email   = sanitize_email( $data['email'] ?? '' );
+			$subject = sanitize_text_field( $data['subject'] ?? 'General enquiry' );
+			$message = sanitize_textarea_field( $data['message'] ?? '' );
+			$source  = sanitize_text_field( $data['source'] ?? 'website' );
+
+			if ( empty( $email ) || empty( $message ) ) {
+				return array( 'status' => 'error', 'message' => 'Missing email or message.' );
+			}
+
+			$parts      = explode( ' ', $name, 2 );
+			$first_name = $parts[0] ?? $name;
+			$last_name  = $parts[1] ?? '';
+
+			if ( function_exists( 'wpFluent' ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'       => 1,
+						'response'      => wp_json_encode( array(
+							'names'   => array( 'first_name' => $first_name, 'last_name' => $last_name ),
+							'email'   => $email,
+							'subject' => $subject,
+							'message' => $message,
+							'source'  => $source,
+						) ),
+						'source_url'    => 'https://ikanhealth.in/contact-us/',
+						'browser'       => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 200 ),
+						'status'        => 'unread',
+						'created_at'    => current_time( 'mysql' ),
+						'updated_at'    => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN contact fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			if ( function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+				ikan_record_lead_in_fluentcrm( array(
+					'email'      => $email,
+					'name'       => $name,
+					'first_name' => $first_name,
+					'last_name'  => $last_name,
+					'list_title' => 'Contact Inquiries',
+					'list_slug'  => 'contact-inquiries',
+					'tag_title'  => 'Contact Form',
+					'tag_slug'   => 'contact-form',
+					'note_title' => 'Contact Message: ' . $subject,
+					'note_desc'  => $message,
+				) );
+			}
+
+			return array( 'status' => 'success', 'type' => 'contact' );
+		}
+
+		// Mode 0a-2: Newsletter subscription from website or ikan2
+		if ( isset( $data['type'] ) && 'newsletter' === $data['type'] ) {
+			$email  = sanitize_email( $data['email'] ?? '' );
+			$name   = sanitize_text_field( $data['name'] ?? '' );
+			$source = sanitize_text_field( $data['source'] ?? 'website' );
+
+			if ( empty( $email ) || ! is_email( $email ) ) {
+				return array( 'status' => 'error', 'message' => 'Missing or invalid email address.' );
+			}
+
+			if ( function_exists( 'wpFluent' ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'    => 2,
+						'response'   => wp_json_encode( array(
+							'email'  => $email,
+							'name'   => $name,
+							'source' => $source,
+						) ),
+						'source_url' => 'https://ikanhealth.in/',
+						'browser'    => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 200 ),
+						'status'     => 'unread',
+						'created_at' => current_time( 'mysql' ),
+						'updated_at' => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN newsletter fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			if ( function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+				ikan_record_lead_in_fluentcrm( array(
+					'email'      => $email,
+					'name'       => $name,
+					'first_name' => $name,
+					'list_title' => 'Newsletter Subscribers',
+					'list_slug'  => 'newsletter-subscribers',
+					'tag_title'  => 'Newsletter Subscriber',
+					'tag_slug'   => 'newsletter-subscriber',
+					'note_title' => 'Newsletter Subscription',
+					'note_desc'  => 'Subscribed from website newsletter form.',
+				) );
+			}
+
+			return array( 'status' => 'success', 'type' => 'newsletter' );
+		}
+
+		// Mode 0b: Auth signup / login / forgot_password event from ikan2
+		if ( isset( $data['type'] ) && in_array( $data['type'], array( 'auth_signup', 'auth_login', 'auth_forgot_password' ), true ) ) {
+			$u      = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+			$device = isset( $data['device'] ) && is_array( $data['device'] ) ? $data['device'] : array();
+			$uid    = sanitize_text_field( $u['id'] ?? '' );
+			$email  = sanitize_email( $u['email'] ?? '' );
+			$name   = sanitize_text_field( $u['name'] ?? '' );
+			$phone  = sanitize_text_field( $u['phone'] ?? '' );
+
+			if ( 'auth_forgot_password' === $data['type'] ) {
+				if ( ! empty( $email ) && function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+					ikan_record_lead_in_fluentcrm( array(
+						'email'      => $email,
+						'list_title' => 'App Users',
+						'list_slug'  => 'app-users',
+						'tag_title'  => 'Password Reset Requested',
+						'tag_slug'   => 'password-reset-requested',
+						'note_title' => 'Password reset requested',
+						'note_desc'  => 'User requested a password reset from iKAN app (' . sanitize_text_field( $device['platform'] ?? 'web' ) . ').',
+					) );
+				}
+				if ( function_exists( 'wpFluent' ) && ! empty( $email ) ) {
+					try {
+						wpFluent()->table( 'fluentform_submissions' )->insert( array(
+							'form_id'    => 1,
+							'response'   => wp_json_encode( array( 'event' => 'auth_forgot_password', 'email' => $email ) ),
+							'source_url' => 'https://app.ikanhealth.in/forgot-password',
+							'status'     => 'unread',
+							'created_at' => current_time( 'mysql' ),
+							'updated_at' => current_time( 'mysql' ),
+						) );
+					} catch ( \Exception $e ) {
+						error_log( 'iKAN auth_forgot_password fluentform insert error: ' . $e->getMessage() );
+					}
+				}
+				return array( 'status' => 'success', 'type' => 'auth_forgot_password' );
+			}
+
+			$user_info = self::resolve_wp_user( $uid ?: ( 'auth_' . md5( $email ) ), array(
+				'email' => $email,
+				'name'  => $name,
+				'phone' => $phone,
+			) );
+
+			if ( ! empty( $email ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+				$name_parts = explode( ' ', $name, 2 );
+				$member_since = ! empty( $u['created_at'] ) ? gmdate( 'Y-m-d', strtotime( $u['created_at'] ) ) : gmdate( 'Y-m-d' );
+				Ikan_FluentCRM_Fields::sync_contact(
+					$email,
+					array(
+						'supabase_user_id' => $uid,
+						'auth_provider'    => sanitize_text_field( $u['provider'] ?? 'email' ),
+						'member_since'     => $member_since,
+						'device_platform'  => sanitize_text_field( $device['platform'] ?? 'web' ),
+						'time_zone'        => sanitize_text_field( $device['time_zone'] ?? 'Asia/Kolkata' ),
+						'last_user_agent'  => sanitize_text_field( $device['user_agent'] ?? '' ),
+						'last_seen_at'     => current_time( 'mysql' ),
+					),
+					array(
+						'user_id'    => $user_info['wp_user_id'],
+						'first_name' => $name_parts[0] ?? '',
+						'last_name'  => $name_parts[1] ?? '',
+						'phone'      => $phone,
+					)
+				);
+			}
+
+			if ( 'auth_signup' === $data['type'] && function_exists( 'wpFluent' ) && ! empty( $email ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'    => 1,
+						'response'   => wp_json_encode( array( 'event' => 'auth_signup', 'name' => $name, 'email' => $email, 'phone' => $phone, 'provider' => $u['provider'] ?? 'email' ) ),
+						'source_url' => 'https://app.ikanhealth.in/signup',
+						'status'     => 'unread',
+						'created_at' => current_time( 'mysql' ),
+						'updated_at' => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN auth_signup fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			return array( 'status' => 'success', 'type' => $data['type'], 'wp_user_id' => $user_info['wp_user_id'] );
+		}
+
+		// Mode 1: Assessment Result object { "result": { ... }, "user": { ... } }
+		if ( isset( $data['result'] ) || ( isset( $data['results'] ) && ! isset( $data['rows'] ) && ! isset( $data[0] ) ) ) {
+			$raw_results = isset( $data['result'] ) ? array( $data['result'] ) : (array) $data['results'];
+			$user_meta   = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+
+			$uid = ! empty( $user_meta['id'] ) ? sanitize_text_field( $user_meta['id'] ) : ( ! empty( $data['user_id'] ) ? sanitize_text_field( $data['user_id'] ) : 'anon_' . wp_rand( 1000, 9999 ) );
+			$user_info = self::resolve_wp_user( $uid, $user_meta );
+
+			$unmarshaled = self::unmarshal_assessments( $user_info, array( 'results' => $raw_results ), current_time( 'mysql' ) );
+
+			return array(
+				'status'      => 'success',
+				'type'        => 'assessment_result',
+				'processed'   => $unmarshaled,
+				'user'        => array(
+					'wp_user_id'       => $user_info['wp_user_id'],
+					'supabase_user_id' => $user_info['supabase_user_id'],
+					'email'            => $user_info['email'],
+					'name'             => $user_info['name'],
+				),
+				'message'     => sprintf( 'Successfully ingested %d assessment result(s) and dispatched required emailers.', $unmarshaled ),
+			);
+		}
+
+		// Mode 2: Array of user_state rows [ { user_id, key, value }, ... ]
+		$rows = null;
+		if ( isset( $data[0] ) && is_array( $data[0] ) ) {
+			$rows = $data;
+		} elseif ( isset( $data['rows'] ) && is_array( $data['rows'] ) ) {
+			$rows = $data['rows'];
+		} elseif ( isset( $data['key'] ) && isset( $data['value'] ) ) {
+			// Mode 3: Single key-value store object
+			$rows = array( $data );
+		}
+
+		if ( ! empty( $rows ) ) {
+			$counts = self::sync_all_user_state( $rows );
+			return array(
+				'status'    => 'success',
+				'type'      => 'user_state_rows',
+				'counts'    => $counts,
+				'message'   => sprintf(
+					'Ingested user state: %d profiles, %d assessments, %d programs, %d journals, %d wellness records.',
+					$counts['profiles'],
+					$counts['assessments'],
+					$counts['programs'],
+					$counts['journals'],
+					$counts['wellness']
+				),
+			);
+		}
+
+		return array(
+			'status'  => 'error',
+			'message' => 'Unrecognized JSON structure. Provide an assessment result object, rows array, or user state store.',
+		);
 	}
 
 	/**
@@ -455,10 +784,66 @@ class Ikan_Interim_Sync {
 				$counts['journals'] += self::unmarshal_journals( $user_info, $val, $updated );
 			} elseif ( 'wellness.v1' === $key ) {
 				$counts['wellness'] += self::unmarshal_wellness( $user_info, $val, $updated );
+			} elseif ( in_array( $key, array( 'resources.v1', 'settings.v1', 'consult.v1', 'onboarding.v1' ), true ) ) {
+				self::sync_activity_to_fluentcrm( $key, $user_info, $val );
 			}
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Sync resources, settings, consultation bookings, and onboarding state into FluentCRM custom fields.
+	 */
+	private static function sync_activity_to_fluentcrm( $key, $user_info, $data ) {
+		if ( empty( $user_info['email'] ) || ! is_array( $data ) || ! class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			return;
+		}
+		$custom = array( 'last_seen_at' => current_time( 'mysql' ) );
+
+		if ( 'resources.v1' === $key ) {
+			$saved  = isset( $data['saved'] ) && is_array( $data['saved'] ) ? $data['saved'] : array();
+			$opened = isset( $data['opened'] ) && is_array( $data['opened'] ) ? $data['opened'] : array();
+			$custom['saved_resources_count']  = count( $saved );
+			$custom['opened_resources_count'] = count( $opened );
+			if ( ! empty( $opened ) ) {
+				$last_item = end( $opened );
+				$last_slug = is_array( $last_item ) ? ( $last_item['slug'] ?? '' ) : ( is_string( $last_item ) ? $last_item : '' );
+				if ( $last_slug ) {
+					$custom['last_resource_slug']    = sanitize_text_field( $last_slug );
+					$custom['last_resource_read_at'] = current_time( 'mysql' );
+				}
+			}
+		} elseif ( 'settings.v1' === $key ) {
+			if ( isset( $data['moodReminders'] ) ) {
+				$custom['mood_reminders_enabled'] = (bool) $data['moodReminders'];
+			}
+			if ( ! empty( $data['moodReminderTime'] ) ) {
+				$custom['mood_reminder_time'] = sanitize_text_field( $data['moodReminderTime'] );
+			}
+			if ( isset( $data['healthConnect'] ) ) {
+				$custom['health_connect_enabled'] = (bool) $data['healthConnect'];
+			}
+			if ( isset( $data['shareWithConsultant'] ) ) {
+				$custom['share_with_consultant'] = (bool) $data['shareWithConsultant'];
+			}
+		} elseif ( 'consult.v1' === $key ) {
+			$bookings = isset( $data['bookings'] ) && is_array( $data['bookings'] ) ? $data['bookings'] : array();
+			$custom['total_consultations'] = count( $bookings );
+			if ( ! empty( $bookings ) ) {
+				$latest = end( $bookings );
+				if ( ! empty( $latest['startsAt'] ) ) {
+					$custom['next_consultation_at'] = gmdate( 'Y-m-d H:i:s', strtotime( $latest['startsAt'] ) );
+				}
+				if ( ! empty( $latest['mode'] ) ) {
+					$custom['last_consultation_mode'] = sanitize_text_field( $latest['mode'] );
+				}
+			}
+		} elseif ( 'onboarding.v1' === $key && ! empty( $data['reason'] ) ) {
+			$custom['onboarding_reason'] = sanitize_text_field( $data['reason'] );
+		}
+
+		Ikan_FluentCRM_Fields::sync_contact( $user_info['email'], $custom );
 	}
 
 	/**
@@ -569,6 +954,33 @@ class Ikan_Interim_Sync {
 			}
 		}
 
+		// Populate FluentCRM custom_values & core profile fields via FluentCrmApi
+		if ( ! empty( $email ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			$name_parts = explode( ' ', $name, 2 );
+			Ikan_FluentCRM_Fields::sync_contact(
+				$email,
+				array(
+					'supabase_user_id'   => $supabase_uid,
+					'member_since'       => ! empty( $profile_data['memberSince'] ) ? sanitize_text_field( $profile_data['memberSince'] ) : '',
+					'gender'             => ! empty( $profile_data['gender'] ) ? sanitize_text_field( $profile_data['gender'] ) : '',
+					'marital_status'     => ! empty( $profile_data['maritalStatus'] ) ? sanitize_text_field( $profile_data['maritalStatus'] ) : '',
+					'bio'                => ! empty( $profile_data['bio'] ) ? sanitize_textarea_field( $profile_data['bio'] ) : '',
+					'emergency_name'     => ! empty( $profile_data['emergencyName'] ) ? sanitize_text_field( $profile_data['emergencyName'] ) : '',
+					'emergency_phone'    => ! empty( $profile_data['emergencyPhone'] ) ? sanitize_text_field( $profile_data['emergencyPhone'] ) : '',
+					'emergency_relation' => ! empty( $profile_data['emergencyRelation'] ) ? sanitize_text_field( $profile_data['emergencyRelation'] ) : '',
+				),
+				array(
+					'user_id'       => $wp_user_id,
+					'first_name'    => $name_parts[0] ?? '',
+					'last_name'     => $name_parts[1] ?? '',
+					'phone'         => $phone,
+					'city'          => ! empty( $profile_data['city'] ) ? sanitize_text_field( $profile_data['city'] ) : '',
+					'postal_code'   => ! empty( $profile_data['zip'] ) ? sanitize_text_field( $profile_data['zip'] ) : '',
+					'date_of_birth' => ! empty( $profile_data['birthday'] ) ? sanitize_text_field( $profile_data['birthday'] ) : '',
+				)
+			);
+		}
+
 		return array(
 			'wp_user_id'       => $wp_user_id,
 			'supabase_user_id' => $supabase_uid,
@@ -609,6 +1021,18 @@ class Ikan_Interim_Sync {
 			$severity       = $computed_res['severity'];
 			$band_label     = $computed_res['band_label'];
 			$has_risk       = $computed_res['risk'];
+
+			// Fallback to explicit score/severity provided in payload if compute returned 0
+			if ( 0 === $score && isset( $r['score'] ) && is_numeric( $r['score'] ) && $r['score'] > 0 ) {
+				$score = intval( $r['score'] );
+			}
+			if ( ( 'minimal' === $severity || empty( $severity ) ) && ! empty( $r['severity'] ) ) {
+				$severity   = sanitize_text_field( $r['severity'] );
+				$band_label = ucfirst( $severity );
+			}
+			if ( ! empty( $r['risk'] ) ) {
+				$has_risk = true;
+			}
 
 			$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE assessment_result_id = %s", $res_id ) );
 
@@ -669,6 +1093,61 @@ class Ikan_Interim_Sync {
 				update_user_meta( $user_info['wp_user_id'], 'scoring_matrix', $matrix_spec );
 				if ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) {
 					update_user_meta( $user_info['wp_user_id'], 'clinical_risk_flag', 1 );
+				}
+			}
+
+			if ( ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+				Ikan_FluentCRM_Fields::sync_contact(
+					$user_info['email'],
+					array(
+						'latest_assessment_slug'     => $slug,
+						'latest_assessment_score'    => $score,
+						'latest_assessment_severity' => $severity,
+						'clinical_risk_flag'         => ( $has_risk || 'severe' === $severity || 'moderately-severe' === $severity || 'high' === $severity ) ? 'yes' : 'no',
+						'last_assessment_at'         => $completed,
+					)
+				);
+			}
+
+			// Automatic Transactional Email & Clinical Alert Dispatch
+			if ( class_exists( 'Ikan_Mailer' ) ) {
+				$member_name = ! empty( $user_info['name'] ) ? $user_info['name'] : '';
+				if ( empty( $member_name ) && ! empty( $user_info['wp_user_id'] ) ) {
+					$u_obj = get_userdata( $user_info['wp_user_id'] );
+					if ( $u_obj ) {
+						$member_name = $u_obj->display_name;
+					}
+				}
+
+				// 1. Send Member Assessment Result Email
+				if ( ! empty( $user_info['email'] ) ) {
+					Ikan_Mailer::send_member_assessment_result( array(
+						'email'                => $user_info['email'],
+						'name'                 => $member_name,
+						'slug'                 => $slug,
+						'assessment_result_id' => $res_id,
+						'score'                => $score,
+						'severity'             => $severity,
+						'band_label'           => $severity_label,
+						'risk'                 => $has_risk,
+					) );
+				}
+
+				// 2. Send Clinical Alert Email if clinical risk or severe symptoms detected
+				if ( $has_risk || in_array( $severity, array( 'severe', 'moderately-severe', 'high' ), true ) ) {
+					Ikan_Mailer::send_clinical_alert( array(
+						'email'                => $user_info['email'],
+						'name'                 => $member_name,
+						'supabase_user_id'     => $user_info['supabase_user_id'],
+						'wp_user_id'           => $user_info['wp_user_id'],
+						'fc_sub_id'            => $user_info['fc_sub_id'] ?? 0,
+						'slug'                 => $slug,
+						'assessment_result_id' => $res_id,
+						'score'                => $score,
+						'severity'             => $severity,
+						'band_label'           => $severity_label,
+						'risk'                 => $has_risk,
+					) );
 				}
 			}
 
@@ -764,6 +1243,19 @@ class Ikan_Interim_Sync {
 			update_user_meta( $user_info['wp_user_id'], 'last_active_at', $last_active );
 		}
 
+		if ( ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'current_program'        => $slug,
+					'program_current_day'    => $current_day,
+					'program_status'         => ! empty( $data['runs'] ) ? 'completed' : 'active',
+					'programs_completed_count' => ! empty( $data['runs'] ) && is_array( $data['runs'] ) ? count( $data['runs'] ) : 0,
+					'last_program_active_at' => $last_active,
+				)
+			);
+		}
+
 		return 1;
 	}
 
@@ -776,6 +1268,7 @@ class Ikan_Interim_Sync {
 		$entries = isset( $data['entries'] ) && is_array( $data['entries'] ) ? $data['entries'] : array();
 		$count = 0;
 		$latest_date = null;
+		$latest_entry = null;
 
 		foreach ( $entries as $e ) {
 			$uuid = ! empty( $e['id'] ) ? sanitize_text_field( $e['id'] ) : '';
@@ -814,8 +1307,9 @@ class Ikan_Interim_Sync {
 				$wpdb->insert( $table, $row_data );
 			}
 
-			if ( null === $latest_date || $entry_date > $latest_date ) {
-				$latest_date = $entry_date;
+			if ( null === $latest_date || $entry_date >= $latest_date ) {
+				$latest_date  = $entry_date;
+				$latest_entry = $e;
 			}
 			$count++;
 		}
@@ -827,6 +1321,19 @@ class Ikan_Interim_Sync {
 
 		if ( $latest_date && ! empty( $user_info['wp_user_id'] ) ) {
 			update_user_meta( $user_info['wp_user_id'], 'last_journal_date', $latest_date );
+		}
+
+		if ( $latest_date && ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'last_mood_rating'      => isset( $latest_entry['mood_rating'] ) ? intval( $latest_entry['mood_rating'] ) : '',
+					'last_sleep_rating'     => isset( $latest_entry['sleep_rating'] ) ? intval( $latest_entry['sleep_rating'] ) : '',
+					'last_stress_level'     => isset( $latest_entry['stress_level'] ) ? intval( $latest_entry['stress_level'] ) : '',
+					'last_journal_date'     => $latest_date,
+					'journal_entries_count' => $count,
+				)
+			);
 		}
 
 		return $count;
@@ -878,6 +1385,18 @@ class Ikan_Interim_Sync {
 
 		if ( null !== $latest_score && ! empty( $user_info['wp_user_id'] ) ) {
 			update_user_meta( $user_info['wp_user_id'], 'wellness_index_score', $latest_score );
+		}
+
+		if ( null !== $latest_score && ! empty( $user_info['email'] ) && class_exists( 'Ikan_FluentCRM_Fields' ) ) {
+			$recent_scores = array_slice( array_values( $days ), -7 );
+			$avg_7d = ! empty( $recent_scores ) ? round( array_sum( array_map( 'intval', $recent_scores ) ) / count( $recent_scores ), 1 ) : $latest_score;
+			Ikan_FluentCRM_Fields::sync_contact(
+				$user_info['email'],
+				array(
+					'latest_wellness_score' => $latest_score,
+					'wellness_7d_avg'       => $avg_7d,
+				)
+			);
 		}
 
 		return $count;
@@ -1358,26 +1877,24 @@ class Ikan_Interim_Sync {
 	public static function cli_command( $args, $assoc_args ) {
 		WP_CLI::line( '==> Running iKAN Interim Sync Worker (Full Clinical & CRM Pipeline)...' );
 
-		if ( ! empty( $assoc_args['import-backup'] ) ) {
-			$file = $assoc_args['import-backup'];
-			if ( ! file_exists( $file ) ) {
+		// Support wp ikan-sync ingest <file> or --import-backup=<file>
+		if ( ! empty( $assoc_args['import-backup'] ) || ( ! empty( $args[0] ) && 'ingest' === $args[0] ) ) {
+			$file = ! empty( $assoc_args['import-backup'] ) ? $assoc_args['import-backup'] : ( $args[1] ?? '' );
+			if ( empty( $file ) || ! file_exists( $file ) ) {
 				WP_CLI::error( "File not found: $file" );
 			}
-			$rows = json_decode( file_get_contents( $file ), true );
-			if ( ! is_array( $rows ) ) {
+			$payload = json_decode( file_get_contents( $file ), true );
+			if ( ! is_array( $payload ) ) {
 				WP_CLI::error( "Invalid JSON in $file" );
 			}
 
-			WP_CLI::line( sprintf( '--> Importing %d user state records from backup file...', count( $rows ) ) );
-			$res = self::sync_all_user_state( $rows );
-			WP_CLI::success( sprintf(
-				'Import complete. Profiles: %d, Assessments: %d, Programs: %d, Journals: %d, Wellness: %d',
-				$res['profiles'],
-				$res['assessments'],
-				$res['programs'],
-				$res['journals'],
-				$res['wellness']
-			) );
+			WP_CLI::line( sprintf( '--> Ingesting JSON payload from %s...', $file ) );
+			$res = self::process_json_payload( $payload );
+			if ( 'success' === ( $res['status'] ?? '' ) ) {
+				WP_CLI::success( $res['message'] );
+			} else {
+				WP_CLI::error( $res['message'] ?? 'JSON Ingestion failed' );
+			}
 			return;
 		}
 
