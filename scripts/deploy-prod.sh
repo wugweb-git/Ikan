@@ -75,8 +75,13 @@ URLS=(
   "https://ikanhealth.in/equip-programs/"
   "https://ikanhealth.in/resources/"
   "https://ikanhealth.in/join/partner/"
+  "https://ikanhealth.in/partner/"
+  "https://ikanhealth.in/partner/join/"
+  "https://ikanhealth.in/partner/account/"
   "https://ikanhealth.in/burnout-cost-calculator/"
   "https://ikanhealth.in/org/"
+  "https://ikanhealth.in/corporate/join/"
+  "https://ikanhealth.in/corporate/portal/"
   "https://ikanhealth.in/faq/"
   "https://ikanhealth.in/storybook/"
 )
