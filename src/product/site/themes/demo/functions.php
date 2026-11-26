@@ -172,11 +172,12 @@ add_action( 'template_redirect', function() {
     }
   }
 
-  // Intercept partner, professional application, and org routes before canonical redirects
+  // Intercept Partner paths (/partner, /partner/join, /partner/account)
   if (
-    $req_path === 'join/partner' || str_starts_with( $req_path, 'join/partner/' ) ||
-    $req_path === 'join/professional' || str_starts_with( $req_path, 'join/professional/' ) ||
-    $req_path === 'partner' || str_starts_with( $req_path, 'partner/' ) ||
+    $req_path === 'partner/join' || str_starts_with( $req_path, 'partner/join/' ) ||
+    $req_path === 'join/partner/apply' || str_starts_with( $req_path, 'join/partner/apply/' ) ||
+    $req_path === 'join/professional/apply' || str_starts_with( $req_path, 'join/professional/apply/' ) ||
+    $req_path === 'partner/apply' || str_starts_with( $req_path, 'partner/apply/' ) ||
     $req_path === 'professional-application' || str_starts_with( $req_path, 'professional-application/' )
   ) {
     status_header( 200 );
@@ -187,7 +188,51 @@ add_action( 'template_redirect', function() {
     }
   }
 
-  if ( $req_path === 'org' || str_starts_with( $req_path, 'org/' ) || $req_path === 'organisation' ) {
+  if (
+    $req_path === 'partner/account' || str_starts_with( $req_path, 'partner/account/' ) ||
+    $req_path === 'partner/portal' || str_starts_with( $req_path, 'partner/portal/' ) ||
+    $req_path === 'partner/login' || str_starts_with( $req_path, 'partner/login/' )
+  ) {
+    status_header( 200 );
+    $tpl = locate_template( 'partner-account.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
+
+  if (
+    $req_path === 'join/partner' || $req_path === 'join/partner/' ||
+    $req_path === 'join/professional' || $req_path === 'join/professional/' ||
+    $req_path === 'partner' || $req_path === 'partner/'
+  ) {
+    status_header( 200 );
+    $tpl = locate_template( 'partner.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
+
+  // Intercept Corporate paths (/corporate/join, /corporate/portal, /org)
+  if (
+    $req_path === 'corporate/join' || str_starts_with( $req_path, 'corporate/join/' ) ||
+    $req_path === 'corporate' || $req_path === 'corporate/' ||
+    $req_path === 'org/join' || str_starts_with( $req_path, 'org/join/' )
+  ) {
+    status_header( 200 );
+    $tpl = locate_template( 'corporate-join.php' );
+    if ( $tpl ) {
+      load_template( $tpl );
+      exit;
+    }
+  }
+
+  if (
+    $req_path === 'corporate/portal' || str_starts_with( $req_path, 'corporate/portal/' ) ||
+    $req_path === 'org' || str_starts_with( $req_path, 'org/' ) ||
+    $req_path === 'organisation' || str_starts_with( $req_path, 'organisation/' )
+  ) {
     status_header( 200 );
     $tpl = locate_template( 'org.php' );
     if ( $tpl ) {
@@ -259,6 +304,7 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
     'program', 'programs', 'consult', 'consultation', 'contact', 'contact-us',
     'burnout-cost-calculator', 'calculator', 'faq', 'faqs', 'org', 'organisation',
     'partner', 'professional-application', 'join/partner', 'join/professional',
+    'partner/join', 'partner/account', 'corporate', 'corporate/join', 'corporate/portal',
     'login', 'signup', 'register', 'forgot-password', 'phone-login'
   ];
   if (
@@ -266,6 +312,7 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
     str_starts_with( $path, 'join/professional/' ) ||
     str_starts_with( $path, 'join/partner/' ) ||
     str_starts_with( $path, 'partner/' ) ||
+    str_starts_with( $path, 'corporate/' ) ||
     str_starts_with( $path, 'org/' ) ||
     str_starts_with( $path, 'professional-application/' )
   ) {
@@ -299,12 +346,42 @@ function ikan_get_vite_assets() {
 add_filter( 'template_include', function( $template ) {
   $req_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
 
-  // Handle prefix routes for multi-step applications and sub-pages
-  if ( str_starts_with( $req_path, 'org' ) ) {
+  // 1. Corporate Routes (/corporate/join, /corporate/portal, /org)
+  if (
+    $req_path === 'corporate/join' || str_starts_with( $req_path, 'corporate/join' ) ||
+    $req_path === 'corporate' || $req_path === 'org/join' || str_starts_with( $req_path, 'org/join' )
+  ) {
+    return get_template_directory() . '/corporate-join.php';
+  }
+  if (
+    $req_path === 'corporate/portal' || str_starts_with( $req_path, 'corporate/portal' ) ||
+    str_starts_with( $req_path, 'org' ) || str_starts_with( $req_path, 'organisation' )
+  ) {
     return get_template_directory() . '/org.php';
   }
-  if ( str_starts_with( $req_path, 'join/partner' ) || str_starts_with( $req_path, 'join/professional' ) || $req_path === 'partner' ) {
+
+  // 2. Partner Routes (/partner, /partner/join, /partner/account)
+  if (
+    $req_path === 'partner/join' || str_starts_with( $req_path, 'partner/join' ) ||
+    $req_path === 'join/partner/apply' || str_starts_with( $req_path, 'join/partner/apply' ) ||
+    $req_path === 'join/professional/apply' || str_starts_with( $req_path, 'join/professional/apply' ) ||
+    $req_path === 'partner/apply' || str_starts_with( $req_path, 'partner/apply' ) ||
+    str_starts_with( $req_path, 'professional-application' )
+  ) {
     return get_template_directory() . '/professional-application.php';
+  }
+  if (
+    $req_path === 'partner/account' || str_starts_with( $req_path, 'partner/account' ) ||
+    $req_path === 'partner/portal' || str_starts_with( $req_path, 'partner/portal' ) ||
+    $req_path === 'partner/login' || str_starts_with( $req_path, 'partner/login' )
+  ) {
+    return get_template_directory() . '/partner-account.php';
+  }
+  if (
+    str_starts_with( $req_path, 'join/partner' ) || str_starts_with( $req_path, 'join/professional' ) ||
+    str_starts_with( $req_path, 'partner' )
+  ) {
+    return get_template_directory() . '/partner.php';
   }
   if ( str_starts_with( $req_path, 'onboarding' ) || str_starts_with( $req_path, 'get-started' ) || $req_path === 'splash' ) {
     $onboard_file = get_template_directory() . '/onboarding.php';
@@ -313,45 +390,57 @@ add_filter( 'template_include', function( $template ) {
 
   // Explicit URL alias to template map for 100% URL parity
   $alias_map = [
-    'about'                   => 'about-us.php',
-    'about-us'                => 'about-us.php',
-    'service'                 => 'services.php',
-    'services'                => 'services.php',
-    'resource'                => 'resources.php',
-    'resources'               => 'resources.php',
-    'article'                 => 'resources.php',
-    'articles'                => 'resources.php',
-    'assessment'              => 'assessments.php',
-    'assessments'             => 'assessments.php',
-    'equip'                   => 'equip-programs.php',
-    'equip-programs'          => 'equip-programs.php',
-    'program'                 => 'equip-programs.php',
-    'programs'                => 'equip-programs.php',
-    'calculator'              => 'burnout-cost-calculator.php',
-    'calc'                    => 'burnout-cost-calculator.php',
-    'burnout-cost-calculator' => 'burnout-cost-calculator.php',
-    'burnout-calculator'      => 'burnout-cost-calculator.php',
-    'contact'                 => 'contact-us.php',
-    'contact-us'              => 'contact-us.php',
-    'faq'                     => 'faq.php',
-    'faqs'                    => 'faq.php',
-    'consult'                 => 'consultation.php',
-    'consultation'            => 'consultation.php',
-    'org'                     => 'org.php',
-    'organisation'            => 'org.php',
-    'privacy'                 => 'privacy-policy.php',
-    'privacy-policy'          => 'privacy-policy.php',
-    'terms'                   => 'terms-of-use.php',
-    'terms-of-use'            => 'terms-of-use.php',
-    'cancellation'            => 'cancellation-policy.php',
-    'cancellation-policy'     => 'cancellation-policy.php',
-    'return-policy'           => 'return-policy.php',
-    'returns'                 => 'return-policy.php',
-    'workplace-privacy'       => 'workplace-privacy.php',
-    'partner'                 => 'professional-application.php',
-    'join/partner'            => 'professional-application.php',
-    'join/professional'       => 'professional-application.php',
-    'professional-application'=> 'professional-application.php',
+    'about'                    => 'about-us.php',
+    'about-us'                 => 'about-us.php',
+    'service'                  => 'services.php',
+    'services'                 => 'services.php',
+    'resource'                 => 'resources.php',
+    'resources'                => 'resources.php',
+    'article'                  => 'resources.php',
+    'articles'                 => 'resources.php',
+    'assessment'               => 'assessments.php',
+    'assessments'              => 'assessments.php',
+    'equip'                    => 'equip-programs.php',
+    'equip-programs'           => 'equip-programs.php',
+    'program'                  => 'equip-programs.php',
+    'programs'                 => 'equip-programs.php',
+    'calculator'               => 'burnout-cost-calculator.php',
+    'calc'                     => 'burnout-cost-calculator.php',
+    'burnout-cost-calculator'  => 'burnout-cost-calculator.php',
+    'burnout-calculator'       => 'burnout-cost-calculator.php',
+    'contact'                  => 'contact-us.php',
+    'contact-us'               => 'contact-us.php',
+    'faq'                      => 'faq.php',
+    'faqs'                     => 'faq.php',
+    'consult'                  => 'consultation.php',
+    'consultation'             => 'consultation.php',
+    'org'                      => 'org.php',
+    'organisation'             => 'org.php',
+    'corporate'                => 'corporate-join.php',
+    'corporate/join'           => 'corporate-join.php',
+    'corporate/portal'         => 'org.php',
+    'org/join'                 => 'corporate-join.php',
+    'org/portal'               => 'org.php',
+    'privacy'                  => 'privacy-policy.php',
+    'privacy-policy'           => 'privacy-policy.php',
+    'terms'                    => 'terms-of-use.php',
+    'terms-of-use'             => 'terms-of-use.php',
+    'cancellation'             => 'cancellation-policy.php',
+    'cancellation-policy'      => 'cancellation-policy.php',
+    'return-policy'            => 'return-policy.php',
+    'returns'                  => 'return-policy.php',
+    'workplace-privacy'        => 'workplace-privacy.php',
+    'partner'                  => 'partner.php',
+    'join/partner'             => 'partner.php',
+    'join/professional'        => 'partner.php',
+    'partner/join'             => 'professional-application.php',
+    'partner/apply'            => 'professional-application.php',
+    'partner/account'          => 'partner-account.php',
+    'partner/portal'           => 'partner-account.php',
+    'partner/login'            => 'partner-account.php',
+    'join/partner/apply'       => 'professional-application.php',
+    'join/professional/apply'  => 'professional-application.php',
+    'professional-application' => 'professional-application.php',
   ];
 
   if ( isset( $alias_map[ $req_path ] ) ) {
