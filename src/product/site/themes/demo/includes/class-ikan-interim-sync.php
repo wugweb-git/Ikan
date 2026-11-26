@@ -184,24 +184,34 @@ class Ikan_Interim_Sync {
 			Ikan_DB_Schema::create_tables();
 		}
 
-		// Mode 0a: Contact form submission from ikan2
+		// Mode 0a: Contact form submission from website or ikan2
 		if ( isset( $data['type'] ) && 'contact' === $data['type'] ) {
 			$name    = sanitize_text_field( $data['name'] ?? '' );
 			$email   = sanitize_email( $data['email'] ?? '' );
 			$subject = sanitize_text_field( $data['subject'] ?? 'General enquiry' );
 			$message = sanitize_textarea_field( $data['message'] ?? '' );
-			$source  = sanitize_text_field( $data['source'] ?? 'app' );
+			$source  = sanitize_text_field( $data['source'] ?? 'website' );
 
 			if ( empty( $email ) || empty( $message ) ) {
 				return array( 'status' => 'error', 'message' => 'Missing email or message.' );
 			}
 
+			$parts      = explode( ' ', $name, 2 );
+			$first_name = $parts[0] ?? $name;
+			$last_name  = $parts[1] ?? '';
+
 			if ( function_exists( 'wpFluent' ) ) {
 				try {
 					wpFluent()->table( 'fluentform_submissions' )->insert( array(
 						'form_id'       => 1,
-						'response'      => wp_json_encode( array( 'name' => $name, 'email' => $email, 'subject' => $subject, 'message' => $message, 'source' => $source ) ),
-						'source_url'    => 'https://app.ikanhealth.in/contact',
+						'response'      => wp_json_encode( array(
+							'names'   => array( 'first_name' => $first_name, 'last_name' => $last_name ),
+							'email'   => $email,
+							'subject' => $subject,
+							'message' => $message,
+							'source'  => $source,
+						) ),
+						'source_url'    => 'https://ikanhealth.in/contact-us/',
 						'browser'       => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 200 ),
 						'status'        => 'unread',
 						'created_at'    => current_time( 'mysql' ),
@@ -213,21 +223,68 @@ class Ikan_Interim_Sync {
 			}
 
 			if ( function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
-				$parts = explode( ' ', $name, 2 );
 				ikan_record_lead_in_fluentcrm( array(
 					'email'      => $email,
-					'first_name' => $parts[0] ?? '',
-					'last_name'  => $parts[1] ?? '',
+					'name'       => $name,
+					'first_name' => $first_name,
+					'last_name'  => $last_name,
 					'list_title' => 'Contact Inquiries',
 					'list_slug'  => 'contact-inquiries',
-					'tag_title'  => 'App Contact',
-					'tag_slug'   => 'app-contact',
-					'note_title' => 'App Contact: ' . $subject,
+					'tag_title'  => 'Contact Form',
+					'tag_slug'   => 'contact-form',
+					'note_title' => 'Contact Message: ' . $subject,
 					'note_desc'  => $message,
 				) );
 			}
 
 			return array( 'status' => 'success', 'type' => 'contact' );
+		}
+
+		// Mode 0a-2: Newsletter subscription from website or ikan2
+		if ( isset( $data['type'] ) && 'newsletter' === $data['type'] ) {
+			$email  = sanitize_email( $data['email'] ?? '' );
+			$name   = sanitize_text_field( $data['name'] ?? '' );
+			$source = sanitize_text_field( $data['source'] ?? 'website' );
+
+			if ( empty( $email ) || ! is_email( $email ) ) {
+				return array( 'status' => 'error', 'message' => 'Missing or invalid email address.' );
+			}
+
+			if ( function_exists( 'wpFluent' ) ) {
+				try {
+					wpFluent()->table( 'fluentform_submissions' )->insert( array(
+						'form_id'    => 2,
+						'response'   => wp_json_encode( array(
+							'email'  => $email,
+							'name'   => $name,
+							'source' => $source,
+						) ),
+						'source_url' => 'https://ikanhealth.in/',
+						'browser'    => substr( sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 200 ),
+						'status'     => 'unread',
+						'created_at' => current_time( 'mysql' ),
+						'updated_at' => current_time( 'mysql' ),
+					) );
+				} catch ( \Exception $e ) {
+					error_log( 'iKAN newsletter fluentform insert error: ' . $e->getMessage() );
+				}
+			}
+
+			if ( function_exists( 'ikan_record_lead_in_fluentcrm' ) ) {
+				ikan_record_lead_in_fluentcrm( array(
+					'email'      => $email,
+					'name'       => $name,
+					'first_name' => $name,
+					'list_title' => 'Newsletter Subscribers',
+					'list_slug'  => 'newsletter-subscribers',
+					'tag_title'  => 'Newsletter Subscriber',
+					'tag_slug'   => 'newsletter-subscriber',
+					'note_title' => 'Newsletter Subscription',
+					'note_desc'  => 'Subscribed from website newsletter form.',
+				) );
+			}
+
+			return array( 'status' => 'success', 'type' => 'newsletter' );
 		}
 
 		// Mode 0b: Auth signup / login / forgot_password event from ikan2
