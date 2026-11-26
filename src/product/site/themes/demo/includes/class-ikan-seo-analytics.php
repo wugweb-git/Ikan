@@ -29,6 +29,9 @@ class Ikan_SEO_Analytics {
 		add_action( 'wp_head', array( __CLASS__, 'render_seo_and_ai_head' ), 5 );
 		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_llms_txt' ), 1 );
 
+		// Rank Math Sitemap Hook: inject app.ikanhealth.in (ikan2) sitemap into master sitemap_index.xml
+		add_filter( 'rank_math/sitemap/index', array( __CLASS__, 'filter_rank_math_sitemap_index' ), 20 );
+
 		// Google Site Kit & GTM dataLayer event tracking
 		add_action( 'wp_footer', array( __CLASS__, 'render_datalayer_events' ), 99 );
 	}
@@ -54,6 +57,21 @@ class Ikan_SEO_Analytics {
 		echo "- Sitemaps: https://ikanhealth.in/sitemap_index.xml and https://app.ikanhealth.in/sitemap.xml\n";
 		echo "- Contact: hello@ikanhealth.in\n";
 		exit;
+	}
+
+	/**
+	 * Append app.ikanhealth.in (ikan2) sitemap into Rank Math Sitemap Index.
+	 *
+	 * @param string $xml Rank Math XML index string.
+	 * @return string
+	 */
+	public static function filter_rank_math_sitemap_index( $xml ) {
+		$now = gmdate( 'Y-m-d\TH:i:s+00:00' );
+		$extra = "\t<sitemap>\n" .
+			"\t\t<loc>https://app.ikanhealth.in/sitemap.xml</loc>\n" .
+			"\t\t<lastmod>" . esc_html( $now ) . "</lastmod>\n" .
+			"\t</sitemap>\n";
+		return $extra . $xml;
 	}
 
 	/**
