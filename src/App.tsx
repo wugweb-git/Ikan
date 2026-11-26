@@ -159,6 +159,7 @@ const WorkplacePrivacy = lazy(() => lazyRetry(() => import('./product/site/pages
 const OrgJoin = lazy(() => lazyRetry(() => import('./product/org/pages/Join').then(m => ({ default: m.Join })), 'OrgJoin'));
 const OrgPortal = lazy(() => lazyRetry(() => import('./product/org/OrgPortal').then(m => ({ default: m.OrgPortal })), 'OrgPortal'));
 const ProfessionalApplication = lazy(() => lazyRetry(() => import('./product/site/pages/ProfessionalApplication').then(m => ({ default: m.ProfessionalApplication })), 'ProfessionalApplication'));
+const TherapistPartnership = lazy(() => lazyRetry(() => import('./product/site/pages/TherapistPartnership').then(m => ({ default: m.TherapistPartnership })), 'TherapistPartnership'));
 const WellnessTimeline = () => <MemberRedirect path="/timeline" />;
 const LearningDiary = () => <MemberRedirect path="/learning-diary" />;
 
@@ -755,8 +756,16 @@ function AppContent() {
         case '/join/partner':
         case '/join/professional':
         case '/professional-application':
-        case '/partner':
+        case '/partner/join':
+        case '/partner/apply':
           return withSuspense(<ProfessionalApplication onNavigate={handleNavigate} />);
+        case '/therapist-partnership':
+        case '/therapist-partnership/':
+        case '/partner/alignment':
+        case '/therapist-alignment':
+        case '/partner':
+        case '/partner/':
+          return withSuspense(<TherapistPartnership onNavigate={handleNavigate} />);
         case '/timeline':
           return withSuspense(<WellnessTimeline onNavigate={handleNavigate} />);
         case '/learning-diary':

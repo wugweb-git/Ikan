@@ -8,6 +8,16 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [x] **Dedicated Partner & Corporate Paths with ikan2 Design System (`ikan` repo)**:
+  - **Partner Paths**:
+    - `https://ikanhealth.in/partner/`: Authentic Therapist & Professional Network Landing Page (built with `ikan2.css` tokens, interactive earnings calculator, 90/10 split, comparison grid, matching engine walkthrough, FAQ accordion, rich visual cards).
+    - `https://ikanhealth.in/partner/join/`: Authentic 11-step provider application wizard (`professional-application.php`).
+    - `https://ikanhealth.in/partner/account/`: Dedicated Provider Account Portal & Sign-In screen (with clinical dashboard links, payout schedule, and link to apply).
+  - **Corporate Paths**:
+    - `https://ikanhealth.in/corporate/join/`: Workplace Mental Health Pilot Onboarding & Demo Inquiry page (with AJAX lead capture to FluentCRM `org-leads` and Burnout Calculator integration).
+    - `https://ikanhealth.in/corporate/portal/`: The authentic Organisation Portal (`org.php` with Insights, People, Settings, and Org Login).
+  - **Deployed & Verified Live on Hostinger Production**: All 5 routes returning HTTP 200 with zero redirects and verified live content.
+
 - [x] **Google Play Store Submission (`ikan2` / `com.ikan.wugweb`)**:
   - Signed release AAB built with upload keystore (`/Users/abcom/ikan-upload.jks`): `ikan-health-release-v1.0.4.aab` (`versionCode 5`, `versionName 1.0.4`).
   - Google Play Store screenshots generated at 1080×2400 portrait and uploaded.
