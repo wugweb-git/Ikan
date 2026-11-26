@@ -1,4 +1,5 @@
 <?php
+
 /**
  * iKAN Health — FluentCRM Email Templates Engine
  *
@@ -13,11 +14,12 @@
  * @package iKAN_Health
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
-class Ikan_FluentCRM_Templates {
+class Ikan_FluentCRM_Templates
+{
 
 	const TEMPLATE_VERSION = '2.6.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
@@ -25,11 +27,12 @@ class Ikan_FluentCRM_Templates {
 	/**
 	 * Boot hooks and CLI handlers.
 	 */
-	public static function init() {
-		add_action( 'admin_init', array( __CLASS__, 'maybe_push_templates' ), 30 );
+	public static function init()
+	{
+		add_action('admin_init', array(__CLASS__, 'maybe_push_templates'), 30);
 
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			WP_CLI::add_command( 'ikan-templates', array( __CLASS__, 'cli_handler' ) );
+		if (defined('WP_CLI') && WP_CLI) {
+			WP_CLI::add_command('ikan-templates', array(__CLASS__, 'cli_handler'));
 		}
 	}
 
@@ -39,22 +42,24 @@ class Ikan_FluentCRM_Templates {
 	 *
 	 * @return bool
 	 */
-	public static function is_fluentcrm_installed() {
-		return defined( 'FLUENTCRM' ) || class_exists( '\FluentCrm\App\Models\Template' ) || function_exists( 'fluentcrmTemplateCPTSlug' );
+	public static function is_fluentcrm_installed()
+	{
+		return defined('FLUENTCRM') || class_exists('\FluentCrm\App\Models\Template') || function_exists('fluentcrmTemplateCPTSlug');
 	}
 
 	/**
 	 * Run template push if version updated or forced.
 	 */
-	public static function maybe_push_templates() {
-		if ( ! self::is_fluentcrm_installed() ) {
+	public static function maybe_push_templates()
+	{
+		if (! self::is_fluentcrm_installed()) {
 			return;
 		}
 
-		$installed = get_option( self::OPTION_KEY, '0.0.0' );
-		if ( version_compare( $installed, self::TEMPLATE_VERSION, '<' ) ) {
+		$installed = get_option(self::OPTION_KEY, '0.0.0');
+		if (version_compare($installed, self::TEMPLATE_VERSION, '<')) {
 			self::push_templates();
-			update_option( self::OPTION_KEY, self::TEMPLATE_VERSION );
+			update_option(self::OPTION_KEY, self::TEMPLATE_VERSION);
 		}
 	}
 
@@ -63,8 +68,9 @@ class Ikan_FluentCRM_Templates {
 	 *
 	 * @return int Number of templates created or updated.
 	 */
-	public static function push_templates() {
-		if ( ! self::is_fluentcrm_installed() ) {
+	public static function push_templates()
+	{
+		if (! self::is_fluentcrm_installed()) {
 			return 0;
 		}
 
@@ -72,7 +78,7 @@ class Ikan_FluentCRM_Templates {
 		$templates = self::get_templates();
 		$synced    = 0;
 
-		foreach ( $templates as $tpl ) {
+		foreach ($templates as $tpl) {
 			$existing_id = (int) $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type = 'fc_template' LIMIT 1",
@@ -90,28 +96,28 @@ class Ikan_FluentCRM_Templates {
 				'post_excerpt' => $tpl['excerpt'] ?? $tpl['subject'],
 			);
 
-			if ( $existing_id > 0 ) {
+			if ($existing_id > 0) {
 				$post_data['ID'] = $existing_id;
-				wp_update_post( $post_data );
+				wp_update_post($post_data);
 				$post_id = $existing_id;
 			} else {
-				$new_id = wp_insert_post( $post_data, true );
-				if ( ! is_wp_error( $new_id ) ) {
+				$new_id = wp_insert_post($post_data, true);
+				if (! is_wp_error($new_id)) {
 					$post_id = $new_id;
 				}
 			}
 
-			if ( $post_id > 0 ) {
-				update_post_meta( $post_id, '_design_template', 'raw_html' );
-				update_post_meta( $post_id, '_edit_type', 'raw_html' );
-				update_post_meta( $post_id, '_email_subject', $tpl['subject'] );
-				update_post_meta( $post_id, '_email_pre_header', $tpl['preheader'] ?? $tpl['subject'] );
-				update_post_meta( $post_id, '_template_config', array(
+			if ($post_id > 0) {
+				update_post_meta($post_id, '_design_template', 'raw_html');
+				update_post_meta($post_id, '_edit_type', 'raw_html');
+				update_post_meta($post_id, '_email_subject', $tpl['subject']);
+				update_post_meta($post_id, '_email_pre_header', $tpl['preheader'] ?? $tpl['subject']);
+				update_post_meta($post_id, '_template_config', array(
 					'template_type' => 'raw_html',
-				) );
-				update_post_meta( $post_id, '_edit_template_config', array(
+				));
+				update_post_meta($post_id, '_edit_template_config', array(
 					'template_type' => 'raw_html',
-				) );
+				));
 				$synced++;
 			}
 		}
@@ -141,7 +147,8 @@ class Ikan_FluentCRM_Templates {
 	 * @param array<string, mixed> $args Template parameters.
 	 * @return string HTML email document.
 	 */
-	public static function render_shell( $args = array() ) {
+	public static function render_shell($args = array())
+	{
 		$badge_label  = $args['badge_label'] ?? 'Personal Wellbeing Summary';
 		$badge_bg     = $args['badge_bg'] ?? '#F2F9F7';
 		$badge_border = $args['badge_border'] ?? $args['badge_bg'] ?? '#D1ECE5';
@@ -164,22 +171,22 @@ class Ikan_FluentCRM_Templates {
 
 		// Left-aligned CTA Button (ikan2 style black pill)
 		$cta_html = '';
-		if ( $cta_label && $cta_url ) {
+		if ($cta_label && $cta_url) {
 			$cta_html = '
 			<div style="margin:24px 0 8px 0;text-align:left">
-			  <a href="' . esc_url( $cta_url ) . '" class="mobile-btn" target="_blank" style="display:inline-block;padding:12px 24px;background-color:#0E1217;color:#FFFFFF !important;text-decoration:none !important;border-radius:999px;font-family:' . $font_family . ';font-size:14px;font-weight:600;letter-spacing:0.01em;text-align:left">
-			    ' . esc_html( $cta_label ) . '
+			  <a href="' . esc_url($cta_url) . '" class="mobile-btn" target="_blank" style="display:inline-block;padding:12px 24px;background-color:#0E1217;color:#FFFFFF !important;text-decoration:none !important;border-radius:999px;font-family:' . $font_family . ';font-size:14px;font-weight:600;letter-spacing:0.01em;text-align:left">
+			    ' . esc_html($cta_label) . '
 			  </a>
 			</div>';
 		}
 
 		// Google Schema.org JSON-LD (EmailMessage / ViewAction for Google to sync in)
 		$target_action_url = $cta_url ?: 'https://app.ikanhealth.in';
-		$action_name       = $cta_label ?: ( $heading ? wp_strip_all_tags( $heading ) : 'Open iKAN' );
-		$schema_json       = wp_json_encode( array(
+		$action_name       = $cta_label ?: ($heading ? wp_strip_all_tags($heading) : 'Open iKAN');
+		$schema_json       = wp_json_encode(array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'EmailMessage',
-			'description'     => wp_strip_all_tags( $heading ?: $badge_label ),
+			'description'     => wp_strip_all_tags($heading ?: $badge_label),
 			'potentialAction' => array(
 				'@type'  => 'ViewAction',
 				'target' => $target_action_url,
@@ -191,11 +198,11 @@ class Ikan_FluentCRM_Templates {
 				'url'   => 'https://ikanhealth.in',
 				'logo'  => 'https://app.ikanhealth.in/pwa-192x192.png',
 			),
-		), JSON_UNESCAPED_SLASHES );
+		), JSON_UNESCAPED_SLASHES);
 
 		// 24/7 Crisis Support Box (Left Aligned)
 		$crisis_html = '';
-		if ( $show_crisis ) {
+		if ($show_crisis) {
 			$crisis_html = '
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F6F8FA;border:1px solid #E3E7EC;border-radius:12px;margin-top:24px;margin-bottom:16px;text-align:left">
 			  <tr>
@@ -211,21 +218,21 @@ class Ikan_FluentCRM_Templates {
 
 		// Card timestamp or date
 		$card_time_html = '';
-		if ( $card_time ) {
+		if ($card_time) {
 			$card_time_html = '
 			<div style="font-family:' . $font_family . ';font-size:12px;line-height:18px;color:#5B6470;margin-top:14px;text-align:left">
-			  ' . esc_html( $card_time ) . '
+			  ' . esc_html($card_time) . '
 			</div>';
 		}
 
 		// Outside footer
 		$disclaimer_html = '';
-		if ( $disclaimer ) {
-			$disclaimer_html = '<p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left"><strong style="color:#0E1217">Clinical Notice:</strong> ' . esc_html( $disclaimer ) . '</p>';
+		if ($disclaimer) {
+			$disclaimer_html = '<p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left"><strong style="color:#0E1217">Clinical Notice:</strong> ' . esc_html($disclaimer) . '</p>';
 		}
 		$footer_note_html = '';
-		if ( $footer_note ) {
-			$footer_note_html = '<p style="font-family:' . $font_family . ';font-size:12px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left">' . esc_html( $footer_note ) . '</p>';
+		if ($footer_note) {
+			$footer_note_html = '<p style="font-family:' . $font_family . ';font-size:12px;line-height:1.55;color:#5B6470;margin:0 0 8px 0;text-align:left">' . esc_html($footer_note) . '</p>';
 		}
 
 		return '<!DOCTYPE html>
@@ -238,29 +245,28 @@ class Ikan_FluentCRM_Templates {
   <meta name="supported-color-schemes" content="light only" />
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>' . esc_html( $heading ?: $badge_label ) . '</title>
+  <title>' . esc_html($heading ?: $badge_label) . '</title>
   <script type="application/ld+json">' . $schema_json . '</script>
   <style type="text/css">
-    *, *:before, *:after { box-sizing: border-box; }
-    html, body { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; box-sizing: border-box; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; }
     img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
-    body { height: 100% !important; background-color: #EDF0F4; font-family: ' . $font_family . '; color: #0E1217; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #EDF0F4; font-family: ' . $font_family . '; color: #0E1217; }
     
     /* Strict Mobile-First Viewport Rules (<600px) — Rows remain side-by-side as columns */
     @media only screen and (max-width: 600px) {
-      .email-wrapper { padding: 16px 10px !important; }
+      .email-wrapper { padding: 16px 12px !important; }
       .email-container { width: 100% !important; max-width: 100% !important; }
-      .card-cell { padding: 20px 14px !important; border-radius: 16px !important; }
+      .card-cell { padding: 20px 16px !important; border-radius: 16px !important; }
       .mobile-btn { display: inline-block !important; width: auto !important; max-width: 100% !important; box-sizing: border-box !important; text-align: left !important; }
-      .footer-cell { padding: 14px 4px !important; }
+      .footer-cell { padding: 16px 4px !important; }
     }
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#EDF0F4;">
   <!-- Hidden preview text for inbox snippet -->
   <div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">
-    ' . esc_html( wp_strip_all_tags( $intro ?: $heading ) ) . '
+    ' . esc_html(wp_strip_all_tags($intro ?: $heading)) . '
   </div>
 
   <!-- Outer background canvas (#EDF0F4 from ikan2) -->
@@ -288,12 +294,12 @@ class Ikan_FluentCRM_Templates {
 
           <!-- Main White Card (#FFFFFF, border-radius: 20px, border: 1px solid #E3E7EC) -->
           <tr>
-            <td class="card-cell" style="background-color:#FFFFFF;border-radius:20px;border:1px solid #E3E7EC;padding:28px 24px;box-shadow:0 1px 3px rgba(0,0,0,0.02);text-align:left;word-break:break-word;overflow-wrap:break-word;box-sizing:border-box">
+            <td class="card-cell" style="background-color:#FFFFFF;border-radius:20px;border:1px solid #E3E7EC;padding:28px 28px;box-shadow:0 1px 3px rgba(0,0,0,0.02);text-align:left;word-break:break-word;overflow-wrap:break-word;">
 
               <!-- Left-Aligned Context Badge -->
               <div style="margin-bottom:14px;text-align:left">
-                <span style="display:inline-block;padding:6px 12px;background-color:' . esc_attr( $badge_bg ) . ';border:1px solid ' . esc_attr( $badge_border ) . ';border-radius:999px;font-family:' . $font_family . ';font-size:11px;font-weight:700;color:' . esc_attr( $badge_color ) . ';letter-spacing:0.04em;text-transform:uppercase">
-                  ' . esc_html( $badge_label ) . '
+                <span style="display:inline-block;padding:6px 12px;background-color:' . esc_attr($badge_bg) . ';border:1px solid ' . esc_attr($badge_border) . ';border-radius:999px;font-family:' . $font_family . ';font-size:11px;font-weight:700;color:' . esc_attr($badge_color) . ';letter-spacing:0.04em;text-transform:uppercase">
+                  ' . esc_html($badge_label) . '
                 </span>
               </div>
 
@@ -302,9 +308,9 @@ class Ikan_FluentCRM_Templates {
                 ' . $heading . '
               </h1>
 
-              ' . ( $greeting ? '<p style="font-family:' . $font_family . ';color:#0E1217;font-size:15px;line-height:1.6;font-weight:600;margin:0 0 10px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $greeting . '</p>' : '' ) . '
+              ' . ($greeting ? '<p style="font-family:' . $font_family . ';color:#0E1217;font-size:15px;line-height:1.6;font-weight:600;margin:0 0 10px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $greeting . '</p>' : '') . '
 
-              ' . ( $intro ? '<p style="font-family:' . $font_family . ';color:#5B6470;font-size:14px;line-height:1.65;margin:0 0 16px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $intro . '</p>' : '' ) . '
+              ' . ($intro ? '<p style="font-family:' . $font_family . ';color:#5B6470;font-size:14px;line-height:1.65;margin:0 0 16px 0;text-align:left;word-break:break-word;overflow-wrap:break-word">' . $intro . '</p>' : '') . '
 
               <!-- Specialized Content Section (Left Aligned, Preserves Rows) -->
               <div style="text-align:left">
@@ -313,8 +319,6 @@ class Ikan_FluentCRM_Templates {
 
               <!-- Left-Aligned Call to Action -->
               ' . $cta_html . '
-
-              ' . $card_time_html . '
 
               ' . $crisis_html . '
 
@@ -346,6 +350,8 @@ class Ikan_FluentCRM_Templates {
                 </table>
               </div>
 
+              ' . $card_time_html . '
+
             </td>
           </tr>
 
@@ -355,7 +361,7 @@ class Ikan_FluentCRM_Templates {
               ' . $disclaimer_html . '
               ' . $footer_note_html . '
               <p style="font-family:' . $font_family . ';font-size:11px;line-height:1.55;color:#5B6470;margin:0 0 6px 0;text-align:left">
-                &copy; ' . gmdate( 'Y' ) . ' iKAN Health &bull; ##crm.business_address##<br>
+                &copy; ' . gmdate('Y') . ' iKAN Health &bull; ##crm.business_address##<br>
                 Sent via <code>noreply@ikanhealth.in</code>. Monitored support: <a href="mailto:support@ikanhealth.in" style="color:#0E9384;text-decoration:none">support@ikanhealth.in</a>
               </p>
               <p style="font-family:' . $font_family . ';font-size:11px;color:#5B6470;margin:0;text-align:left">
@@ -380,7 +386,8 @@ class Ikan_FluentCRM_Templates {
 	 * @param array<string, mixed> $args Alert parameters.
 	 * @return string HTML email document.
 	 */
-	public static function render_alert_shell( $args = array() ) {
+	public static function render_alert_shell($args = array())
+	{
 		$badge_label  = $args['badge_label'] ?? 'New app user';
 		$badge_tint   = $args['badge_tint'] ?? '#FBE6E4';
 		$badge_ink    = $args['badge_ink'] ?? '#A83E38';
@@ -394,11 +401,11 @@ class Ikan_FluentCRM_Templates {
 		$font_family = "Manrope, 'Segoe UI', Helvetica, Arial, sans-serif";
 
 		$facts_html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;border-top:1px solid #E3E7EC;text-align:left;table-layout:fixed">';
-		foreach ( $facts as $i => $row ) {
+		foreach ($facts as $i => $row) {
 			$rule       = $i > 0 ? 'border-top:1px solid #E3E7EC;' : '';
 			$facts_html .= '<tr>'
-				. '<td style="padding:12px 0;' . $rule . 'width:38%;vertical-align:top;font-family:' . $font_family . ';font-size:13px;line-height:20px;color:#5B6470;font-weight:500;text-align:left;word-break:break-word;overflow-wrap:anywhere;">' . esc_html( $row[0] ) . '</td>'
-				. '<td style="padding:12px 0;' . $rule . 'vertical-align:top;font-family:' . $font_family . ';font-size:14px;line-height:20px;color:#0E1217;font-weight:600;word-break:break-word;overflow-wrap:anywhere;text-align:left;">' . $row[1] . '</td>'
+				. '<td style="padding:12px 0;' . $rule . 'width:38%;vertical-align:top;font-family:' . $font_family . ';font-size:13px;line-height:20px;color:#5B6470;font-weight:500;text-align:left;word-break:break-word;">' . esc_html($row[0]) . '</td>'
+				. '<td style="padding:12px 0;' . $rule . 'vertical-align:top;font-family:' . $font_family . ';font-size:14px;line-height:20px;color:#0E1217;font-weight:600;word-break:break-word;overflow-wrap:break-word;text-align:left;">' . $row[1] . '</td>'
 				. '</tr>';
 		}
 		$facts_html .= '</table>';
@@ -428,7 +435,8 @@ class Ikan_FluentCRM_Templates {
 	 *
 	 * @return array<int, array<string, string>>
 	 */
-	public static function get_templates() {
+	public static function get_templates()
+	{
 		return array(
 
 			// 1. (Post 314 Update) Member Assessment Summary — Personal Wellbeing Export
@@ -798,9 +806,9 @@ class Ikan_FluentCRM_Templates {
 						'title'       => '##contact.full_name|New Account##',
 						'intro'       => 'Someone created an account in the iKAN app.',
 						'facts'       => array(
-							array( 'Name', '##contact.full_name##' ),
-							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
-							array( 'Signed up with', '##contact.custom.auth_provider|Email and password##' ),
+							array('Name', '##contact.full_name##'),
+							array('Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>'),
+							array('Signed up with', '##contact.custom.auth_provider|Email and password##'),
 						),
 						'cta_label'   => 'Open the app',
 						'cta_url'     => 'https://app.ikanhealth.in',
@@ -824,11 +832,11 @@ class Ikan_FluentCRM_Templates {
 						'title'       => '##contact.custom.company_name|Corporate Enquiry##',
 						'intro'       => 'Someone asked about a pilot from the burnout cost calculator.',
 						'facts'       => array(
-							array( 'Name', '##contact.full_name##' ),
-							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
-							array( 'Company', '##contact.custom.company_name|--##' ),
-							array( 'Team size', '##contact.custom.team_size|--##' ),
-							array( 'From', 'ikanhealth.in' ),
+							array('Name', '##contact.full_name##'),
+							array('Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>'),
+							array('Company', '##contact.custom.company_name|--##'),
+							array('Team size', '##contact.custom.team_size|--##'),
+							array('From', 'ikanhealth.in'),
 						),
 						'cta_label'   => 'Reply to Lead',
 						'cta_url'     => 'mailto:##contact.email##?subject=Re:%20your%20iKAN%20pilot%20enquiry',
@@ -852,9 +860,9 @@ class Ikan_FluentCRM_Templates {
 						'title'       => '##contact.custom.subject|General enquiry##',
 						'intro'       => 'Someone sent a message through the contact form.',
 						'facts'       => array(
-							array( 'Name', '##contact.full_name##' ),
-							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
-							array( 'From', 'ikanhealth.in' ),
+							array('Name', '##contact.full_name##'),
+							array('Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>'),
+							array('From', 'ikanhealth.in'),
 						),
 						'cta_label'   => 'Reply to Message',
 						'cta_url'     => 'mailto:##contact.email##',
@@ -878,10 +886,10 @@ class Ikan_FluentCRM_Templates {
 						'title'       => '##contact.full_name##',
 						'intro'       => 'A new clinical partner applied to join iKAN. Expected response within 3–5 business days.',
 						'facts'       => array(
-							array( 'Name', '##contact.full_name##' ),
-							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
-							array( 'Phone', '##contact.phone|--##' ),
-							array( 'Specialty / Category', '##contact.custom.category|Counselor##' ),
+							array('Name', '##contact.full_name##'),
+							array('Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>'),
+							array('Phone', '##contact.phone|--##'),
+							array('Specialty / Category', '##contact.custom.category|Counselor##'),
 						),
 						'cta_label'   => 'Review in Admin',
 						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
@@ -905,9 +913,9 @@ class Ikan_FluentCRM_Templates {
 						'title'       => '##contact.email##',
 						'intro'       => 'A new subscriber joined the iKAN newsletter list.',
 						'facts'       => array(
-							array( 'Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>' ),
-							array( 'Name', '##contact.full_name|Reader##' ),
-							array( 'From', 'ikanhealth.in' ),
+							array('Email', '<a href="mailto:##contact.email##" style="color:#0E1217;text-decoration:underline">##contact.email##</a>'),
+							array('Name', '##contact.full_name|Reader##'),
+							array('From', 'ikanhealth.in'),
 						),
 						'cta_label'   => 'Open Subscribers',
 						'cta_url'     => 'https://ikanhealth.in/wp-admin/admin.php?page=fluentcrm-admin#/subscribers',
@@ -921,22 +929,23 @@ class Ikan_FluentCRM_Templates {
 	/**
 	 * WP-CLI handler for compiling and inspecting FluentCRM templates.
 	 */
-	public static function cli_handler( $args, $assoc_args ) {
+	public static function cli_handler($args, $assoc_args)
+	{
 		$action = $args[0] ?? 'list';
 
-		switch ( $action ) {
+		switch ($action) {
 			case 'sync':
-				WP_CLI::line( '==> Compiling all iKAN branded email templates into FluentCRM...' );
+				WP_CLI::line('==> Compiling all iKAN branded email templates into FluentCRM...');
 				$count = self::push_templates();
-				update_option( self::OPTION_KEY, self::TEMPLATE_VERSION );
-				WP_CLI::success( sprintf( 'Successfully compiled and synced %d templates in FluentCRM (post_type = fc_template)!', $count ) );
+				update_option(self::OPTION_KEY, self::TEMPLATE_VERSION);
+				WP_CLI::success(sprintf('Successfully compiled and synced %d templates in FluentCRM (post_type = fc_template)!', $count));
 				break;
 
 			case 'list':
 				global $wpdb;
 				$templates = self::get_templates();
-				WP_CLI::line( '=== iKAN FluentCRM Email Templates Catalog ===' );
-				foreach ( $templates as $tpl ) {
+				WP_CLI::line('=== iKAN FluentCRM Email Templates Catalog ===');
+				foreach ($templates as $tpl) {
 					$existing_id = (int) $wpdb->get_var(
 						$wpdb->prepare(
 							"SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type = 'fc_template' LIMIT 1",
@@ -944,12 +953,12 @@ class Ikan_FluentCRM_Templates {
 						)
 					);
 					$status = $existing_id > 0 ? "Synced (ID: {$existing_id})" : 'Pending Sync';
-					WP_CLI::line( sprintf( '- [%s] %s (Slug: %s)', $status, $tpl['title'], $tpl['slug'] ) );
+					WP_CLI::line(sprintf('- [%s] %s (Slug: %s)', $status, $tpl['title'], $tpl['slug']));
 				}
 				break;
 
 			default:
-				WP_CLI::line( 'Usage: wp ikan-templates [sync|list]' );
+				WP_CLI::line('Usage: wp ikan-templates [sync|list]');
 		}
 	}
 }
