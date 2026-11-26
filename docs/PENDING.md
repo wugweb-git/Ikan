@@ -2,11 +2,17 @@
 
 Single source of truth for outstanding work across sessions. Update this file whenever a deployment or major change completes — see [`docs/GOVERNANCE.md`](GOVERNANCE.md).
 
-*Last updated: 2026-11-24*
+*Last updated: 2026-11-26*
 
 ---
 
 ## 1. Immediate Next Steps / User Action Required
+
+- [x] **Google Play Store Submission (`ikan2` / `com.ikan.wugweb`)**:
+  - Signed release AAB built with upload keystore (`/Users/abcom/ikan-upload.jks`): `ikan-health-release-v1.0.4.aab` (`versionCode 5`, `versionName 1.0.4`).
+  - Google Play Store screenshots generated at 1080×2400 portrait and uploaded.
+  - Policy Status / Privacy Policy resolution: Rank Math 301 redirection active on Hostinger (`/legal/privacy-policy` -> `/privacy-policy/`), `ikan2` route `/privacy-policy` active, and `PermissionsRationaleActivity.kt` updated.
+  - Release submitted for review on Google Play Console's Publishing Overview.
 
 - [ ] **VAPID public key for web push (needs Vedanshu)**: `ikan2-push` reads `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` only from Supabase secrets; the key is in no source file and `supabase secrets list` shows a digest, not the value. Supply it from wherever it was generated, or authorise regenerating the pair (this invalidates every existing push subscription).
 - [ ] **Deferred until after the UX pass (React app)**: native capabilities (Capacitor: share, camera, mic, calendar, Health Connect), a `reminder` activity block (frozen catalog id `cat-activity-reminder`, admin editor panel, renderer), digital-wellness incl. a screen-time feasibility spike, and the open question of making consent an interaction. Plan: `/Users/abcom/.claude/plans/velvety-wondering-perlis.md`.
