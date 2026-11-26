@@ -8,6 +8,31 @@ Single source of truth for outstanding work across sessions. Update this file wh
 
 ## 1. Immediate Next Steps / User Action Required
 
+- [x] **Therapist Partnership: Practice Alignment Charter & Guide Page (`ikan` repo)**:
+  - **Authentic Alignment Document Implementation**:
+    - Created comprehensive practice charter based directly on co-founder workbook `I-Kan_Internal_Therapist_Partnership_Alignment_Workbook.docx` (`1fNtC-FW152AzdJkacGAZGZG0c_D5sgt3`).
+    - React page component: `src/product/site/pages/TherapistPartnership.tsx` wired into React SPA routes `/therapist-partnership`, `/partner`, `/partner/alignment`, `/therapist-alignment`.
+    - WordPress theme template: `src/product/site/themes/demo/therapist-partnership.php` (and synchronized with `partner.php`).
+    - Built with full `ikan2.css` design system tokens (`--font-display: 'Sora'`, `--font-sans: 'Manrope'`, oklch color ramp, soft ambient glow, calm teal `#0F4C45` and warm sand `#FAF9F6`).
+    - Visual Features:
+      - Verified Clinician showcase card (Dr. Shweta Rao preview, RCI verified badge, instant daily settlement demo).
+      - 5 Practice Pledges Bento Grid (Zero clinical interference, 100% control over fees/calendar, zero session surveillance, non-exclusive practice freedom, transparent 90/10 split).
+      - 5-Step Client & Clinician End-to-End Journey (Intake -> Gale-Shapley Match -> Upfront Payment -> Handover -> Daily Payouts).
+      - Gale-Shapley Matching Engine Architecture (Nuanced compatibility, bandwidth & homework calibration to prevent burnout overload, hard verification filters, right of refusal).
+      - Integrated Care Ecosystem showcase (Standardised assessments PHQ-9/GAD-7/PSS-10/BAT-23, Equip psychoeducational programs, mood tracking continuity).
+      - Interactive Commercials Calculator with presets (₹1,200, ₹1,800, ₹2,000, ₹2,500, ₹3,500) and live monthly/annualised payout breakdown.
+      - Side-by-side comparison grid (Traditional Aggregators vs i-Kan Clinical Network).
+      - Confidentiality Firewall diagram (What i-Kan manages vs what is strictly locked between clinician and client).
+      - 14-Question Co-Founder FAQ Accordion directly answering all workbook topics.
+      - Direct entry point to the 11-step provider onboarding wizard (`/partner/join/`).
+    - **Deployed & Verified Live on Hostinger Production**:
+      - `https://ikanhealth.in/therapist-partnership/` returning HTTP 200 with verified SSR content and single H1.
+      - `https://ikanhealth.in/partner/` active 301 redirection to `/therapist-partnership/` returning HTTP 200.
+      - `https://ikanhealth.in/join/partner/` returning HTTP 200.
+      - `https://ikanhealth.in/partner/join/` returning HTTP 200 (11-step application wizard).
+      - Rank Math SEO metadata configured on Post ID 356 (Focus keyword: `Therapist Partnership`, 154-char meta description, OpenGraph image).
+
+
 - [x] **Dedicated Partner & Corporate Paths with ikan2 Design System (`ikan` repo)**:
   - **Partner Paths**:
     - `https://ikanhealth.in/partner/`: Authentic Therapist & Professional Network Landing Page (built with `ikan2.css` tokens, interactive earnings calculator, 90/10 split, comparison grid, matching engine walkthrough, FAQ accordion, rich visual cards).
