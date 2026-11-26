@@ -29,6 +29,10 @@ $accent_styles = [
 	'mind'   => '--accent:#5D64B4;--accent-container:#E8E9F8;--accent-strong:#464C9E;',
 ];
 $inline_style = $accent_styles[ $accent ] ?? $accent_styles['calm'];
+$cover_alt      = $cover_id ? get_post_meta( $cover_id, '_wp_attachment_image_alt', true ) : '';
+if ( ! $cover_alt ) {
+	$cover_alt = $name . ' programme cover';
+}
 ?>
 <a
   href="<?php echo esc_url( $url ); ?>"
@@ -36,7 +40,7 @@ $inline_style = $accent_styles[ $accent ] ?? $accent_styles['calm'];
   class="ikan2-theme flex overflow-hidden rounded-[24px] bg-secondary text-foreground no-underline hover:shadow-md transition-shadow"
 >
   <?php if ( $cover_url ) : ?>
-    <img src="<?php echo esc_url( $cover_url ); ?>" alt="" class="w-[112px] shrink-0 object-cover" loading="lazy" decoding="async" />
+    <img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php echo esc_attr( $cover_alt ); ?>" class="w-[112px] shrink-0 object-cover" loading="lazy" decoding="async" />
   <?php else : ?>
     <div class="w-[112px] shrink-0 bg-[var(--accent-container)] flex items-center justify-center text-[var(--accent-strong)]" aria-hidden="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>

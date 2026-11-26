@@ -31,7 +31,7 @@ $initials = strtoupper( substr( $parts[0] ?? 'C', 0, 1 ) . ( isset( $parts[1] ) 
 >
   <div class="flex gap-3">
     <?php if ( $photo_url ) : ?>
-      <img src="<?php echo esc_url( $photo_url ); ?>" alt="" class="h-16 w-16 shrink-0 rounded-full object-cover" loading="lazy" decoding="async" />
+      <img src="<?php echo esc_url( $photo_url ); ?>" alt="<?php echo esc_attr( $name ); ?>" class="h-16 w-16 shrink-0 rounded-full object-cover" loading="lazy" decoding="async" />
     <?php else : ?>
       <span class="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#DFF0E8] text-[#1E523C] font-display text-lg font-semibold">
         <?php echo esc_html( $initials ); ?>

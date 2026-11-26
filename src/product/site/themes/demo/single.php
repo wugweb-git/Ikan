@@ -62,10 +62,12 @@ get_header();
   ] );
 ?>
 
-<!-- Schema.org JSON-LD Structured Data -->
+<?php if ( ! defined( 'RANK_MATH_VERSION' ) ) : ?>
+<!-- Schema.org JSON-LD Structured Data (fallback when Rank Math is inactive) -->
 <script type="application/ld+json">
 <?php echo wp_json_encode( $schema_data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ); ?>
 </script>
+<?php endif; ?>
 
 <main id="main-content" class="ikan2-theme info-page site-page-below-nav w-full flex-1">
   <section class="info-band">

@@ -38,7 +38,7 @@ $initials = strtoupper( substr( $parts[0] ?? 'M', 0, 1 ) . ( isset( $parts[1] ) 
 <section class="ikan2-theme rounded-[24px] bg-secondary p-4 text-foreground">
   <div class="flex items-center gap-3.5">
     <?php if ( $avatar_url ) : ?>
-      <img src="<?php echo esc_url( $avatar_url ); ?>" alt="" class="h-14 w-14 shrink-0 rounded-full object-cover" />
+      <img src="<?php echo esc_url( $avatar_url ); ?>" alt="<?php echo esc_attr( $name ); ?>" class="h-14 w-14 shrink-0 rounded-full object-cover" />
     <?php else : ?>
       <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[#2B634D] text-white font-display text-lg font-semibold">
         <?php echo esc_html( $initials ); ?>

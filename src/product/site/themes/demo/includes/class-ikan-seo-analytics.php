@@ -26,9 +26,45 @@ class Ikan_SEO_Analytics {
 		add_filter( 'rank_math/frontend/canonical', array( __CLASS__, 'filter_rank_math_canonical' ), 20 );
 		add_filter( 'rank_math/frontend/robots', array( __CLASS__, 'filter_rank_math_robots' ), 20 );
 		add_filter( 'rank_math/json_ld', array( __CLASS__, 'enrich_rank_math_json_ld' ), 20, 2 );
+		add_action( 'wp_head', array( __CLASS__, 'render_seo_and_ai_head' ), 5 );
+		add_action( 'template_redirect', array( __CLASS__, 'maybe_serve_llms_txt' ), 1 );
 
 		// Google Site Kit & GTM dataLayer event tracking
 		add_action( 'wp_footer', array( __CLASS__, 'render_datalayer_events' ), 99 );
+	}
+
+	/**
+	 * Serve /llms.txt for AI search engines and LLM context discovery.
+	 */
+	public static function maybe_serve_llms_txt() {
+		$path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+		if ( 'llms.txt' !== $path ) {
+			return;
+		}
+		header( 'Content-Type: text/plain; charset=utf-8' );
+		header( 'X-Robots-Tag: noindex' );
+		echo "# iKAN Health (ikanhealth.in / app.ikanhealth.in)\n\n";
+		echo "> Evidence-based mental health and workplace wellbeing platform for India.\n\n";
+		echo "## Core Services\n";
+		echo "- Validated Assessments (PHQ-9, GAD-7, PSS-10, ISI, BAT-23): https://app.ikanhealth.in/assessments\n";
+		echo "- iKAN Equip Programmes (Sleep Tight, Unburn, Stress Buster, Productivity Reset): https://ikanhealth.in/equip-programs/\n";
+		echo "- Mental Health Resources & Guides: https://ikanhealth.in/resources/\n";
+		echo "- Burnout Cost Calculator (Organisations): https://ikanhealth.in/burnout-cost-calculator/\n";
+		echo "- 1-on-1 Therapist Consultations: https://app.ikanhealth.in/consult\n";
+		echo "- Sitemaps: https://ikanhealth.in/sitemap_index.xml and https://app.ikanhealth.in/sitemap.xml\n";
+		echo "- Contact: hello@ikanhealth.in\n";
+		exit;
+	}
+
+	/**
+	 * Emit keywords meta for custom routes and AI context link.
+	 */
+	public static function render_seo_and_ai_head() {
+		echo '<link rel="alternate" type="text/plain" href="' . esc_url( home_url( '/llms.txt' ) ) . '" title="AI Context" />' . "\n";
+		$meta = self::get_current_route_meta();
+		if ( ! empty( $meta['keywords'] ) ) {
+			echo '<meta name="keywords" content="' . esc_attr( $meta['keywords'] ) . '" />' . "\n";
+		}
 	}
 
 	/**
@@ -50,6 +86,7 @@ class Ikan_SEO_Analytics {
 				'title'       => 'Equip Programmes — Daily Mental Health & Burnout Recovery | iKAN Health',
 				'description' => 'Structured daily Equip programmes for sleep, burnout recovery, stress relief, and focus.',
 				'canonical'   => home_url( '/equip-programs/' ),
+				'keywords'    => 'iKAN Equip, burnout recovery program, sleep tight program, stress management India',
 			);
 		}
 		if ( get_query_var( 'ikan_about_page' ) ) {
@@ -57,6 +94,7 @@ class Ikan_SEO_Analytics {
 				'title'       => 'About iKAN Health — Evidence-Based Mental Health Care',
 				'description' => 'Learn how iKAN connects clinically validated assessments, daily programmes, and therapists.',
 				'canonical'   => home_url( '/about/' ),
+				'keywords'    => 'iKAN Health, mental health platform India, evidence-based therapy, workplace wellbeing',
 			);
 		}
 		if ( get_query_var( 'ikan_contact_page' ) ) {
@@ -64,6 +102,7 @@ class Ikan_SEO_Analytics {
 				'title'       => 'Contact Us | iKAN Health',
 				'description' => 'Reach the iKAN Health team for support, workplace pilots, or general enquiries.',
 				'canonical'   => home_url( '/contact/' ),
+				'keywords'    => 'contact iKAN Health, mental health support India, corporate wellbeing pilot',
 			);
 		}
 		if ( get_query_var( 'ikan_resources_page' ) ) {
@@ -71,6 +110,7 @@ class Ikan_SEO_Analytics {
 				'title'       => 'Mental Health Resources & Guides | iKAN Health',
 				'description' => 'Research-backed articles and practical guides on stress, sleep, anxiety, and workplace wellbeing.',
 				'canonical'   => home_url( '/resources/' ),
+				'keywords'    => 'mental health articles India, burnout guide, anxiety coping strategies, sleep hygiene',
 			);
 		}
 		$legal_slug = get_query_var( 'ikan_legal_page' );

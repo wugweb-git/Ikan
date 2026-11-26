@@ -37,6 +37,10 @@ if ( $post_id > 0 ) {
 }
 
 $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : '';
+$thumb_alt = $thumb_id ? get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ) : '';
+if ( ! $thumb_alt ) {
+	$thumb_alt = $title;
+}
 ?>
 <a
   href="<?php echo esc_url( $url ); ?>"
@@ -46,7 +50,7 @@ $thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'medium' ) : ''
     <div class="aspect-[16/9] overflow-hidden">
       <img
         src="<?php echo esc_url( $thumb_url ); ?>"
-        alt=""
+        alt="<?php echo esc_attr( $thumb_alt ); ?>"
         class="w-full h-full object-cover"
         loading="lazy"
         decoding="async"
