@@ -60,7 +60,8 @@ class Ikan_SEO_Analytics {
 	 * Emit keywords meta for custom routes and AI context link.
 	 */
 	public static function render_seo_and_ai_head() {
-		echo '<link rel="alternate" type="text/plain" href="' . esc_url( home_url( '/llms.txt' ) ) . '" title="AI Context" />' . "\n";
+		echo '<link rel="alternate" type="text/plain" href="' . esc_url( home_url( '/llms.txt' ) ) . '" title="AI Context (llms.txt)" />' . "\n";
+		echo '<link rel="alternate" type="text/plain" href="' . esc_url( home_url( '/ai-context.txt' ) ) . '" title="AI Context Overview" />' . "\n";
 		$meta = self::get_current_route_meta();
 		if ( ! empty( $meta['keywords'] ) ) {
 			echo '<meta name="keywords" content="' . esc_attr( $meta['keywords'] ) . '" />' . "\n";

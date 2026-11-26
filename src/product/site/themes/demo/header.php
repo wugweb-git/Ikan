@@ -194,7 +194,7 @@
       <header class="ikan2-theme nav-fixed-wrapper hidden lg:flex" role="banner">
         <nav class="ikan-capsule-nav px-[16px] py-[12px] m-[0px]" aria-label="Primary navigation" style="border-radius: 9999px;">
           <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="nav-brand no-underline shrink-0" aria-label="iKAN home">
-            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
+            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="iKAN Health logo" width="40" height="40">
             <span class="type-subhead">iKAN</span>
           </a>
           <div class="flex items-center gap-1 xl:gap-2">
@@ -236,7 +236,7 @@
       <nav class="ikan2-theme mnav block lg:hidden" aria-label="Public navigation">
         <div class="mnav__bar">
           <a href="<?php echo esc_url( home_url( "/" ) ); ?>" class="mnav__brand" aria-label="iKAN home">
-            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="" width="40" height="40">
+            <img src="<?php echo esc_url( get_theme_file_uri( "assets/img/favicon.svg" ) ); ?>" alt="iKAN Health logo" width="40" height="40">
             <span class="type-subhead">iKAN</span>
           </a>
           <button type="button" class="mnav__toggle" aria-label="Open navigation menu" aria-expanded="false">
