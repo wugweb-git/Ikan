@@ -382,6 +382,10 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
           <button type="button" class="org-tab" data-target="tab-settings">Settings</button>
         </nav>
 
+        <a href="<?php echo esc_url( home_url( '/corporate/join' ) ); ?>" class="org-button" style="height: 36px; padding: 0 14px; font-size: 13px; text-decoration: none;">
+          Request Pilot
+        </a>
+
         <button type="button" id="btn-toggle-login-view" class="org-button org-button--quiet" style="height: 36px; padding: 0 14px; font-size: 13px;">
           Sign in
         </button>
@@ -687,6 +691,10 @@ $hero_img = 'https://images.unsplash.com/photo-1759951609703-f03171e6f66e?crop=e
 
         <p style="margin-top: 24px; font-size: 13px; color: var(--muted-foreground); line-height: 20px;">
           No access yet? Ask whoever set up iKAN at your organisation, or write to <a href="mailto:support@ikanhealth.in" style="color: var(--brand-teal-ink); font-weight: 600;">support@ikanhealth.in</a>.
+        </p>
+
+        <p style="margin-top: 12px; font-size: 13px; text-align: center;">
+          <a href="<?php echo esc_url( home_url( '/corporate/join' ) ); ?>" style="color: var(--brand-teal-ink); font-weight: 600; text-decoration: underline;">Looking to onboard your organisation? Request a pilot &rarr;</a>
         </p>
       </div>
     </div>
