@@ -21,7 +21,7 @@ if (! defined('ABSPATH')) {
 class Ikan_FluentCRM_Templates
 {
 
-	const TEMPLATE_VERSION = '2.6.0';
+	const TEMPLATE_VERSION = '2.7.0';
 	const OPTION_KEY       = 'ikan_fluentcrm_templates_version';
 
 	/**
@@ -611,21 +611,21 @@ class Ikan_FluentCRM_Templates
 				),
 			),
 
-			// 5. (NEW) 14-Day Clinical Re-assessment Tracker
+			// 5. (NEW) 3-Week Clinical Re-assessment Tracker
 			array(
 				'slug'      => 'clinical-reassessment-due-reminder',
-				'title'     => '14-Day Clinical Re-assessment Tracker',
-				'subject'   => 'Time for your 14-day wellbeing check-in, ##contact.first_name##',
-				'excerpt'   => 'Triggered every 14 days to monitor clinical recovery trajectory and score shift.',
+				'title'     => '3-Week Clinical Re-assessment Tracker',
+				'subject'   => 'Time for your 3-week wellbeing check-in, ##contact.first_name##',
+				'excerpt'   => 'Triggered every 3 weeks (21 days) to monitor clinical recovery trajectory and score shift.',
 				'preheader' => 'Track your progress and compare your score against your clinical baseline.',
 				'html'      => self::render_shell(
 					array(
-						'badge_label'  => '14-Day Check-in',
+						'badge_label'  => '3-Week Check-in',
 						'badge_bg'     => '#EEF2FF',
 						'badge_border' => '#C7D2FE',
 						'badge_color'  => '#4338CA',
-						'heading'      => 'How Has Your Wellbeing Shifted This Fortnight?',
-						'intro'        => 'It has been 14 days since your last screening. Clinical recovery is not always linear — re-taking your screening helps highlight subtle gains in sleep, energy, and stress regulation:',
+						'heading'      => 'How Has Your Wellbeing Shifted Over the Last 3 Weeks?',
+						'intro'        => 'It has been 3 weeks (21 days) since your last screening. Clinical recovery is an incremental journey — re-taking your screening helps highlight subtle gains in sleep, emotional regulation, and stress resilience:',
 						'content_html' => '
 						<div style="background-color:#F8F9FA;border:1px solid #EBECEF;border-radius:12px;padding:16px;margin:16px 0">
 						  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
